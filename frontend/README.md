@@ -1,5 +1,4 @@
 **Merged Pull Requests and Deployed Main branch can be previewed here**
-[Deployed Website Link](https://ecellnitk.netlify.app)
 
 
 # Project Setup Guide
