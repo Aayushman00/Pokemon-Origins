@@ -99,12 +99,12 @@ graph TD
     D --> F["Battle Logic Service<br/>(Python)"]
     F --> E
 
-    style A fill:#f9f,stroke:#333
-    style B fill:#ddd,stroke:#333
-    style C fill:#bbf,stroke:#333
-    style D fill:#bfb,stroke:#333
-    style E fill:#fbb,stroke:#333
-    style F fill:#ff9,stroke:#333
+    style A fill:#f9f,stroke:#333,color:#fff
+    style B fill:#ddd,stroke:#333,color:#000
+    style C fill:#bbf,stroke:#333,color:#000
+    style D fill:#bfb,stroke:#333,color:#000
+    style E fill:#fbb,stroke:#333,color:#000
+    style F fill:#ff9,stroke:#333,color:#000
 ```
 
 ### Component Interactions
