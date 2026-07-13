@@ -92,13 +92,15 @@ Pokemon-Origins/
 
 ```mermaid
 graph TD
-    A[Client Browser] -->|HTTP/HTTPS| B(Load Balancer)
-    B --> C[Frontend (React/Vite)]
-    B --> D[Backend API (Node/Express)]
-    D --> E[(MySQL Database)]
-    D --> F[Battle Logic Service (Python)]
+    A["Client Browser"] -->|"HTTP/HTTPS"| B["Load Balancer"]
+    B --> C["Frontend<br/>(React/Vite)"]
+    B --> D["Backend API<br/>(Node/Express)"]
+    D --> E[("MySQL Database")]
+    D --> F["Battle Logic Service<br/>(Python)"]
     F --> E
+
     style A fill:#f9f,stroke:#333
+    style B fill:#ddd,stroke:#333
     style C fill:#bbf,stroke:#333
     style D fill:#bfb,stroke:#333
     style E fill:#fbb,stroke:#333
