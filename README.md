@@ -310,36 +310,6 @@ BACKEND_URL=http://localhost:5000/api
 
 ---
 
-## Screenshots
-
-> Add screenshots here after deployment.
-
-### Home
-
-```
-assets/home.png
-```
-
-### Pokédex
-
-```
-assets/pokedex.png
-```
-
-### Battle
-
-```
-assets/battle.png
-```
-
-### Trainer Profile
-
-```
-assets/profile.png
-```
-
----
-
 # Contributing
 
 1. Fork the repository.
@@ -372,9 +342,3 @@ git push origin feature/new-feature
 - Built using React, Express.js, MySQL, and Python
 
 ---
-
-## Author
-
-**Aayushman**
-
-Computer Science Undergraduate • Full Stack Developer • Competitive Programmer
