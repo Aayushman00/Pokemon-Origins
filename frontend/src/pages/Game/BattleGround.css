@@ -102,6 +102,22 @@
   100% { opacity: 1; transform: scale(1.02); }
 }
 
+/* Opposing trainer's battle-intro portrait (absent for legendary/wild
+   encounters — TrainerAvatar renders nothing when trainerSprite is null) */
+.gba-trainer-avatar-wrap {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  z-index: 11;
+}
+
+.gba-trainer-avatar {
+  width: 64px;
+  height: auto;
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 3px 0 rgba(0,0,0,0.5));
+}
+
 /* FireRed-style pokéball throw (no trainer character sprites) */
 .pokeball-throw {
   position: absolute;

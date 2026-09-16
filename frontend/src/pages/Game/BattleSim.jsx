@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { api, getErrorMessage } from '../../api';
 import { TYPE_COLORS } from '../../utils/typeColors';
 import PokemonSprite from '../../components/PokemonSprite/PokemonSprite';
+import TrainerAvatar from '../../components/TrainerAvatar/TrainerAvatar';
 import './BattleGround.css';
 
 // Native stage size; scaled down responsively, never up
@@ -862,6 +863,20 @@ const BattleSim = ({
                         transition={{ duration: 1.15, times: [0, 0.62, 1], delay: 0.35 }}
                         aria-hidden="true"
                       />
+                    )}
+                    {session?.trainerSprite && (
+                      <motion.div
+                        className="gba-trainer-avatar-wrap"
+                        initial={{ x: 80, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: motionMs(150) / 1000, duration: motionMs(350) / 1000 }}
+                      >
+                        <TrainerAvatar
+                          trainerSprite={session.trainerSprite}
+                          alt={trainerName}
+                          className="gba-trainer-avatar pixelated"
+                        />
+                      </motion.div>
                     )}
                     <motion.h2
                       initial={{ opacity: 0, y: 50 }}

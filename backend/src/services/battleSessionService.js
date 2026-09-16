@@ -184,6 +184,7 @@ function toPublicState(session) {
 		status: session.status,
 		battleType: session.battleType,
 		trainerName: session.trainerName,
+		trainerSprite: session.trainerSprite || null,
 		player: clonePokemon(session.player),
 		enemy: clonePokemon(session.enemy),
 		party: session.party.map(clonePokemon),
@@ -231,6 +232,7 @@ function defaultGetEnemyBattle() {
 		}
 		return {
 			trainerName: battle.trainer.name,
+			trainerSprite: battle.trainer.sprite || null,
 			party: battle.trainer.party,
 			battleType: battle.type || "trainer",
 		};
@@ -396,6 +398,7 @@ function createBattleSessionService(deps = {}) {
 			battleNumber,
 			battleType: enemyBattle.battleType || "trainer",
 			trainerName: enemyBattle.trainerName,
+			trainerSprite: enemyBattle.trainerSprite || null,
 			party,
 			// `player` always references the active party entry, so beat
 			// resolution mutates the party snapshot in place.
