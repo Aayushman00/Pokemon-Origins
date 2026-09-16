@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { api, getErrorMessage } from '../../api';
 import { TYPE_COLORS } from '../../utils/typeColors';
 import PokemonSprite from '../../components/PokemonSprite/PokemonSprite';
+import BattlePokemonSprite from '../../components/PokemonSprite/BattlePokemonSprite';
 import TrainerAvatar from '../../components/TrainerAvatar/TrainerAvatar';
 import './BattleGround.css';
 
@@ -959,7 +960,7 @@ const BattleSim = ({
                   }
                   transition={{ duration: motionMs(500) / 1000 || 0.01, ease: 'easeIn' }}
                 >
-                  <PokemonSprite
+                  <BattlePokemonSprite
                     as={motion.img}
                     // Remount on species change so an enemy send-out (Phase
                     // 10) replays the slide-in, like the battle intro.
@@ -996,7 +997,7 @@ const BattleSim = ({
                   }}
                   transition={{ duration: motionMs(500) / 1000 || 0.01, ease: 'easeIn' }}
                 >
-                  <PokemonSprite
+                  <BattlePokemonSprite
                     as={motion.img}
                     pokemonId={userPokemon.pokemon_id}
                     variant="back"
