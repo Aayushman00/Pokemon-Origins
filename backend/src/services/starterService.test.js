@@ -1,6 +1,8 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 const { createStarterService } = require("./starterService");
+const { statAtLevel } = require("../campaign/hydrate");
+const starterStats = require("../starterStats");
 const {
 	createPartyService,
 	createMemoryPartyStore,
@@ -81,5 +83,30 @@ describe("starterService", () => {
 			() => starter.chooseStarter(1, "bulbasaur"),
 			(err) => err.status === 400 && /Party is full/.test(err.message)
 		);
+	});
+
+	it("scales starter stats with statAtLevel instead of storing raw base stats", async () => {
+		const { starter, party } = makeStarterService();
+		await starter.chooseStarter(1, "charmander");
+		const rows = await party.getPartyRows(1);
+		const raw = starterStats.charmander;
+		const mon = rows[0];
+		assert.equal(mon.level, raw.level);
+		assert.equal(mon.attack, statAtLevel(raw.attack, raw.level, false));
+		assert.equal(mon.defense, statAtLevel(raw.defense, raw.level, false));
+		assert.equal(mon.speed, statAtLevel(raw.speed, raw.level, false));
+		assert.equal(
+			mon.special_atk,
+			statAtLevel(raw.special_atk, raw.level, false)
+		);
+		assert.equal(
+			mon.special_def,
+			statAtLevel(raw.special_def, raw.level, false)
+		);
+		const maxHp = statAtLevel(raw.max_hp, raw.level, true);
+		assert.equal(mon.max_hp, maxHp);
+		assert.equal(mon.current_hp, maxHp);
+		// Sanity: the fix must actually lower stats vs. the unscaled raw values.
+		assert.ok(mon.attack < raw.attack);
 	});
 });
