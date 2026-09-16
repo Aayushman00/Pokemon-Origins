@@ -330,6 +330,37 @@ describe("battleSessionService", () => {
 		assert.equal(again.state.sessionId, started.state.sessionId);
 	});
 
+	it("start with force:true resets an active session instead of resuming it", async () => {
+		const { service } = makeService({
+			engine: stubEngine([{ result: "hit", damage: 5 }]),
+		});
+		const started = await service.startBattle(1, {
+			level: 1,
+			battleNumber: 1,
+		});
+		assert.equal(started.state.enemy.current_hp, 30);
+
+		// Deal damage so the active session's state visibly differs from a
+		// fresh one.
+		await service.performAction(1, {
+			sessionId: started.state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		const midFight = service.getSession(1, started.state.sessionId);
+		assert.equal(midFight.state.enemy.current_hp, 25);
+
+		const restarted = await service.startBattle(1, {
+			level: 1,
+			battleNumber: 1,
+			force: true,
+		});
+		assert.equal(restarted.resumed, false);
+		assert.notEqual(restarted.state.sessionId, started.state.sessionId);
+		assert.equal(restarted.state.enemy.current_hp, 30);
+		assert.equal(restarted.state.player.current_hp, 40);
+		assert.equal(restarted.state.status, "active");
+	});
+
 	it("start rejects an empty party and an all-fainted party", async () => {
 		const empty = makeService({ party: [] });
 		await assert.rejects(

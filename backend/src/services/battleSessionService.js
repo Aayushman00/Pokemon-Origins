@@ -315,7 +315,7 @@ function createBattleSessionService(deps = {}) {
 		return session;
 	}
 
-	async function startBattle(trainerId, { level, battleNumber }) {
+	async function startBattle(trainerId, { level, battleNumber, force }) {
 		const progressService = getProgressService();
 		const progress = await progressService.getProgress(trainerId);
 		if (
@@ -328,11 +328,14 @@ function createBattleSessionService(deps = {}) {
 			);
 		}
 
-		// Resume a live session for this exact battle instead of resetting it.
+		// Resume a live session for this exact battle instead of resetting it,
+		// unless the caller explicitly asked for a forced restart (mid-battle
+		// RESTART command) — force always falls through to a fresh session.
 		const existingId = sessionByTrainer.get(Number(trainerId));
 		if (existingId) {
 			const existing = sessions.get(existingId);
 			if (
+				!force &&
 				existing &&
 				existing.status === "active" &&
 				existing.level === level &&
