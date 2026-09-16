@@ -4,6 +4,8 @@ import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { api, getErrorMessage } from '../../api';
 import { TYPE_COLORS } from '../../utils/typeColors';
 import PokemonSprite from '../../components/PokemonSprite/PokemonSprite';
+import BattlePokemonSprite from '../../components/PokemonSprite/BattlePokemonSprite';
+import TrainerAvatar from '../../components/TrainerAvatar/TrainerAvatar';
 import './BattleGround.css';
 
 // Native stage size; scaled down responsively, never up
@@ -79,7 +81,6 @@ const BattleSim = ({
   battleNumber,
   onBattleWon,
   onContinue,
-  isEscapeAllowed = false,
 }) => {
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
@@ -100,8 +101,11 @@ const BattleSim = ({
   const [bagItems, setBagItems] = useState([]); // battle-usable inventory (server-fetched on BAG)
 
   // Battle beat state machine:
-  // encounter → intro → command ↔ (moveSelect | partySelect) → acting →
+  // encounter → intro → command ↔ (moveSelect | partySelect | restartConfirm) → acting →
   // (command | partySelect on forced switch | finished)
+  // restartConfirm → restarting (once YES is confirmed; blocks re-entry and
+  // double-fires while the forced restart request is in flight) → encounter
+  // (via startEncounter, once the fresh session loads) → intro → command
   const [uiPhase, setUiPhase] = useState('encounter');
   const [currentTurn, setCurrentTurn] = useState('none'); // 'player' | 'enemy' | 'none'
 
@@ -150,11 +154,12 @@ const BattleSim = ({
   };
 
   // Create/resume the server session; snapshots become the UI truth
-  const startBattle = async () => {
+  const startBattle = async (force = false) => {
     try {
       const { data } = await api.post('/api/battle/start', {
         level: levelNumber,
         battleNumber,
+        ...(force ? { force: true } : {}),
       });
       if (!data?.success || !data.state) {
         throw new Error(data?.error || 'Failed to start battle');
@@ -286,8 +291,17 @@ const BattleSim = ({
       } else {
         addLog('You have no other Pokémon!');
       }
-    } else if (action === 'RUN') {
-      addLog("Can't run from a trainer battle!");
+    } else if (action === 'RESTART') {
+      setUiPhase('restartConfirm');
+    }
+  };
+
+  const confirmRestart = (confirmed) => {
+    playSound('select');
+    if (confirmed) {
+      restartBattle();
+    } else {
+      setUiPhase('command');
     }
   };
 
@@ -735,8 +749,15 @@ const BattleSim = ({
     }
   };
 
-  // Restart after a loss: a fresh server session replaces the finished one
+  // Restart after a loss (or a confirmed mid-battle RESTART): a fresh server
+  // session replaces the current one. Moves uiPhase to 'restarting'
+  // synchronously so the restart-confirm YES/NO buttons (and re-entry into
+  // the confirm flow, and a fast double-click on this same trigger) are
+  // impossible while the forced restart request is in flight; startEncounter
+  // (called from startBattle's success path) drives uiPhase back to
+  // 'encounter' → 'intro' → 'command' once the new session actually loads.
   const restartBattle = () => {
+    setUiPhase('restarting');
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     setBattleLog([]);
@@ -755,7 +776,7 @@ const BattleSim = ({
     setProgressSave('idle');
     setProgressError('');
 
-    startBattle();
+    startBattle(true);
     timersRef.current.push(
       setTimeout(() => addLog('Battle restarted!'), reduceMotion ? 0 : 3300)
     );
@@ -844,6 +865,20 @@ const BattleSim = ({
                         aria-hidden="true"
                       />
                     )}
+                    {session?.trainerSprite && (
+                      <motion.div
+                        className="gba-trainer-avatar-wrap"
+                        initial={{ x: 80, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        transition={{ delay: motionMs(150) / 1000, duration: motionMs(350) / 1000 }}
+                      >
+                        <TrainerAvatar
+                          trainerSprite={session.trainerSprite}
+                          alt={trainerName}
+                          className="gba-trainer-avatar pixelated"
+                        />
+                      </motion.div>
+                    )}
                     <motion.h2
                       initial={{ opacity: 0, y: 50 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -925,7 +960,7 @@ const BattleSim = ({
                   }
                   transition={{ duration: motionMs(500) / 1000 || 0.01, ease: 'easeIn' }}
                 >
-                  <PokemonSprite
+                  <BattlePokemonSprite
                     as={motion.img}
                     // Remount on species change so an enemy send-out (Phase
                     // 10) replays the slide-in, like the battle intro.
@@ -962,7 +997,7 @@ const BattleSim = ({
                   }}
                   transition={{ duration: motionMs(500) / 1000 || 0.01, ease: 'easeIn' }}
                 >
-                  <PokemonSprite
+                  <BattlePokemonSprite
                     as={motion.img}
                     pokemonId={userPokemon.pokemon_id}
                     variant="back"
@@ -1030,7 +1065,7 @@ const BattleSim = ({
             {/* Bottom UI: dialog + menu, driven by uiPhase */}
             <div className="gba-bottom-ui">
               {uiPhase === 'finished' && battleOutcome ? (
-                <div className="gba-dialog-box">
+                <div className="gba-dialog-box gba-dialog-box--message">
                   <div className="gba-dialog-text">
                     {battleOutcome.outcome === 'win'
                       ? `You won! ${battleOutcome.winner} wins the battle!`
@@ -1188,7 +1223,7 @@ const BattleSim = ({
                 </div>
               ) : (
                 <>
-                  <div className="gba-dialog-box">
+                  <div className={`gba-dialog-box ${uiPhase !== 'moveSelect' ? 'gba-dialog-box--message' : ''}`}>
                     {uiPhase === 'moveSelect' ? (
                       session?.mustStruggle ? (
                         // Every move is out of PP: FireRed offers Struggle.
@@ -1232,7 +1267,11 @@ const BattleSim = ({
                       )
                     ) : (
                       <div className="gba-dialog-text">
-                        {currentTurn === 'player' && selectedMove
+                        {uiPhase === 'restartConfirm'
+                          ? 'Restart this battle?'
+                          : uiPhase === 'restarting'
+                          ? 'Restarting battle...'
+                          : currentTurn === 'player' && selectedMove
                           ? `${userPokemon.nickname} used ${selectedMove.name}!`
                           : currentTurn === 'enemy'
                           ? `${trainerPokemon.nickname} is attacking...`
@@ -1283,9 +1322,12 @@ const BattleSim = ({
                         <button onClick={() => handleMainMenuSelection('FIGHT')}>FIGHT</button>
                         <button onClick={() => handleMainMenuSelection('BAG')}>BAG</button>
                         <button onClick={() => handleMainMenuSelection('POKEMON')}>POKéMON</button>
-                        {isEscapeAllowed && (
-                          <button onClick={() => handleMainMenuSelection('RUN')}>RUN</button>
-                        )}
+                        <button onClick={() => handleMainMenuSelection('RESTART')}>RESTART</button>
+                      </div>
+                    ) : uiPhase === 'restartConfirm' ? (
+                      <div className="gba-main-menu">
+                        <button onClick={() => confirmRestart(true)}>YES</button>
+                        <button onClick={() => confirmRestart(false)}>NO</button>
                       </div>
                     ) : null}
                   </div>

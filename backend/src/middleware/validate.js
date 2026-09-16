@@ -103,6 +103,7 @@ const completeBattleSchema = z.object({
 const battleStartSchema = z.object({
 	level: z.number().int().positive(),
 	battleNumber: z.number().int().positive(),
+	force: z.boolean().optional(),
 });
 
 const rewardClaimSchema = z.object({

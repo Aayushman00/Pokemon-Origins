@@ -184,6 +184,7 @@ function toPublicState(session) {
 		status: session.status,
 		battleType: session.battleType,
 		trainerName: session.trainerName,
+		trainerSprite: session.trainerSprite || null,
 		player: clonePokemon(session.player),
 		enemy: clonePokemon(session.enemy),
 		party: session.party.map(clonePokemon),
@@ -231,6 +232,7 @@ function defaultGetEnemyBattle() {
 		}
 		return {
 			trainerName: battle.trainer.name,
+			trainerSprite: battle.trainer.sprite || null,
 			party: battle.trainer.party,
 			battleType: battle.type || "trainer",
 		};
@@ -315,7 +317,7 @@ function createBattleSessionService(deps = {}) {
 		return session;
 	}
 
-	async function startBattle(trainerId, { level, battleNumber }) {
+	async function startBattle(trainerId, { level, battleNumber, force }) {
 		const progressService = getProgressService();
 		const progress = await progressService.getProgress(trainerId);
 		if (
@@ -328,11 +330,14 @@ function createBattleSessionService(deps = {}) {
 			);
 		}
 
-		// Resume a live session for this exact battle instead of resetting it.
+		// Resume a live session for this exact battle instead of resetting it,
+		// unless the caller explicitly asked for a forced restart (mid-battle
+		// RESTART command) — force always falls through to a fresh session.
 		const existingId = sessionByTrainer.get(Number(trainerId));
 		if (existingId) {
 			const existing = sessions.get(existingId);
 			if (
+				!force &&
 				existing &&
 				existing.status === "active" &&
 				existing.level === level &&
@@ -393,6 +398,7 @@ function createBattleSessionService(deps = {}) {
 			battleNumber,
 			battleType: enemyBattle.battleType || "trainer",
 			trainerName: enemyBattle.trainerName,
+			trainerSprite: enemyBattle.trainerSprite || null,
 			party,
 			// `player` always references the active party entry, so beat
 			// resolution mutates the party snapshot in place.
