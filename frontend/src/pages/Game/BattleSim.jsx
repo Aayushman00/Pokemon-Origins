@@ -99,8 +99,11 @@ const BattleSim = ({
   const [bagItems, setBagItems] = useState([]); // battle-usable inventory (server-fetched on BAG)
 
   // Battle beat state machine:
-  // encounter → intro → command ↔ (moveSelect | partySelect) → acting →
+  // encounter → intro → command ↔ (moveSelect | partySelect | restartConfirm) → acting →
   // (command | partySelect on forced switch | finished)
+  // restartConfirm → restarting (once YES is confirmed; blocks re-entry and
+  // double-fires while the forced restart request is in flight) → encounter
+  // (via startEncounter, once the fresh session loads) → intro → command
   const [uiPhase, setUiPhase] = useState('encounter');
   const [currentTurn, setCurrentTurn] = useState('none'); // 'player' | 'enemy' | 'none'
 
@@ -744,8 +747,15 @@ const BattleSim = ({
     }
   };
 
-  // Restart after a loss: a fresh server session replaces the finished one
+  // Restart after a loss (or a confirmed mid-battle RESTART): a fresh server
+  // session replaces the current one. Moves uiPhase to 'restarting'
+  // synchronously so the restart-confirm YES/NO buttons (and re-entry into
+  // the confirm flow, and a fast double-click on this same trigger) are
+  // impossible while the forced restart request is in flight; startEncounter
+  // (called from startBattle's success path) drives uiPhase back to
+  // 'encounter' → 'intro' → 'command' once the new session actually loads.
   const restartBattle = () => {
+    setUiPhase('restarting');
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
     setBattleLog([]);
@@ -1243,6 +1253,8 @@ const BattleSim = ({
                       <div className="gba-dialog-text">
                         {uiPhase === 'restartConfirm'
                           ? 'Restart this battle?'
+                          : uiPhase === 'restarting'
+                          ? 'Restarting battle...'
                           : currentTurn === 'player' && selectedMove
                           ? `${userPokemon.nickname} used ${selectedMove.name}!`
                           : currentTurn === 'enemy'
