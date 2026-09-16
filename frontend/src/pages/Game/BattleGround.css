@@ -411,6 +411,28 @@
   100% { transform: translateY(4px); }
 }
 
+/* FireRed reference: the message box is navy with white text; only the
+   move-select grid (rendered in the same box) keeps the cream background. */
+.gba-dialog-box--message {
+  background: #1f3b57;
+  border-right-color: #e8e8c8;
+  box-shadow: inset 4px 0 0 rgba(255,255,255,0.08);
+}
+
+.gba-dialog-box--message::after {
+  border-right-color: #ef4444;
+  border-bottom-color: #ef4444;
+}
+
+.gba-dialog-box--message .gba-dialog-text {
+  color: #fff;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
+}
+
+.gba-dialog-box--message .gba-xp-summary p {
+  color: #cbd5c9;
+}
+
 .gba-dialog-text {
   font-size: 14px;
   color: #333;

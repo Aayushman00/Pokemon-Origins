@@ -1039,7 +1039,7 @@ const BattleSim = ({
             {/* Bottom UI: dialog + menu, driven by uiPhase */}
             <div className="gba-bottom-ui">
               {uiPhase === 'finished' && battleOutcome ? (
-                <div className="gba-dialog-box">
+                <div className="gba-dialog-box gba-dialog-box--message">
                   <div className="gba-dialog-text">
                     {battleOutcome.outcome === 'win'
                       ? `You won! ${battleOutcome.winner} wins the battle!`
@@ -1197,7 +1197,7 @@ const BattleSim = ({
                 </div>
               ) : (
                 <>
-                  <div className="gba-dialog-box">
+                  <div className={`gba-dialog-box ${uiPhase !== 'moveSelect' ? 'gba-dialog-box--message' : ''}`}>
                     {uiPhase === 'moveSelect' ? (
                       session?.mustStruggle ? (
                         // Every move is out of PP: FireRed offers Struggle.
