@@ -79,7 +79,6 @@ const BattleSim = ({
   battleNumber,
   onBattleWon,
   onContinue,
-  isEscapeAllowed = false,
 }) => {
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
@@ -150,11 +149,12 @@ const BattleSim = ({
   };
 
   // Create/resume the server session; snapshots become the UI truth
-  const startBattle = async () => {
+  const startBattle = async (force = false) => {
     try {
       const { data } = await api.post('/api/battle/start', {
         level: levelNumber,
         battleNumber,
+        ...(force ? { force: true } : {}),
       });
       if (!data?.success || !data.state) {
         throw new Error(data?.error || 'Failed to start battle');
@@ -286,8 +286,17 @@ const BattleSim = ({
       } else {
         addLog('You have no other Pokémon!');
       }
-    } else if (action === 'RUN') {
-      addLog("Can't run from a trainer battle!");
+    } else if (action === 'RESTART') {
+      setUiPhase('restartConfirm');
+    }
+  };
+
+  const confirmRestart = (confirmed) => {
+    playSound('select');
+    if (confirmed) {
+      restartBattle();
+    } else {
+      setUiPhase('command');
     }
   };
 
@@ -755,7 +764,7 @@ const BattleSim = ({
     setProgressSave('idle');
     setProgressError('');
 
-    startBattle();
+    startBattle(true);
     timersRef.current.push(
       setTimeout(() => addLog('Battle restarted!'), reduceMotion ? 0 : 3300)
     );
@@ -1232,7 +1241,9 @@ const BattleSim = ({
                       )
                     ) : (
                       <div className="gba-dialog-text">
-                        {currentTurn === 'player' && selectedMove
+                        {uiPhase === 'restartConfirm'
+                          ? 'Restart this battle?'
+                          : currentTurn === 'player' && selectedMove
                           ? `${userPokemon.nickname} used ${selectedMove.name}!`
                           : currentTurn === 'enemy'
                           ? `${trainerPokemon.nickname} is attacking...`
@@ -1283,9 +1294,12 @@ const BattleSim = ({
                         <button onClick={() => handleMainMenuSelection('FIGHT')}>FIGHT</button>
                         <button onClick={() => handleMainMenuSelection('BAG')}>BAG</button>
                         <button onClick={() => handleMainMenuSelection('POKEMON')}>POKéMON</button>
-                        {isEscapeAllowed && (
-                          <button onClick={() => handleMainMenuSelection('RUN')}>RUN</button>
-                        )}
+                        <button onClick={() => handleMainMenuSelection('RESTART')}>RESTART</button>
+                      </div>
+                    ) : uiPhase === 'restartConfirm' ? (
+                      <div className="gba-main-menu">
+                        <button onClick={() => confirmRestart(true)}>YES</button>
+                        <button onClick={() => confirmRestart(false)}>NO</button>
                       </div>
                     ) : null}
                   </div>
