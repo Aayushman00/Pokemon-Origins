@@ -14,28 +14,25 @@ function clamp(value, min, max) {
 }
 
 function resolveMove(current, target, elapsedMs) {
-	// Distance/speed-cap math uses the raw (unclamped) target so that a
-	// speed-limited step moves the full max distance toward it. Room-bounds
-	// clamping is applied only once the target is actually reached within
-	// this tick's speed budget; a step that's still speed-capped is, by
-	// definition, moving toward an in-bounds `current` and hasn't arrived
-	// at the (possibly out-of-bounds) target yet.
 	const dx = target.x - current.x;
 	const dy = target.y - current.y;
 	const dist = Math.hypot(dx, dy);
 	const maxDist = MAX_SPEED_PX_PER_SEC * (elapsedMs / 1000);
 
+	let next;
 	if (dist <= maxDist) {
-		return {
-			x: clamp(target.x, 0, ROOM_WIDTH),
-			y: clamp(target.y, 0, ROOM_HEIGHT),
-		};
+		next = { x: target.x, y: target.y };
+	} else {
+		const ratio = maxDist / dist;
+		next = { x: current.x + dx * ratio, y: current.y + dy * ratio };
 	}
 
-	const ratio = maxDist / dist;
+	// Bounds always win, regardless of whether this step arrived at the
+	// target or was still speed-capped: a large elapsedMs (e.g. after a
+	// reconnect or lag spike) must never resolve outside the room.
 	return {
-		x: current.x + dx * ratio,
-		y: current.y + dy * ratio,
+		x: clamp(next.x, 0, ROOM_WIDTH),
+		y: clamp(next.y, 0, ROOM_HEIGHT),
 	};
 }
 

@@ -38,25 +38,20 @@ describe("resolveMove", () => {
 	});
 
 	it("caps displacement exceeding the max speed along the direction of travel", () => {
-		// 1 second elapsed, requesting a jump twice the max allowed distance
-		// in the +x direction. The result should move exactly MAX_SPEED_PX_PER_SEC
-		// in that direction, not teleport to the target.
 		const current = { x: 0, y: 0 };
-		const target = { x: MAX_SPEED_PX_PER_SEC * 2, y: 0 };
-		const result = resolveMove(current, target, 1000);
-		assert.equal(Math.round(result.x), MAX_SPEED_PX_PER_SEC);
+		const target = { x: 700, y: 0 }; // within room bounds, farther than this tick's speed budget
+		const result = resolveMove(current, target, 200); // maxDist = 2000 * 0.2 = 400
+		assert.equal(Math.round(result.x), 400);
 		assert.equal(result.y, 0);
 	});
 
 	it("caps diagonal displacement proportionally along both axes", () => {
 		const current = { x: 0, y: 0 };
-		// A 3-4-5 triangle scaled up so the total distance is 2x the max allowed.
-		const target = { x: MAX_SPEED_PX_PER_SEC * 1.2, y: MAX_SPEED_PX_PER_SEC * 1.6 };
-		const result = resolveMove(current, target, 1000);
+		const target = { x: 300, y: 400 }; // within bounds; 3-4-5 triangle, dist = 500
+		const result = resolveMove(current, target, 100); // maxDist = 2000 * 0.1 = 200
 		const distTravelled = Math.hypot(result.x - current.x, result.y - current.y);
-		assert.ok(Math.abs(distTravelled - MAX_SPEED_PX_PER_SEC) < 0.01);
-		// Direction preserved: y/x ratio should match the target's 1.6/1.2 ratio.
-		assert.ok(Math.abs(result.y / result.x - 1.6 / 1.2) < 0.01);
+		assert.ok(Math.abs(distTravelled - 200) < 0.01);
+		assert.ok(Math.abs(result.y / result.x - 400 / 300) < 0.01);
 	});
 
 	it("does not move (and does not produce NaN) when elapsedMs is 0 and a move was requested", () => {
