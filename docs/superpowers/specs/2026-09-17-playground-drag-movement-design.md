@@ -31,6 +31,8 @@ This spec covers **Phase 1 only**, scoped down to a single vertical slice per th
 
 The architecture must not preclude adding the above later, but nothing beyond this slice gets built now.
 
+**Terminology:** dragging is the UI interaction — a pointer gesture on the client. The `move` socket event (§4) is not a separate movement mechanic; it is only the network representation of that drag, sent repeatedly while the gesture is in progress so the server can track where the drag currently points. Nothing below should be read as implying two systems — there is one interaction (drag), carried over the wire as `move` events.
+
 ## 2. Prior Art Being Replaced
 
 `backend/server.js` currently contains an inline, **unauthenticated** Socket.IO prototype (lines ~10, 114–209): an in-memory `users` object keyed by `socket.id`, a client-supplied `username` used as identity, unclamped/untrusted `move` position updates, and an unused proximity-chat handler. No frontend route currently connects to it (confirmed via `HLD.md`: "no frontend surface uses it, ChatGround deleted"). This spec replaces that block; the proximity-chat handler and any chat-related code are deleted, not carried forward (chat is Phase 2's job, from scratch, once presence exists).
@@ -77,7 +79,7 @@ No new database tables. No new REST endpoints. Everything for this phase is a So
 - Spawn position on join: room center, e.g. `{ x: ROOM_WIDTH / 2, y: ROOM_HEIGHT / 2 }`.
 
 **`movement.js`**
-- Pure function, no I/O — the part that needs the most unit-test coverage:
+- Server-side resolution of one incoming `move` event — i.e. one wire update from an in-progress drag, not a movement system of its own. Pure function, no I/O — the part that needs the most unit-test coverage:
   ```js
   function resolveMove(current, target, elapsedMs) { ... }
   // current: {x, y}, target: {x, y} (client-requested), elapsedMs: number
