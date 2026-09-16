@@ -1,0 +1,31 @@
+{
+  "level": 10,
+  "name": "Legendary Gauntlet",
+  "battles": [
+    {
+      "battleNumber": 1,
+      "type": "legendary",
+      "encounterId": "articuno"
+    },
+    {
+      "battleNumber": 2,
+      "type": "legendary",
+      "encounterId": "zapdos"
+    },
+    {
+      "battleNumber": 3,
+      "type": "legendary",
+      "encounterId": "moltres"
+    },
+    {
+      "battleNumber": 4,
+      "type": "legendary",
+      "encounterId": "mew"
+    },
+    {
+      "battleNumber": 5,
+      "type": "legendary",
+      "encounterId": "mewtwo"
+    }
+  ]
+}

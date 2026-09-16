@@ -1,0 +1,13 @@
+{
+  "level": 9,
+  "source": "champion",
+  "optionCount": 3,
+  "pool": [
+    { "pokemonId": 131, "level": 58 },
+    { "pokemonId": 143, "level": 58 },
+    { "pokemonId": 142, "level": 58 },
+    { "pokemonId": 130, "level": 59 },
+    { "pokemonId": 65, "level": 59 },
+    { "pokemonId": 68, "level": 59 }
+  ]
+}

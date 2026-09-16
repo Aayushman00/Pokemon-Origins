@@ -1,0 +1,252 @@
+{
+  "_readme": {
+    "keys": "Exact pokedex.Move names. Unlisted moves default to plain damage.",
+    "effect_type": "damage (default) | multi_hit | status | heal | ohko",
+    "status_effect": "brn | par | psn | slp | frz (major statuses only; flinch/confusion are out of scope)",
+    "effect_chance": "0..1 roll for status_effect (default 1.0)",
+    "stat_changes": "[{stat: atk|def|spa|spd|spe|acc|eva, delta, target: self|enemy}]; stat_change_chance gates the whole list",
+    "recoil": "fraction of damage dealt taken by the attacker",
+    "drain": "fraction of damage dealt healed by the attacker",
+    "hit_range": "[min,max] hits for multi_hit (2-5 uses Gen 3 weights)",
+    "always_hit": "skip the accuracy roll (Swift etc.)",
+    "typeless": "no STAB, no type chart (Struggle)",
+    "heal_fraction": "self-heal as a fraction of max HP"
+  },
+
+  "Struggle": { "typeless": true, "always_hit": true, "recoil": 0.25 },
+
+  "Fire-punch": { "status_effect": "brn", "effect_chance": 0.1 },
+  "Ember": { "status_effect": "brn", "effect_chance": 0.1 },
+  "Flamethrower": { "status_effect": "brn", "effect_chance": 0.1 },
+  "Fire-blast": { "status_effect": "brn", "effect_chance": 0.1 },
+  "Flame-wheel": { "status_effect": "brn", "effect_chance": 0.1 },
+
+  "Ice-punch": { "status_effect": "frz", "effect_chance": 0.1 },
+  "Ice-beam": { "status_effect": "frz", "effect_chance": 0.1 },
+  "Blizzard": { "status_effect": "frz", "effect_chance": 0.1 },
+  "Powder-snow": { "status_effect": "frz", "effect_chance": 0.1 },
+
+  "Thunder-punch": { "status_effect": "par", "effect_chance": 0.1 },
+  "Thunder-shock": { "status_effect": "par", "effect_chance": 0.1 },
+  "Thunderbolt": { "status_effect": "par", "effect_chance": 0.1 },
+  "Thunder": { "status_effect": "par", "effect_chance": 0.3 },
+  "Zap-cannon": { "status_effect": "par", "effect_chance": 1.0 },
+  "Body-slam": { "status_effect": "par", "effect_chance": 0.3 },
+  "Lick": { "status_effect": "par", "effect_chance": 0.3 },
+  "Dragon-breath": { "status_effect": "par", "effect_chance": 0.3 },
+
+  "Poison-sting": { "status_effect": "psn", "effect_chance": 0.3 },
+  "Sludge": { "status_effect": "psn", "effect_chance": 0.3 },
+  "Sludge-bomb": { "status_effect": "psn", "effect_chance": 0.3 },
+  "Smog": { "status_effect": "psn", "effect_chance": 0.4 },
+
+  "Acid": {
+    "stat_changes": [{ "stat": "def", "delta": -1, "target": "enemy" }],
+    "stat_change_chance": 0.1
+  },
+  "Aurora-beam": {
+    "stat_changes": [{ "stat": "atk", "delta": -1, "target": "enemy" }],
+    "stat_change_chance": 0.1
+  },
+  "Bubble": {
+    "stat_changes": [{ "stat": "spe", "delta": -1, "target": "enemy" }],
+    "stat_change_chance": 0.1
+  },
+  "Bubble-beam": {
+    "stat_changes": [{ "stat": "spe", "delta": -1, "target": "enemy" }],
+    "stat_change_chance": 0.1
+  },
+  "Constrict": {
+    "stat_changes": [{ "stat": "spe", "delta": -1, "target": "enemy" }],
+    "stat_change_chance": 0.1
+  },
+  "Icy-wind": {
+    "stat_changes": [{ "stat": "spe", "delta": -1, "target": "enemy" }]
+  },
+  "Mud-slap": {
+    "stat_changes": [{ "stat": "acc", "delta": -1, "target": "enemy" }]
+  },
+  "Psychic": {
+    "stat_changes": [{ "stat": "spd", "delta": -1, "target": "enemy" }],
+    "stat_change_chance": 0.1
+  },
+  "Crunch": {
+    "stat_changes": [{ "stat": "spd", "delta": -1, "target": "enemy" }],
+    "stat_change_chance": 0.2
+  },
+  "Shadow-ball": {
+    "stat_changes": [{ "stat": "spd", "delta": -1, "target": "enemy" }],
+    "stat_change_chance": 0.2
+  },
+  "Iron-tail": {
+    "stat_changes": [{ "stat": "def", "delta": -1, "target": "enemy" }],
+    "stat_change_chance": 0.3
+  },
+  "Metal-claw": {
+    "stat_changes": [{ "stat": "atk", "delta": 1, "target": "self" }],
+    "stat_change_chance": 0.1
+  },
+  "Ancient-power": {
+    "stat_changes": [
+      { "stat": "atk", "delta": 1, "target": "self" },
+      { "stat": "def", "delta": 1, "target": "self" },
+      { "stat": "spa", "delta": 1, "target": "self" },
+      { "stat": "spd", "delta": 1, "target": "self" },
+      { "stat": "spe", "delta": 1, "target": "self" }
+    ],
+    "stat_change_chance": 0.1
+  },
+
+  "Thunder-wave": { "effect_type": "status", "status_effect": "par" },
+  "Stun-spore": { "effect_type": "status", "status_effect": "par" },
+  "Glare": { "effect_type": "status", "status_effect": "par" },
+  "Sleep-powder": { "effect_type": "status", "status_effect": "slp" },
+  "Hypnosis": { "effect_type": "status", "status_effect": "slp" },
+  "Sing": { "effect_type": "status", "status_effect": "slp" },
+  "Lovely-kiss": { "effect_type": "status", "status_effect": "slp" },
+  "Spore": { "effect_type": "status", "status_effect": "slp" },
+  "Poison-powder": { "effect_type": "status", "status_effect": "psn" },
+  "Poison-gas": { "effect_type": "status", "status_effect": "psn" },
+  "Toxic": { "effect_type": "status", "status_effect": "psn" },
+  "Will-o-wisp": { "effect_type": "status", "status_effect": "brn" },
+
+  "Growl": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "atk", "delta": -1, "target": "enemy" }]
+  },
+  "Leer": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "def", "delta": -1, "target": "enemy" }]
+  },
+  "Tail-whip": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "def", "delta": -1, "target": "enemy" }]
+  },
+  "String-shot": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "spe", "delta": -1, "target": "enemy" }]
+  },
+  "Sand-attack": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "acc", "delta": -1, "target": "enemy" }]
+  },
+  "Smokescreen": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "acc", "delta": -1, "target": "enemy" }]
+  },
+  "Kinesis": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "acc", "delta": -1, "target": "enemy" }]
+  },
+  "Screech": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "def", "delta": -2, "target": "enemy" }]
+  },
+  "Scary-face": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "spe", "delta": -2, "target": "enemy" }]
+  },
+  "Growth": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "spa", "delta": 1, "target": "self" }]
+  },
+  "Swords-dance": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "atk", "delta": 2, "target": "self" }]
+  },
+  "Meditate": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "atk", "delta": 1, "target": "self" }]
+  },
+  "Sharpen": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "atk", "delta": 1, "target": "self" }]
+  },
+  "Harden": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "def", "delta": 1, "target": "self" }]
+  },
+  "Withdraw": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "def", "delta": 1, "target": "self" }]
+  },
+  "Defense-curl": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "def", "delta": 1, "target": "self" }]
+  },
+  "Barrier": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "def", "delta": 2, "target": "self" }]
+  },
+  "Acid-armor": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "def", "delta": 2, "target": "self" }]
+  },
+  "Agility": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "spe", "delta": 2, "target": "self" }]
+  },
+  "Double-team": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "eva", "delta": 1, "target": "self" }]
+  },
+  "Minimize": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "eva", "delta": 1, "target": "self" }]
+  },
+  "Amnesia": {
+    "effect_type": "status",
+    "stat_changes": [{ "stat": "spd", "delta": 2, "target": "self" }]
+  },
+  "Calm-mind": {
+    "effect_type": "status",
+    "stat_changes": [
+      { "stat": "spa", "delta": 1, "target": "self" },
+      { "stat": "spd", "delta": 1, "target": "self" }
+    ]
+  },
+  "Dragon-dance": {
+    "effect_type": "status",
+    "stat_changes": [
+      { "stat": "atk", "delta": 1, "target": "self" },
+      { "stat": "spe", "delta": 1, "target": "self" }
+    ]
+  },
+
+  "Take-down": { "recoil": 0.25 },
+  "Double-edge": { "recoil": 0.33 },
+  "Submission": { "recoil": 0.25 },
+
+  "Absorb": { "drain": 0.5 },
+  "Mega-drain": { "drain": 0.5 },
+  "Giga-drain": { "drain": 0.5 },
+  "Leech-life": { "drain": 0.5 },
+
+  "Double-slap": { "effect_type": "multi_hit", "hit_range": [2, 5] },
+  "Comet-punch": { "effect_type": "multi_hit", "hit_range": [2, 5] },
+  "Fury-attack": { "effect_type": "multi_hit", "hit_range": [2, 5] },
+  "Pin-missile": { "effect_type": "multi_hit", "hit_range": [2, 5] },
+  "Spike-cannon": { "effect_type": "multi_hit", "hit_range": [2, 5] },
+  "Barrage": { "effect_type": "multi_hit", "hit_range": [2, 5] },
+  "Fury-swipes": { "effect_type": "multi_hit", "hit_range": [2, 5] },
+  "Double-kick": { "effect_type": "multi_hit", "hit_range": [2, 2] },
+  "Bonemerang": { "effect_type": "multi_hit", "hit_range": [2, 2] },
+  "Twineedle": {
+    "effect_type": "multi_hit",
+    "hit_range": [2, 2],
+    "status_effect": "psn",
+    "effect_chance": 0.2
+  },
+
+  "Swift": { "always_hit": true },
+  "Feint-attack": { "always_hit": true },
+  "Aerial-ace": { "always_hit": true },
+  "Magical-leaf": { "always_hit": true },
+
+  "Guillotine": { "effect_type": "ohko" },
+  "Horn-drill": { "effect_type": "ohko" },
+  "Fissure": { "effect_type": "ohko" },
+
+  "Recover": { "effect_type": "heal", "heal_fraction": 0.5 },
+  "Soft-boiled": { "effect_type": "heal", "heal_fraction": 0.5 }
+}

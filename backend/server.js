@@ -1,7 +1,15 @@
 // server.js
+const { PORT, CORS_ORIGIN } = require("./src/config/env");
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+const http = require("http");
+const socketIo = require("socket.io");
+const pinoHttp = require("pino-http");
+const crypto = require("crypto");
 
 const registerRoutes = require("./src/register");
 const loginRoutes = require("./src/login");
@@ -10,17 +18,88 @@ const pokemonRoutes = require("./src/Pokedex");
 const pokemonDetailRoutes = require("./src/PokemonDetailRoutes");
 const gamestarter = require("./src/games");
 const trainerRouter = require("./src/trainer");
+const battleRoutes = require("./src/routes/battle");
+const campaignRoutes = require("./src/routes/campaign");
+const rewardRoutes = require("./src/routes/rewards");
+const inventoryRoutes = require("./src/routes/inventory");
+const martRoutes = require("./src/routes/mart");
+const evolutionRoutes = require("./src/routes/evolutions");
+const moveRoutes = require("./src/routes/moves");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(bodyParser.json());
+app.use(helmet());
+app.use(
+	cors({
+		origin: CORS_ORIGIN === "*" ? true : CORS_ORIGIN,
+		credentials: true,
+	})
+);
+app.use(bodyParser.json({ limit: "1mb" }));
+app.use(
+	pinoHttp({
+		genReqId: (req) =>
+			req.headers["x-request-id"] || crypto.randomUUID(),
+		customProps: (req) => ({ requestId: req.id }),
+		serializers: {
+			req: (req) => ({
+				id: req.id,
+				method: req.method,
+				url: req.url,
+			}),
+		},
+	})
+);
+
+app.use((req, res, next) => {
+	res.setHeader("X-Request-Id", req.id);
+	next();
+});
+
+const apiLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 100,
+	standardHeaders: true,
+	legacyHeaders: false,
+	message: {
+		success: false,
+		error: "Too many requests. Please try again later.",
+	},
+});
+
+const authLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000,
+	max: 20,
+	standardHeaders: true,
+	legacyHeaders: false,
+	message: {
+		success: false,
+		error: "Too many auth attempts. Please try again later.",
+	},
+});
+
+app.get("/health", (req, res) => {
+	res.json({ status: "ok" });
+});
+
+app.use("/api/login", authLimiter);
+app.use("/api/register", authLimiter);
+app.use("/api", apiLimiter);
+app.use("/pokemon", apiLimiter);
+app.use("/pokemon-detail", apiLimiter);
+app.use("/trainer", apiLimiter);
 
 app.use("/api", registerRoutes);
 app.use("/api", loginRoutes);
 app.use("/api", validateRoutes);
 app.use("/api", gamestarter);
+app.use("/api/battle", battleRoutes);
+app.use("/api/campaign", campaignRoutes);
+app.use("/api/rewards", rewardRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/mart", martRoutes);
+app.use("/api/evolutions", evolutionRoutes);
+app.use("/api/moves", moveRoutes);
 
 app.use("/pokemon", pokemonRoutes);
 app.use("/pokemon-detail", pokemonDetailRoutes);
@@ -30,37 +109,23 @@ app.get("/", (req, res) => {
 	res.send("Pokémon API is running.");
 });
 
-app.listen(PORT, () => {
-	console.log(`Server is running on http://localhost:${PORT}`);
-});
-
-// SERVER SETUP (server.js)
-
-const http = require("http");
-const socketIo = require("socket.io");
-const path = require("path");
-
+// Single HTTP server: REST + Socket.IO on PORT
 const server = http.createServer(app);
 const io = socketIo(server, {
 	cors: {
-		origin: "*", // or specify your frontend domain
+		origin: CORS_ORIGIN === "*" ? true : CORS_ORIGIN,
 		methods: ["GET", "POST"],
+		credentials: true,
 	},
 });
 
-// Store connected users
 const users = {};
-
-// Vicinity distance for chat (in virtual units)
 const CHAT_VICINITY_DISTANCE = 100;
 
-// Socket.IO connection handling
 io.on("connection", (socket) => {
 	console.log("New user connected:", socket.id);
 
-	// Handle user joining
 	socket.on("join", (userData) => {
-		// Add user to the users object with initial position
 		users[socket.id] = {
 			id: socket.id,
 			username: userData.username,
@@ -71,22 +136,17 @@ io.on("connection", (socket) => {
 			color: userData.color || getRandomColor(),
 		};
 
-		// Send the current user their ID and initial state
 		socket.emit("init", {
 			id: socket.id,
 			users: users,
 		});
 
-		// Broadcast new user to everyone else
 		socket.broadcast.emit("user_joined", users[socket.id]);
 	});
 
-	// Handle user movement
 	socket.on("move", (position) => {
 		if (users[socket.id]) {
 			users[socket.id].position = position;
-
-			// Broadcast user's new position to all other clients
 			socket.broadcast.emit("user_moved", {
 				id: socket.id,
 				position,
@@ -94,25 +154,19 @@ io.on("connection", (socket) => {
 		}
 	});
 
-	// Handle chat messages
 	socket.on("send_message", (message) => {
 		if (!users[socket.id]) return;
 
 		const sender = users[socket.id];
 
-		// Find users in vicinity
 		const usersInVicinity = Object.values(users).filter((user) => {
 			if (user.id === sender.id) return false;
-
-			// Calculate distance
 			const dx = user.position.x - sender.position.x;
 			const dy = user.position.y - sender.position.y;
 			const distance = Math.sqrt(dx * dx + dy * dy);
-
 			return distance <= CHAT_VICINITY_DISTANCE;
 		});
 
-		// Send message only to users in vicinity (and the sender)
 		const messageData = {
 			id: Date.now(),
 			sender: sender.id,
@@ -128,21 +182,16 @@ io.on("connection", (socket) => {
 		});
 	});
 
-	// Handle disconnection
 	socket.on("disconnect", () => {
 		console.log("User disconnected:", socket.id);
 
 		if (users[socket.id]) {
-			// Broadcast to all clients that this user has left
 			io.emit("user_left", socket.id);
-
-			// Remove user from the users object
 			delete users[socket.id];
 		}
 	});
 });
 
-// Helper function for random color
 function getRandomColor() {
 	const colors = [
 		"#FF6633",
@@ -159,6 +208,6 @@ function getRandomColor() {
 	return colors[Math.floor(Math.random() * colors.length)];
 }
 
-server.listen(1000, () => {
-	console.log(`Server with Socket.IO is running on http://localhost:${PORT}`);
+server.listen(PORT, () => {
+	console.log(`API + Socket.IO running on http://localhost:${PORT}`);
 });

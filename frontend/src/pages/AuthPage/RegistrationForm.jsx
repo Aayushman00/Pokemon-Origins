@@ -2,8 +2,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../App";
+import { api, getErrorMessage } from "../../api";
 
-const RegistrationForm = () => {
+const RegistrationForm = ({ formRef }) => {
 	const { setUser } = useUser();
 	const [name, setName] = useState("");
 	const [email, setEmail] = useState("");
@@ -19,12 +20,12 @@ const RegistrationForm = () => {
 		setLoading(true);
 
 		try {
-			const response = await fetch("http://localhost:5000/api/register", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ name, email, gender, password }),
+			const { data } = await api.post("/api/register", {
+				name,
+				email,
+				gender,
+				password,
 			});
-			const data = await response.json();
 			if (data.success) {
 				localStorage.setItem("trainer", JSON.stringify(data.user));
 				localStorage.setItem("token", data.token);
@@ -34,69 +35,89 @@ const RegistrationForm = () => {
 				setErrorMsg(data.error || "Registration failed.");
 			}
 		} catch (err) {
-			setErrorMsg("Error during registration: " + err.message);
+			setErrorMsg(getErrorMessage(err, "Error during registration"));
 		} finally {
 			setLoading(false);
 		}
 	};
 
 	return (
-		<form onSubmit={handleSubmit} className="space-y-4">
+		<form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
 			<div>
-				<label className="text-[#80e9a6]">Your Name:</label>
+				<label htmlFor="register-name" className="lcd-label">
+					Your Name
+				</label>
 				<input
+					id="register-name"
 					type="text"
 					placeholder="Enter your name"
 					value={name}
 					onChange={(e) => setName(e.target.value)}
 					required
-					className="bg-[#15803d] mt-1 p-2 border rounded w-full text-white placeholder:text-[#80e9a6] border-[#80e9a6]"
+					className="lcd-field"
 				/>
 			</div>
 			<div>
-				<label className="text-[#80e9a6]">Email:</label>
+				<label htmlFor="register-email" className="lcd-label">
+					Email
+				</label>
 				<input
+					id="register-email"
 					type="email"
-					placeholder="Enter your email"
+					placeholder="trainer@kanto.net"
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
 					required
-					className="bg-[#15803d] mt-1 p-2 border rounded w-full text-white placeholder:text-[#80e9a6] border-[#80e9a6]"
+					className="lcd-field"
 				/>
 			</div>
 			<div>
-				<label className="text-[#80e9a6]">Gender:</label>
+				<label htmlFor="register-gender" className="lcd-label">
+					Gender
+				</label>
 				<select
+					id="register-gender"
 					value={gender}
 					onChange={(e) => setGender(e.target.value)}
 					required
-					className="bg-[#15803d] mt-1 p-2 border rounded w-full text-white placeholder:text-[#80e9a6] border-[#80e9a6]"
+					className="lcd-field"
 				>
-					<option value="">Select Gender</option>
+					<option value="">Select gender</option>
 					<option value="Male">Male</option>
 					<option value="Female">Female</option>
 					<option value="Other">Other</option>
 				</select>
 			</div>
 			<div>
-				<label className="text-[#80e9a6]">Password:</label>
+				<label htmlFor="register-password" className="lcd-label">
+					Password
+				</label>
 				<input
+					id="register-password"
 					type="password"
 					placeholder="Enter a secure password"
 					value={password}
 					onChange={(e) => setPassword(e.target.value)}
 					required
-					className="bg-[#15803d] mt-1 p-2 border rounded w-full text-white placeholder:text-[#80e9a6] border-[#80e9a6]"
+					className="lcd-field"
 				/>
 			</div>
 			<button
 				type="submit"
 				disabled={loading}
-				className="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-all duration-300"
+				className="pixel-btn pixel-btn--primary w-full"
 			>
 				{loading ? "Registering..." : "Register"}
 			</button>
-			{errorMsg && <p className="text-red-500">{errorMsg}</p>}
+			{errorMsg && (
+				<p
+					className="font-pixel text-[0.6rem] leading-relaxed"
+					role="alert"
+					style={{ color: "var(--hp-red)" }}
+				>
+					{errorMsg}
+				</p>
+			)}
 		</form>
 	);
 };

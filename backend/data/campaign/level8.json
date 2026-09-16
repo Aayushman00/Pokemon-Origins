@@ -1,0 +1,31 @@
+{
+  "level": 8,
+  "name": "Viridian City",
+  "battles": [
+    {
+      "battleNumber": 1,
+      "type": "trainer",
+      "trainerId": "cooltrainer_vince"
+    },
+    {
+      "battleNumber": 2,
+      "type": "trainer",
+      "trainerId": "tamer_jude"
+    },
+    {
+      "battleNumber": 3,
+      "type": "trainer",
+      "trainerId": "rocket_grunt_odessa"
+    },
+    {
+      "battleNumber": 4,
+      "type": "trainer",
+      "trainerId": "cooltrainer_selena"
+    },
+    {
+      "battleNumber": 5,
+      "type": "gym_boss",
+      "trainerId": "giovanni"
+    }
+  ]
+}

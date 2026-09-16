@@ -1,0 +1,31 @@
+{
+  "level": 3,
+  "name": "Vermilion City",
+  "battles": [
+    {
+      "battleNumber": 1,
+      "type": "trainer",
+      "trainerId": "sailor_dwayne"
+    },
+    {
+      "battleNumber": 2,
+      "type": "trainer",
+      "trainerId": "engineer_baily"
+    },
+    {
+      "battleNumber": 3,
+      "type": "trainer",
+      "trainerId": "gentleman_tucker"
+    },
+    {
+      "battleNumber": 4,
+      "type": "trainer",
+      "trainerId": "rocker_luca"
+    },
+    {
+      "battleNumber": 5,
+      "type": "gym_boss",
+      "trainerId": "lt_surge"
+    }
+  ]
+}

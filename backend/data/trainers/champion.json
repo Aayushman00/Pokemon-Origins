@@ -1,0 +1,15 @@
+{
+  "blue": {
+    "id": "blue",
+    "name": "Blue",
+    "title": "Champion",
+    "specialization": "Varied",
+    "region": "Kanto",
+    "sprite": "blue",
+    "party": [
+      { "pokemonId": 18, "level": 57 },
+      { "pokemonId": 65, "level": 56 },
+      { "pokemonId": 6, "level": 60 }
+    ]
+  }
+}

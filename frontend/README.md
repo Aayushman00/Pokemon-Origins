@@ -1,114 +1,55 @@
-**Merged Pull Requests and Deployed Main branch can be previewed here**
+# Frontend — Pokemon Origins
 
+React + Vite SPA. Setup, env, and architecture live in the **repo root**:
 
-# Project Setup Guide
+- [`README.md`](../README.md) — `npm run setup` / `npm run dev`
+- [`HLD.md`](../HLD.md) — routes, BFF, landing page
+- [`docs/design/STYLE_GUIDE.md`](../docs/design/STYLE_GUIDE.md)
+- [`docs/design/ANIMATION_GUIDE.md`](../docs/design/ANIMATION_GUIDE.md)
 
-This project uses **React** with **Vite** and **Tailwind CSS** for styling. Follow these instructions to contribute effectively, maintain modularity, and adhere to best practices.
+## Local
 
-## Workflow Guidelines
+From the repository root (preferred):
 
-1. **Create a new branch:**
-   - Whenever you start working on a new feature or section, **create a new branch** from the `main` branch. Use appropriate naming conventions for your branch.
-     ```bash
-     git checkout -b feature/your-feature-name
-     ```
+```bash
+npm run setup
+npm run dev
+```
 
-2. **Work in the repo:**
-   - Make all your changes in the newly created branch. Never push directly to the `main` branch.
-   
-3. **Push changes:**
-   - After your work is done, **push your branch to the repository**:
-     ```bash
-     git push origin feature/your-feature-name
-     ```
-     
-4. **Create a pull request:**
-   - Once you’ve pushed your code, create a **pull request** (PR) on GitHub to merge it into the `main` branch. This will allow for code review and validation before merging.
+Frontend-only: `npm run dev:frontend` (or `npm run dev` inside `frontend/` after install). Default: http://localhost:5173
 
-## Project Structure
-
-To maintain clarity and ease of use, the project is organized as follows:
+## Layout (`src/`)
 
 ```
-.
+src/
+├── api.js                 # Axios client (Bearer interceptor)
+├── App.jsx                # Routes + session rehydrate
+├── config.js              # API_URL from env
+├── styles/tokens.css      # Design tokens
+├── utils/typeColors.js    # Shared type hex map
+├── sprites/               # Local sprite path resolver (+ tests)
 ├── components/
-│   ├── Button.jsx
-│   ├── Header.jsx
-│   └── Footer.jsx
-├── constants/
-│   ├── pageData.js
-│   └── themeConfig.js
-├── pages/
-│   ├── HomePage/
-│   │   ├── HeroSection.jsx
-│   │   └── components
-│   │        └── Features.jsx
-│   ├── AboutPage/
-│       ├── TeamSection.jsx
-│       └── components
-│            └── Features.jsx
-│   
-│     
-├── App.jsx
-├── index.jsx
-└── tailwind.config.js
+│   ├── Header/            # Site header (hidden on in-device screens)
+│   ├── PokemonSprite/
+│   └── Shell/             # Shell + LcdPanel
+└── pages/
+    ├── Landing/           # Public `/`
+    ├── AuthPage/
+    ├── Game/              # Hub, Level, BattleSim, Bag, Mart, RewardPicker
+    └── Pokedex/
 ```
 
-### Folder Explanation:
+## Routes
 
-- **components/**: in the src directory Contains **generic and reusable components** that can be used across different pages (e.g., Buttons, Header, Footer).
-  
-- **constants/**: All static data like texts, theme configurations, and other reusable data should be stored here and imported where needed. This ensures that any changes to static data can be done in a single place.
+| Path | Notes |
+|------|--------|
+| `/` | Landing (public) |
+| `/auth` | Login / register |
+| `/pokedex`, `/pokedex/:id` | Public dex |
+| `/game`, `/game/bag`, `/game/mart`, `/level/:levelNumber` | JWT required |
 
-- **pages/**: Each page has its own folder. Inside each page folder, you should further divide the UI into **sections** and **components** specific to that page.
+Battle calls go through the backend BFF (`/api/battle/*`), not the battle-engine origin.
 
-### Best Practices:
+## UI rules
 
-- **Component Modularity**: Break down pages into smaller, **reusable** components that handle specific responsibilities.
-  
-- **Tailwind CSS**: Use Tailwind CSS as much as possible for styling. The project’s `tailwind.config.js` file contains **custom theme colors** and other configurations. Always refer to the configured colors when styling.
-  
-- **Code Reusability**: Keep components generic if they’re likely to be reused on multiple pages. Place such components in the root `components/` folder.
-
-- **Code Organization**: Keep your code **well-organized** and **modular**. Each page should have its own directory with subcomponents for different sections of the page.
-
-- **Responsivness**: Make sure that the website looks and works for all screen sizes ie. mobile desktop tab .
-
-## Using Tailwind Theme Colors
-
-Refer to the `tailwind.config.js` file for custom theme colors configured for this project. To apply a custom color, use the color class like this:
-
-```html
-<div className="bg-primary-blue-500 ">
-  This is a custom-themed div.
-</div>
-```
-
-### Example Tailwind Colors Configuration (in `tailwind.config.js`):
-
-```js
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        primary: '#ff5733',
-        secondary: '#333399',
-        accent: '#50c878',
-      },
-    },
-  },
-}
-```
-
-## Steps to Start the Project
-
-1. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-2. **Start the development server**:
-   ```bash
-   npm run dev
-   ```
-
+Use tokens and Shell/LCD primitives. Do not introduce purple SaaS layouts, Inter/Roboto as display, or a second type-color map — import `typeColor` from `utils/typeColors.js`.

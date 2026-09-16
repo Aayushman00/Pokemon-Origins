@@ -1,0 +1,35 @@
+{
+  "name": "pokemon-origins",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pokemon Origins — full-stack Pokedex, trainer API, and battle engine",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "concurrently -k --kill-signal SIGTERM -n frontend,backend,battle -c cyan,green,magenta \"npm:dev:frontend\" \"npm:dev:backend\" \"npm:dev:battle\"",
+    "dev:frontend": "npm run dev -w frontend",
+    "dev:backend": "npm run dev -w backend",
+    "dev:battle": "node scripts/start-battle-engine.js",
+    "install:all": "npm install && node scripts/setup-battle-engine.js",
+    "setup": "npm run install:all",
+    "build": "npm run build -w frontend",
+    "start:backend": "npm run start -w backend",
+    "docker:up": "docker compose --profile full up --build",
+    "docker:down": "docker compose --profile full down",
+    "docker:db": "docker compose up mysql -d",
+    "sprites:bootstrap": "node scripts/bootstrap-dev-sprites.js",
+    "sprites:slice": "python scripts/slice-pokemon-sprites.py",
+    "validate:sprites": "node scripts/validate-sprites.js",
+    "validate:sprites:dev": "node scripts/validate-sprites.js --front-only",
+    "test:sprites": "npm run test:sprites -w frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2",
+    "dotenv": "^16.4.7"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

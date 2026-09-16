@@ -2,8 +2,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../App";
+import { api, getErrorMessage } from "../../api";
 
-const LoginForm = () => {
+const LoginForm = ({ formRef }) => {
 	const { setUser } = useUser();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -17,28 +18,11 @@ const LoginForm = () => {
 		setLoading(true);
 
 		try {
-			// First, login
-			const response = await fetch("http://localhost:5000/api/login", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ email, password }),
-			});
-			const data = await response.json();
+			const { data } = await api.post("/api/login", { email, password });
 			if (data.success) {
 				localStorage.setItem("token", data.token);
 
-				// Immediately call the validate endpoint to get full user data
-				const validateResponse = await fetch(
-					"http://localhost:5000/api/validate",
-					{
-						method: "GET",
-						headers: {
-							"Content-Type": "application/json",
-							Authorization: "Bearer " + data.token,
-						},
-					}
-				);
-				const validateData = await validateResponse.json();
+				const { data: validateData } = await api.get("/api/validate");
 				if (validateData.success) {
 					localStorage.setItem("trainer", JSON.stringify(validateData.user));
 					setUser(validateData.user);
@@ -50,46 +34,58 @@ const LoginForm = () => {
 				setErrorMsg(data.error || "Login failed.");
 			}
 		} catch (err) {
-			setErrorMsg("Error during login: " + err.message);
+			setErrorMsg(getErrorMessage(err, "Error during login"));
 		} finally {
 			setLoading(false);
 		}
 	};
 
 	return (
-		<form onSubmit={handleSubmit} className="space-y-4">
+		<form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
 			<div>
-				<label className="text-[#80e9a6] placeholder:text-[#80e9a6]">
-					Email:
+				<label htmlFor="login-email" className="lcd-label">
+					Email
 				</label>
 				<input
+					id="login-email"
 					type="email"
-					placeholder="Enter your email"
+					placeholder="trainer@kanto.net"
 					value={email}
 					onChange={(e) => setEmail(e.target.value)}
 					required
-					className="bg-[#15803d] mt-1 p-2 border rounded w-full text-white placeholder:text-[#80e9a6] border-[#80e9a6]"
+					className="lcd-field"
 				/>
 			</div>
 			<div>
-				<label className="text-[#80e9a6]">Password:</label>
+				<label htmlFor="login-password" className="lcd-label">
+					Password
+				</label>
 				<input
+					id="login-password"
 					type="password"
 					placeholder="Enter your password"
 					value={password}
 					onChange={(e) => setPassword(e.target.value)}
 					required
-					className="bg-[#15803d] mt-1 p-2 border rounded w-full"
+					className="lcd-field"
 				/>
 			</div>
 			<button
 				type="submit"
 				disabled={loading}
-				className="bg-[#15803d] mt-1 p-2 border rounded w-full text-white placeholder:text-[#80e9a6] border-[#80e9a6]"
+				className="pixel-btn pixel-btn--primary w-full"
 			>
 				{loading ? "Logging in..." : "Login"}
 			</button>
-			{errorMsg && <p className="text-red-500">{errorMsg}</p>}
+			{errorMsg && (
+				<p
+					className="font-pixel text-[0.6rem] leading-relaxed"
+					role="alert"
+					style={{ color: "var(--hp-red)" }}
+				>
+					{errorMsg}
+				</p>
+			)}
 		</form>
 	);
 };

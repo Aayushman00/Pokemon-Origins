@@ -5,6 +5,15 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# Claude
+.claude/
+
+# Codegraph
+.codegraph/
+
+# Cursor
+.cursor/
+
 # Build outputs
 dist/
 build/

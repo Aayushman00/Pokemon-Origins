@@ -1,0 +1,104 @@
+{
+  "brock": {
+    "id": "brock",
+    "name": "Brock",
+    "title": "Gym Leader",
+    "specialization": "Rock",
+    "region": "Kanto",
+    "sprite": "brock",
+    "party": [
+      { "pokemonId": 74, "level": 12 },
+      { "pokemonId": 95, "level": 14 }
+    ]
+  },
+  "misty": {
+    "id": "misty",
+    "name": "Misty",
+    "title": "Gym Leader",
+    "specialization": "Water",
+    "region": "Kanto",
+    "sprite": "misty",
+    "party": [
+      { "pokemonId": 120, "level": 16 },
+      { "pokemonId": 121, "level": 19 }
+    ]
+  },
+  "lt_surge": {
+    "id": "lt_surge",
+    "name": "Lt. Surge",
+    "title": "Gym Leader",
+    "specialization": "Electric",
+    "region": "Kanto",
+    "sprite": "lt_surge",
+    "party": [
+      { "pokemonId": 100, "level": 19 },
+      { "pokemonId": 25, "level": 17 },
+      { "pokemonId": 26, "level": 22 }
+    ]
+  },
+  "erika": {
+    "id": "erika",
+    "name": "Erika",
+    "title": "Gym Leader",
+    "specialization": "Grass",
+    "region": "Kanto",
+    "sprite": "erika",
+    "party": [
+      { "pokemonId": 71, "level": 26 },
+      { "pokemonId": 114, "level": 24 },
+      { "pokemonId": 45, "level": 27 }
+    ]
+  },
+  "koga": {
+    "id": "koga",
+    "name": "Koga",
+    "title": "Gym Leader",
+    "specialization": "Poison",
+    "region": "Kanto",
+    "sprite": "koga",
+    "party": [
+      { "pokemonId": 109, "level": 32 },
+      { "pokemonId": 89, "level": 33 },
+      { "pokemonId": 110, "level": 35 }
+    ]
+  },
+  "sabrina": {
+    "id": "sabrina",
+    "name": "Sabrina",
+    "title": "Gym Leader",
+    "specialization": "Psychic",
+    "region": "Kanto",
+    "sprite": "sabrina",
+    "party": [
+      { "pokemonId": 64, "level": 36 },
+      { "pokemonId": 122, "level": 37 },
+      { "pokemonId": 65, "level": 39 }
+    ]
+  },
+  "blaine": {
+    "id": "blaine",
+    "name": "Blaine",
+    "title": "Gym Leader",
+    "specialization": "Fire",
+    "region": "Kanto",
+    "sprite": "blaine",
+    "party": [
+      { "pokemonId": 58, "level": 40 },
+      { "pokemonId": 78, "level": 42 },
+      { "pokemonId": 59, "level": 45 }
+    ]
+  },
+  "giovanni": {
+    "id": "giovanni",
+    "name": "Giovanni",
+    "title": "Gym Leader",
+    "specialization": "Ground",
+    "region": "Kanto",
+    "sprite": "giovanni",
+    "party": [
+      { "pokemonId": 111, "level": 43 },
+      { "pokemonId": 51, "level": 45 },
+      { "pokemonId": 112, "level": 48 }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "level": 6,
+  "name": "Saffron City",
+  "battles": [
+    {
+      "battleNumber": 1,
+      "type": "trainer",
+      "trainerId": "channeler_hope"
+    },
+    {
+      "battleNumber": 2,
+      "type": "trainer",
+      "trainerId": "psychic_rodney"
+    },
+    {
+      "battleNumber": 3,
+      "type": "trainer",
+      "trainerId": "rocket_grunt_silas"
+    },
+    {
+      "battleNumber": 4,
+      "type": "trainer",
+      "trainerId": "blackbelt_kiyo"
+    },
+    {
+      "battleNumber": 5,
+      "type": "gym_boss",
+      "trainerId": "sabrina"
+    }
+  ]
+}

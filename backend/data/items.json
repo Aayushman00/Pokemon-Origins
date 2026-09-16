@@ -1,0 +1,71 @@
+{
+  "items": [
+    {
+      "itemId": 1,
+      "name": "Potion",
+      "category": "healing",
+      "healAmount": 20,
+      "usableInBattle": true,
+      "usableOverworld": true,
+      "description": "Restores 20 HP of one Pokémon."
+    },
+    {
+      "itemId": 2,
+      "name": "Super Potion",
+      "category": "healing",
+      "healAmount": 50,
+      "usableInBattle": true,
+      "usableOverworld": true,
+      "description": "Restores 50 HP of one Pokémon."
+    },
+    {
+      "itemId": 3,
+      "name": "Fire Stone",
+      "category": "evolution_stone",
+      "usableInBattle": false,
+      "usableOverworld": true,
+      "description": "A peculiar stone that radiates heat. Makes certain Pokémon evolve."
+    },
+    {
+      "itemId": 4,
+      "name": "Water Stone",
+      "category": "evolution_stone",
+      "usableInBattle": false,
+      "usableOverworld": true,
+      "description": "A peculiar stone with a watery blue hue. Makes certain Pokémon evolve."
+    },
+    {
+      "itemId": 5,
+      "name": "Thunder Stone",
+      "category": "evolution_stone",
+      "usableInBattle": false,
+      "usableOverworld": true,
+      "description": "A peculiar stone that sparks faintly. Makes certain Pokémon evolve."
+    },
+    {
+      "itemId": 6,
+      "name": "Leaf Stone",
+      "category": "evolution_stone",
+      "usableInBattle": false,
+      "usableOverworld": true,
+      "description": "A peculiar stone with a leaf pattern. Makes certain Pokémon evolve."
+    },
+    {
+      "itemId": 7,
+      "name": "Hyper Potion",
+      "category": "healing",
+      "healAmount": 200,
+      "usableInBattle": true,
+      "usableOverworld": true,
+      "description": "Restores 200 HP of one Pokémon."
+    },
+    {
+      "itemId": 8,
+      "name": "Elixir",
+      "category": "pp_restore",
+      "usableInBattle": false,
+      "usableOverworld": true,
+      "description": "Fully restores the PP of all moves of one Pokémon."
+    }
+  ]
+}

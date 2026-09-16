@@ -1,0 +1,375 @@
+{
+  "youngster_joey": {
+    "id": "youngster_joey",
+    "name": "Youngster Joey",
+    "title": "Youngster",
+    "specialization": "Normal",
+    "region": "Kanto",
+    "sprite": "youngster_joey",
+    "party": [{ "pokemonId": 19, "level": 4 }]
+  },
+  "lass_annie": {
+    "id": "lass_annie",
+    "name": "Lass Annie",
+    "title": "Lass",
+    "specialization": "Flying",
+    "region": "Kanto",
+    "sprite": "lass_annie",
+    "party": [{ "pokemonId": 16, "level": 5 }]
+  },
+  "bug_catcher_tim": {
+    "id": "bug_catcher_tim",
+    "name": "Bug Catcher Tim",
+    "title": "Bug Catcher",
+    "specialization": "Bug",
+    "region": "Kanto",
+    "sprite": "bug_catcher_tim",
+    "party": [{ "pokemonId": 10, "level": 5 }]
+  },
+  "hiker_jack": {
+    "id": "hiker_jack",
+    "name": "Hiker Jack",
+    "title": "Hiker",
+    "specialization": "Rock",
+    "region": "Kanto",
+    "sprite": "hiker_jack",
+    "party": [{ "pokemonId": 74, "level": 8 }]
+  },
+
+  "swimmer_luis": {
+    "id": "swimmer_luis",
+    "name": "Swimmer Luis",
+    "title": "Swimmer",
+    "specialization": "Water",
+    "region": "Kanto",
+    "sprite": "swimmer_luis",
+    "party": [{ "pokemonId": 118, "level": 13 }]
+  },
+  "picnicker_dana": {
+    "id": "picnicker_dana",
+    "name": "Picnicker Dana",
+    "title": "Picnicker",
+    "specialization": "Grass",
+    "region": "Kanto",
+    "sprite": "picnicker_dana",
+    "party": [
+      { "pokemonId": 43, "level": 13 },
+      { "pokemonId": 69, "level": 14 }
+    ]
+  },
+  "fisherman_ned": {
+    "id": "fisherman_ned",
+    "name": "Fisherman Ned",
+    "title": "Fisherman",
+    "specialization": "Water",
+    "region": "Kanto",
+    "sprite": "fisherman_ned",
+    "party": [
+      { "pokemonId": 60, "level": 14 },
+      { "pokemonId": 98, "level": 15 }
+    ]
+  },
+  "camper_rick": {
+    "id": "camper_rick",
+    "name": "Camper Rick",
+    "title": "Camper",
+    "specialization": "Normal",
+    "region": "Kanto",
+    "sprite": "camper_rick",
+    "party": [
+      { "pokemonId": 27, "level": 15 },
+      { "pokemonId": 20, "level": 16 }
+    ]
+  },
+
+  "sailor_dwayne": {
+    "id": "sailor_dwayne",
+    "name": "Sailor Dwayne",
+    "title": "Sailor",
+    "specialization": "Fighting",
+    "region": "Kanto",
+    "sprite": "sailor_dwayne",
+    "party": [
+      { "pokemonId": 66, "level": 18 },
+      { "pokemonId": 72, "level": 19 }
+    ]
+  },
+  "engineer_baily": {
+    "id": "engineer_baily",
+    "name": "Engineer Baily",
+    "title": "Engineer",
+    "specialization": "Electric",
+    "region": "Kanto",
+    "sprite": "engineer_baily",
+    "party": [
+      { "pokemonId": 81, "level": 19 },
+      { "pokemonId": 100, "level": 20 }
+    ]
+  },
+  "gentleman_tucker": {
+    "id": "gentleman_tucker",
+    "name": "Gentleman Tucker",
+    "title": "Gentleman",
+    "specialization": "Fire",
+    "region": "Kanto",
+    "sprite": "gentleman_tucker",
+    "party": [{ "pokemonId": 58, "level": 21 }]
+  },
+  "rocker_luca": {
+    "id": "rocker_luca",
+    "name": "Rocker Luca",
+    "title": "Rocker",
+    "specialization": "Electric",
+    "region": "Kanto",
+    "sprite": "rocker_luca",
+    "party": [
+      { "pokemonId": 25, "level": 20 },
+      { "pokemonId": 100, "level": 21 }
+    ]
+  },
+
+  "lass_kaylee": {
+    "id": "lass_kaylee",
+    "name": "Lass Kaylee",
+    "title": "Lass",
+    "specialization": "Normal",
+    "region": "Kanto",
+    "sprite": "lass_kaylee",
+    "party": [
+      { "pokemonId": 35, "level": 24 },
+      { "pokemonId": 52, "level": 24 }
+    ]
+  },
+  "beauty_grace": {
+    "id": "beauty_grace",
+    "name": "Beauty Grace",
+    "title": "Beauty",
+    "specialization": "Grass",
+    "region": "Kanto",
+    "sprite": "beauty_grace",
+    "party": [
+      { "pokemonId": 43, "level": 25 },
+      { "pokemonId": 44, "level": 26 }
+    ]
+  },
+  "rocket_grunt_marco": {
+    "id": "rocket_grunt_marco",
+    "name": "Rocket Grunt Marco",
+    "title": "Team Rocket Grunt",
+    "specialization": "Poison",
+    "region": "Kanto",
+    "sprite": "rocket_grunt_marco",
+    "party": [
+      { "pokemonId": 41, "level": 25 },
+      { "pokemonId": 23, "level": 26 }
+    ]
+  },
+  "juggler_dalton": {
+    "id": "juggler_dalton",
+    "name": "Juggler Dalton",
+    "title": "Juggler",
+    "specialization": "Psychic",
+    "region": "Kanto",
+    "sprite": "juggler_dalton",
+    "party": [
+      { "pokemonId": 96, "level": 26 },
+      { "pokemonId": 64, "level": 27 }
+    ]
+  },
+
+  "tamer_evan": {
+    "id": "tamer_evan",
+    "name": "Tamer Evan",
+    "title": "Tamer",
+    "specialization": "Normal",
+    "region": "Kanto",
+    "sprite": "tamer_evan",
+    "party": [
+      { "pokemonId": 28, "level": 29 },
+      { "pokemonId": 53, "level": 30 }
+    ]
+  },
+  "bird_keeper_roger": {
+    "id": "bird_keeper_roger",
+    "name": "Bird Keeper Roger",
+    "title": "Bird Keeper",
+    "specialization": "Flying",
+    "region": "Kanto",
+    "sprite": "bird_keeper_roger",
+    "party": [
+      { "pokemonId": 17, "level": 30 },
+      { "pokemonId": 22, "level": 31 }
+    ]
+  },
+  "biker_jaxon": {
+    "id": "biker_jaxon",
+    "name": "Biker Jaxon",
+    "title": "Biker",
+    "specialization": "Poison",
+    "region": "Kanto",
+    "sprite": "biker_jaxon",
+    "party": [
+      { "pokemonId": 88, "level": 30 },
+      { "pokemonId": 109, "level": 31 }
+    ]
+  },
+  "rocket_grunt_petra": {
+    "id": "rocket_grunt_petra",
+    "name": "Rocket Grunt Petra",
+    "title": "Team Rocket Grunt",
+    "specialization": "Poison",
+    "region": "Kanto",
+    "sprite": "rocket_grunt_petra",
+    "party": [
+      { "pokemonId": 24, "level": 31 },
+      { "pokemonId": 42, "level": 32 }
+    ]
+  },
+
+  "channeler_hope": {
+    "id": "channeler_hope",
+    "name": "Channeler Hope",
+    "title": "Channeler",
+    "specialization": "Ghost",
+    "region": "Kanto",
+    "sprite": "channeler_hope",
+    "party": [
+      { "pokemonId": 92, "level": 33 },
+      { "pokemonId": 93, "level": 34 }
+    ]
+  },
+  "psychic_rodney": {
+    "id": "psychic_rodney",
+    "name": "Psychic Rodney",
+    "title": "Psychic",
+    "specialization": "Psychic",
+    "region": "Kanto",
+    "sprite": "psychic_rodney",
+    "party": [
+      { "pokemonId": 79, "level": 34 },
+      { "pokemonId": 64, "level": 35 }
+    ]
+  },
+  "rocket_grunt_silas": {
+    "id": "rocket_grunt_silas",
+    "name": "Rocket Grunt Silas",
+    "title": "Team Rocket Grunt",
+    "specialization": "Fighting",
+    "region": "Kanto",
+    "sprite": "rocket_grunt_silas",
+    "party": [
+      { "pokemonId": 42, "level": 34 },
+      { "pokemonId": 67, "level": 35 }
+    ]
+  },
+  "blackbelt_kiyo": {
+    "id": "blackbelt_kiyo",
+    "name": "Blackbelt Kiyo",
+    "title": "Blackbelt",
+    "specialization": "Fighting",
+    "region": "Kanto",
+    "sprite": "blackbelt_kiyo",
+    "party": [
+      { "pokemonId": 67, "level": 35 },
+      { "pokemonId": 106, "level": 36 }
+    ]
+  },
+
+  "burglar_quinn": {
+    "id": "burglar_quinn",
+    "name": "Burglar Quinn",
+    "title": "Burglar",
+    "specialization": "Fire",
+    "region": "Kanto",
+    "sprite": "burglar_quinn",
+    "party": [
+      { "pokemonId": 37, "level": 38 },
+      { "pokemonId": 58, "level": 39 }
+    ]
+  },
+  "super_nerd_miguel": {
+    "id": "super_nerd_miguel",
+    "name": "Super Nerd Miguel",
+    "title": "Super Nerd",
+    "specialization": "Fire",
+    "region": "Kanto",
+    "sprite": "super_nerd_miguel",
+    "party": [
+      { "pokemonId": 88, "level": 39 },
+      { "pokemonId": 126, "level": 40 }
+    ]
+  },
+  "swimmer_nora": {
+    "id": "swimmer_nora",
+    "name": "Swimmer Nora",
+    "title": "Swimmer",
+    "specialization": "Water",
+    "region": "Kanto",
+    "sprite": "swimmer_nora",
+    "party": [
+      { "pokemonId": 117, "level": 39 },
+      { "pokemonId": 73, "level": 40 }
+    ]
+  },
+  "scientist_ivan": {
+    "id": "scientist_ivan",
+    "name": "Scientist Ivan",
+    "title": "Scientist",
+    "specialization": "Poison",
+    "region": "Kanto",
+    "sprite": "scientist_ivan",
+    "party": [
+      { "pokemonId": 77, "level": 40 },
+      { "pokemonId": 110, "level": 41 }
+    ]
+  },
+
+  "cooltrainer_vince": {
+    "id": "cooltrainer_vince",
+    "name": "Cooltrainer Vince",
+    "title": "Cooltrainer",
+    "specialization": "Ground",
+    "region": "Kanto",
+    "sprite": "cooltrainer_vince",
+    "party": [
+      { "pokemonId": 28, "level": 42 },
+      { "pokemonId": 57, "level": 43 }
+    ]
+  },
+  "tamer_jude": {
+    "id": "tamer_jude",
+    "name": "Tamer Jude",
+    "title": "Tamer",
+    "specialization": "Ground",
+    "region": "Kanto",
+    "sprite": "tamer_jude",
+    "party": [
+      { "pokemonId": 111, "level": 43 },
+      { "pokemonId": 24, "level": 43 }
+    ]
+  },
+  "rocket_grunt_odessa": {
+    "id": "rocket_grunt_odessa",
+    "name": "Rocket Grunt Odessa",
+    "title": "Team Rocket Grunt",
+    "specialization": "Poison",
+    "region": "Kanto",
+    "sprite": "rocket_grunt_odessa",
+    "party": [
+      { "pokemonId": 42, "level": 43 },
+      { "pokemonId": 89, "level": 44 }
+    ]
+  },
+  "cooltrainer_selena": {
+    "id": "cooltrainer_selena",
+    "name": "Cooltrainer Selena",
+    "title": "Cooltrainer",
+    "specialization": "Fire",
+    "region": "Kanto",
+    "sprite": "cooltrainer_selena",
+    "party": [
+      { "pokemonId": 38, "level": 44 },
+      { "pokemonId": 99, "level": 44 }
+    ]
+  }
+}

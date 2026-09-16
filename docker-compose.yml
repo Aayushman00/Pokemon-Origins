@@ -1,20 +1,88 @@
-version: "3.8"
-
 services:
   mysql:
-    image: mysql:latest
-    container_name: my-mysql-container
-    restart: always
+    image: mysql:8.0
+    container_name: pokemon-origins-mysql
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: pokedex
-      MYSQL_USER: myuser
-      MYSQL_PASSWORD: mypassword
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-pokedex}
+      MYSQL_USER: ${MYSQL_USER:-myuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-mypassword}
     ports:
-      - "3306:3306"
+      - "${DB_PORT:-3306}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./pokedex_data.sql:/docker-entrypoint-initdb.d/pokedex_data.sql
+      - ./database/pokedex_data.sql:/docker-entrypoint-initdb.d/01_pokedex_data.sql
+      - ./database/migrations/001_trainer_progress.sql:/docker-entrypoint-initdb.d/02_trainer_progress.sql
+      - ./database/migrations/002_reward_offers.sql:/docker-entrypoint-initdb.d/03_reward_offers.sql
+      - ./database/migrations/003_trainer_inventory.sql:/docker-entrypoint-initdb.d/04_trainer_inventory.sql
+      - ./database/migrations/004_trainer_wallet.sql:/docker-entrypoint-initdb.d/05_trainer_wallet.sql
+      - ./database/migrations/005_pending_move_learns.sql:/docker-entrypoint-initdb.d/06_pending_move_learns.sql
+      - ./database/migrations/006_backfill_move_pp.sql:/docker-entrypoint-initdb.d/07_backfill_move_pp.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pokemon-origins-backend
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-myuser}
+      DB_PASSWORD: ${DB_PASSWORD:-mypassword}
+      DB_NAME: ${DB_NAME:-pokedex}
+      TRAINER_DB_NAME: ${TRAINER_DB_NAME:-trainer}
+      PORT: ${PORT:-5000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      JWT_SECRET: ${JWT_SECRET:-change_me_in_local_env}
+      BATTLE_ENGINE_URL: ${BATTLE_ENGINE_URL:-http://battle-engine:8000}
+    ports:
+      - "${PORT:-5000}:5000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      battle-engine:
+        condition: service_started
+    profiles:
+      - full
+
+  battle-engine:
+    build:
+      context: ./battle-engine
+      dockerfile: Dockerfile
+    container_name: pokemon-origins-battle
+    restart: unless-stopped
+    environment:
+      BATTLE_HOST: 0.0.0.0
+      BATTLE_PORT: 8000
+      BATTLE_SERVICE_URL: http://battle-engine:8000
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5000}
+    ports:
+      - "${BATTLE_PORT:-8000}:8000"
+    profiles:
+      - full
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pokemon-origins-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:5000}
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+      - battle-engine
+    profiles:
+      - full
 
 volumes:
   mysql-data:

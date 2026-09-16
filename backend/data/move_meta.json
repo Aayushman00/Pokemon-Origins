@@ -1,0 +1,17 @@
+{
+  "_readme": "Per-move metadata keyed by exact pokedex.Move name. `priority` follows Gen 3 brackets (higher acts first; unlisted moves are 0). Protect/Counter and similar are listed for turn order only — their special mechanics are out of scope.",
+  "moves": {
+    "Quick-attack": { "priority": 1 },
+    "Mach-punch": { "priority": 1 },
+    "Fake-out": { "priority": 1 },
+    "Extreme-speed": { "priority": 2 },
+    "Endure": { "priority": 2 },
+    "Protect": { "priority": 3 },
+    "Detect": { "priority": 3 },
+    "Vital-throw": { "priority": -1 },
+    "Counter": { "priority": -5 },
+    "Mirror-coat": { "priority": -5 },
+    "Roar": { "priority": -6 },
+    "Whirlwind": { "priority": -6 }
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "level": 8,
+  "source": "gym_boss",
+  "optionCount": 3,
+  "pool": [
+    { "pokemonId": 111, "level": 47 },
+    { "pokemonId": 28, "level": 47 },
+    { "pokemonId": 33, "level": 47 },
+    { "pokemonId": 115, "level": 48 },
+    { "pokemonId": 128, "level": 48 },
+    { "pokemonId": 105, "level": 47 }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "level": 5,
+  "name": "Fuchsia City",
+  "battles": [
+    {
+      "battleNumber": 1,
+      "type": "trainer",
+      "trainerId": "tamer_evan"
+    },
+    {
+      "battleNumber": 2,
+      "type": "trainer",
+      "trainerId": "bird_keeper_roger"
+    },
+    {
+      "battleNumber": 3,
+      "type": "trainer",
+      "trainerId": "biker_jaxon"
+    },
+    {
+      "battleNumber": 4,
+      "type": "trainer",
+      "trainerId": "rocket_grunt_petra"
+    },
+    {
+      "battleNumber": 5,
+      "type": "gym_boss",
+      "trainerId": "koga"
+    }
+  ]
+}

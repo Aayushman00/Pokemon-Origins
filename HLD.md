@@ -1,228 +1,146 @@
-# High-Level Design (HLD) - Pokemon Origins
+# High-Level Design (HLD) — Pokemon Origins
 
 ## 1. System Overview
 
-Pokemon Origins is a distributed web application that combines a Pokemon encyclopedia (Pokedex) with a turn-based battle simulation system and trainer management features. The system follows a microservices-inspired architecture with three primary components that communicate via well-defined APIs.
+Pokemon Origins is a full-stack web app: a public Pokédex, trainer accounts, starter selection, and a Gen-I-style turn-based battle. The UI is one continuous GBA / FireRed–LeafGreen handheld experience. Three processes talk over HTTP; the browser never calls the battle engine directly.
+
+```
+Browser (:5173)
+  → backend REST + Socket.IO (:5000) → MySQL (pokedex + trainer)
+  → backend /api/battle/* (JWT)      → battle-engine (:8000)
+```
+
+The public front door is `/` (landing). Auth, hub, Pokédex, and Level 1 battle sit behind that.
 
 ## 2. Architectural Goals
 
-- **Separation of Concerns**: Distinct responsibilities for UI, business logic, and game mechanics
-- **Scalability**: Ability to scale components independently based on load
-- **Maintainability**: Clear boundaries between services with versioned APIs
-- **Performance**: Efficient data retrieval and battle computation
-- **Extensibility**: Easy addition of new Pokemon, moves, abilities, and game mechanics
+- **Separation of concerns**: React UI, Express BFF/business API, Python combat math
+- **Battle engine stays internal**: frontend uses the authenticated backend proxy only
+- **One visual language**: design tokens + Shell/LCD primitives across Landing → Auth → Hub → Pokédex → Battle
+- **Fail closed on secrets**: `JWT_SECRET` required at backend boot
+- **Incremental hardening**: helmet, rate limits, Zod on write paths, structured request logs
 
 ## 3. System Components
 
-### 3.1 Frontend Client (SPA)
-- **Technology**: React 18 with Vite, Tailwind CSS
-- **Responsibilities**:
-  - User interface rendering and interactions
-  - State management via React Context
-  - Client-side routing (React Router v6)
-  - Communication with backend APIs
-  - Local caching of frequently accessed data
-- **Key Features**:
-  - Responsive design for mobile/desktop
-  - Progressive enhancement with graceful degradation
-  - Lazy loading of route-based components
-  - Optimistic UI updates where appropriate
+### 3.1 Frontend client (SPA)
 
-### 3.2 Backend API Server
-- **Technology**: Node.js with Express.js
-- **Responsibilities**:
-  - RESTful API exposure for frontend consumption
-  - Authentication and session management
-  - Data validation and sanitization
-  - Database interaction layer
-  - Service orchestration (coordinating with battle logic service)
-  - Rate limiting and basic security measures
-- **Key Features**:
-  - JWT-based authentication
-  - Input validation middleware
-  - Centralized error handling
-  - Database connection pooling
-  - Environment-based configuration
+- **Technology**: React 18, Vite, Tailwind, Framer Motion, React Router v6
+- **Entry**: `frontend/src/App.jsx` — session rehydrate via `GET /api/validate`, then routed screens
+- **API**: shared Axios client `frontend/src/api.js` (`baseURL = VITE_API_URL`, Bearer from `localStorage`)
+- **Design system**:
+  - Tokens: `frontend/src/styles/tokens.css`
+  - Primitives: `Shell`, `LcdPanel`
+  - Type colors: `frontend/src/utils/typeColors.js` (Pokémon data only, never chrome)
+  - Guides: [`docs/design/STYLE_GUIDE.md`](docs/design/STYLE_GUIDE.md), [`docs/design/ANIMATION_GUIDE.md`](docs/design/ANIMATION_GUIDE.md)
 
-### 3.3 Battle Logic Service
-- **Technology**: Python 3.11
-- **Responsibilities**:
-  - Pure battle simulation logic
-  - Move effectiveness calculations (type matchups)
-  - Status effect application and duration tracking
-  - Experience point and reward calculation
-  - Turn resolution and battle state progression
-- **Key Features**:
-  - Stateless combat resolution (given same inputs, same outputs)
-  - Configurable battle rules via JSON
-  - Extensible move and ability system
-  - Deterministic outcomes for replayability
+**Routes**
 
-### 3.4 Data Storage Layer
-- **Technology**: MySQL 8.0
-- **Responsibilities**:
-  - Persistent storage of trainers, Pokemon, items
-  - Battle logs and historical data
-  - Configuration and reference data (types, moves, abilities)
-  - User-generated content (custom teams, etc.)
-- **Design Considerations**:
-  - Proper indexing for query performance
-  - Normalization to reduce redundancy
-  - Foreign key constraints for data integrity
-  - Backup and recovery procedures
+| Path | Auth | Screen |
+|------|------|--------|
+| `/` | Public | Landing — hero brand, session-aware CTAs, live rotating showcase from `GET /pokemon` |
+| `/pokedex`, `/pokedex/:id` | Public | Pokédex list / detail |
+| `/auth` | Public | Login / register (GameBoy shell) |
+| `/game` | JWT | Hub + starter lab |
+| `/level/:levelNumber` | JWT | Campaign level battles (1–10, progress-locked server-side) |
+| `*` | — | Redirect: session → `/game`, else `/auth` |
+
+Header shows on landing / auth / dex; hidden on all in-device screens (`/game`, `/game/*`, `/level/*`).
+
+The unrouted ChatGround Socket.IO prototype has been **deleted** (UI/UX cleanup pass).
+
+### 3.2 Backend API (BFF)
+
+- **Technology**: Node.js, Express, Socket.IO on the **same** HTTP server (`PORT`, default 5000)
+- **Entrypoint**: `backend/server.js`
+- **Cross-cutting**: `helmet`, CORS from `CORS_ORIGIN`, JSON body ≤ 1mb, `pino-http` + `X-Request-Id`, rate limits (auth 20/15min; API 100/15min)
+- **Auth**: JWT (`requireAuth`); trainer-bound routes compare JWT `trainer_id` to the path
+- **Validation**: Zod schemas on login, register, choose-starter, battle damage body
+- **Services**: `authService`, `starterService`, `trainerService`, `battleService` (battle-engine HTTP client)
+
+**HTTP surface (current)**
+
+| Method | Path | Auth | Notes |
+|--------|------|------|--------|
+| GET | `/health` | No | `{ status: "ok" }` |
+| POST | `/api/register`, `/api/login` | No | Rate-limited |
+| GET | `/api/validate` | JWT | Session rehydrate |
+| POST | `/api/choose-starter` | JWT | Transactional party insert |
+| GET | `/pokemon` | No | Landing showcase + Pokédex list |
+| GET | `/pokemon-detail/:id` | No | Species detail |
+| GET | `/trainer/:id/data` | JWT, id must match token | Party for battle |
+| GET | `/api/battle/level/1` | JWT | Proxies battle-engine level payload |
+| POST | `/api/battle/calculate-damage` | JWT | Proxies combat |
+
+Errors prefer `{ success, error }`.
+
+### 3.3 Battle engine
+
+- **Technology**: Python 3.11, FastAPI (`battle-engine/`)
+- **Role**: Stateless combat — damage, type multiplier, crit, miss, turn order
+- **Called only by the backend** (`BATTLE_ENGINE_URL`). Browser CORS is not the client path.
+- **Health**: `GET /health`
+- **Tests**: `pytest` on `app/combat.py` (damage / turn order / miss)
+
+The legacy `battle-logic-service/` directory has been **deleted**. `battle-engine/` is the only combat service.
+
+### 3.4 Data storage
+
+- **Technology**: MySQL 8 — two schemas in one dump (`database/pokedex_data.sql`)
+  - `pokedex`: species, moves, types, abilities
+  - `trainer`: trainers, party Pokémon, party moves, inventory
+- Cross-schema FK: `trainer.trainer_pokemon_moves.move_id` → `pokedex.Move(move_id)`
+- Restore notes: [`database/README.md`](database/README.md)
 
 ## 4. Component Interfaces
 
-### 4.1 Frontend ↔ Backend API
-- **Protocol**: HTTP/1.1 with JSON payloads
-- **Authentication**: Bearer token in Authorization header
-- **Error Handling**: Standard HTTP status codes with error objects
-- **Data Transfer Objects**: Well-defined request/response schemas
-- **Endpoints**: RESTful resource-oriented URLs
-- **Versioning**: Path-based versioning (`/api/v1/`)
+### 4.1 Browser ↔ backend
 
-### 4.2 Backend ↔ Battle Logic Service
-- **Protocol**: HTTP/1.1 with JSON payloads
-- **Communication Pattern**: Request-response for battle actions
-- **Data Contracts**:
-  - Battle initialization: Trainer IDs, Pokemon selections, levels
-  - Turn processing: Action selections, current battle state
-  - State queries: Current HP, status effects, active Pokemon
-- **Error Propagation**: Battle service errors mapped to appropriate HTTP status
+- HTTP/JSON; Bearer JWT on authenticated calls (Axios interceptor)
+- Public reads: `/pokemon`, `/pokemon-detail/:id`, landing does not require a session
+- The backend still hosts a Socket.IO endpoint on the API origin, but no frontend surface uses it (ChatGround deleted)
 
-### 4.3 Backend ↔ Database
-- **Technology**: MySQL2 connection pool with Promises
-- **Query Pattern**: Parameterized queries to prevent SQL injection
-- **Transaction Management**: Explicit transactions for multi-step operations
-- **Connection Handling**: Pool sizing based on expected concurrent load
+### 4.2 Backend ↔ battle-engine (BFF)
 
-## 5. Data Models
+- Backend `battleService` forwards `GET /level/1` and `POST /calculate-damage`
+- Frontend battle UI (`BattleSim.jsx`, `level1.jsx`) uses `api` only — no `BATTLE_URL` / `battleClient`
 
-### 5.1 Core Entities
-- **Trainer**: User account, progression, inventory, battle history
-- **Pokemon**: Species data, individual stats, moves, abilities, experience
-- **Move**: Attack/defense capabilities, power, accuracy, PP, type
-- **Type Effectiveness**: Matchup multipliers (offensive/defensive)
-- **Ability**: Passive effects that modify battle dynamics
-- **Item**: Consumables and equipment with battle/field effects
+### 4.3 Backend ↔ MySQL
 
-### 5.2 Battle-Specific Models
-- **BattleSession**: Active battle state, participants, turn tracker
-- **BattleLog**: Chronological record of actions and results
-- **EffectInstance**: Active status effects with duration counters
-- **DamageCalculation**: Intermediate values in damage computation
+- Two pools (`pokedex` + `trainer`) via `mysql2`
+- Parameterized queries; starter selection runs in a transaction
 
-## 6. System Qualities
+## 5. Key user flows
 
-### 6.1 Performance
-- **Target Response Time**: <200ms for API calls (95th percentile)
-- **Battle Resolution**: <100ms per turn calculation
-- **Database Query Optimization**: Indexed lookups for primary access patterns
-- **Caching Strategy**: 
-  - Static data (types, moves, abilities) cached in-memory
-  - Session data stored in Redis (if deployed) or server memory
-  - Client-side caching of immutable Pokemon data
+1. **Landing** — `GET /pokemon` → shuffle ~8 → rotate featured sprite every 4s (pause on hover/focus). CTAs: logged out → `/auth`, logged in → `/game`. Showcase failure does not block CTAs.
+2. **Register / login** — JWT stored in `localStorage`; App rehydrates with `/api/validate`.
+3. **Choose starter** — hub lab → `POST /api/choose-starter` → Continue unlocks `/level/1`.
+4. **Level 1** — `GET /api/battle/level/1` + `GET /trainer/:id/data` → sequenced battle UI → `POST /api/battle/calculate-damage` per turn.
 
-### 6.2 Scalability
-- **Horizontal Scaling**: 
-  - Frontend: CDN distribution and multiple instances behind load balancer
-  - Backend: Stateless API servers behind load balancer
-  - Battle Service: Multiple instances with sticky sessions or shared state
-- **Database Scaling**: 
-  - Read replicas for query-heavy operations
-  - Connection pooling to manage database connections
-  - Archival strategy for battle logs
+## 6. System qualities (as built)
 
-### 6.3 Reliability
-- **Fault Tolerance**:
-  - Graceful degradation when battle service unavailable (cached battles)
-  - Database connection retry with exponential backoff
-  - Circuit breaker pattern for external service calls
-- **Data Integrity**:
-  - ACID transactions for financial/item transactions
-  - Referential integrity constraints in database
-  - Input validation at API boundaries
-- **Monitoring**:
-  - Health check endpoints for all services
-  - Structured logging with correlation IDs
-  - Metrics collection for performance tracking
+| Area | Current |
+|------|---------|
+| Security | JWT required for trainer/battle/starter; helmet; CORS from env; auth + API rate limits; 1mb JSON cap |
+| Observability | Backend `/health`, battle `/health`, pino request logs + request id |
+| Reliability | Battle proxy errors mapped to HTTP; landing degrades if Pokédex API is down |
+| Motion / a11y | `prefers-reduced-motion` collapses tokens; battle skips flash/lunge; landing showcase instant-swaps |
+| Not in this revision | JWT refresh rotation, `/api/v1` versioning, Redis Socket.IO adapter, GraphQL, extra levels, BAG/POKéMON/RUN |
 
-### 6.4 Security
-- **Authentication**: JWT tokens with refresh rotation
-- **Authorization**: Role-based access control (trainer vs admin)
-- **Input Validation**: Strict validation on all external inputs
-- **Output Encoding**: Context-aware encoding for web outputs
-- **Secrets Management**: Environment variables, never in code
-- **API Security**: Rate limiting, CORS policies, security headers
+## 7. Deployment
 
-## 7. Deployment Architecture
+**Local:** `npm run setup` then `npm run dev` (workspaces + concurrently). MySQL via `npm run docker:db` or a local instance.
 
-### 7.1 Development Environment
-- Local Docker Compose setup for all services
-- Hot reloading for frontend and backend
-- Debugging capabilities for all components
+**Compose:** MySQL by default; `--profile full` builds frontend, backend, and battle-engine images. Backend exposes **5000 only** (Socket.IO is on that port). Battle-engine exposes 8000 for the BFF, not the browser.
 
-### 7.2 Production Environment
-- **Load Balancer**: Distributes traffic to multiple instances
-- **API Gateway**: Handles SSL termination, routing, and basic security
-- **Service Discovery**: For inter-service communication in scaled environments
-- **Container Orchestration**: Kubernetes or Docker Swarm for production scaling
-- **Database**: Managed MySQL service or clustered deployment
-- **CDN**: For static asset delivery (frontend builds)
+## 8. Future (out of current scope)
 
-### 7.3 CI/CD Pipeline
-- **Source Control**: Git with feature branching strategy
-- **Automated Testing**: Unit, integration, and end-to-end tests
-- **Static Analysis**: Linting and security scanning
-- **Container Building**: Automated image creation and vulnerability scanning
-- **Deployment Strategy**: Blue-green or rolling updates
-- **Rollback Mechanism**: Automated rollback on health check failures
+- Multiplayer chat (would need a new client for the backend Socket.IO endpoint + Redis presence adapter)
+- JWT refresh, API versioning, extra battle levels, BAG / party / run
+- GraphQL, TypeScript rewrite, Kubernetes / Helm
 
-## 8. Integration Points
+## 9. Document control
 
-### 8.1 External APIs
-- **PokéAPI**: Optional synchronization for canonical Pokemon data
-- **Payment Gateway**: For premium features (if implemented)
-- **Social Media**: Authentication and sharing (if implemented)
-
-### 8.2 Internal Services
-- **Analytics Service**: Track user engagement and feature usage
-- **Notification Service**: Email/push notifications for events
-- **Moderation System**: User-generated content review (if applicable)
-
-## 9. Future Enhancements
-
-### 9.1 Technical Improvements
-- Migration to GraphQL for flexible data fetching
-- Implementation of WebSockets for real-time battle updates
-- Introduction of event-driven architecture with message queues
-- Migration to TypeScript for frontend and backend
-- Containerization of all services with Helm charts
-
-### 9.2 Feature Expansions
-- Trading system between trainers
-- Guild/clan functionality with shared resources
-- Advanced battle formats (double battles, tournaments)
-- Mobile application development (React Native)
-- AI-powered battle recommendations
-
-## 10. Risks and Mitigations
-
-### 10.1 Technical Risks
-- **Performance Bottlenecks**: Mitigated by caching, indexing, and load testing
-- **Data Consistency**: Addressed through transactions and eventual consistency patterns
-- **Security Vulnerabilities**: Prevented via regular dependency updates and penetration testing
-
-### 10.2 Operational Risks
-- **Deployment Failures**: Reduced by blue-green deployments and automated rollback
-- **Data Loss**: Prevented by regular backups and point-in-time recovery
-- **Service Downtime**: Minimized through health checks and redundancy
-
-## 11. Approval
-
-This document represents the high-level design for the Pokemon Origins application. It serves as a reference for development, testing, and operations teams.
-
-**Prepared by**: Development Team  
-**Version**: 1.0  
-**Date**: 2024-07-13  
-**Status**: Approved for Implementation
+**Version**: 1.1  
+**Date**: 2026-08-13  
+**Status**: Matches the landing-page + BFF architecture in this repo  
+**See also**: [`README.md`](README.md), [`docs/design/STYLE_GUIDE.md`](docs/design/STYLE_GUIDE.md)

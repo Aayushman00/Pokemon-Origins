@@ -1,30 +1,10 @@
 // PokemonDetail.jsx
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
-import axios from "axios";
 import { motion } from "framer-motion";
-
-// Hex color codes for each Pokémon type
-const typeColorCodes = {
-  normal: "#A8A77A",
-  fire: "#EE8130",
-  water: "#6390F0",
-  grass: "#7AC74C",
-  electric: "#F7D02C",
-  ice: "#96D9D6",
-  fighting: "#C22E28",
-  poison: "#A33EA1",
-  ground: "#E2BF65",
-  flying: "#A98FF3",
-  psychic: "#F95587",
-  bug: "#A6B91A",
-  rock: "#B6A136",
-  ghost: "#735797",
-  dragon: "#6F35FC",
-  dark: "#705746",
-  steel: "#B7B7CE",
-  fairy: "#D685AD",
-};
+import { api } from "../../api";
+import { typeColor } from "../../utils/typeColors";
+import PokemonSprite from "../../components/PokemonSprite/PokemonSprite";
 
 const MAX_STAT = 255;
 const legendaryIds = [144, 145, 146, 150, 151];
@@ -34,7 +14,7 @@ function PokemonDetail() {
   const [pokemon, setPokemon] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [primaryTypeColor, setPrimaryTypeColor] = useState("#cccccc");
+  const [primaryTypeColor, setPrimaryTypeColor] = useState("#7fe9a6");
   const [animateBars, setAnimateBars] = useState(false);
   const [contentVisible, setContentVisible] = useState(false);
 
@@ -43,12 +23,11 @@ function PokemonDetail() {
     try {
       setLoading(true);
       setError(null);
-      const { data } = await axios.get(`http://localhost:5000/pokemon-detail/${id}`);
+      const { data } = await api.get(`/pokemon-detail/${id}`);
       setPokemon(data);
-      // Set primary type color (data.types is an array of strings)
       if (data.types && data.types.length > 0) {
         const firstType = data.types[0].toLowerCase();
-        setPrimaryTypeColor(typeColorCodes[firstType] || "#cccccc");
+        setPrimaryTypeColor(typeColor(firstType, "#7fe9a6"));
       }
     } catch (err) {
       console.error(err);
@@ -85,21 +64,34 @@ function PokemonDetail() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen transition-opacity duration-500">
-        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="device-backdrop flex items-center justify-center">
+        <p
+          className="font-pixel text-[0.7rem]"
+          style={{ color: "var(--lcd-ink)" }}
+        >
+          Loading entry...
+        </p>
       </div>
     );
   }
   if (error || !pokemon) {
     return (
-      <div className="text-center mt-10 space-y-4">
-        <div className="text-lg text-red-600">{error || "Error loading data."}</div>
-        <button
-          onClick={fetchData}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors duration-300"
+      <div className="device-backdrop flex flex-col items-center justify-center gap-4 p-4">
+        <p
+          className="font-pixel text-[0.7rem] text-center"
+          role="alert"
+          style={{ color: "var(--hp-red)" }}
         >
-          Retry
-        </button>
+          {error || "Error loading data."}
+        </p>
+        <div className="flex gap-2">
+          <button onClick={fetchData} className="pixel-btn pixel-btn--primary">
+            Retry
+          </button>
+          <Link to="/pokedex" className="pixel-btn">
+            Back to Pokédex
+          </Link>
+        </div>
       </div>
     );
   }
@@ -113,103 +105,136 @@ function PokemonDetail() {
   // Determine if this Pokémon is legendary
   const isLegendary = legendaryIds.includes(Number(pokemon.id));
 
+  const labelStyle = { color: "var(--lcd-ink-dim)" };
+  const valueStyle = { color: "var(--lcd-ink-bright)" };
+
   return (
     <div
-      className="min-h-screen p-4 font-sans transition-all duration-500"
+      className="device-backdrop p-3 sm:p-6"
       style={{
-        backgroundColor: primaryTypeColor,
-        backgroundImage:
-          "repeating-linear-gradient(45deg, rgba(255,255,255,0.05) 0 20px, transparent 20px 40px)",
+        backgroundImage: `radial-gradient(ellipse at 50% 0%, ${primaryTypeColor}2e, transparent 55%)`,
       }}
     >
+      {/* Back to the dex grid */}
+      <div className="max-w-5xl mx-auto mb-4">
+        <Link to="/pokedex" className="pixel-btn">
+          &#9664; Pokédex
+        </Link>
+      </div>
+
       {/* Main Content Container */}
       <div
-        className={`relative ${
-          isLegendary ? "ring-4 ring-yellow-400 ring-offset-2" : ""
-        } bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg p-6 rounded-3xl shadow-2xl max-w-5xl mx-auto transition-opacity duration-500 ease-in-out ${
+        className={`dex-panel relative p-5 sm:p-8 max-w-5xl mx-auto transition-opacity duration-500 ease-in-out ${
           contentVisible ? "opacity-100" : "opacity-0"
         }`}
+        style={isLegendary ? { boxShadow: "0 0 0 3px #f8d030" } : undefined}
       >
         {/* Pokéball Watermark */}
-        <div className="absolute right-4 top-4 opacity-10 pointer-events-none">
-          <img
-            src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png"
-            alt="Pokéball watermark"
-            className="w-16 h-16"
-          />
-        </div>
+        <div
+          className="absolute right-4 top-4 opacity-10 pointer-events-none w-16 h-16 rounded-full"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 50%, #c04040 0 46%, #1a1a1a 47% 52%, #f0f0f0 53% 100%)",
+          }}
+          aria-hidden="true"
+        />
 
         {/* Title */}
-        <div className="text-center mb-6 pt-8">
-          <h1 className="text-4xl font-bold capitalize text-gray-900 dark:text-gray-100 tracking-wide">
-            {pokemon.name} #{String(pokemon.id).padStart(4, "0")}
+        <div className="text-center mb-6 pt-2">
+          <h1
+            className="font-pixel text-base sm:text-xl capitalize leading-relaxed"
+            style={{
+              color: "var(--lcd-ink-bright)",
+              textShadow: "0 2px 0 var(--lcd-shadow)",
+            }}
+          >
+            {pokemon.name} No.{String(pokemon.id).padStart(4, "0")}
           </h1>
           {isLegendary && (
-            <p className="mt-2 text-xl text-purple-600 font-semibold animate-pulse">
-              A Legendary Pokémon!
+            <p
+              className="font-pixel text-[0.6rem] mt-3"
+              style={{ color: "#f8d030" }}
+            >
+              A LEGENDARY POKEMON!
             </p>
           )}
         </div>
 
         {/* Flavor Text */}
         {pokemon.details?.flavor_text && (
-          <p className="max-w-xl mx-auto text-center text-gray-700 dark:text-gray-300 italic mb-6">
+          <p
+            className="max-w-xl mx-auto text-center italic mb-6"
+            style={{ color: "var(--lcd-ink)" }}
+          >
             {pokemon.details.flavor_text}
           </p>
         )}
 
         {/* Profile & Image */}
-        <div className="flex flex-col md:flex-row gap-6 items-center justify-center mb-8">
-          {/* Sprite Container with Perspective for 3D Effect */}
+        <div className="flex flex-col md:flex-row gap-6 items-stretch justify-center mb-8">
+          {/* Sprite panel */}
           <div
-            className="md:w-1/2 flex justify-center bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-3xl p-4 transition-transform duration-300 hover:scale-105"
-            style={{ perspective: "1000px" }}
+            className="md:w-1/2 flex justify-center items-center rounded-lg p-4"
+            style={{
+              background: "var(--lcd-panel)",
+              border: "2px solid var(--lcd-shadow)",
+            }}
           >
-              <motion.img
+            <PokemonSprite
+              as={motion.img}
+              pokemon={pokemon}
+              variant="front"
               layoutId={`shared-image-${pokemon.pokemon_id}`}
               loading="lazy"
-
-              src={pokemon.img_src}
-              alt={pokemon.name}
-              className="w-64 h-64 object-contain sprite-3d"
+              className="w-64 h-64 object-contain pixelated"
             />
           </div>
 
           {/* Profile Box */}
-          <div className="bg-blue-500 rounded-3xl p-6 md:w-1/2 text-white shadow-lg transition-transform duration-300 hover:scale-105">
+          <div
+            className="rounded-lg p-6 md:w-1/2"
+            style={{
+              background: "var(--lcd-raised)",
+              border: "2px solid var(--lcd-shadow)",
+            }}
+          >
             <div className="grid grid-cols-2 gap-y-4 gap-x-8">
-              {/* Row 1: Labels */}
-              <div className="font-semibold text-left">Height</div>
-              <div className="font-semibold">Category</div>
+              <div className="font-pixel text-[0.55rem]" style={labelStyle}>
+                HEIGHT
+              </div>
+              <div className="font-pixel text-[0.55rem]" style={labelStyle}>
+                CATEGORY
+              </div>
 
-              {/* Row 2: Values */}
-              <div className="text-left text-lg">
+              <div className="text-lg" style={valueStyle}>
                 {pokemon.height ? pokemon.height : "—"} m
               </div>
-              <div className="text-lg">
+              <div className="text-lg" style={valueStyle}>
                 {pokemon.details?.category || "Pokémon"}
               </div>
 
-              {/* Row 3: Labels */}
-              <div className="font-semibold text-left">Weight</div>
-              <div className="font-semibold">Abilities</div>
+              <div className="font-pixel text-[0.55rem]" style={labelStyle}>
+                WEIGHT
+              </div>
+              <div className="font-pixel text-[0.55rem]" style={labelStyle}>
+                ABILITIES
+              </div>
 
-              {/* Row 4: Values */}
-              <div className="text-left text-lg">
+              <div className="text-lg" style={valueStyle}>
                 {pokemon.weight ? pokemon.weight : "—"} kg
               </div>
-              <div className="text-lg">
+              <div className="text-lg" style={valueStyle}>
                 {pokemon.abilities && pokemon.abilities.length > 0
                   ? pokemon.abilities.join(", ")
                   : "—"}
               </div>
 
-              {/* Row 5: Label */}
-              <div className="font-semibold text-left">Gender</div>
+              <div className="font-pixel text-[0.55rem]" style={labelStyle}>
+                GENDER
+              </div>
               <div />
 
-              {/* Row 6: Value */}
-              <div className="text-left text-lg">
+              <div className="text-lg" style={valueStyle}>
                 {pokemon.genders && pokemon.genders.length > 0
                   ? pokemon.genders.join(", ")
                   : "Genderless"}
@@ -225,39 +250,60 @@ function PokemonDetail() {
           <div className="md:w-1/2 space-y-8 text-center">
             {/* Types */}
             <div>
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
-                Type
+              <h2
+                className="font-pixel text-[0.7rem] mb-4"
+                style={{ color: "var(--lcd-ink-bright)" }}
+              >
+                TYPE
               </h2>
               <div className="flex justify-center gap-3 flex-wrap">
                 {pokemon.types.map((t) => (
                   <span
                     key={t}
-                    className="px-4 py-2 rounded-full text-white font-medium shadow-md transition-transform duration-300 hover:scale-105"
-                    style={{ backgroundColor: typeColorCodes[t.toLowerCase()] || "#ccc" }}
+                    className="dex-chip"
+                    style={{
+                      backgroundColor: typeColor(t),
+                      fontSize: "0.6rem",
+                      padding: "0.4rem 0.7rem",
+                    }}
                   >
-                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                    {t}
                   </span>
                 ))}
               </div>
             </div>
             {/* Weaknesses */}
             <div>
-              <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-4">
-                Weaknesses
+              <h2
+                className="font-pixel text-[0.7rem] mb-4"
+                style={{ color: "var(--lcd-ink-bright)" }}
+              >
+                WEAKNESSES
               </h2>
               <div className="flex justify-center gap-3 flex-wrap">
                 {pokemon.weaknesses && pokemon.weaknesses.length > 0 ? (
                   pokemon.weaknesses.map((w) => (
                     <span
                       key={w}
-                      className="px-4 py-2 rounded-full text-white font-medium shadow-md transition-transform duration-300 hover:scale-105"
-                      style={{ backgroundColor: typeColorCodes[w.toLowerCase()] || "#ccc" }}
+                      className="dex-chip"
+                      style={{
+                        backgroundColor: typeColor(w),
+                        fontSize: "0.6rem",
+                        padding: "0.4rem 0.7rem",
+                      }}
                     >
-                      {w.charAt(0).toUpperCase() + w.slice(1)}
+                      {w}
                     </span>
                   ))
                 ) : (
-                  <span className="px-4 py-2 rounded-full bg-gray-400 text-white font-medium shadow-md">
+                  <span
+                    className="dex-chip"
+                    style={{
+                      backgroundColor: typeColor("normal"),
+                      fontSize: "0.6rem",
+                      padding: "0.4rem 0.7rem",
+                    }}
+                  >
                     None
                   </span>
                 )}
@@ -266,29 +312,49 @@ function PokemonDetail() {
           </div>
 
           {/* Right Column: Stats */}
-          <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl shadow-md w-full md:w-1/2">
-            <h2 className="text-2xl font-bold mb-4 text-center text-gray-800 dark:text-gray-100">
-              Stats
+          <div
+            className="rounded-lg p-6 w-full md:w-1/2"
+            style={{
+              background: "var(--lcd-panel)",
+              border: "2px solid var(--lcd-shadow)",
+            }}
+          >
+            <h2
+              className="font-pixel text-[0.7rem] mb-5 text-center"
+              style={{ color: "var(--lcd-ink-bright)" }}
+            >
+              STATS
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {statsArray.map((stat) => {
                 const statPercent = (stat.base_stat / MAX_STAT) * 100;
                 return (
                   <div key={stat.name} className="flex flex-col">
-                    {/* Stat Name & Value */}
                     <div className="flex justify-between items-center mb-1">
-                      <span className="capitalize text-gray-700 dark:text-gray-300 font-medium">
+                      <span
+                        className="capitalize font-medium"
+                        style={{ color: "var(--lcd-ink)" }}
+                      >
                         {stat.name}
                       </span>
-                      <span className="font-bold text-gray-900 dark:text-gray-100">
+                      <span
+                        className="font-pixel text-[0.6rem]"
+                        style={{ color: "var(--lcd-ink-bright)" }}
+                      >
                         {stat.base_stat}
                       </span>
                     </div>
-                    {/* Animated Horizontal Bar */}
-                    <div className="w-full bg-gray-300 dark:bg-gray-600 rounded-full h-2 overflow-hidden">
+                    {/* Animated horizontal bar */}
+                    <div
+                      className="w-full rounded-full h-2 overflow-hidden"
+                      style={{ background: "var(--lcd-shadow)" }}
+                    >
                       <div
-                        className="bg-blue-500 h-2 rounded-full transition-all duration-500 ease-in-out"
-                        style={{ width: animateBars ? `${statPercent}%` : "0%" }}
+                        className="h-2 rounded-full transition-all duration-500 ease-in-out"
+                        style={{
+                          width: animateBars ? `${statPercent}%` : "0%",
+                          background: "var(--lcd-accent)",
+                        }}
                       />
                     </div>
                   </div>
@@ -297,128 +363,127 @@ function PokemonDetail() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Evolution Chain */}
-      <div
-        className={`bg-white/80 dark:bg-gray-800/80 backdrop-blur-md p-6 rounded-3xl shadow-2xl max-w-5xl mx-auto mt-6 relative z-10 transition-opacity duration-500 ease-in-out ${
-          contentVisible ? "opacity-100" : "opacity-0"
-        }`}
-      >
-        <h2 className="text-2xl font-bold text-center mb-6 text-gray-800 dark:text-gray-100">
-          Evolutions
-        </h2>
-        {(() => {
-          const prevEvos = pokemon.previous_evolutions || [];
-          const nextEvos = pokemon.next_evolutions || [];
-          const chain = [
-            ...prevEvos,
-            {
-              id: pokemon.id,
-              name: pokemon.name,
-              img_src: pokemon.img_src,
-              types: pokemon.types || [],
-            },
-            ...nextEvos,
-          ];
+        {/* Evolution Chain */}
+        <div className="mt-10">
+          <h2
+            className="font-pixel text-[0.7rem] text-center mb-6"
+            style={{ color: "var(--lcd-ink-bright)" }}
+          >
+            EVOLUTIONS
+          </h2>
+          {(() => {
+            const prevEvos = pokemon.previous_evolutions || [];
+            const nextEvos = pokemon.next_evolutions || [];
+            const chain = [
+              ...prevEvos,
+              {
+                id: pokemon.id,
+                name: pokemon.name,
+                types: pokemon.types || [],
+              },
+              ...nextEvos,
+            ];
 
-          const EvolutionCircle = ({ evoData }) => (
-            <div className="flex flex-col items-center transition-transform duration-300 hover:scale-105">
-              <Link to={`/pokedex/${evoData.id}`}>
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-lg overflow-hidden mb-2">
-                  <img
-                    loading="lazy"
-                    src={evoData.img_src}
-                    alt={evoData.name}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-              </Link>
-              <p className="text-md sm:text-lg font-bold capitalize text-gray-800 dark:text-gray-100">
-                {evoData.name}
-                <span className="block text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                  #{String(evoData.id).padStart(4, "0")}
-                </span>
-              </p>
-              <div className="flex space-x-2 mt-2">
-                {evoData.types?.map((type) => (
-                  <span
-                    key={type}
-                    className="px-2 py-1 text-xs text-white font-semibold rounded-full shadow transition-transform duration-300 hover:scale-105"
-                    style={{
-                      backgroundColor: typeColorCodes[type.toLowerCase()] || "#ccc",
-                    }}
-                  >
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </span>
-                ))}
-              </div>
-            </div>
-          );
-
-          // Special case for Eevee
-          if (chain[0].id === 133) {
-            const eevee = chain[0];
-            const evolutions = chain.slice(1);
-            return (
-              <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
-                <EvolutionCircle evoData={eevee} />
-                {evolutions.length > 0 && (
-                  <div className="text-4xl text-gray-500 font-bold hidden sm:block relative -mt-3">
-                    &rarr;
+            const EvolutionCircle = ({ evoData }) => (
+              <div className="flex flex-col items-center">
+                <Link to={`/pokedex/${evoData.id}`} className="dex-slot !p-2">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 overflow-hidden">
+                    <PokemonSprite
+                      pokemonId={evoData.id}
+                      variant="front"
+                      alt={evoData.name}
+                      loading="lazy"
+                      className="w-full h-full object-contain pixelated"
+                    />
                   </div>
-                )}
-                <div className="flex gap-4 sm:gap-8">
-                  {evolutions.map((evo) => (
-                    <EvolutionCircle evoData={evo} key={evo.id} />
+                </Link>
+                <p
+                  className="font-pixel text-[0.55rem] capitalize mt-2 text-center"
+                  style={{ color: "var(--lcd-ink-bright)" }}
+                >
+                  {evoData.name}
+                  <span
+                    className="block font-pixel text-[0.45rem] mt-1"
+                    style={{ color: "var(--lcd-ink-dim)" }}
+                  >
+                    No.{String(evoData.id).padStart(4, "0")}
+                  </span>
+                </p>
+                <div className="flex space-x-1 mt-2">
+                  {evoData.types?.map((type) => (
+                    <span
+                      key={type}
+                      className="dex-chip"
+                      style={{
+                        backgroundColor: typeColor(type),
+                      }}
+                    >
+                      {type}
+                    </span>
                   ))}
                 </div>
               </div>
             );
-          }
 
-          // Default: arrow between each stage
-          return (
-            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
-              {chain.map((poke, idx) => (
-                <React.Fragment key={poke.id}>
-                  <EvolutionCircle evoData={poke} />
-                  {idx < chain.length - 1 && (
-                    <div className="text-4xl text-gray-500 font-bold hidden sm:block relative -mt-3">
-                      &rarr;
-                    </div>
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-          );
-        })()}
+            const Arrow = () => (
+              <div
+                className="font-pixel text-lg hidden sm:block relative -mt-6"
+                style={{ color: "var(--lcd-ink-dim)" }}
+                aria-hidden="true"
+              >
+                &#9654;
+              </div>
+            );
+
+            // Special case for Eevee
+            if (chain[0].id === 133) {
+              const eevee = chain[0];
+              const evolutions = chain.slice(1);
+              return (
+                <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
+                  <EvolutionCircle evoData={eevee} />
+                  {evolutions.length > 0 && <Arrow />}
+                  <div className="flex flex-wrap justify-center gap-4 sm:gap-8">
+                    {evolutions.map((evo) => (
+                      <EvolutionCircle evoData={evo} key={evo.id} />
+                    ))}
+                  </div>
+                </div>
+              );
+            }
+
+            // Default: arrow between each stage
+            return (
+              <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
+                {chain.map((poke, idx) => (
+                  <React.Fragment key={poke.id}>
+                    <EvolutionCircle evoData={poke} />
+                    {idx < chain.length - 1 && <Arrow />}
+                  </React.Fragment>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
       </div>
 
-      {/* Global Navigation */}
-      <div className="flex flex-col items-center mt-8 max-w-5xl mx-auto space-y-4">
-        <div className="flex justify-between w-full">
-          {pokemon.id > 1 ? (
-            <Link
-              to={`/pokedex/${pokemon.id - 1}`}
-              className="text-lg bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-300"
-            >
-              &larr; Prev
-            </Link>
-          ) : (
-            <div />
-          )}
-          {pokemon.id < 151 ? (
-            <Link
-              to={`/pokedex/${pokemon.id + 1}`}
-              className="text-lg bg-gray-200 dark:bg-gray-700 px-4 py-2 rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-300"
-            >
-              Next &rarr;
-            </Link>
-          ) : (
-            <div />
-          )}
-        </div>
+      {/* Prev / Next navigation */}
+      <div className="flex justify-between max-w-5xl mx-auto mt-6">
+        {pokemon.id > 1 ? (
+          <Link to={`/pokedex/${pokemon.id - 1}`} className="pixel-btn">
+            &#9664; Prev
+          </Link>
+        ) : (
+          <div />
+        )}
+        {pokemon.id < 151 ? (
+          <Link to={`/pokedex/${pokemon.id + 1}`} className="pixel-btn">
+            Next &#9654;
+          </Link>
+        ) : (
+          <div />
+        )}
       </div>
     </div>
   );

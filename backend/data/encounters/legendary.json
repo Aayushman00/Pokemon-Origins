@@ -1,0 +1,32 @@
+{
+  "articuno": {
+    "id": "articuno",
+    "name": "Articuno",
+    "pokemonId": 144,
+    "level": 58
+  },
+  "zapdos": {
+    "id": "zapdos",
+    "name": "Zapdos",
+    "pokemonId": 145,
+    "level": 60
+  },
+  "moltres": {
+    "id": "moltres",
+    "name": "Moltres",
+    "pokemonId": 146,
+    "level": 62
+  },
+  "mew": {
+    "id": "mew",
+    "name": "Mew",
+    "pokemonId": 151,
+    "level": 64
+  },
+  "mewtwo": {
+    "id": "mewtwo",
+    "name": "Mewtwo",
+    "pokemonId": 150,
+    "level": 66
+  }
+}

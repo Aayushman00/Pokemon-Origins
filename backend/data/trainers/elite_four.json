@@ -1,0 +1,54 @@
+{
+  "lorelei": {
+    "id": "lorelei",
+    "name": "Lorelei",
+    "title": "Elite Four",
+    "specialization": "Ice",
+    "region": "Kanto",
+    "sprite": "lorelei",
+    "party": [
+      { "pokemonId": 87, "level": 50 },
+      { "pokemonId": 91, "level": 49 },
+      { "pokemonId": 131, "level": 52 }
+    ]
+  },
+  "bruno": {
+    "id": "bruno",
+    "name": "Bruno",
+    "title": "Elite Four",
+    "specialization": "Fighting",
+    "region": "Kanto",
+    "sprite": "bruno",
+    "party": [
+      { "pokemonId": 95, "level": 51 },
+      { "pokemonId": 107, "level": 52 },
+      { "pokemonId": 68, "level": 54 }
+    ]
+  },
+  "agatha": {
+    "id": "agatha",
+    "name": "Agatha",
+    "title": "Elite Four",
+    "specialization": "Ghost",
+    "region": "Kanto",
+    "sprite": "agatha",
+    "party": [
+      { "pokemonId": 42, "level": 53 },
+      { "pokemonId": 24, "level": 54 },
+      { "pokemonId": 94, "level": 56 }
+    ]
+  },
+  "lance": {
+    "id": "lance",
+    "name": "Lance",
+    "title": "Elite Four",
+    "specialization": "Dragon",
+    "region": "Kanto",
+    "sprite": "lance",
+    "party": [
+      { "pokemonId": 130, "level": 55 },
+      { "pokemonId": 148, "level": 54 },
+      { "pokemonId": 149, "level": 58 }
+    ]
+  }
+}

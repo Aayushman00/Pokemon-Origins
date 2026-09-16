@@ -16,10 +16,12 @@ import PokemonDetail from "./pages/Pokedex/pokemonDetail";
 import Game from "./pages/Game/Game";
 import AuthPage from "./pages/AuthPage/AuthPage";
 import Header from "./components/Header/header";
-import Level1 from './pages/Game/level1';
+import Level from './pages/Game/Level';
+import Bag from './pages/Game/Bag';
+import Mart from './pages/Game/Mart';
+import Landing from "./pages/Landing/Landing";
 
-import { LayoutGroup } from "framer-motion";
-// import Home from "./home";
+import { api } from "./api";
 
 const UserContext = createContext(null);
 export const useUser = () => useContext(UserContext);
@@ -28,16 +30,29 @@ function AnimatedRoutes({ user }) {
   const location = useLocation();
   return (
     <TransitionGroup>
-      <CSSTransition key={location.key} timeout={300} classNames="fade">
+      <CSSTransition key={location.key} timeout={200} classNames="fade">
         <Routes location={location}>
-          <Route path="/" element={<Home />} />
+          {/* Landing is the public front door; unknown routes still redirect by session */}
+          <Route path="/" element={<Landing />} />
           <Route path="/pokedex" element={<Pokedex />} />
           <Route path="/pokedex/:id" element={<PokemonDetail />} />
           <Route path="/auth" element={<AuthPage />} />
-          <Route path="/level/1" element={<Level1 />} />
+          {/* Phase 10: any campaign level; /level/1 keeps working */}
+          <Route
+            path="/level/:levelNumber"
+            element={user ? <Level /> : <Navigate to="/auth" replace />}
+          />
           <Route
             path="/game"
-            element={user ? <Game user={user} /> : <Navigate to="/auth" replace />}
+            element={user ? <Game /> : <Navigate to="/auth" replace />}
+          />
+          <Route
+            path="/game/bag"
+            element={user ? <Bag /> : <Navigate to="/auth" replace />}
+          />
+          <Route
+            path="/game/mart"
+            element={user ? <Mart /> : <Navigate to="/auth" replace />}
           />
           <Route
             path="*"
@@ -49,17 +64,7 @@ function AnimatedRoutes({ user }) {
   );
 }
 
-function Home() {
-	return (
-		<div className="p-8">
-			<h2 className="text-2xl font-bold mb-4">Welcome to PokéGame!</h2>
-			<p>This is the Home page. Use the navigation above to explore.</p>
-		</div>
-	);
-}
-
 function App() {
-  const [darkMode, setDarkMode] = useState(false);
   const [user, setUser] = useState(null);
   const [rehydrated, setRehydrated] = useState(false);
 
@@ -69,14 +74,7 @@ function App() {
       const token = localStorage.getItem("token");
       if (storedUser && token) {
         try {
-          const response = await fetch("http://localhost:5000/api/validate", {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + token,
-            },
-          });
-          const data = await response.json();
+          const { data } = await api.get("/api/validate");
           if (data.success) {
             setUser(data.user);
             localStorage.setItem("trainer", JSON.stringify(data.user));
@@ -97,21 +95,26 @@ function App() {
     validateSession();
   }, []);
 
-  useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-  }, [darkMode]);
-
-  if (!rehydrated) return <div>Loading...</div>;
+  if (!rehydrated)
+    return (
+      <div className="device-backdrop flex items-center justify-center">
+        <p
+          className="font-pixel text-[0.7rem]"
+          style={{ color: "var(--lcd-ink)" }}
+        >
+          Booting...
+        </p>
+      </div>
+    );
 
   return (
     <UserContext.Provider value={{ user, setUser }}>
       <Router>
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
-          <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+        <div
+          className="min-h-screen"
+          style={{ background: "var(--charcoal)", color: "var(--lcd-ink)" }}
+        >
+          <Header />
           <AnimatedRoutes user={user} />
         </div>
       </Router>

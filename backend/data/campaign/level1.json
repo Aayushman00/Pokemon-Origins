@@ -1,0 +1,31 @@
+{
+  "level": 1,
+  "name": "Pewter City",
+  "battles": [
+    {
+      "battleNumber": 1,
+      "type": "trainer",
+      "trainerId": "youngster_joey"
+    },
+    {
+      "battleNumber": 2,
+      "type": "trainer",
+      "trainerId": "lass_annie"
+    },
+    {
+      "battleNumber": 3,
+      "type": "trainer",
+      "trainerId": "bug_catcher_tim"
+    },
+    {
+      "battleNumber": 4,
+      "type": "trainer",
+      "trainerId": "hiker_jack"
+    },
+    {
+      "battleNumber": 5,
+      "type": "gym_boss",
+      "trainerId": "brock"
+    }
+  ]
+}

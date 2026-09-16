@@ -1,0 +1,31 @@
+{
+  "level": 4,
+  "name": "Celadon City",
+  "battles": [
+    {
+      "battleNumber": 1,
+      "type": "trainer",
+      "trainerId": "lass_kaylee"
+    },
+    {
+      "battleNumber": 2,
+      "type": "trainer",
+      "trainerId": "beauty_grace"
+    },
+    {
+      "battleNumber": 3,
+      "type": "trainer",
+      "trainerId": "rocket_grunt_marco"
+    },
+    {
+      "battleNumber": 4,
+      "type": "trainer",
+      "trainerId": "juggler_dalton"
+    },
+    {
+      "battleNumber": 5,
+      "type": "gym_boss",
+      "trainerId": "erika"
+    }
+  ]
+}

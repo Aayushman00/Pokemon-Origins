@@ -2,18 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@keyframes progressAnimation {
-	from {
-	  width: 0%;
-	}
-	to {
-	  width: var(--target-width);
-	}
-  }
-  
-  .animate-progress {
-	animation: progressAnimation 0.5s ease-in-out forwards;
-  }  
+/* Gilroy — readable body font (display font is Press Start 2P, see tokens.css) */
 @font-face {
 	font-family: "Gilroy";
 	src: url("./assets/fonts/gilroy/Gilroy-Black.ttf") format("truetype");
@@ -54,166 +43,6 @@
 	src: url("./assets/fonts/gilroy/Gilroy-ExtraBoldItalic.ttf")
 		format("truetype");
 	font-weight: 800;
-	font-style: italic;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-Heavy.ttf") format("truetype");
-	font-weight: 900;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-HeavyItalic.ttf") format("truetype");
-	font-weight: 900;
-	font-style: italic;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-Light.ttf") format("truetype");
-	font-weight: 300;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-LightItalic.ttf") format("truetype");
-	font-weight: 300;
-	font-style: italic;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-Medium.ttf") format("truetype");
-	font-weight: 500;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-MediumItalic.ttf") format("truetype");
-	font-weight: 500;
-	font-style: italic;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-Regular.ttf") format("truetype");
-	font-weight: normal;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-RegularItalic.ttf") format("truetype");
-	font-weight: normal;
-	font-style: italic;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-SemiBold.ttf") format("truetype");
-	font-weight: 600;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-SemiBoldItalic.ttf") format("truetype");
-	font-weight: 600;
-	font-style: italic;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-Thin.ttf") format("truetype");
-	font-weight: 100;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-ThinItalic.ttf") format("truetype");
-	font-weight: 100;
-	font-style: italic;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-UltraLight.ttf") format("truetype");
-	font-weight: 200;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-UltraLightItalic.ttf")
-		format("truetype");
-	font-weight: 200;
-	font-style: italic;
-}
-
-body {
-	overflow-x: hidden;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-Black.ttf") format("truetype");
-	font-weight: 900;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-BlackItalic.ttf") format("truetype");
-	font-weight: 900;
-	font-style: italic;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-Bold.ttf") format("truetype");
-	font-weight: bold;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-BoldItalic.ttf") format("truetype");
-	font-weight: bold;
-	font-style: italic;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-ExtraBold.ttf") format("truetype");
-	font-weight: 800;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-ExtraBoldItalic.ttf")
-		format("truetype");
-	font-weight: 800;
-	font-style: italic;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-Heavy.ttf") format("truetype");
-	font-weight: 900;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: "Gilroy";
-	src: url("./assets/fonts/gilroy/Gilroy-HeavyItalic.ttf") format("truetype");
-	font-weight: 900;
 	font-style: italic;
 }
 
@@ -304,129 +133,34 @@ body {
 
 body,
 html {
-	background-color: black;
-	color: white;
-	height: 100vh;
-	scroll-snap-type: y mandatory;
+	background-color: #262220; /* --charcoal fallback */
+	background-color: var(--charcoal, #262220);
+	color: var(--lcd-ink-bright, #d2ffe0);
 	font-family: "Gilroy", sans-serif;
-	/* overflow-y: scroll; */
+	min-height: 100vh;
+	margin: 0;
+	overflow-x: hidden;
 }
 
 * {
 	box-sizing: border-box;
-	font-family: "Gilroy", sans-serif;
 }
 
-.grotesk {
-	font-family: "Sharp Grotesk Medium 25 Regular";
-}
-
-.poppins-black-italic {
-	font-family: "Poppins", sans-serif;
-	font-weight: 900;
-	font-style: italic;
-}
-
-/* Add this to your global CSS file */
-.scrollbar-hide::-webkit-scrollbar {
-	display: none;
-}
-
-.scrollbar-hide {
-	-ms-overflow-style: none;
-	/* IE and Edge */
-	scrollbar-width: none;
-	/* Firefox */
-}
-
-@keyframes slideUp {
-	from {
-		transform: translateY(0);
-	}
-
-	to {
-		transform: translateY(-100vh);
-	}
-}
-
-.slide-up {
-	animation: slideUp 1s forwards;
-}
-
-/* Marquee Keyframes */
-@keyframes marquee-left {
-	from {
-		transform: translateX(0);
-	}
-
-	to {
-		transform: translateX(-100%);
-	}
-}
-/* Marquee Keyframes */
-@keyframes marquee-right {
-	to {
-		transform: translateX(100%);
-	}
-
-	from {
-		transform: translateX(0);
-	}
-}
-
-.marquee-container-left {
-	display: flex;
-	animation: marquee-left 20s linear infinite;
-}
-.marquee-container-right {
-	display: flex;
-	animation: marquee-right 20s linear infinite;
-}
-
-.marquee-content {
-	flex-shrink: 0;
-	display: flex;
-}
-
-
-.tektur,* {
-	font-family: "Tektur", sans-serif;
-	font-optical-sizing: auto;
-	
-	font-style: normal;
-	font-variation-settings:
-	  "wdth" 100;
-  }
-
-  
-  .text-border {
-	-webkit-text-stroke: 2px rgb(15, 82, 182);
-  }
-
-  .fade-enter {
+/* Route transition fade (~200ms; collapses under prefers-reduced-motion) */
+.fade-enter {
 	opacity: 0;
-  }
-  
-  .fade-enter-active {
-	opacity: 1;
-	transition: opacity 300ms ease-in;
-  }
-  
-  .fade-exit {
-	opacity: 1;
-  }
-  
-  .fade-exit-active {
-	opacity: 0;
-	transition: opacity 300ms ease-out;
-  }
-  
-/* Custom CSS for 3D hover effect on Pokémon sprite */
-.sprite-3d {
-	transition: transform 0.5s, box-shadow 0.5s;
-	transform-style: preserve-3d;
-  }
-  .sprite-3d:hover {
-	transform: rotateY(15deg) rotateX(5deg) scale(1.2);
-  }
+}
 
+.fade-enter-active {
+	opacity: 1;
+	transition: opacity 200ms ease-in;
+}
+
+.fade-exit {
+	opacity: 1;
+}
+
+.fade-exit-active {
+	opacity: 0;
+	transition: opacity 200ms ease-out;
+}

@@ -1,0 +1,13 @@
+{
+  "level": 10,
+  "source": "legendary",
+  "optionCount": 3,
+  "pool": [
+    { "pokemonId": 144, "level": 58 },
+    { "pokemonId": 145, "level": 60 },
+    { "pokemonId": 146, "level": 62 },
+    { "pokemonId": 151, "level": 64 },
+    { "pokemonId": 150, "level": 66 },
+    { "pokemonId": 149, "level": 60 }
+  ]
+}

@@ -130,9 +130,11 @@ module.exports = {
       {
         move_id: 55,
         name: "Water-gun",
-        power: 40,  
+        power: 40,
         accuracy: 100,
-        move_type:"Normal",
+        // Phase 11 data fix: was mistyped as "Normal", which broke type
+        // effectiveness for Squirtle's only non-Normal starter move.
+        move_type: "Water",
         pp: 25,
         status_effect: null,
         effect_chance: null

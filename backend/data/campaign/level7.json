@@ -1,0 +1,31 @@
+{
+  "level": 7,
+  "name": "Cinnabar Island",
+  "battles": [
+    {
+      "battleNumber": 1,
+      "type": "trainer",
+      "trainerId": "burglar_quinn"
+    },
+    {
+      "battleNumber": 2,
+      "type": "trainer",
+      "trainerId": "super_nerd_miguel"
+    },
+    {
+      "battleNumber": 3,
+      "type": "trainer",
+      "trainerId": "swimmer_nora"
+    },
+    {
+      "battleNumber": 4,
+      "type": "trainer",
+      "trainerId": "scientist_ivan"
+    },
+    {
+      "battleNumber": 5,
+      "type": "gym_boss",
+      "trainerId": "blaine"
+    }
+  ]
+}

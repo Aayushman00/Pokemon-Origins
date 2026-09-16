@@ -1,0 +1,31 @@
+{
+  "level": 9,
+  "name": "Indigo Plateau",
+  "battles": [
+    {
+      "battleNumber": 1,
+      "type": "elite_four",
+      "trainerId": "lorelei"
+    },
+    {
+      "battleNumber": 2,
+      "type": "elite_four",
+      "trainerId": "bruno"
+    },
+    {
+      "battleNumber": 3,
+      "type": "elite_four",
+      "trainerId": "agatha"
+    },
+    {
+      "battleNumber": 4,
+      "type": "elite_four",
+      "trainerId": "lance"
+    },
+    {
+      "battleNumber": 5,
+      "type": "champion",
+      "trainerId": "blue"
+    }
+  ]
+}
