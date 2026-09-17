@@ -4,12 +4,15 @@ const { JWT_SECRET } = require("../config/env");
 const { createSocketAuthMiddleware } = require("./socketAuth");
 const { createRoomState } = require("./roomState");
 const { resolveMove, ROOM_WIDTH, ROOM_HEIGHT } = require("./movement");
+const { createChatRing, sanitizeMessage, isRateLimited } = require("./chat");
 
 const ROOM_ID = "main";
 
 function attachPlayground(io, pool) {
 	const roomState = createRoomState();
+	const chatRing = createChatRing();
 	const lastMoveAt = new Map(); // trainerId -> timestamp (ms)
+	const lastMessageAt = new Map(); // trainerId -> timestamp (ms)
 
 	io.use(
 		createSocketAuthMiddleware({
@@ -32,7 +35,11 @@ function attachPlayground(io, pool) {
 		const self = roomState.addPlayer(trainerId, name, spawn);
 		lastMoveAt.set(trainerId, Date.now());
 
-		socket.emit("room:init", { self, players: roomState.listPlayers() });
+		socket.emit("room:init", {
+			self,
+			players: roomState.listPlayers(),
+			messages: chatRing.recent(),
+		});
 		socket.to(ROOM_ID).emit("player:joined", self);
 
 		socket.on("move", (target) => {
@@ -51,9 +58,23 @@ function attachPlayground(io, pool) {
 			io.to(ROOM_ID).emit("player:moved", { trainerId, x: resolved.x, y: resolved.y });
 		});
 
+		socket.on("chat:send", (text) => {
+			const clean = sanitizeMessage(text);
+			if (!clean) return;
+
+			const now = Date.now();
+			if (isRateLimited(lastMessageAt.get(trainerId), now)) return;
+			lastMessageAt.set(trainerId, now);
+
+			const msg = { trainerId, name, text: clean, ts: now };
+			chatRing.push(msg);
+			io.to(ROOM_ID).emit("chat:message", msg);
+		});
+
 		socket.on("disconnect", () => {
 			roomState.removePlayer(trainerId);
 			lastMoveAt.delete(trainerId);
+			lastMessageAt.delete(trainerId);
 			io.to(ROOM_ID).emit("player:left", { trainerId });
 		});
 	});
