@@ -8,7 +8,7 @@
 		"start": "node server.js",
 		"seed:party": "node scripts/seed-party.js",
 		"seed:inventory": "node scripts/seed-inventory.js",
-		"test": "node --test src/campaign/loader.test.js src/campaign/hydrate.test.js src/campaign/content.test.js src/services/campaignService.test.js src/services/progressService.test.js src/services/partyService.test.js src/services/starterService.test.js src/services/xpService.test.js src/services/inventoryService.test.js src/services/martService.test.js src/services/evolutionService.test.js src/services/moveLearnService.test.js src/services/rewardService.test.js src/services/battleStatus.test.js src/services/battleAi.test.js src/services/battleSessionService.test.js src/playground/movement.test.js src/playground/roomState.test.js"
+		"test": "node --test src/campaign/loader.test.js src/campaign/hydrate.test.js src/campaign/content.test.js src/services/campaignService.test.js src/services/progressService.test.js src/services/partyService.test.js src/services/starterService.test.js src/services/xpService.test.js src/services/inventoryService.test.js src/services/martService.test.js src/services/evolutionService.test.js src/services/moveLearnService.test.js src/services/rewardService.test.js src/services/battleStatus.test.js src/services/battleAi.test.js src/services/battleSessionService.test.js src/playground/movement.test.js src/playground/roomState.test.js src/playground/socketAuth.test.js"
 	},
 	"keywords": [],
 	"author": "",
