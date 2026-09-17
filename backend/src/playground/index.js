@@ -4,7 +4,7 @@ const { JWT_SECRET } = require("../config/env");
 const { createSocketAuthMiddleware } = require("./socketAuth");
 const { createRoomState } = require("./roomState");
 const { resolveMove, ROOM_WIDTH, ROOM_HEIGHT } = require("./movement");
-const { createChatRing, sanitizeMessage, isRateLimited } = require("./chat");
+const { createChatRing, sanitizeMessage, isRateLimited, MIN_MESSAGE_INTERVAL_MS } = require("./chat");
 
 const ROOM_ID = "main";
 
@@ -30,6 +30,18 @@ function attachPlayground(io, pool) {
 	io.on("connection", (socket) => {
 		const { trainerId, name } = socket.trainer;
 		socket.join(ROOM_ID);
+
+		// lastMessageAt is intentionally keyed by trainerId (not per-socket)
+		// and intentionally NOT cleared on disconnect, so the flood guard
+		// survives reconnects. Sweep out entries that are old enough to
+		// never rate-limit anyone again, so the Map doesn't grow unbounded
+		// over the server's lifetime.
+		const nowSweep = Date.now();
+		for (const [id, ts] of lastMessageAt) {
+			if (nowSweep - ts >= MIN_MESSAGE_INTERVAL_MS) {
+				lastMessageAt.delete(id);
+			}
+		}
 
 		const spawn = { x: ROOM_WIDTH / 2, y: ROOM_HEIGHT / 2 };
 		const self = roomState.addPlayer(trainerId, name, spawn);
@@ -74,7 +86,8 @@ function attachPlayground(io, pool) {
 		socket.on("disconnect", () => {
 			roomState.removePlayer(trainerId);
 			lastMoveAt.delete(trainerId);
-			lastMessageAt.delete(trainerId);
+			// lastMessageAt is deliberately NOT cleared here — see the sweep
+			// in the connection handler above.
 			io.to(ROOM_ID).emit("player:left", { trainerId });
 		});
 	});

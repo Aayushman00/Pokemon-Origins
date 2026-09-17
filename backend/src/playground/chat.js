@@ -27,6 +27,10 @@ function createChatRing(maxSize = DEFAULT_MAX_MESSAGES) {
 
 function sanitizeMessage(text) {
 	if (typeof text !== "string") return null;
+	// Cheap pre-trim length check: a string can only shrink (or stay the
+	// same) when trimmed, so anything more than 2x the real cap is
+	// trivially rejectable without paying for the trim/scan.
+	if (text.length > MAX_MESSAGE_LENGTH * 2) return null;
 	const trimmed = text.trim();
 	if (!trimmed || trimmed.length > MAX_MESSAGE_LENGTH) return null;
 	return trimmed;
