@@ -19,6 +19,7 @@ const Playground = () => {
   const containerRef = useRef(null);
   const draggingRef = useRef(false);
   const lastEmitRef = useRef(0);
+  const chatLogRef = useRef(null);
 
   const rerender = () => forceRender((n) => n + 1);
 
@@ -90,6 +91,11 @@ const Playground = () => {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [selfId]);
+
+  useEffect(() => {
+    const el = chatLogRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages]);
 
   const pointToRoom = (clientX, clientY) => {
     const rect = containerRef.current.getBoundingClientRect();
@@ -168,9 +174,9 @@ const Playground = () => {
       </div>
 
       <div className="playground-chat">
-        <div className="playground-chat-log">
-          {messages.map((msg, i) => (
-            <div key={`${msg.trainerId}-${msg.ts}-${i}`} className="playground-chat-message">
+        <div className="playground-chat-log" ref={chatLogRef}>
+          {messages.map((msg) => (
+            <div key={`${msg.trainerId}-${msg.ts}`} className="playground-chat-message">
               <span className="playground-chat-author">{msg.name}:</span> {msg.text}
             </div>
           ))}
