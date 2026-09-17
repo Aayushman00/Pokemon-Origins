@@ -36,7 +36,7 @@ function attachPlayground(io, pool) {
 		socket.to(ROOM_ID).emit("player:joined", self);
 
 		socket.on("move", (target) => {
-			if (!target || typeof target.x !== "number" || typeof target.y !== "number") {
+			if (!target || !Number.isFinite(target.x) || !Number.isFinite(target.y)) {
 				return;
 			}
 			const current = roomState.getPlayer(trainerId);
