@@ -3,28 +3,6 @@ const express = require("express");
 const router = express.Router();
 const db = require("./config/db"); // Ensure this is a promise-based connection/pool
 
-// A static mapping from type names to IDs (adjust if needed)
-const typeMapping = {
-  normal: 1,
-  fire: 2,
-  water: 3,
-  electric: 4,
-  grass: 5,
-  ice: 6,
-  fighting: 7,
-  poison: 8,
-  ground: 9,
-  flying: 10,
-  psychic: 11,
-  bug: 12,
-  rock: 13,
-  ghost: 14,
-  dragon: 15,
-  dark: 16,
-  steel: 17,
-  fairy: 18,
-};
-
 // Utility: Wrap db.query using async/await
 const queryAsync = async (query, params = []) => {
   const [rows] = await db.query(query, params);
@@ -139,11 +117,12 @@ router.get("/:id", async (req, res) => {
     // 7. Compute weaknesses from the type_damage_relations table.
     let weaknessSet = new Set();
     for (const typeName of types) {
-      const typeId = typeMapping[typeName.toLowerCase()];
-      if (!typeId) continue;
       const weakRows = await queryAsync(
-        "SELECT t.name FROM type_damage_relations d JOIN Type t ON d.attacking_type_id = t.type_id WHERE d.defending_type_id = ? AND d.multiplier > 1",
-        [typeId]
+        `SELECT t.name FROM type_damage_relations d
+         JOIN Type t ON d.attacking_type_id = t.type_id
+         WHERE d.defending_type_id = (SELECT type_id FROM Type WHERE LOWER(name) = LOWER(?))
+           AND d.multiplier > 1`,
+        [typeName]
       );
       weakRows.forEach((row) => weaknessSet.add(row.name));
     }
