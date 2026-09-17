@@ -40,3 +40,52 @@
   text-align: center;
   color: var(--lcd-ink, #111);
 }
+
+.playground-layout {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.playground-chat {
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  height: 600px;
+  border: 2px solid #333;
+  background: #111;
+  color: #eee;
+}
+
+.playground-chat-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  font-size: 13px;
+}
+
+.playground-chat-message {
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+
+.playground-chat-author {
+  font-weight: bold;
+}
+
+.playground-chat-form {
+  display: flex;
+  border-top: 1px solid #333;
+}
+
+.playground-chat-form input {
+  flex: 1;
+  padding: 6px;
+  background: #222;
+  color: #eee;
+  border: none;
+}
+
+.playground-chat-form button {
+  padding: 6px 12px;
+}
