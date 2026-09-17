@@ -1,3 +1,4 @@
+// backend/src/playground/socketAuth.js
 /**
  * Socket.IO handshake middleware factory. Verifies the JWT the same way
  * backend/src/middleware/auth.js does for REST, then resolves the trainer's
@@ -25,15 +26,24 @@ function createSocketAuthMiddleware({ verifyToken, findTrainerById }) {
 			return next(new Error("Invalid token payload"));
 		}
 
-		findTrainerById(decoded.trainer_id)
-			.then((trainer) => {
+		let lookupPromise;
+		try {
+			lookupPromise = Promise.resolve(findTrainerById(decoded.trainer_id));
+		} catch {
+			return next(new Error("Trainer lookup failed"));
+		}
+
+		lookupPromise.then(
+			(trainer) => {
 				if (!trainer) {
-					return next(new Error("Trainer not found"));
+					next(new Error("Trainer not found"));
+					return;
 				}
 				socket.trainer = { trainerId: trainer.trainer_id, name: trainer.name };
 				next();
-			})
-			.catch(() => next(new Error("Trainer lookup failed")));
+			},
+			() => next(new Error("Trainer lookup failed"))
+		);
 	};
 }
 
