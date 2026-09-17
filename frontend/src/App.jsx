@@ -20,6 +20,7 @@ import Level from './pages/Game/Level';
 import Bag from './pages/Game/Bag';
 import Mart from './pages/Game/Mart';
 import Landing from "./pages/Landing/Landing";
+import Playground from "./pages/Playground/Playground";
 
 import { api } from "./api";
 
@@ -53,6 +54,10 @@ function AnimatedRoutes({ user }) {
           <Route
             path="/game/mart"
             element={user ? <Mart /> : <Navigate to="/auth" replace />}
+          />
+          <Route
+            path="/playground"
+            element={user ? <Playground /> : <Navigate to="/auth" replace />}
           />
           <Route
             path="*"
