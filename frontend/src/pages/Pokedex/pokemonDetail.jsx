@@ -412,6 +412,14 @@ function PokemonDetail() {
                     No.{String(evoData.id).padStart(4, "0")}
                   </span>
                 </p>
+                {evoData.requirement && (
+                  <p
+                    className="font-pixel text-[0.45rem] mt-1 text-center"
+                    style={{ color: "var(--lcd-accent)" }}
+                  >
+                    {evoData.requirement}
+                  </p>
+                )}
                 <div className="flex space-x-1 mt-2">
                   {evoData.types?.map((type) => (
                     <span
