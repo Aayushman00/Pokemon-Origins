@@ -13,7 +13,7 @@
 ## Rulings (made during planning, binding on this plan)
 
 1. **Reuse `addLog`'s existing call sites; don't touch all ~25 of them.** The spec's Section 13 conceptual diagram shows a "Battle Event Stream" feeding both a battle message layer and a developer log as if they were two separate things a caller pushes to. In this codebase, every event-type branch in `playEvent` already calls the same `addLog(message)` function for its player-visible text — there is already exactly one call site per event, not two, and it already exists. This plan changes what `addLog` does internally (also update `currentMessage`, not just `battleLog`) rather than duplicating ~25 call sites into two separate calls each. Same outcome (message layer + dev log both fed from one event stream), far smaller and safer diff.
-2. **No new queue/timer pacing.** `playEvent`'s existing `await wait(motionMs(...))` calls after each `addLog()` already sequence events one at a time with real delays (matching `ANIMATION_GUIDE.md`'s "beats are sequenced, never parallel spam" rule, which predates this redesign). A message-queue-with-its-own-timer would duplicate pacing logic that already exists and works. `currentMessage` is simply "whatever `addLog` most recently set," consumed synchronously by the render — the existing `await wait()` calls are what makes it readable one beat at a time.
+2. **`addLog` needs its own small internal queue — a real gap found during plan review.** The original draft of this ruling assumed `playEvent`'s existing `await wait(motionMs(...))` calls between beats were sufficient pacing for `currentMessage` too. Verified false: `playEvent`'s damage-landed branch (`BattleSim.jsx:605-608`) calls `addLog` up to four times **synchronously, with no `await` between them** (`"X dealt Y damage!"`, optionally `"Hit N times!"`, optionally `"It's a one-hit KO!"`, then `logEffectiveness()` which can itself add a crit line and an effectiveness line). React 18's automatic batching (this app renders via `createRoot`, confirmed in `frontend/src/main.jsx`) collapses all `setCurrentMessage(...)` calls made synchronously in a row into a single committed render — only the **last** call's text would ever actually paint, silently dropping "X dealt Y damage!", "Hit N times!", and the crit line on any hit that also has a multiplier line, which is a common case and exactly the kind of message this phase exists to surface. Fix: `addLog` gets its own tiny internal FIFO queue + `setTimeout`-paced drain, entirely inside `addLog`'s own body — the ~25 call sites in `playEvent` stay completely unchanged (Ruling 1 still holds: one change point, not two), but that one change point now guarantees every distinct message gets its own timed display slot regardless of how many times a caller invokes `addLog` back-to-back without awaiting. This decouples the dialog box's message pacing from `playEvent`'s coarser per-beat `wait()` calls, which for the common single-message-per-beat case is invisible (the queue drains immediately, matching prior behavior) and for the rare multi-message beat is a real, deliberate improvement (each line gets its moment, GBA-style) rather than the silent data loss the original approach would have shipped.
 3. **`currentMessage` resets at the one authoritative "player regains control" point, not at every possible UI-navigation exit.** After a full round of events plays out, `BattleSim.jsx`'s response-handling block resets `currentTurn`/`selectedMove`/`hoveredMove` back to idle (currently at `BattleSim.jsx:687-689`) — this plan adds a `setCurrentMessage('')` reset at that exact point, so the dialog falls back to "What will X do?" once the player regains control. Explicit "CANCEL" buttons that back out of the bag/move menus without triggering any event (`BattleSim.jsx:~1178`, `~1247`) are NOT given their own reset — if a stale message is still showing when a player backs out of a sub-menu without acting, it stays visible until the next real action clears it. `ponytail: minor stale-message edge case on cancel-without-acting, not the structural problem this phase fixes; add explicit resets at those two cancel handlers if it's ever reported as visually confusing in practice.`
 4. **Developer log collapses in place, doesn't resize the scaled stage.** `BattleSim.jsx` computes `STAGE_TOTAL_HEIGHT` (a constant used to size the whole scaled wrapper) assuming the log container's fixed height. Collapsing the log by hiding its *inner* scrollable content (not unmounting the outer `.gba-battle-log-container`) keeps the container's footprint constant, so `STAGE_TOTAL_HEIGHT` doesn't need to become dynamic — a smaller, safer change than making the overall stage layout height-responsive to a UI toggle.
 5. **Victory/faint/XP messages are out of scope here.** `BattleSim.jsx:1098-1114` (the `uiPhase === 'finished'` dialog box showing win/lose text + XP summary) already reads real event-derived text, not generic placeholders — confirmed accurate during the original repo audit and unchanged since. This phase only fixes the *active-battle* dialog box (`BattleSim.jsx:1257` block), which is the one still showing only generic template text.
@@ -27,24 +27,28 @@
 
 ---
 
-### Task 1: Add `currentMessage` state, wire `addLog`, reset on round completion
+### Task 1: Add `currentMessage` state, give `addLog` an internal message queue, reset on round completion
 
 **Files:**
-- Modify: `frontend/src/pages/Game/BattleSim.jsx` (add one `useState` near the other state declarations, modify `addLog`'s body at lines 241-244, add one reset line near lines 687-689)
+- Modify: `frontend/src/pages/Game/BattleSim.jsx` (add one `useState` and two `useRef`s near the other state declarations, replace `addLog`'s body at lines 241-244 with a queued version, add one reset line near lines 687-689)
 
 **Interfaces:**
-- Consumes: nothing new.
+- Consumes: `motionMs`, `timersRef` (both already exist in this component, at lines 134 and wherever `timersRef` is declared — reused, not redefined).
 - Produces: `currentMessage` (state) and `setCurrentMessage` (setter), used by Task 2. No other task depends on this.
 
-- [ ] **Step 1: Add the state**
+- [ ] **Step 1: Add the state and queue refs**
 
 Find the block of `useState` declarations near the top of the component (around line 97, alongside `const [battleLog, setBattleLog] = useState([]);`) and add directly after it:
 
 ```javascript
   const [currentMessage, setCurrentMessage] = useState('');
+  const messageQueueRef = useRef([]);
+  const messageTimerRef = useRef(null);
 ```
 
-- [ ] **Step 2: Update `addLog` to also set the current message**
+(`useRef` is already imported at `BattleSim.jsx:1` alongside `useState`/`useEffect` — verified 2026-09-18, no import change needed.)
+
+- [ ] **Step 2: Replace `addLog` with a queued version**
 
 Change (`BattleSim.jsx:241-244`):
 
@@ -58,12 +62,34 @@ Change (`BattleSim.jsx:241-244`):
 to:
 
 ```javascript
+  // Drains messageQueueRef one at a time, pacing the in-game dialog box
+  // independently of however many times addLog was called back-to-back
+  // (React 18 batches synchronous setState calls, so without this a
+  // multi-message beat like "dealt damage" + "critical hit" + "super
+  // effective" would silently collapse to only the last message -- see
+  // Phase 8 plan Ruling 2).
+  const flushNextMessage = () => {
+    if (messageQueueRef.current.length === 0) {
+      messageTimerRef.current = null;
+      return;
+    }
+    const next = messageQueueRef.current.shift();
+    setCurrentMessage(next);
+    messageTimerRef.current = setTimeout(flushNextMessage, motionMs(600));
+    timersRef.current.push(messageTimerRef.current);
+  };
+
   const addLog = (message) => {
     const timestamp = new Date().toLocaleTimeString();
     setBattleLog((prevLog) => [...prevLog, `${timestamp} - ${message}`]);
-    setCurrentMessage(message);
+    messageQueueRef.current.push(message);
+    if (!messageTimerRef.current) {
+      flushNextMessage();
+    }
   };
 ```
+
+(`timersRef.current.push(...)` matches the existing `wait()` helper's own cleanup pattern a few lines above — `timersRef` is already declared at `BattleSim.jsx:130`, verified 2026-09-18, no new declaration needed.)
 
 - [ ] **Step 3: Reset the message when the player regains control**
 
@@ -81,10 +107,19 @@ change to:
       setCurrentTurn('none');
       setSelectedMove(null);
       setHoveredMove(null);
+      // Drop any messages the queue hasn't painted yet (e.g. a multi-line
+      // damage beat that outlasted this round's own animation timing) so a
+      // stale queued line can't overwrite "What will X do?" after control
+      // has already returned to the player.
+      messageQueueRef.current = [];
+      if (messageTimerRef.current) {
+        clearTimeout(messageTimerRef.current);
+        messageTimerRef.current = null;
+      }
       setCurrentMessage('');
 ```
 
-(Re-verify this exact 3-line snippet's current location with `grep -n "setCurrentTurn('none');" -A2 frontend/src/pages/Game/BattleSim.jsx` before editing — this file has multiple `setCurrentTurn('none')` call sites, e.g. inside individual `playEvent` branches; the one this step targets is specifically the one immediately followed by `setSelectedMove(null)` and `setHoveredMove(null)`, the post-round "return control to player" block, not any of the per-event-type ones inside `playEvent`.)
+(Re-verify this exact 3-line snippet's current location with `grep -n "setCurrentTurn('none');" -A2 frontend/src/pages/Game/BattleSim.jsx` before editing — this file has multiple `setCurrentTurn('none')` call sites, e.g. inside individual `playEvent` branches; the one this step targets is specifically the one immediately followed by `setSelectedMove(null)` and `setHoveredMove(null)`, the post-round "return control to player" block, not any of the per-event-type ones inside `playEvent`. The queue-clearing lines are new in this revision of the plan — added because the queue can legitimately still hold undrained messages at this point for a multi-message beat, per Ruling 2.)
 
 - [ ] **Step 4: Verify the build**
 
@@ -98,7 +133,7 @@ Expected: clean build (this task has no new visible behavior yet — `currentMes
 grep -n "currentMessage" frontend/src/pages/Game/BattleSim.jsx
 ```
 
-Expected: 3 matching lines — the `useState` declaration (`const [currentMessage, setCurrentMessage] = useState('');`), the `setCurrentMessage(message)` call inside `addLog`, and the `setCurrentMessage('')` reset. If your count differs, read each match to confirm it's one of exactly these three things, nothing else.
+Expected: 3 matching lines — the `useState` declaration (`const [currentMessage, setCurrentMessage] = useState('');`), the `setCurrentMessage(next)` call inside `flushNextMessage`, and the `setCurrentMessage('')` reset. If your count differs, read each match to confirm it's one of exactly these three things, nothing else.
 
 - [ ] **Step 6: Commit**
 
