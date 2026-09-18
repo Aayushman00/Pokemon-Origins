@@ -799,6 +799,9 @@ const BattleSim = ({
     setUiPhase('restarting');
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
+    messageQueueRef.current = [];
+    messageTimerRef.current = null;
+    setCurrentMessage('');
     setBattleLog([]);
     setBattleOutcome(null);
     setSelectedMove(null);
