@@ -87,6 +87,7 @@ const BattleSim = ({
 }) => {
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
+  const { user } = useUser();
 
   // Server session + displayed battle state (HP animates beat-by-beat)
   const [session, setSession] = useState(null);
@@ -814,7 +815,6 @@ const BattleSim = ({
   };
 
   const grid = gridMoves();
-  const { user } = useUser();
   const playerSpriteUrl = playerTrainerSprite(user?.gender);
   const introStarted = uiPhase !== 'encounter';
   const trainerName = session?.trainerName || 'The trainer';
@@ -884,6 +884,7 @@ const BattleSim = ({
                         />
                       </motion.div>
                     )}
+                    {/* Unlike the opponent avatar above (gated on session?.trainerSprite for wild/legendary fights), the player always throws their own Poké Ball, so this renders unconditionally on every encounter */}
                     <motion.div
                       className="gba-player-trainer-avatar-wrap"
                       initial={{ x: -80, opacity: 0 }}
