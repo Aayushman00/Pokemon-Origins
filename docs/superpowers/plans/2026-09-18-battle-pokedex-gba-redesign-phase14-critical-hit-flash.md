@@ -150,10 +150,12 @@ Expected: clean build.
 - [ ] **Step 8: Static verification**
 
 ```bash
-grep -n "criticalFlash\|triggerCriticalFlash" frontend/src/pages/Game/BattleSim.jsx
+grep -in "criticalFlash" frontend/src/pages/Game/BattleSim.jsx
 ```
 
-Expected: matches at the state declaration, the function definition, the `playEvent` call site, the JSX condition (`{criticalFlash &&`), and the `restartBattle` reset — 5 occurrences of `criticalFlash`-related identifiers (state + reset + JSX use it; function name adds 2 more for its declaration and its call site). Read each to confirm it's one of these 5 sites, not something unexpected.
+(`-i` matters: `setCriticalFlash` capitalizes the C right after `set`, so a case-sensitive grep misses both `setCriticalFlash(...)` calls inside `triggerCriticalFlash` and the `restartBattle` reset line — exactly the line this check most needs to catch if it were missing.)
+
+Expected: 6 matches — the state declaration, both `setCriticalFlash(...)` calls inside `triggerCriticalFlash`, the JSX condition (`{criticalFlash &&`), and the `restartBattle` reset line (5 sites, one being counted twice since `triggerCriticalFlash` itself sets it twice). Read each to confirm it's one of these sites, not something unexpected, and specifically confirm the `restartBattle` reset line is among them.
 
 ```bash
 grep -n "triggerHitFlash(event.moveType)" -A1 frontend/src/pages/Game/BattleSim.jsx
