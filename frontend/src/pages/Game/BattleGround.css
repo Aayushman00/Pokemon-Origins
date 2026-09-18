@@ -674,6 +674,24 @@
 }
 
 /* Battle Log (sibling of the stage so it is not clipped by overflow) */
+.gba-battle-log-toggle {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 15px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid rgba(80, 104, 96, 0.3);
+  color: #506860;
+  font-family: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.gba-battle-log-toggle:hover {
+  background: rgba(80, 104, 96, 0.08);
+}
+
 .gba-battle-log-container {
   width: 768px;
   margin-top: 12px;

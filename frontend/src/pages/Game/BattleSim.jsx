@@ -96,6 +96,7 @@ const BattleSim = ({
   const [battleOutcome, setBattleOutcome] = useState(null);
   const [battleLog, setBattleLog] = useState([]);
   const [currentMessage, setCurrentMessage] = useState('');
+  const [devLogOpen, setDevLogOpen] = useState(false);
   const messageQueueRef = useRef([]);
   const messageTimerRef = useRef(null);
   const [error, setError] = useState('');
@@ -1399,20 +1400,32 @@ const BattleSim = ({
             </div>
           </div>
 
-          {/* Battle log lives below the stage so it is actually visible */}
+          {/* Developer log: full event history with timestamps, collapsed by
+              default. The in-game dialog box (Phase 8) is the primary
+              gameplay feedback surface now -- this stays available for
+              debugging, not as the main way players see battle events. */}
           <div className="gba-battle-log-container">
-            <div className="gba-battle-log" ref={logRef}>
-              {battleLog.map((entry, index) => (
-                <motion.p
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {entry}
-                </motion.p>
-              ))}
-            </div>
+            <button
+              type="button"
+              className="gba-battle-log-toggle"
+              onClick={() => setDevLogOpen((open) => !open)}
+            >
+              {devLogOpen ? '▼' : '▶'} DEVELOPER LOG
+            </button>
+            {devLogOpen && (
+              <div className="gba-battle-log" ref={logRef}>
+                {battleLog.map((entry, index) => (
+                  <motion.p
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {entry}
+                  </motion.p>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
