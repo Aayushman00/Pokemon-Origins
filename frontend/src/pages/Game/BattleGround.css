@@ -104,6 +104,16 @@
   z-index: 11;
 }
 
+/* Player's own trainer (Red/Leaf), mirrored to the opposite corner --
+   Phase 7. Same lifecycle as .gba-trainer-avatar-wrap: only visible during
+   the encounter overlay, unmounts with it. */
+.gba-player-trainer-avatar-wrap {
+  position: absolute;
+  bottom: 18px;
+  left: 24px;
+  z-index: 11;
+}
+
 .gba-trainer-avatar {
   width: 64px;
   height: auto;
@@ -111,7 +121,8 @@
   filter: drop-shadow(2px 3px 0 rgba(0,0,0,0.5));
 }
 
-/* FireRed-style pokéball throw (no trainer character sprites) */
+/* FireRed-style pokéball throw, now paired with a brief trainer-avatar
+   flash on both sides (Phase 7) rather than no trainer sprites at all. */
 .pokeball-throw {
   position: absolute;
   left: 50%;

@@ -8,6 +8,8 @@ import BattlePokemonSprite from '../../components/PokemonSprite/BattlePokemonSpr
 import TrainerAvatar from '../../components/TrainerAvatar/TrainerAvatar';
 import './BattleGround.css';
 import { slotStyle, shadowStyle } from './battleLayout';
+import { useUser } from '../../App';
+import { playerTrainerSprite } from '../../utils/trainerSprite';
 
 // Native stage size; scaled down responsively, never up
 const STAGE_WIDTH = 768;
@@ -812,6 +814,8 @@ const BattleSim = ({
   };
 
   const grid = gridMoves();
+  const { user } = useUser();
+  const playerSpriteUrl = playerTrainerSprite(user?.gender);
   const introStarted = uiPhase !== 'encounter';
   const trainerName = session?.trainerName || 'The trainer';
   const party = session?.party || [];
@@ -880,6 +884,19 @@ const BattleSim = ({
                         />
                       </motion.div>
                     )}
+                    <motion.div
+                      className="gba-player-trainer-avatar-wrap"
+                      initial={{ x: -80, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: motionMs(150) / 1000, duration: motionMs(350) / 1000 }}
+                    >
+                      <img
+                        src={playerSpriteUrl}
+                        alt=""
+                        aria-hidden="true"
+                        className="gba-trainer-avatar pixelated"
+                      />
+                    </motion.div>
                     <motion.h2
                       initial={{ opacity: 0, y: 50 }}
                       animate={{ opacity: 1, y: 0 }}
