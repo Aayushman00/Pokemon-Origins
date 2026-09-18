@@ -80,7 +80,7 @@ function createPokemonDetailService({ client, typeEffectiveness }) {
     }));
     const next_evolutions = flattenNext(currentNode);
 
-    const weaknesses = await typeEffectiveness.getWeaknesses(types);
+    const { weaknesses, resistances, immunities } = await typeEffectiveness.getMatchups(types);
 
     return {
       id: pokemon.id,
@@ -99,6 +99,8 @@ function createPokemonDetailService({ client, typeEffectiveness }) {
       previous_evolutions,
       next_evolutions,
       weaknesses,
+      resistances,
+      immunities,
     };
   }
 

@@ -142,4 +142,13 @@ describe("pokemonDetailService.getPokemonDetail", () => {
     const detail = await svc.getPokemonDetail(25);
     assert.deepEqual(detail.weaknesses, ["ground"]);
   });
+
+  it("includes resistances and immunities alongside weaknesses, from the same typeEffectiveness service", async () => {
+    const client = fakeClient();
+    const svc = createPokemonDetailService({ client, typeEffectiveness: createTypeEffectivenessService({ client }) });
+    const detail = await svc.getPokemonDetail(25);
+    assert.deepEqual(detail.weaknesses, ["ground"]);
+    assert.deepEqual(detail.resistances, []);
+    assert.deepEqual(detail.immunities, []);
+  });
 });
