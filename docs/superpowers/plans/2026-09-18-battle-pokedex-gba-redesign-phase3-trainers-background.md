@@ -14,7 +14,7 @@
 
 1. **Source files live outside the git repository.** `Main Character Male.gif`, `Main Character Female.gif`, and `Game Boy Advance - Pokemon FireRed _ LeafGreen - Battle Effects - Battle Backgrounds.png` are all at `C:\Users\ayush\Desktop\Coding\Pokemon Origins\` — one directory above this repo's root (`C:\Users\ayush\Desktop\Coding\Pokemon Origins\Pokemon-Origins\`), and are not tracked by any git repository (confirmed during Phase 2's Task 5 investigation of this same parent folder). The crop scripts read them via a path one level above the repo root (`Path(__file__).resolve().parents[2] / "<filename>"`), matching where the user actually placed them; only the *derived, cropped* output PNGs are written into the repo. This is a one-time read of user-supplied source material, not a runtime dependency.
 2. **Output paths.** Following Phase 2's precedent (write to the app's real static-asset root, not the design spec's generic `assets/...` proposal): trainer sprites go to `frontend/public/sprites/trainers/player/red.png` and `.../leaf.png` (same `sprites/trainers/` convention `TrainerAvatar.jsx` already uses for NPC opponents, just under a new `player/` subfolder since a player-controlled trainer is a distinct concept from an NPC). Backgrounds go to `frontend/public/backgrounds/{name}.png` (new convention — nothing currently reads background images, so this establishes the pattern used by the same static-serving mechanism as `frontend/public/sprites/`).
-3. **Neither trainer sheet contains an official back-facing "throw the Poké Ball" send-out sprite.** Verified by cropping and visually inspecting every candidate region on both sheets (2026-09-18): the male sheet's two large standalone poses (40×55 and 33×80, at roughly x=133-172/y=215-269 and x=237-269/y=210-289) are both **front-facing** overworld idle poses, not back-facing throw poses; likewise the male sheet's 5-pose "OTHER" row (roughly y=144-192) contains a walking pose, a **front-facing pose holding a Poké Ball raised overhead**, a gesturing pose, and two running poses — no back view. The female sheet's "BATTLE" row (y≈166-220) similarly contains only front/side running and waving poses. Given neither sheet has the specific asset the spec assumed would exist, this plan selects the closest available substitute for a brief send-out flourish: **male → the front-facing "Poké Ball raised overhead" pose** (bbox 86,149–148,192 on the male sheet, reads naturally as an enthusiastic send-out gesture), **female → the front-facing "arm raised, waving" pose** (bbox 152,172–203,219 on the female sheet — the clearest single-figure, non-cropped-off pose in that row). `ponytail: substitute front-facing poses stand in for a true back-facing throw sprite that doesn't exist in the uploaded sheets; upgrade path is sourcing a real FRLG trainer-back sprite (e.g. from Bulbagarden's trainer sprite categories, same MediaWiki-API technique as Phase 2) if a future pass wants the authentic throw animation.`
+3. **Neither trainer sheet contains an official back-facing "throw the Poké Ball" send-out sprite.** Verified by cropping and visually inspecting every candidate region on both sheets (2026-09-18, re-verified at 6x zoom after an initial misread during plan review): the male sheet's two large standalone poses (40×55 and 33×80, at roughly x=133-172/y=215-269 and x=237-269/y=210-289) are both front-facing overworld idle poses. The 5-pose "OTHER" row (y≈144-192) contains: a back/three-quarter pose with hand raised near the face and backpack visible (bbox 86,149-148,192 — **no ball present**, ruled out), a **forward-lunging pose with the arm fully extended and hand open reaching forward** (bbox 242,144-305,192 — the closest thing on this sheet to a throwing/releasing motion), a gesturing pose, and two running poses. The female sheet's "BATTLE" row (y≈166-220) contains a 3/4-profile arm-raised/waving pose (bbox 152,172-203,219) — accurate as originally identified, no correction needed. Given neither sheet has the specific asset the spec assumed would exist, this plan selects the closest available substitute for a brief send-out flourish: **male → the forward-lunging, arm-extended pose** (bbox 242,144-305,192), **female → the arm-raised pose** (bbox 152,172-203,219). `ponytail: substitute poses stand in for a true back-facing throw sprite that doesn't exist in the uploaded sheets; upgrade path is sourcing a real FRLG trainer-back sprite (e.g. from Bulbagarden's trainer sprite categories, same MediaWiki-API technique as Phase 2) if a future pass wants the authentic throw animation.`
 4. **Background: 10 usable cells, not 12.** The sheet is a 3-column × 4-row grid, but row 4's columns 2-3 are occupied by a credit/attribution text box ("Pokemon FRLG Battle BG's ripped by Desgardes. No credit needed."), not a background — verified via border-line detection (row 4's right two columns show only a 67%-width red border scan, not the 100% seen for real cell dividers). This plan crops the 9 backgrounds in rows 1-3 plus the 1 valid cell in row 4 column 1, for **10 total named backgrounds**, and explicitly skips the credit-box region.
 5. **Precise grid geometry**, measured via border-color detection (dark red `RGB(128,0,0)`, 2026-09-18): columns at x=[6-245], [249-488], [492-731] (240px wide each, 3px borders at x=0-5, 246-248, 489-491, 732-736); rows at y=[6-117], [121-232], [235-346], [349-460] (112px tall each, borders at y=0-5, 118-120, 233-234, 347-348, 461-465). Row 4 only has a real cell in column 1.
 
@@ -59,7 +59,7 @@ JOBS = [
     (
         "Main Character Male.gif",
         (17, 219, 255),
-        (86, 149, 149, 193),  # front-facing, Poke Ball raised overhead -- see plan Ruling 3
+        (242, 144, 306, 193),  # forward-lunging, arm extended reaching forward -- see plan Ruling 3
         "red.png",
     ),
     (
@@ -105,7 +105,7 @@ if __name__ == "__main__":
 
 Run: `python scripts/crop_trainer_sprites.py`
 
-Expected: two `wrote ...` lines, `red.png (63x44)`, `leaf.png (52x48)`.
+Expected: two `wrote ...` lines, `red.png (64x49)`, `leaf.png (52x48)`.
 
 - [ ] **Step 3: Verify transparency and no color-key halo**
 
@@ -130,11 +130,11 @@ print('OK: both trainer sprites fully color-keyed')
 "
 ```
 
-Expected: `red.png size (63, 44) residual-background-pixels 0`, `leaf.png size (52, 48) residual-background-pixels 0`, `OK: both trainer sprites fully color-keyed`.
+Expected: `red.png size (64, 49) residual-background-pixels 0`, `leaf.png size (52, 48) residual-background-pixels 0`, `OK: both trainer sprites fully color-keyed`.
 
 - [ ] **Step 4: Visual spot-check**
 
-Use the Read tool to view both `frontend/public/sprites/trainers/player/red.png` and `.../leaf.png` — confirm each shows a clean, recognizable trainer pose (per Ruling 3: Red holding a Poké Ball overhead; Leaf with arm raised) with a checkerboard/transparent background, no cyan/magenta halo, no clipped body parts.
+Use the Read tool to view both `frontend/public/sprites/trainers/player/red.png` and `.../leaf.png` — confirm each shows a clean, recognizable trainer pose (per Ruling 3: Red lunging forward with arm extended; Leaf with arm raised) with a checkerboard/transparent background, no cyan/magenta halo, no clipped body parts.
 
 - [ ] **Step 5: Commit**
 
