@@ -1153,7 +1153,7 @@ const BattleSim = ({
                   {battleOutcome.outcome === 'win' ? (
                     progressSave === 'error' ? (
                       <motion.button
-                        className="gba-restart-btn"
+                        className="pixel-btn pixel-btn--primary"
                         onClick={retryProgressAward}
                         whileHover={reduceMotion ? {} : { scale: 1.05 }}
                         whileTap={reduceMotion ? {} : { scale: 0.95 }}
@@ -1162,7 +1162,7 @@ const BattleSim = ({
                       </motion.button>
                     ) : (
                       <motion.button
-                        className="gba-restart-btn"
+                        className="pixel-btn pixel-btn--primary"
                         onClick={() => (onContinue ? onContinue() : restartBattle())}
                         disabled={progressSave !== 'saved'}
                         whileHover={reduceMotion || progressSave !== 'saved' ? {} : { scale: 1.05 }}
@@ -1174,7 +1174,7 @@ const BattleSim = ({
                   ) : (
                     <div className="gba-finish-actions">
                       <motion.button
-                        className="gba-restart-btn"
+                        className="pixel-btn pixel-btn--primary"
                         onClick={restartBattle}
                         whileHover={reduceMotion ? {} : { scale: 1.05 }}
                         whileTap={reduceMotion ? {} : { scale: 0.95 }}
@@ -1182,7 +1182,7 @@ const BattleSim = ({
                         Battle Again
                       </motion.button>
                       <button
-                        className="gba-restart-btn gba-restart-btn--secondary"
+                        className="pixel-btn"
                         onClick={() => navigate('/game')}
                       >
                         Back to hub

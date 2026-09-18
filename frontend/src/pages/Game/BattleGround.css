@@ -585,68 +585,12 @@
   background: #d8d8b8;
 }
 
-/* Restart Button */
-.gba-restart-btn {
-  margin-top: 10px;
-  padding: 8px 14px;
-  background: linear-gradient(to bottom, #f05858, #e04848);
-  border: 3px solid #506860;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  font-family: 'Press Start 2P', monospace;
-  color: white;
-  transition: all 0.2s ease;
-  position: relative;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 3px 6px rgba(0,0,0,0.2);
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.4);
-}
-
-.gba-restart-btn::before {
-  content: "";
-  position: absolute;
-  width: 20px;
-  height: 20px;
-  background: white;
-  border-radius: 50%;
-  border: 2px solid #506860;
-  top: 50%;
-  left: 12px;
-  transform: translateY(-50%);
-  box-shadow: inset 0 -2px 0 rgba(0,0,0,0.3);
-}
-
-.gba-restart-btn:hover {
-  background: linear-gradient(to bottom, #ff6868, #f05858);
-  transform: translateY(-3px);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 6px 10px rgba(0,0,0,0.25);
-}
-
-.gba-restart-btn:active {
-  transform: translateY(1px);
-  box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
-}
-
 /* Loss screen offers two exits: retry (primary) or back to the hub */
 .gba-finish-actions {
   display: flex;
   gap: 10px;
   justify-content: center;
   flex-wrap: wrap;
-}
-
-.gba-restart-btn--secondary {
-  background: linear-gradient(to bottom, #e8e8c8, #d8d8b0);
-  color: #33403a;
-  text-shadow: none;
-}
-
-.gba-restart-btn--secondary::before {
-  display: none;
-}
-
-.gba-restart-btn--secondary:hover {
-  background: linear-gradient(to bottom, #f4f4d8, #e8e8c8);
 }
 
 /* Battle Log (sibling of the stage so it is not clipped by overflow) */
