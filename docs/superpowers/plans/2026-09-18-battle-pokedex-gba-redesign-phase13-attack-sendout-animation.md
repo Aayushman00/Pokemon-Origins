@@ -89,8 +89,10 @@ Expected: clean build.
 - [ ] **Step 4: Static verification**
 
 ```bash
-grep -n "8, -32, -26\|type: 'spring'" frontend/src/pages/Game/BattleSim.jsx
+grep -n "8, -32, -26\|stiffness: 260, damping: 20" frontend/src/pages/Game/BattleSim.jsx
 ```
+
+(Note: `type: 'spring'` alone is NOT a safe grep target here — the file already has 2 pre-existing, unrelated `type: 'spring'` occurrences for HP-bar-fill width transitions, using `stiffness: 120, damping: 20`. `stiffness: 260, damping: 20` is unique to this task's new code.)
 
 Expected: both new patterns present, exactly once each (this task only touches the enemy block).
 
@@ -171,10 +173,10 @@ Expected: clean build.
 - [ ] **Step 4: Static verification**
 
 ```bash
-grep -n "\-8, 32, 26\|type: 'spring'" frontend/src/pages/Game/BattleSim.jsx
+grep -n "\-8, 32, 26\|stiffness: 260, damping: 20" frontend/src/pages/Game/BattleSim.jsx
 ```
 
-Expected: the player's array pattern present once, and `type: 'spring'` now present twice total in the file (enemy from Task 1, player from this task).
+Expected: the player's array pattern present once, and `stiffness: 260, damping: 20` now present twice total in the file (enemy from Task 1, player from this task) — do not grep on `type: 'spring'` alone, per Task 1 Step 4's note about the 2 pre-existing, unrelated HP-bar-fill spring transitions elsewhere in this file.
 
 - [ ] **Step 5: Visual check**
 
