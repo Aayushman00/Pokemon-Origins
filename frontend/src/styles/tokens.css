@@ -501,6 +501,22 @@
 	text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.4);
 }
 
+.dex-stat-bar {
+	display: flex;
+	gap: 2px;
+}
+
+.dex-stat-segment {
+	flex: 1 1 0;
+	height: 8px;
+	background: var(--lcd-shadow);
+	border-radius: 1px;
+}
+
+.dex-stat-segment.filled {
+	background: var(--lcd-accent);
+}
+
 /* ---------- Accessibility ---------- */
 
 :focus-visible {

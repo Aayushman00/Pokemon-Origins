@@ -310,6 +310,80 @@ function PokemonDetail() {
                 )}
               </div>
             </div>
+            {/* Resistances */}
+            <div>
+              <h2
+                className="font-pixel text-[0.7rem] mb-4"
+                style={{ color: "var(--lcd-ink-bright)" }}
+              >
+                RESISTANCES
+              </h2>
+              <div className="flex justify-center gap-3 flex-wrap">
+                {pokemon.resistances && pokemon.resistances.length > 0 ? (
+                  pokemon.resistances.map((r) => (
+                    <span
+                      key={r}
+                      className="dex-chip"
+                      style={{
+                        backgroundColor: typeColor(r),
+                        fontSize: "0.6rem",
+                        padding: "0.4rem 0.7rem",
+                      }}
+                    >
+                      {r}
+                    </span>
+                  ))
+                ) : (
+                  <span
+                    className="dex-chip"
+                    style={{
+                      backgroundColor: typeColor("normal"),
+                      fontSize: "0.6rem",
+                      padding: "0.4rem 0.7rem",
+                    }}
+                  >
+                    None
+                  </span>
+                )}
+              </div>
+            </div>
+            {/* Immunities */}
+            <div>
+              <h2
+                className="font-pixel text-[0.7rem] mb-4"
+                style={{ color: "var(--lcd-ink-bright)" }}
+              >
+                IMMUNITIES
+              </h2>
+              <div className="flex justify-center gap-3 flex-wrap">
+                {pokemon.immunities && pokemon.immunities.length > 0 ? (
+                  pokemon.immunities.map((i) => (
+                    <span
+                      key={i}
+                      className="dex-chip"
+                      style={{
+                        backgroundColor: typeColor(i),
+                        fontSize: "0.6rem",
+                        padding: "0.4rem 0.7rem",
+                      }}
+                    >
+                      {i}
+                    </span>
+                  ))
+                ) : (
+                  <span
+                    className="dex-chip"
+                    style={{
+                      backgroundColor: typeColor("normal"),
+                      fontSize: "0.6rem",
+                      padding: "0.4rem 0.7rem",
+                    }}
+                  >
+                    None
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Right Column: Stats */}
@@ -345,18 +419,17 @@ function PokemonDetail() {
                         {stat.base_stat}
                       </span>
                     </div>
-                    {/* Animated horizontal bar */}
-                    <div
-                      className="w-full rounded-full h-2 overflow-hidden"
-                      style={{ background: "var(--lcd-shadow)" }}
-                    >
-                      <div
-                        className="h-2 rounded-full transition-all duration-500 ease-in-out"
-                        style={{
-                          width: animateBars ? `${statPercent}%` : "0%",
-                          background: "var(--lcd-accent)",
-                        }}
-                      />
+                    {/* Segmented pixel-block bar */}
+                    <div className="dex-stat-bar">
+                      {Array.from({ length: 10 }, (_, i) => {
+                        const filledSegments = Math.floor(statPercent / 10);
+                        return (
+                          <div
+                            key={i}
+                            className={`dex-stat-segment${animateBars && i < filledSegments ? " filled" : ""}`}
+                          />
+                        );
+                      })}
                     </div>
                   </div>
                 );
