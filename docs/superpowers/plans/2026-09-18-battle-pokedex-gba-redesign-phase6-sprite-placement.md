@@ -46,7 +46,7 @@ Run: `grep -n "variant=\"front\"\|variant=\"back\"" frontend/src/pages/Game/Batt
 
 Expected: at least one `variant="front"` near the enemy container's `BattlePokemonSprite` usage and one `variant="back"` near the player container's — read the surrounding ~15 lines of each match with the Read tool to confirm which container each belongs to (do not assume from grep output order alone).
 
-**Result (2026-09-18):** Confirmed — `variant="front"` at line 976 is inside the enemy `BattlePokemonSprite` (enclosing container is `.gba-enemy-container`), `variant="back"` at line 1016 is inside the player `BattlePokemonSprite` (enclosing container is `.gba-player-container`). Correct assignment.
+**Result (2026-09-18):** Confirmed — `variant="front"` at line 976 is inside the enemy `BattlePokemonSprite` (enclosing container is `.gba-enemy-container`), `variant="back"` at line 1016 is inside the player `BattlePokemonSprite` (enclosing container is `.gba-player-container`). Correct assignment. A third grep match at line 1185 (`variant="front"` on a plain `PokemonSprite`, not `BattlePokemonSprite`) is the party-select menu row thumbnail (`.gba-party-row-sprite`) — independently checked and also correctly configured (`width: 26px; height: 26px; image-rendering: pixelated` at `BattleGround.css:849-854`), not a battle-scene placement concern. Noted here since the original verification pass under-reported this third match.
 
 - [x] **Step 3: Confirm the real sprite files exist and are non-placeholder**
 
