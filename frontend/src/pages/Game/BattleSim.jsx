@@ -1336,10 +1336,8 @@ const BattleSim = ({
                           ? 'Restart this battle?'
                           : uiPhase === 'restarting'
                           ? 'Restarting battle...'
-                          : currentTurn === 'player' && selectedMove
-                          ? `${userPokemon.nickname} used ${selectedMove.name}!`
-                          : currentTurn === 'enemy'
-                          ? `${trainerPokemon.nickname} is attacking...`
+                          : currentMessage
+                          ? currentMessage
                           : `What will ${userPokemon.nickname} do?`}
                       </div>
                     )}
