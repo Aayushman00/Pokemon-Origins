@@ -225,11 +225,21 @@ export function shadowStyle(role) {
 
 - [ ] **Step 2: Add tests**
 
-Append to `frontend/src/pages/Game/battleLayout.test.js` (same file, same `node:test`/`node:assert/strict` imports already present):
+First, change the existing import line at the top of `frontend/src/pages/Game/battleLayout.test.js` from:
 
 ```javascript
-import { SHADOW_SIZES, shadowStyle } from "./battleLayout.js";
+import { BATTLE_SLOTS, slotStyle } from "./battleLayout.js";
+```
 
+to (merge the new names into this one line — do not add a second, separate import line for the same module, that would be a duplicate-binding syntax error):
+
+```javascript
+import { BATTLE_SLOTS, slotStyle, SHADOW_SIZES, shadowStyle } from "./battleLayout.js";
+```
+
+Then append this new `describe` block to the end of the file:
+
+```javascript
 describe("battleLayout shadows", () => {
   it("has the opponent shadow footprint, unchanged from the old CSS ::after rule", () => {
     assert.deepEqual(SHADOW_SIZES.opponent, { width: 180, height: 20, bottom: -10, left: -30 });
@@ -250,19 +260,30 @@ describe("battleLayout shadows", () => {
     });
   });
 
+  it("shadowStyle('player') returns an inline-style-ready object", () => {
+    assert.deepEqual(shadowStyle("player"), {
+      position: "absolute",
+      zIndex: -1,
+      width: "200px",
+      height: "30px",
+      bottom: "-15px",
+      right: "-30px",
+    });
+  });
+
   it("throws on an unknown role", () => {
     assert.throws(() => shadowStyle("bystander"));
   });
 });
 ```
 
-(This is appended to the existing test file, not a new file — add the import at the top alongside the existing `BATTLE_SLOTS, slotStyle` import line, e.g. `import { BATTLE_SLOTS, slotStyle, SHADOW_SIZES, shadowStyle } from "./battleLayout.js";`.)
+This is appended to the existing test file, not a new file — the import merge is the separate step above, done before this block.
 
 - [ ] **Step 3: Run the tests**
 
 Run: `cd frontend && node --test src/pages/Game/battleLayout.test.js`
 
-Expected: PASS, 9/9 (5 existing + 4 new).
+Expected: PASS, 10/10 (5 existing + 5 new).
 
 - [ ] **Step 4: Add the shadow `<img>` elements in `BattleSim.jsx`**
 
