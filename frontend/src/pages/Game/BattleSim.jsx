@@ -1041,13 +1041,21 @@ const BattleSim = ({
                     alt={trainerPokemon.nickname}
                     initial={{ x: 60, opacity: 0 }}
                     animate={{
-                      x: enemyAttacking && !reduceMotion ? [0, -24, 0] : introStarted ? 0 : 60,
+                      x:
+                        enemyAttacking && !reduceMotion
+                          ? [0, 8, -32, -26, 0]
+                          : introStarted
+                          ? 0
+                          : 60,
                       opacity: introStarted ? 1 : 0,
                     }}
                     transition={{
-                      x: enemyAttacking
-                        ? { duration: 0.45 }
-                        : { duration: motionMs(450) / 1000, ease: 'easeOut' },
+                      x:
+                        enemyAttacking && !reduceMotion
+                          ? { duration: 0.45, times: [0, 0.15, 0.6, 0.8, 1] }
+                          : reduceMotion
+                          ? { duration: 0 }
+                          : { type: 'spring', stiffness: 260, damping: 20 },
                       opacity: { duration: motionMs(350) / 1000 },
                     }}
                   />
