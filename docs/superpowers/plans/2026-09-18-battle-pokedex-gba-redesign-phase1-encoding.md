@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - Do not touch the battle system, the Pokédex UI, or any sprite/asset pipeline code — this phase is DB/encoding-only (per spec Section 9, Phase 1 scope).
-- Do not rewrite or "fix" `database/pokedex_data.sql` itself — the file is already UTF-8-clean (verified 2026-09-18); this phase adds prevention/detection, not a data patch.
+- Do not rewrite or "fix" `database/pokedex_data.sql` itself — the file is already UTF-8-clean (verified 2026-09-18); this phase adds prevention/detection, not a data patch. Task 3's Step 3 is a narrow, explicit exception: it corrupts the file on disk to prove detection works, then restores it byte-exact and verifies the restore with `git diff` before any commit — the file is never left corrupted at a commit boundary.
 - Do not remove or alter the existing `createLoggingPool()` wrapper in `backend/src/config/db.js` (lines 56-91) — it changes live query-logging behavior and is out of scope for an encoding fix.
 - `charset` must be the exact string `"utf8mb4"` (matches the dump's declared `SET NAMES utf8mb4` / `utf8mb4_0900_ai_ci` collation — verified in `database/pokedex_data.sql`).
 - The verification script must exit with status `0` when the dump is clean and non-zero when any of these byte sequences are found: `Pok├⌐mon`, `PokÃ©mon`, the raw UTF-8 bytes for `Ã©`, and the Unicode replacement character `\ufffd`.
@@ -109,10 +109,12 @@ exact dump.
 
 **Whenever you re-export `pokedex_data.sql` from Workbench:**
 
-1. Run `python scripts/reorder-sql-dump.py` — it detects a UTF-16LE/BE BOM,
-   decodes it, and rewrites the file as UTF-8 (it is idempotent on an
-   already-UTF-8 file: the BOM check just falls through to the UTF-8
-   decode branch).
+1. Run `python scripts/reorder-sql-dump.py` — it detects a UTF-16LE/BE BOM
+   and rewrites the file as UTF-8. Run it once per fresh export only: it
+   also reorders `pokemon_genders`/`pokemon_species` and the `trainer`
+   tables, and asserts the *pre-reorder* order on entry — running it a
+   second time on a file it already reordered will raise
+   `SystemExit("unexpected pokedex table order")`, not silently no-op.
 2. Run `python scripts/check_encoding.py` — it exits non-zero if any
    mojibake byte sequence is still present, so a broken export is caught
    before it's committed.
@@ -216,6 +218,37 @@ Run: `python scripts/check_encoding.py; echo "exit=$?"` — expect `exit=0`. Als
 ```bash
 git add scripts/check_encoding.py
 git commit -m "feat: add standalone mojibake verification script for pokedex_data.sql"
+```
+
+- [ ] **Step 6: One-time repo-wide grep across all encoding-sensitive file types**
+
+`check_encoding.py` only ever checks `database/pokedex_data.sql` — the one
+file with a documented history of corruption. Spec Section 5, item 3 also
+asks for a one-time confirm-and-document pass across the rest of the repo's
+text file types, so run it now and record the result in this task's commit:
+
+```bash
+grep -rlP 'Pok\x{251c}\x{2510}mon|Pok\xc3\x83\xc2\xa9mon|\xc3\x83\xc2\xa9|\x{FFFD}' \
+  --include='*.sql' --include='*.js' --include='*.jsx' --include='*.json' \
+  --include='*.md' --include='*.py' --include='*.env' \
+  --exclude-dir=node_modules --exclude-dir=.git --exclude-dir=dist \
+  --exclude-dir=.venv --exclude-dir=__pycache__ .
+```
+
+Expected: no output (no matching files). This matches the repo audit
+already performed on 2026-09-18 (see the design spec's Section 1 problem
+statement, which found none present). If this grep finds any match, stop —
+that file is a real, uninvestigated instance of the bug and needs its own
+task before Phase 1 can be called complete; do not silently patch the
+matched string.
+
+- [ ] **Step 7: Record the result**
+
+Append one line to this task's commit message via `git commit --amend` (or
+note it in the PR/ledger if amending is inconvenient):
+
+```
+verify: repo-wide grep for mojibake patterns across .sql/.js/.jsx/.json/.md/.py/.env — none found (2026-09-18)
 ```
 
 ---
