@@ -303,8 +303,10 @@ Expected: still PASS, `# pass 9` (this task didn't touch `battleAnimation.js`, t
 - [ ] **Step 7: Static verification**
 
 ```bash
-grep -n "playerCritical\|enemyCritical" frontend/src/pages/Game/BattleSim.jsx
+grep -in "playerCritical\|enemyCritical" frontend/src/pages/Game/BattleSim.jsx
 ```
+
+(`-i` matters: `setPlayerCritical`/`setEnemyCritical` capitalize the P/E right after `set`, so a case-sensitive grep misses the `playEvent` ternary line and both `restartBattle()` reset lines.)
 
 Expected: matches at the 2 `useState` declarations, the 2 capture lines in `playEvent`, the 2 reset lines in `restartBattle()` (and possibly a separate round-end reset block per Step 3), and the 2 usages inside `getAnimState({...})` calls in Step 4 — read each match to confirm it's one of these, not something unexpected.
 
