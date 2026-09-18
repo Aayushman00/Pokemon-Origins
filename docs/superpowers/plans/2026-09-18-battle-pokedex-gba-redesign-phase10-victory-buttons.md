@@ -2,45 +2,64 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Restyle `.gba-restart-btn` and its `--secondary` variant — the "Retry save" / "Continue" / "Battle Again" / "Back to hub" buttons shown at the end of a battle — off modern-pill-button chrome (red gradient fill, rounded corners, a decorative white circle pseudo-element, hover-lift transform, soft drop shadows) onto the same flat GBA panel language established in Phase 9, closing out the actual "ugly victory modal" surface identified in the original repo audit (the win/lose message-progression flow itself was already correct and is untouched).
+**Goal:** Restyle the "Retry save" / "Continue" / "Battle Again" / "Back to hub" buttons shown at the end of a battle off modern-pill-button chrome (red gradient fill, rounded corners, a decorative white circle pseudo-element, hover-lift transform, soft drop shadows) onto the app's **existing** `.pixel-btn` chrome — per the design spec's explicit instruction, not a newly invented style — closing out the actual "ugly victory modal" surface identified in the original repo audit (the win/lose message-progression flow itself was already correct and is untouched).
 
-**Architecture:** No component/state changes. Only the CSS for `.gba-restart-btn`, its `::before` pseudo-element, `--secondary` variant, and their hover/active states change in `BattleGround.css`. The JSX (`BattleSim.jsx`'s `uiPhase === 'finished'` block, its `motion.button` `whileHover`/`whileTap` scale-tap feedback, `onClick` handlers, `disabled` logic) is untouched — this phase is chrome only, matching Phase 9's scope discipline.
+**Architecture:** The spec (Section 8, quoted below) is explicit: swap `.gba-restart-btn` to `.pixel-btn` chrome "instead of inventing new button chrome." `.pixel-btn`/`.pixel-btn--primary`/`.pixel-btn:disabled` already exist in `frontend/src/styles/tokens.css:167-208` and are already used elsewhere in this exact file (`BattleSim.jsx`'s error-state "Back to hub" button, line ~832). This means the fix is a `className` swap in JSX (a small, mechanical, non-logic change — no `onClick`/`disabled`/`whileHover`/`whileTap` prop touched) plus deleting the now-dead `.gba-restart-btn*` CSS rules from `BattleGround.css`, not a from-scratch CSS restyle. This is a correction from an earlier draft of this plan, which incorrectly invented new hardcoded hex colors instead of reusing `.pixel-btn` — caught during plan review, see Ruling 1.
 
 **Tech Stack:** No new dependency.
 
-**Spec:** `docs/superpowers/specs/2026-09-18-battle-pokedex-gba-redesign-design.md`, Section 4 (forbidden list), Section 14 ("Victory screen"), Section 9 Phase 10.
+**Spec:** `docs/superpowers/specs/2026-09-18-battle-pokedex-gba-redesign-design.md`, Section 2 ("Visual direction" — forbidden chrome list), Section 8 ("Victory flow"), Section 9 Phase 10.
 
 ## Rulings (made during planning, binding on this plan)
 
-1. **Primary/secondary distinction via color, not shape.** The current code distinguishes the primary action (red) from the secondary "Back to hub" action (cream) — this plan keeps that same primary/secondary color-based hierarchy rather than inventing a new distinguishing mechanic, since it already reads clearly and matches how real GBA dialogs sometimes use accent color for the recommended option. The primary button's flat color becomes `#48d232` (this file's own established "good/positive" HP-bar-good color, `BattleGround.css`'s `.health-good` rule — reused, not invented, for visual consistency with the rest of the battle scene) instead of red, since red in this UI language is reserved for danger/damage states (HP-critical, damage flashes) elsewhere in this same file — using it for a positive "you won, continue" action was a mismatched signal, not just a stylistic one.
-2. **Secondary button matches Phase 9's exact flat cream palette.** `.gba-restart-btn--secondary` becomes `#e8e8c8` background / `#506860` border — the same values Phase 9 already established for the command menu and `.gba-hp-box` — one consistent panel language across the whole battle scene rather than a third slightly-different cream shade.
-3. **The decorative `::before` circle is deleted, not restyled.** It's a purely ornamental white-circle-with-shadow with no semantic meaning (not an icon representing the action, just decoration) — exactly the kind of "arbitrary CSS" the spec's forbidden list calls out. Deleted entirely, matching how Phase 9 deleted (not toned down) the shine-sweep.
-4. **A `:disabled` state is added — a small, justified addition, not scope creep.** The "Continue" button already sets `disabled={progressSave !== 'saved'}` in JSX (existing logic, unchanged), but `BattleGround.css` currently has no `.gba-restart-btn:disabled` rule at all — the button visually looks fully active even when non-interactive. This is a pre-existing gap this phase's CSS pass can cheaply close (one rule, `opacity` + `cursor`) while already touching this exact selector; it's not a new feature, it's completing a state the existing JSX logic already exposes but the existing CSS never styled.
+1. **Use `.pixel-btn`, don't invent new colors — corrected during plan review.** An earlier draft of this plan replaced `.gba-restart-btn`'s red-gradient chrome with newly-invented flat hex colors (`#48d232` reused from `.health-good`, plus new hover/active shades). A plan reviewer caught that this directly contradicts the spec's own explicit text: Section 8 says to restyle onto "the same pixel-button chrome already defined for the rest of the app (`.pixel-btn` in `tokens.css`/`STYLE_GUIDE.md`) instead of inventing new button chrome," and Section 9's Phase 10 line says "swap `.gba-restart-btn` to `.pixel-btn` chrome." The corrected plan does exactly that: JSX `className` changes from `gba-restart-btn`/`gba-restart-btn--secondary` to `pixel-btn`/`pixel-btn--primary`, and the `.gba-restart-btn*` CSS rules are deleted (dead code) rather than restyled in place.
+2. **Primary/secondary mapping:** `.pixel-btn--primary` (accent-colored, `tokens.css:193-196`) is used for the single "confirm and move on" action per screen — "Retry save," "Continue," and "Battle Again" (the three contexts where only one primary action is shown). Plain `.pixel-btn` (no `--primary` modifier) is used for "Back to hub," the secondary/alternate exit on the loss screen where two buttons appear side by side — matching `.pixel-btn--primary`'s existing purpose elsewhere in the app (the one recommended action gets the accent, everything else gets the base style).
+3. **This is a small, scoped JSX change, not a logic change.** Only the `className` string on 4 button elements changes (`BattleSim.jsx` lines ~1156, ~1165, ~1177, ~1185 as of this plan's writing — re-verify current line numbers before editing). `onClick` handlers, `disabled` logic, `whileHover`/`whileTap` framer-motion props, and all surrounding JSX structure/text are untouched. This keeps the phase's actual risk profile equivalent to a CSS-only change even though it technically touches `BattleSim.jsx`.
+4. **`.pixel-btn:disabled` already exists — no new rule needed.** The earlier draft's Ruling 4 proposed adding a `.gba-restart-btn:disabled` rule from scratch to fix a real gap (the "Continue" button's `disabled={progressSave !== 'saved'}` had no visual treatment). Verified: `.pixel-btn:disabled` (`tokens.css:203-208`, `opacity: 0.5; cursor: not-allowed;`) already covers this — the `className` swap in Ruling 1 fixes this gap as a side effect, with no new CSS needed.
 
 ## Global Constraints
 
-- Do not touch any JS/JSX in `BattleSim.jsx` — no changes to `onClick` handlers, `disabled` logic, `whileHover`/`whileTap` props, or the win/lose message/XP-summary text (already correct per the original audit).
-- Do not touch `.gba-finish-actions` (the flex container) or `.gba-dialog-box`/`.gba-xp-summary` — only `.gba-restart-btn` and its `::before`/`--secondary`/`:hover`/`:active` rules.
-- `.gba-main-menu button` (Phase 9's restyle) must not be touched or referenced — these are separate selectors for separate UI regions; no shared-class refactor is in scope here.
+- Do not touch `onClick` handlers, `disabled` logic, `whileHover`/`whileTap` props, or any other JSX structure/text in `BattleSim.jsx` — only the 4 `className` string values change.
+- Do not touch `.gba-finish-actions` (the flex container) or `.gba-dialog-box`/`.gba-xp-summary` — only the button `className`s and the now-dead `.gba-restart-btn*` CSS block.
+- Do not touch `.gba-main-menu button` (Phase 9's restyle) or `.pixel-btn`/`.pixel-btn--primary` themselves in `tokens.css` — this phase consumes those existing classes, it doesn't modify them.
+- Before deleting `.gba-restart-btn*` CSS, confirm via grep that nothing outside `BattleSim.jsx`'s 4 usages (all being changed in this same task) references those class names — dead code must actually be dead before removal.
 
 ---
 
-### Task 1: Restyle the victory-flow buttons
+### Task 1: Swap victory-flow buttons to `.pixel-btn` chrome
 
 **Files:**
-- Modify: `frontend/src/pages/Game/BattleGround.css` (the `.gba-restart-btn` block and its `::before`/`:hover`/`:active`/`--secondary`/`--secondary::before`/`--secondary:hover` rules — re-verify current line numbers with `grep -n "gba-restart-btn" frontend/src/pages/Game/BattleGround.css` before editing, since this file has shifted across every prior phase this session)
+- Modify: `frontend/src/pages/Game/BattleSim.jsx` (4 `className` values, lines ~1156, ~1165, ~1177, ~1185 — re-verify current line numbers with `grep -n "gba-restart-btn" frontend/src/pages/Game/BattleSim.jsx` before editing)
+- Modify: `frontend/src/pages/Game/BattleGround.css` (delete the `.gba-restart-btn`/`::before`/`:hover`/`:active`/`--secondary`/`--secondary::before`/`--secondary:hover` rules — re-verify current line numbers with `grep -n "gba-restart-btn" frontend/src/pages/Game/BattleGround.css` before editing)
 
-**Interfaces:** none — pure CSS, no other task depends on this.
+**Interfaces:** none — no other task depends on this.
 
 - [ ] **Step 1: Confirm current state**
 
-Run: `grep -n "gba-restart-btn" -A15 frontend/src/pages/Game/BattleGround.css | head -70`
+Run: `grep -n "gba-restart-btn" frontend/src/pages/Game/BattleSim.jsx frontend/src/pages/Game/BattleGround.css`
 
-Expected: confirms the current rules match this plan's quoted "before" text below (word-for-word) before editing.
+Expected: 4 JSX matches (one is `gba-restart-btn gba-restart-btn--secondary` on the same line, still one grep match) and the CSS matches this plan's quoted "before" block below.
 
-- [ ] **Step 2: Replace the button styling**
+- [ ] **Step 2: Change the 4 `className` values in `BattleSim.jsx`**
 
-Change (current, spanning `.gba-restart-btn` through `.gba-restart-btn--secondary:hover`):
+Change each of these 4 buttons' `className` (re-verify exact surrounding JSX matches before editing each — only the `className` value changes, nothing else on these lines):
+
+1. "Retry save" button: `className="gba-restart-btn"` → `className="pixel-btn pixel-btn--primary"`
+2. "Continue"/"Saving..." button: `className="gba-restart-btn"` → `className="pixel-btn pixel-btn--primary"`
+3. "Battle Again" button: `className="gba-restart-btn"` → `className="pixel-btn pixel-btn--primary"`
+4. "Back to hub" button: `className="gba-restart-btn gba-restart-btn--secondary"` → `className="pixel-btn"`
+
+- [ ] **Step 3: Delete the now-dead CSS**
+
+Confirm nothing else references these classes first:
+
+```bash
+grep -rn "gba-restart-btn" frontend/src --include=*.jsx --include=*.js --include=*.css
+```
+
+Expected: no output (Step 2 already removed the only 4 usages; if this finds anything else, STOP — the class isn't actually dead, don't delete its CSS).
+
+Then delete this entire block from `frontend/src/pages/Game/BattleGround.css` (re-verify it matches exactly before deleting — this is the same "before" text an earlier draft of this plan already quoted and verified byte-accurate):
 
 ```css
 .gba-restart-btn {
@@ -83,15 +102,11 @@ Change (current, spanning `.gba-restart-btn` through `.gba-restart-btn--secondar
   transform: translateY(1px);
   box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
 }
+```
 
-/* Loss screen offers two exits: retry (primary) or back to the hub */
-.gba-finish-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
+and this block (leave `.gba-finish-actions`, which sits between the two deleted blocks, untouched):
 
+```css
 .gba-restart-btn--secondary {
   background: linear-gradient(to bottom, #e8e8c8, #d8d8b0);
   color: #33403a;
@@ -107,86 +122,35 @@ Change (current, spanning `.gba-restart-btn` through `.gba-restart-btn--secondar
 }
 ```
 
-to (flat colors per Rulings 1-3, `.gba-finish-actions` unchanged and included here only for surrounding context — do not modify it):
-
-```css
-.gba-restart-btn {
-  margin-top: 10px;
-  padding: 8px 14px;
-  background: #48d232;
-  border: 3px solid #2c7a1c;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-family: 'Press Start 2P', monospace;
-  color: white;
-  text-shadow: 1px 1px 0 rgba(0,0,0,0.3);
-}
-
-.gba-restart-btn:hover {
-  background: #56e03e;
-}
-
-.gba-restart-btn:active {
-  background: #3ab528;
-}
-
-.gba-restart-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Loss screen offers two exits: retry (primary) or back to the hub */
-.gba-finish-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.gba-restart-btn--secondary {
-  background: #e8e8c8;
-  border-color: #506860;
-  color: #33403a;
-  text-shadow: none;
-}
-
-.gba-restart-btn--secondary:hover {
-  background: #f2f2d8;
-}
-```
-
-(The `::before` circle and `--secondary::before` override are deleted entirely, per Ruling 3 — there is no replacement, nothing else references them.)
-
-- [ ] **Step 3: Verify the build**
+- [ ] **Step 4: Verify the build**
 
 Run: `cd frontend && npm run build`
 
 Expected: clean build.
 
-- [ ] **Step 4: Static verification**
+- [ ] **Step 5: Static verification**
 
 ```bash
-sed -n '/\.gba-restart-btn {/,/^\.gba-battle-log-toggle/p' frontend/src/pages/Game/BattleGround.css
+grep -rn "gba-restart-btn" frontend/src
 ```
 
-Expected: printed block shows only the new flat rules (no `linear-gradient`, `transform`, `box-shadow`, or any `::before` rule for either `.gba-restart-btn` or `.gba-restart-btn--secondary`), plus the untouched `.gba-finish-actions` rule sitting in between exactly as before.
+Expected: no output anywhere in the frontend source (fully removed, both the JSX class usages and the CSS rules).
 
 ```bash
-grep -n "gba-restart-btn\|gba-finish-actions" frontend/src/pages/Game/BattleSim.jsx
+grep -n "pixel-btn" frontend/src/pages/Game/BattleSim.jsx
 ```
 
-Expected: unchanged from before this task (4 JSX usages of `gba-restart-btn`, 1 of `gba-finish-actions`) — this task made zero JS/JSX edits, this grep is a scope-confirmation, not something that should show new matches.
+Expected: 5 matches — the 4 new victory-button usages from Step 2, plus the pre-existing error-state "Back to hub" button (line ~832) that already used `pixel-btn` before this task.
 
-- [ ] **Step 5: Visual check**
+- [ ] **Step 6: Visual check**
 
-If a live database happens to be available, win a battle and confirm: the "Continue"/"Battle Again" button is now a flat green with a dark border (no gradient, no white circle, no lift-on-hover), the "Back to hub" secondary button is flat cream matching the command panel's Phase 9 style, and — if reachable — a disabled "Continue" button (mid-save) visibly dims rather than looking identically clickable.
+If a live database happens to be available, win and lose a battle to see both paths: confirm "Continue"/"Battle Again"/"Retry save" now render in the app's existing accent pixel-button style (matching whatever other `.pixel-btn--primary` buttons look like elsewhere in the app, e.g. the auth/hub screens), "Back to hub" renders as a plain `.pixel-btn`, and a disabled "Continue" (mid-save) visibly dims via the pre-existing `.pixel-btn:disabled` rule.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add frontend/src/pages/Game/BattleGround.css
-git commit -m "feat: restyle victory-flow buttons off modern pill-button chrome"
+git add frontend/src/pages/Game/BattleSim.jsx frontend/src/pages/Game/BattleGround.css
+git commit -m "feat: swap victory-flow buttons to existing pixel-btn chrome, remove dead gba-restart-btn CSS"
 ```
 
 ---
