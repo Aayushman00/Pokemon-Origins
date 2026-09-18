@@ -157,36 +157,10 @@
 
 /* top/right now supplied by battleLayout.js via inline style (BattleSim.jsx) */
 
-.gba-enemy-container::after {
-  content: "";
-  position: absolute;
-  width: 180px;
-  height: 20px;
-  background: rgba(0,0,0,0.3);
-  border-radius: 50%;
-  bottom: -10px;
-  left: -30px;
-  filter: blur(4px);
-  z-index: -1;
-}
-
 /* bottom/left now supplied by battleLayout.js via inline style (BattleSim.jsx) */
 .gba-player-container {
   flex-direction: column;
   align-items: flex-end;
-}
-
-.gba-player-container::after {
-  content: "";
-  position: absolute;
-  width: 200px;
-  height: 30px;
-  background: rgba(0,0,0,0.3);
-  border-radius: 50%;
-  bottom: -15px;
-  right: -30px;
-  filter: blur(4px);
-  z-index: -1;
 }
 
 /* HP Box Styling */
