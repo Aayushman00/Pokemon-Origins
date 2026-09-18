@@ -442,7 +442,7 @@
 }
 
 .gba-move-btn {
-  background: linear-gradient(to bottom, #f8f8f8, #e0e0e0);
+  background: #e8e8c8;
   border: 2px solid #506860;
   border-radius: 6px;
   padding: 6px;
@@ -451,21 +451,16 @@
   color: #333;
   text-align: center;
   cursor: pointer;
-  text-shadow: 1px 1px 0 rgba(255,255,255,0.8);
-  box-shadow: inset 1px 1px 0 rgba(255,255,255,0.8), 2px 2px 0 rgba(0,0,0,0.2);
-  transition: all 0.2s;
   position: relative;
-  overflow: hidden;
 }
 
 .gba-move-btn:hover {
-  background: linear-gradient(to bottom, #e8f8ff, #c0e0ff);
-  transform: translateY(-2px);
+  background: #f2f2d8;
   border-color: #7090a8;
 }
 
 .gba-move-btn.selected {
-  background: linear-gradient(to bottom, #c0e0ff, #80c0ff);
+  background: #c0e0ff;
   animation: selectPulse 1.5s infinite;
 }
 
@@ -478,24 +473,6 @@
 .gba-move-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  box-shadow: none;
-}
-
-.gba-move-btn::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 70%;
-  height: 100%;
-  background: rgba(255,255,255,0.2);
-  transform: skewX(-25deg);
-  transition: left 0.3s ease;
-}
-
-.gba-move-btn:hover::after {
-  left: 120%;
-  transition: left 0.7s ease;
 }
 
 .gba-move-btn.blank {
@@ -562,8 +539,8 @@
 }
 
 .gba-main-menu button {
-  background: #e8e8c8;
-  border: 4px solid #506860;
+  background: var(--panel-cream);
+  border: 4px solid var(--panel-border);
   border-radius: 12px;
   padding: 10px 8px;
   width: 100%;
@@ -667,12 +644,11 @@
 .error, .loading {
   padding: 20px;
   text-align: center;
-  background: #f8f8f8;
+  background: #e8e8c8;
   border: 4px solid #506860;
   border-radius: 10px;
   margin: 20px auto;
   max-width: 400px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 5px 15px rgba(0,0,0,0.2);
 }
 
 .error {
@@ -767,7 +743,7 @@
   gap: 8px;
   width: 100%;
   padding: 2px 8px;
-  background: linear-gradient(to bottom, #f8f8f8, #e0e0e0);
+  background: #e8e8c8;
   border: 2px solid #506860;
   border-radius: 6px;
   font-family: 'Press Start 2P', monospace;
@@ -778,8 +754,7 @@
 }
 
 .gba-party-row:hover:not(:disabled) {
-  background: linear-gradient(to bottom, #ffffff, #f0f0f0);
-  transform: translateY(-1px);
+  background: #f2f2d8;
 }
 
 .gba-party-row:disabled {
@@ -852,19 +827,17 @@
   align-items: center;
   width: 100%;
   padding: 6px 10px;
-  background: linear-gradient(to bottom, #f8f8f8, #e0e0e0);
+  background: #e8e8c8;
   border: 2px solid #506860;
   border-radius: 6px;
   font-family: 'Press Start 2P', monospace;
   color: #333;
   cursor: pointer;
   text-align: left;
-  transition: transform 0.1s ease-out, background 0.1s ease-out;
 }
 
 .gba-bag-row:hover {
-  background: linear-gradient(to bottom, #ffffff, #f0f0f0);
-  transform: translateY(-1px);
+  background: #f2f2d8;
 }
 
 .gba-bag-row-name {
@@ -902,7 +875,7 @@
 }
 
 .gba-party-cancel {
-  background: linear-gradient(to bottom, #f8f8f8, #e0e0e0);
+  background: #e8e8c8;
   border: 3px solid #506860;
   border-radius: 6px;
   padding: 8px 14px;
@@ -910,12 +883,10 @@
   font-family: 'Press Start 2P', monospace;
   color: #333;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8), 0 3px 6px rgba(0,0,0,0.1);
 }
 
 .gba-party-cancel:hover {
-  background: linear-gradient(to bottom, #ffffff, #f0f0f0);
-  transform: translateY(-2px);
+  background: #f2f2d8;
 }
 
 /* ---- Battle fidelity (Phase 14): status badges, PP, Struggle ---------- */
