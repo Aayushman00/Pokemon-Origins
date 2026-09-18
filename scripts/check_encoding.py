@@ -7,7 +7,11 @@ from pathlib import Path
 import sys
 
 path = Path(__file__).resolve().parents[1] / "database" / "pokedex_data.sql"
-raw = path.read_bytes()
+try:
+    raw = path.read_bytes()
+except FileNotFoundError:
+    print(f"ERROR: {path} not found. Restore the database dump first (see database/README.md).")
+    sys.exit(1)
 
 # Each pattern is checked as raw bytes so this never depends on how the
 # *current* Python process's default encoding would decode the file --
