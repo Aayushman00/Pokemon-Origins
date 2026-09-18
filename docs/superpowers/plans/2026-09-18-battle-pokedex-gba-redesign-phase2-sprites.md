@@ -387,7 +387,10 @@ def main() -> None:
         battle_back = BATTLE_DIR / ddd / "back.png"
         battle_back_b = BATTLE_DIR / ddd / "back-b.png"
 
-        if all(_is_valid_existing(p) for p in (pokemon_front, battle_front, battle_back)):
+        if all(
+            _is_valid_existing(p)
+            for p in (pokemon_front, battle_front, battle_front_b, battle_back, battle_back_b)
+        ):
             skipped += 1
             continue
 
