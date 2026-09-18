@@ -7,6 +7,7 @@ import PokemonSprite from '../../components/PokemonSprite/PokemonSprite';
 import BattlePokemonSprite from '../../components/PokemonSprite/BattlePokemonSprite';
 import TrainerAvatar from '../../components/TrainerAvatar/TrainerAvatar';
 import './BattleGround.css';
+import { slotStyle } from './battleLayout';
 
 // Native stage size; scaled down responsively, never up
 const STAGE_WIDTH = 768;
@@ -908,7 +909,7 @@ const BattleSim = ({
               </AnimatePresence>
 
               {/* Enemy: HP box + sprite */}
-              <div className="gba-enemy-container">
+              <div className="gba-enemy-container" style={slotStyle('opponent')}>
                 {introStarted && (
                   <div className="gba-hp-box enemy-hp-box">
                     <div className="gba-pokemon-name">
@@ -984,7 +985,7 @@ const BattleSim = ({
               </div>
 
               {/* Player: sprite + HP box */}
-              <div className="gba-player-container">
+              <div className="gba-player-container" style={slotStyle('player')}>
                 <motion.div
                   className={`gba-pokemon-sprite player-sprite ${playerDamageEffect ? 'damage-effect' : ''}`}
                   animate={{
