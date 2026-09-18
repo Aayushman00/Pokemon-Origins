@@ -95,6 +95,9 @@ const BattleSim = ({
   const [trainerPokemon, setTrainerPokemon] = useState(null);
   const [battleOutcome, setBattleOutcome] = useState(null);
   const [battleLog, setBattleLog] = useState([]);
+  const [currentMessage, setCurrentMessage] = useState('');
+  const messageQueueRef = useRef([]);
+  const messageTimerRef = useRef(null);
   const [error, setError] = useState('');
   const [selectedMove, setSelectedMove] = useState(null);
   const [hoveredMove, setHoveredMove] = useState(null);
@@ -238,9 +241,30 @@ const BattleSim = ({
     }
   };
 
+  // Drains messageQueueRef one at a time, pacing the in-game dialog box
+  // independently of however many times addLog was called back-to-back
+  // (React 18 batches synchronous setState calls, so without this a
+  // multi-message beat like "dealt damage" + "critical hit" + "super
+  // effective" would silently collapse to only the last message -- see
+  // Phase 8 plan Ruling 2).
+  const flushNextMessage = () => {
+    if (messageQueueRef.current.length === 0) {
+      messageTimerRef.current = null;
+      return;
+    }
+    const next = messageQueueRef.current.shift();
+    setCurrentMessage(next);
+    messageTimerRef.current = setTimeout(flushNextMessage, motionMs(600));
+    timersRef.current.push(messageTimerRef.current);
+  };
+
   const addLog = (message) => {
     const timestamp = new Date().toLocaleTimeString();
     setBattleLog((prevLog) => [...prevLog, `${timestamp} - ${message}`]);
+    messageQueueRef.current.push(message);
+    if (!messageTimerRef.current) {
+      flushNextMessage();
+    }
   };
 
   // Brief type-tinted flash over the stage on a landed hit
@@ -687,6 +711,16 @@ const BattleSim = ({
       setCurrentTurn('none');
       setSelectedMove(null);
       setHoveredMove(null);
+      // Drop any messages the queue hasn't painted yet (e.g. a multi-line
+      // damage beat that outlasted this round's own animation timing) so a
+      // stale queued line can't overwrite "What will X do?" after control
+      // has already returned to the player.
+      messageQueueRef.current = [];
+      if (messageTimerRef.current) {
+        clearTimeout(messageTimerRef.current);
+        messageTimerRef.current = null;
+      }
+      setCurrentMessage('');
 
       if (data.state.status === 'active') {
         if (data.state.requiresSwitch) {
