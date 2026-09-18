@@ -10,6 +10,7 @@ import './BattleGround.css';
 import { slotStyle, shadowStyle } from './battleLayout';
 import { useUser } from '../../App';
 import { playerTrainerSprite } from '../../utils/trainerSprite';
+import { getAnimState, ANIMATION_VARIANTS } from './battleAnimation';
 
 // Native stage size; scaled down responsively, never up
 const STAGE_WIDTH = 768;
@@ -124,6 +125,8 @@ const BattleSim = ({
   const [enemyDamageEffect, setEnemyDamageEffect] = useState(false);
   const [playerFainted, setPlayerFainted] = useState(false);
   const [enemyFainted, setEnemyFainted] = useState(false);
+  const [playerCritical, setPlayerCritical] = useState(false);
+  const [enemyCritical, setEnemyCritical] = useState(false);
   const [hitFlash, setHitFlash] = useState(null); // type-tinted overlay color
 
   // Responsive stage scale
@@ -621,11 +624,14 @@ const BattleSim = ({
     const setDefender = isPlayer ? setTrainerPokemon : setUserPokemon;
     if (isPlayer) view.enemy = { ...view.enemy, current_hp: event.targetHpAfter };
     else view.player = { ...view.player, current_hp: event.targetHpAfter };
+    const setCritical = isPlayer ? setEnemyCritical : setPlayerCritical;
     setDamageEffect(true);
+    setCritical(!!event.critical_hit);
     playSound('damage');
     setDefender((prev) => ({ ...prev, current_hp: event.targetHpAfter }));
     await wait(motionMs(600));
     setDamageEffect(false);
+    setCritical(false);
 
     addLog(`${attackerName} dealt ${event.damage} damage!`);
     if (event.hits > 1) addLog(`Hit ${event.hits} time(s)!`);
@@ -813,6 +819,8 @@ const BattleSim = ({
     setEnemyDamageEffect(false);
     setPlayerFainted(false);
     setEnemyFainted(false);
+    setPlayerCritical(false);
+    setEnemyCritical(false);
     setHitFlash(null);
     setOpponentMove(null);
     setProgressSave('idle');
@@ -1015,11 +1023,11 @@ const BattleSim = ({
                 <motion.div
                   className={`gba-pokemon-sprite enemy-sprite ${enemyDamageEffect ? 'damage-effect' : ''}`}
                   animate={
-                    enemyFainted
-                      ? { y: 46, opacity: 0 }
-                      : enemyDamageEffect && !reduceMotion
-                      ? { x: [-10, 10, -10, 10, 0], opacity: [1, 0.7, 1, 0.7, 1] }
-                      : { y: 0, opacity: 1 }
+                    reduceMotion
+                      ? (enemyFainted ? ANIMATION_VARIANTS.FAINT : ANIMATION_VARIANTS.IDLE)
+                      : ANIMATION_VARIANTS[
+                          getAnimState({ fainted: enemyFainted, critical: enemyCritical, damageEffect: enemyDamageEffect })
+                        ]
                   }
                   transition={{ duration: motionMs(500) / 1000 || 0.01, ease: 'easeIn' }}
                 >
@@ -1058,11 +1066,11 @@ const BattleSim = ({
                   className={`gba-pokemon-sprite player-sprite ${playerDamageEffect ? 'damage-effect' : ''}`}
                   animate={{
                     scaleX: -1,
-                    ... (playerFainted
-                      ? { y: 46, opacity: 0 }
-                      : playerDamageEffect && !reduceMotion
-                      ? { x: [-10, 10, -10, 10, 0], opacity: [1, 0.7, 1, 0.7, 1] }
-                      : { y: 0, opacity: 1 })
+                    ...(reduceMotion
+                      ? (playerFainted ? ANIMATION_VARIANTS.FAINT : ANIMATION_VARIANTS.IDLE)
+                      : ANIMATION_VARIANTS[
+                          getAnimState({ fainted: playerFainted, critical: playerCritical, damageEffect: playerDamageEffect })
+                        ])
                   }}
                   transition={{ duration: motionMs(500) / 1000 || 0.01, ease: 'easeIn' }}
                 >
