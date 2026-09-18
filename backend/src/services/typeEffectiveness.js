@@ -31,7 +31,20 @@ function createTypeEffectivenessService({ client }) {
       .map(([name]) => name);
   }
 
-  return { getWeaknesses, getCombinedMultipliers };
+  async function getMatchups(types) {
+    const multiplier = await getCombinedMultipliers(types);
+    const weaknesses = [];
+    const resistances = [];
+    const immunities = [];
+    for (const [name, value] of multiplier.entries()) {
+      if (value === 0) immunities.push(name);
+      else if (value < 1) resistances.push(name);
+      else if (value > 1) weaknesses.push(name);
+    }
+    return { weaknesses, resistances, immunities };
+  }
+
+  return { getWeaknesses, getMatchups, getCombinedMultipliers };
 }
 
 module.exports = { createTypeEffectivenessService, ALL_TYPES };
