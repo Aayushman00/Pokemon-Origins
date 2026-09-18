@@ -128,6 +128,7 @@ const BattleSim = ({
   const [playerCritical, setPlayerCritical] = useState(false);
   const [enemyCritical, setEnemyCritical] = useState(false);
   const [hitFlash, setHitFlash] = useState(null); // type-tinted overlay color
+  const [criticalFlash, setCriticalFlash] = useState(false); // white double-pulse accent, crits only
 
   // Responsive stage scale
   const [stageScale, setStageScale] = useState(1);
@@ -277,6 +278,14 @@ const BattleSim = ({
     const typeKey = String(moveType || '').toLowerCase();
     setHitFlash(TYPE_COLORS[typeKey] || '#ffffff');
     timersRef.current.push(setTimeout(() => setHitFlash(null), 280));
+  };
+
+  // Extra white double-pulse accent layered on top of the normal hit flash,
+  // critical hits only (spec Section 6: "sharper shake + a brief screen-flash accent").
+  const triggerCriticalFlash = () => {
+    if (reduceMotion) return;
+    setCriticalFlash(true);
+    timersRef.current.push(setTimeout(() => setCriticalFlash(false), 220));
   };
 
   const logEffectiveness = (event, defenderName) => {
@@ -620,6 +629,7 @@ const BattleSim = ({
     }
 
     triggerHitFlash(event.moveType);
+    if (event.critical_hit) triggerCriticalFlash();
     const setDamageEffect = isPlayer ? setEnemyDamageEffect : setPlayerDamageEffect;
     const setDefender = isPlayer ? setTrainerPokemon : setUserPokemon;
     if (isPlayer) view.enemy = { ...view.enemy, current_hp: event.targetHpAfter };
@@ -822,6 +832,7 @@ const BattleSim = ({
     setPlayerCritical(false);
     setEnemyCritical(false);
     setHitFlash(null);
+    setCriticalFlash(false);
     setOpponentMove(null);
     setProgressSave('idle');
     setProgressError('');
@@ -968,6 +979,20 @@ const BattleSim = ({
                     animate={{ opacity: 0.4 }}
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.12 }}
+                  />
+                )}
+              </AnimatePresence>
+
+              {/* Critical-hit white double-pulse accent */}
+              <AnimatePresence>
+                {criticalFlash && (
+                  <motion.div
+                    className="hit-flash"
+                    style={{ background: '#ffffff' }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 0.7, 0, 0.5, 0] }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.22, times: [0, 0.25, 0.5, 0.75, 1] }}
                   />
                 )}
               </AnimatePresence>
