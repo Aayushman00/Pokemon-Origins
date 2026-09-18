@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { api } from "../../api";
 import { typeColor } from "../../utils/typeColors";
 import PokemonSprite from "../../components/PokemonSprite/PokemonSprite";
+import { formatStatLabel } from "../../utils/statLabels";
 
 const MAX_STAT = 255;
 const legendaryIds = [144, 145, 146, 150, 151];
@@ -184,7 +185,7 @@ function PokemonDetail() {
               as={motion.img}
               pokemon={pokemon}
               variant="front"
-              layoutId={`shared-image-${pokemon.pokemon_id}`}
+              layoutId={`shared-image-${pokemon.id}`}
               loading="lazy"
               className="w-64 h-64 object-contain pixelated"
             />
@@ -335,7 +336,7 @@ function PokemonDetail() {
                         className="capitalize font-medium"
                         style={{ color: "var(--lcd-ink)" }}
                       >
-                        {stat.name}
+                        {formatStatLabel(stat.name)}
                       </span>
                       <span
                         className="font-pixel text-[0.6rem]"
@@ -381,6 +382,7 @@ function PokemonDetail() {
                 id: pokemon.id,
                 name: pokemon.name,
                 types: pokemon.types || [],
+                requirement: pokemon.requirement,
               },
               ...nextEvos,
             ];
