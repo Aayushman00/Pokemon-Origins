@@ -427,6 +427,8 @@ function PokemonDetail() {
                       className="dex-chip"
                       style={{
                         backgroundColor: typeColor(type),
+                        fontSize: "0.6rem",
+                        padding: "0.4rem 0.7rem",
                       }}
                     >
                       {type}
