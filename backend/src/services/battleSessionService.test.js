@@ -128,6 +128,13 @@ describe("snapshotPokemon gender/xp fields", () => {
 		assert.equal(snap.gender, "genderless");
 	});
 
+	it("keeps a player row's null gender null instead of rolling one (pre-migration rows)", () => {
+		// Player-shaped raw data always has a DB id; a null gender here means
+		// a real pre-migration row, not "no data" like enemy config.
+		const snap = snapshotPokemon(playerMon({ id: 101, gender: null }), 1);
+		assert.equal(snap.gender, null);
+	});
+
 	it("exposes experience and xp_to_next matching xpService's curve", () => {
 		const snap = snapshotPokemon(playerMon({ level: 5, experience: 30 }), 1);
 		assert.equal(snap.experience, 30);

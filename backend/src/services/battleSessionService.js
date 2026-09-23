@@ -161,7 +161,10 @@ function snapshotPokemon(raw, fallbackPosition = null) {
 		// is rolled here once, at session-start snapshot time, and stays
 		// stable for the whole battle (session.player/enemyParty are mutated
 		// in place across turns, not re-snapshotted).
-		gender: raw.gender || rollGenderForSpecies(raw.pokemon_id),
+		// Player rows have a real DB id and must keep a null gender as-is
+		// (pre-migration rows); only gender-less enemy config data gets a
+		// rolled fallback.
+		gender: raw.gender ?? (raw.id == null ? rollGenderForSpecies(raw.pokemon_id) : null),
 		experience: Number(raw.experience) || 0,
 		xp_to_next: xpNeededForLevel(level),
 	};

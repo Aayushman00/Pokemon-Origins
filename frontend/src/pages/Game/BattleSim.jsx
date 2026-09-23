@@ -20,7 +20,7 @@ import { getAnimState, ANIMATION_VARIANTS, getMoveAnimCategory } from './battleA
 
 // Native stage size; fixed, never scaled
 const STAGE_WIDTH = 808; // fills the GBA screen edge-to-edge (lcd-panel--fixed, .lcd-content padding zeroed for battle)
-const STAGE_TOTAL_HEIGHT = 580; // stage only -- dev log now renders outside the GBA casing
+const STAGE_TOTAL_HEIGHT = 580;
 
 // Gen 3 battle fidelity (Phase 14): client-side text for server events.
 // The server log carries the same lines; the client re-derives them so the
@@ -775,6 +775,14 @@ const BattleSim = ({
   const resolveServerAction = async (action) => {
     setUiPhase('acting');
     setError('');
+    // Clear out any leftover lines from the previous beat/intro so they
+    // can't leak into a new message-only phase.
+    setActiveBeatLines([]);
+    messageQueueRef.current = [];
+    if (messageTimerRef.current) {
+      clearTimeout(messageTimerRef.current);
+      messageTimerRef.current = null;
+    }
 
     try {
       const { data } = await api.post('/api/battle/action', {
@@ -823,14 +831,12 @@ const BattleSim = ({
       setCurrentTurn('none');
       setSelectedMove(null);
       setHoveredMove(null);
-      // Drop any messages the queue hasn't painted yet (e.g. a multi-line
-      // damage beat that outlasted this round's own animation timing) so a
-      // stale queued line can't overwrite "What will X do?" after control
-      // has already returned to the player.
-      messageQueueRef.current = [];
-      if (messageTimerRef.current) {
-        clearTimeout(messageTimerRef.current);
-        messageTimerRef.current = null;
+      // Let any still-queued lines (e.g. a multi-line damage beat that
+      // outlasted this round's own animation timing) finish draining into
+      // activeBeatLines before we hand control back, so nothing the player
+      // hasn't seen yet gets silently dropped.
+      while (messageQueueRef.current.length > 0 || messageTimerRef.current) {
+        await wait(100);
       }
       setActiveBeatLines([]);
 
@@ -1415,6 +1421,8 @@ const BattleSim = ({
                           ? 'Restart this battle?'
                           : uiPhase === 'restarting'
                           ? 'Restarting battle...'
+                          : activeBeatLines.length > 0
+                          ? activeBeatLines[activeBeatLines.length - 1]
                           : `What will ${userPokemon.nickname} do?`}
                       </div>
                     )}
