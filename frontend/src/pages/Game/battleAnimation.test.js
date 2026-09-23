@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { getAnimState, ANIMATION_VARIANTS } from "./battleAnimation.js";
+import { getAnimState, ANIMATION_VARIANTS, getMoveAnimCategory } from "./battleAnimation.js";
 
 describe("getAnimState", () => {
   it("returns FAINT when fainted, regardless of other flags", () => {
@@ -49,5 +49,28 @@ describe("ANIMATION_VARIANTS", () => {
 
   it("FAINT sinks and fades, matching the pre-existing faint behavior", () => {
     assert.deepEqual(ANIMATION_VARIANTS.FAINT, { y: 46, opacity: 0 });
+  });
+});
+
+describe("getMoveAnimCategory", () => {
+  it("classifies contact-feel types as physical", () => {
+    for (const type of ["Normal", "Fighting", "Rock", "Ground", "Steel", "Bug", "Poison", "Ghost", "Dark", "Dragon"]) {
+      assert.equal(getMoveAnimCategory(type), "physical", `${type} should be physical`);
+    }
+  });
+
+  it("classifies ranged-feel types as ranged", () => {
+    for (const type of ["Water", "Electric", "Psychic", "Fire", "Ice", "Fairy", "Flying"]) {
+      assert.equal(getMoveAnimCategory(type), "ranged", `${type} should be ranged`);
+    }
+  });
+
+  it("is case-insensitive", () => {
+    assert.equal(getMoveAnimCategory("fire"), "ranged");
+    assert.equal(getMoveAnimCategory("NORMAL"), "physical");
+  });
+
+  it("defaults unknown types to physical", () => {
+    assert.equal(getMoveAnimCategory("???"), "physical");
   });
 });

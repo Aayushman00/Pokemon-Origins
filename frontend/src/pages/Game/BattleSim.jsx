@@ -16,7 +16,7 @@ import './BattleGround.css';
 import { slotStyle, shadowStyle } from './battleLayout';
 import { useUser } from '../../App';
 import { playerTrainerSprite } from '../../utils/trainerSprite';
-import { getAnimState, ANIMATION_VARIANTS } from './battleAnimation';
+import { getAnimState, ANIMATION_VARIANTS, getMoveAnimCategory } from './battleAnimation';
 
 // Native stage size; fixed, never scaled
 const STAGE_WIDTH = 808; // fills the GBA screen edge-to-edge (lcd-panel--fixed, .lcd-content padding zeroed for battle)
@@ -137,6 +137,8 @@ const BattleSim = ({
   const [enemyCritical, setEnemyCritical] = useState(false);
   const [hitFlash, setHitFlash] = useState(null); // type-tinted overlay color
   const [criticalFlash, setCriticalFlash] = useState(false); // white double-pulse accent, crits only
+  const [rangedFlash, setRangedFlash] = useState(null); // ranged-move projectile flash, tinted by type
+  const [statusSparkle, setStatusSparkle] = useState(false); // status/heal move accent on the user
 
   const battleSoundRef = useRef(null);
   const timersRef = useRef([]);
@@ -313,6 +315,19 @@ const BattleSim = ({
     if (reduceMotion) return;
     setCriticalFlash(true);
     timersRef.current.push(setTimeout(() => setCriticalFlash(false), 220));
+  };
+
+  const triggerRangedFlash = (moveType) => {
+    if (reduceMotion) return;
+    const typeKey = String(moveType || '').toLowerCase();
+    setRangedFlash(TYPE_COLORS[typeKey] || '#ffffff');
+    timersRef.current.push(setTimeout(() => setRangedFlash(null), 350));
+  };
+
+  const triggerStatusSparkle = () => {
+    if (reduceMotion) return;
+    setStatusSparkle(true);
+    timersRef.current.push(setTimeout(() => setStatusSparkle(false), 500));
   };
 
   const logEffectiveness = (event, defenderName) => {
@@ -655,11 +670,25 @@ const BattleSim = ({
       await wait(motionMs(700)); // telegraph beat
     }
 
+    const isStatusLike = event.result === 'status' || event.result === 'heal';
+    const category = getMoveAnimCategory(event.moveType);
     const setAttacking = isPlayer ? setPlayerAttacking : setEnemyAttacking;
-    setAttacking(true);
-    playSound('attack');
-    await wait(motionMs(500));
-    setAttacking(false);
+
+    if (isStatusLike) {
+      triggerStatusSparkle();
+      playSound('attack');
+      await wait(motionMs(400));
+    } else if (category === 'physical') {
+      setAttacking(true);
+      playSound('attack');
+      await wait(motionMs(500));
+      setAttacking(false);
+    } else {
+      playSound('attack');
+      await wait(motionMs(200));
+      triggerRangedFlash(event.moveType);
+      await wait(motionMs(300));
+    }
     if (!isPlayer) {
       timersRef.current.push(setTimeout(() => setOpponentMove(null), 1500));
     }
@@ -898,6 +927,8 @@ const BattleSim = ({
     setEnemyCritical(false);
     setHitFlash(null);
     setCriticalFlash(false);
+    setRangedFlash(null);
+    setStatusSparkle(false);
     setOpponentMove(null);
     setProgressSave('idle');
     setProgressError('');
@@ -1063,6 +1094,15 @@ const BattleSim = ({
                   />
                 )}
               </AnimatePresence>
+
+              {rangedFlash && (
+                <div
+                  className="ranged-flash"
+                  style={{ background: rangedFlash }}
+                  aria-hidden="true"
+                />
+              )}
+              {statusSparkle && <div className="status-sparkle" aria-hidden="true" />}
 
               {/* Enemy: HP box + sprite */}
               <div className="gba-enemy-container" style={slotStyle('opponent')}>
