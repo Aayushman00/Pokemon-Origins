@@ -762,7 +762,7 @@ const BattleSim = ({
     playSound('damage');
     // Same tick: start the stepped drain and show the -N tick.
     setDefender((prev) => ({ ...prev, current_hp: event.targetHpAfter }));
-    showDamageTick(isPlayer ? 'enemy' : 'player', event.damage);
+    if (event.damage > 0) showDamageTick(isPlayer ? 'enemy' : 'player', event.damage);
 
     // Beat 6 -- drain.
     await wait(motionMs(DRAIN_MS));
