@@ -6,6 +6,21 @@ import "./Playground.css";
 const LERP_FACTOR = 0.25;
 const MOVE_EMIT_INTERVAL_MS = 50; // ~20/sec
 const MAX_CLIENT_MESSAGES = 50;
+const GUEST_NAME_KEY = "playground_guest_name";
+
+/** Kept for the tab session so a reconnect/reload doesn't reroll a new guest identity. */
+function getOrCreateGuestName() {
+  try {
+    const existing = sessionStorage.getItem(GUEST_NAME_KEY);
+    if (existing) return existing;
+    const name = `Guest${Math.floor(1000 + Math.random() * 9000)}`;
+    sessionStorage.setItem(GUEST_NAME_KEY, name);
+    return name;
+  } catch {
+    // Private browsing / blocked storage: fall back to a one-off name.
+    return `Guest${Math.floor(1000 + Math.random() * 9000)}`;
+  }
+}
 
 const Playground = () => {
   const [selfId, setSelfId] = useState(null);
@@ -25,7 +40,8 @@ const Playground = () => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const socket = io(API_URL, { auth: { token } });
+    const auth = token ? { token } : { name: getOrCreateGuestName() };
+    const socket = io(API_URL, { auth });
     socketRef.current = socket;
 
     socket.on("connect_error", () => setConnectError(true));

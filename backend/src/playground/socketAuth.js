@@ -8,11 +8,27 @@
  * DI pattern used by backend/src/services/*.
  */
 
+const GUEST_NAME_MAX_LENGTH = 20;
+
+/** Trims/caps a client-supplied guest name; null when nothing usable was sent. */
+function sanitizeGuestName(name) {
+	const trimmed = String(name || "").trim().slice(0, GUEST_NAME_MAX_LENGTH);
+	return trimmed || null;
+}
+
 function createSocketAuthMiddleware({ verifyToken, findTrainerById }) {
 	return function socketAuthMiddleware(socket, next) {
 		const token = socket.handshake?.auth?.token;
+
 		if (!token) {
-			return next(new Error("No token provided"));
+			// No account required to visit the Playground: a guest who supplies
+			// a display name gets a per-connection identity instead of a DB row.
+			const guestName = sanitizeGuestName(socket.handshake?.auth?.name);
+			if (!guestName) {
+				return next(new Error("No token provided"));
+			}
+			socket.trainer = { trainerId: `guest-${socket.id}`, name: guestName };
+			return next();
 		}
 
 		let decoded;
@@ -47,4 +63,4 @@ function createSocketAuthMiddleware({ verifyToken, findTrainerById }) {
 	};
 }
 
-module.exports = { createSocketAuthMiddleware };
+module.exports = { createSocketAuthMiddleware, sanitizeGuestName };

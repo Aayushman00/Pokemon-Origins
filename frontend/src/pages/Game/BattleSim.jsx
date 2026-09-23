@@ -6,16 +6,19 @@ import { TYPE_COLORS } from '../../utils/typeColors';
 import PokemonSprite from '../../components/PokemonSprite/PokemonSprite';
 import BattlePokemonSprite from '../../components/PokemonSprite/BattlePokemonSprite';
 import TrainerAvatar from '../../components/TrainerAvatar/TrainerAvatar';
+import Shell from '../../components/Shell/Shell';
+import LcdPanel from '../../components/Shell/LcdPanel';
+import HpBox from './battle/HpBox';
+import GbaControls from '../../components/Shell/GbaControls';
 import './BattleGround.css';
 import { slotStyle, shadowStyle } from './battleLayout';
 import { useUser } from '../../App';
 import { playerTrainerSprite } from '../../utils/trainerSprite';
 import { getAnimState, ANIMATION_VARIANTS } from './battleAnimation';
-import HpBox from './battle/HpBox';
 
-// Native stage size; scaled down responsively, never up
-const STAGE_WIDTH = 768;
-const STAGE_TOTAL_HEIGHT = 698; // stage (540) + margin-top (12) + battle log container (146)
+// Native stage size; fixed, never scaled
+const STAGE_WIDTH = 808; // fills the GBA screen edge-to-edge (lcd-panel--fixed, .lcd-content padding zeroed for battle)
+const STAGE_TOTAL_HEIGHT = 580; // stage only -- dev log now renders outside the GBA casing
 
 // Gen 3 battle fidelity (Phase 14): client-side text for server events.
 // The server log carries the same lines; the client re-derives them so the
@@ -40,6 +43,7 @@ const STATUS_HURT_TEXT = {
   brn: (name) => `${name} was hurt by its burn!`,
   psn: (name) => `${name} was hurt by poison!`,
 };
+
 const STAT_LABELS = {
   atk: 'ATTACK',
   def: 'DEFENSE',
@@ -104,6 +108,9 @@ const BattleSim = ({
   const [error, setError] = useState('');
   const [selectedMove, setSelectedMove] = useState(null);
   const [hoveredMove, setHoveredMove] = useState(null);
+  // D-pad/A/B cursor for the command menu, move grid, and restart confirm --
+  // index into that phase's option list (2x2 grid or YES/NO pair).
+  const [menuCursor, setMenuCursor] = useState(0);
   const [opponentMove, setOpponentMove] = useState(null);
   const [progressSave, setProgressSave] = useState('idle'); // idle | saving | saved | error
   const [progressError, setProgressError] = useState('');
@@ -130,9 +137,6 @@ const BattleSim = ({
   const [enemyCritical, setEnemyCritical] = useState(false);
   const [hitFlash, setHitFlash] = useState(null); // type-tinted overlay color
   const [criticalFlash, setCriticalFlash] = useState(false); // white double-pulse accent, crits only
-
-  // Responsive stage scale
-  const [stageScale, setStageScale] = useState(1);
 
   const logRef = useRef(null);
   const battleSoundRef = useRef(null);
@@ -208,21 +212,53 @@ const BattleSim = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [levelNumber, battleNumber]);
 
-  // Scale the fixed 768px stage down on narrow screens
-  useEffect(() => {
-    const onResize = () =>
-      setStageScale(Math.min(1, (window.innerWidth - 24) / STAGE_WIDTH));
-    onResize();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
   // Auto-scroll battle log when updated
   useEffect(() => {
     if (logRef.current) {
       logRef.current.scrollTop = logRef.current.scrollHeight;
     }
   }, [battleLog]);
+
+  // Reset the D-pad cursor to the first option whenever a cursor-driven
+  // screen (command menu / move grid / restart confirm) opens.
+  useEffect(() => {
+    setMenuCursor(0);
+  }, [uiPhase]);
+
+  // D-pad + A/B keyboard control for the command menu, move grid, and
+  // restart confirm. Command menu is the floor for B (Ruling: never exits
+  // the battle or navigates away from it).
+  useEffect(() => {
+    const cursorPhases = ['command', 'moveSelect', 'restartConfirm'];
+    if (!cursorPhases.includes(uiPhase)) return undefined;
+
+    const onKeyDown = (e) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        if (uiPhase === 'restartConfirm') {
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            setMenuCursor((c) => (c === 0 ? 1 : 0));
+          }
+          return;
+        }
+        setMenuCursor((c) => {
+          const next = moveCursorInGrid(c, e.key);
+          if (uiPhase === 'moveSelect' && !session?.mustStruggle && !gridMoves()[next]) return c;
+          return next;
+        });
+      } else if (e.key === 'a' || e.key === 'A' || e.key === 'Enter') {
+        e.preventDefault();
+        confirmMenuCursor();
+      } else if (e.key === 'b' || e.key === 'B' || e.key === 'Escape') {
+        e.preventDefault();
+        pressBackButton();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uiPhase, menuCursor, session?.mustStruggle]);
 
   // Play sound effects; missing files must never break the battle
   const playSound = (soundType) => {
@@ -355,6 +391,45 @@ const BattleSim = ({
       grid.push(i < moves.length ? moves[i] : null);
     }
     return grid;
+  };
+
+  // D-pad cursor within a 2x2 option grid (command menu / move grid) --
+  // arrows toggle row/col, wrapping like the original games' menus.
+  const moveCursorInGrid = (cursor, key) => {
+    const row = Math.floor(cursor / 2);
+    const col = cursor % 2;
+    if (key === 'ArrowLeft' || key === 'ArrowRight') return row * 2 + (1 - col);
+    if (key === 'ArrowUp' || key === 'ArrowDown') return (1 - row) * 2 + col;
+    return cursor;
+  };
+
+  // A: confirm whatever the arrow cursor is currently on.
+  const confirmMenuCursor = () => {
+    if (uiPhase === 'command') {
+      const actions = ['FIGHT', 'BAG', 'POKEMON', 'RESTART'];
+      handleMainMenuSelection(actions[menuCursor]);
+    } else if (uiPhase === 'moveSelect') {
+      if (session?.mustStruggle) {
+        handleSelectMove(STRUGGLE_MOVE);
+        return;
+      }
+      const move = gridMoves()[menuCursor];
+      if (!move) return;
+      if (typeof move.current_pp === 'number' && move.current_pp <= 0) return;
+      handleSelectMove(move);
+    } else if (uiPhase === 'restartConfirm') {
+      confirmRestart(menuCursor === 0);
+    }
+  };
+
+  // B: back one screen. Command menu is the floor -- never leaves the battle.
+  const pressBackButton = () => {
+    if (uiPhase === 'moveSelect') {
+      playSound('select');
+      setUiPhase('command');
+    } else if (uiPhase === 'restartConfirm') {
+      confirmRestart(false);
+    }
   };
 
   // Animate one server event with the existing lunge/flash/HP/faint beats.
@@ -884,17 +959,20 @@ const BattleSim = ({
 
   return (
     <div className="battle-page device-backdrop">
-      <div
-        className="battle-scale-outer"
-        style={{
-          width: STAGE_WIDTH * stageScale,
-          height: STAGE_TOTAL_HEIGHT * stageScale,
-        }}
+      <Shell
+        poweredOn
+        controls={
+          <>
+            <GbaControls onB={pressBackButton} onA={confirmMenuCursor} />
+          </>
+        }
       >
-        <div style={{ transform: `scale(${stageScale})`, transformOrigin: 'top left', width: STAGE_WIDTH }}>
-          <div className="gba-battle-container">
-            {/* Sound Effects */}
-            <audio ref={battleSoundRef} />
+        <LcdPanel scanlines={false} className="lcd-panel--fixed">
+          <div className="battle-scale-outer" style={{ width: STAGE_WIDTH, height: STAGE_TOTAL_HEIGHT }}>
+            <div style={{ width: STAGE_WIDTH }}>
+              <div className="gba-battle-container">
+                {/* Sound Effects */}
+                <audio ref={battleSoundRef} />
             <div className="gba-battle-background">
               {/* Encounter beat: flash + pokéball throw + appear text */}
               <AnimatePresence>
@@ -1067,7 +1145,6 @@ const BattleSim = ({
                 <motion.div
                   className={`gba-pokemon-sprite player-sprite ${playerDamageEffect ? 'damage-effect' : ''}`}
                   animate={{
-                    scaleX: -1,
                     ...(reduceMotion
                       ? (playerFainted ? ANIMATION_VARIANTS.FAINT : ANIMATION_VARIANTS.IDLE)
                       : ANIMATION_VARIANTS[
@@ -1081,9 +1158,8 @@ const BattleSim = ({
                     pokemonId={userPokemon.pokemon_id}
                     variant="back"
                     alt={userPokemon.nickname}
-                    initial={{ x: -60, opacity: 0, scaleX: -1 }}
+                    initial={{ x: -60, opacity: 0 }}
                     animate={{
-                      scaleX: -1,
                       x:
                         playerAttacking && !reduceMotion
                           ? [0, -8, 32, 26, 0]
@@ -1296,9 +1372,15 @@ const BattleSim = ({
                             move ? (
                               <button
                                 key={move.move_id}
-                                className={`gba-move-btn ${selectedMove?.move_id === move.move_id ? 'selected' : ''}`}
-                                onClick={() => handleSelectMove(move)}
-                                onMouseEnter={() => setHoveredMove(move)}
+                                className={`gba-move-btn ${menuCursor === index ? 'selected' : ''}`}
+                                onClick={() => {
+                                  setMenuCursor(index);
+                                  handleSelectMove(move);
+                                }}
+                                onMouseEnter={() => {
+                                  setMenuCursor(index);
+                                  setHoveredMove(move);
+                                }}
                                 onMouseLeave={() => setHoveredMove(null)}
                                 onFocus={() => setHoveredMove(move)}
                                 onBlur={() => setHoveredMove(null)}
@@ -1307,6 +1389,7 @@ const BattleSim = ({
                                   move.current_pp <= 0
                                 }
                               >
+                                <span className="gba-cursor-arrow">{menuCursor === index ? '▶' : ''}</span>
                                 <span className="gba-move-btn-name">{move.name}</span>
                                 {typeof move.current_pp === 'number' && (
                                   <span className="gba-move-btn-pp">
@@ -1335,52 +1418,79 @@ const BattleSim = ({
                   <div className="gba-menu-box">
                     {uiPhase === 'moveSelect' ? (
                       <div className="gba-move-info">
-                        {hoveredMove ? (
-                          <>
-                            <p><strong>{hoveredMove.name}</strong></p>
-                            <p>
-                              Type:{' '}
-                              {(hoveredMove.type || hoveredMove.move_type) && (
-                                <span
-                                  className="move-type"
-                                  style={{
-                                    background:
-                                      TYPE_COLORS[String(hoveredMove.type || hoveredMove.move_type).toLowerCase()] ||
-                                      '#a8a77a',
-                                  }}
-                                >
-                                  {hoveredMove.type || hoveredMove.move_type}
-                                </span>
-                              )}
-                            </p>
-                            <p>
-                              PP:{' '}
-                              {typeof hoveredMove.current_pp === 'number'
-                                ? `${hoveredMove.current_pp}/${hoveredMove.max_pp}`
-                                : '—'}
-                            </p>
-                            <p>
-                              Description:{' '}
-                              {hoveredMove.description
-                                ? hoveredMove.description
-                                : 'No description available.'}
-                            </p>
-                          </>
+                        {(hoveredMove || grid[menuCursor]) ? (
+                          (() => {
+                            const shown = hoveredMove || grid[menuCursor];
+                            return (
+                              <>
+                                <p><strong>{shown.name}</strong></p>
+                                <p>
+                                  Type:{' '}
+                                  {(shown.type || shown.move_type) && (
+                                    <span
+                                      className="move-type"
+                                      style={{
+                                        background:
+                                          TYPE_COLORS[String(shown.type || shown.move_type).toLowerCase()] ||
+                                          '#a8a77a',
+                                      }}
+                                    >
+                                      {shown.type || shown.move_type}
+                                    </span>
+                                  )}
+                                </p>
+                                <p>
+                                  PP:{' '}
+                                  {typeof shown.current_pp === 'number'
+                                    ? `${shown.current_pp}/${shown.max_pp}`
+                                    : '—'}
+                                </p>
+                                <p>
+                                  Description:{' '}
+                                  {shown.description
+                                    ? shown.description
+                                    : 'No description available.'}
+                                </p>
+                              </>
+                            );
+                          })()
                         ) : (
                           <p>Hover over a move for details</p>
                         )}
                       </div>
                     ) : uiPhase === 'command' ? (
                       <div className="gba-main-menu">
-                        <button onClick={() => handleMainMenuSelection('FIGHT')}>FIGHT</button>
-                        <button onClick={() => handleMainMenuSelection('BAG')}>BAG</button>
-                        <button onClick={() => handleMainMenuSelection('POKEMON')}>POKéMON</button>
-                        <button onClick={() => handleMainMenuSelection('RESTART')}>RESTART</button>
+                        {[
+                          { action: 'FIGHT', label: 'FIGHT' },
+                          { action: 'BAG', label: 'BAG' },
+                          { action: 'POKEMON', label: 'POKéMON' },
+                          { action: 'RESTART', label: 'RESTART' },
+                        ].map(({ action, label }, index) => (
+                          <button
+                            key={action}
+                            onClick={() => {
+                              setMenuCursor(index);
+                              handleMainMenuSelection(action);
+                            }}
+                            onMouseEnter={() => setMenuCursor(index)}
+                          >
+                            <span className="gba-cursor-arrow">{menuCursor === index ? '▶' : ''}</span>
+                            {label}
+                          </button>
+                        ))}
                       </div>
                     ) : uiPhase === 'restartConfirm' ? (
                       <div className="gba-main-menu">
-                        <button onClick={() => confirmRestart(true)}>YES</button>
-                        <button onClick={() => confirmRestart(false)}>NO</button>
+                        {['YES', 'NO'].map((label, index) => (
+                          <button
+                            key={label}
+                            onClick={() => confirmRestart(index === 0)}
+                            onMouseEnter={() => setMenuCursor(index)}
+                          >
+                            <span className="gba-cursor-arrow">{menuCursor === index ? '▶' : ''}</span>
+                            {label}
+                          </button>
+                        ))}
                       </div>
                     ) : null}
                   </div>
@@ -1388,35 +1498,38 @@ const BattleSim = ({
               )}
             </div>
           </div>
-
-          {/* Developer log: full event history with timestamps, collapsed by
-              default. The in-game dialog box (Phase 8) is the primary
-              gameplay feedback surface now -- this stays available for
-              debugging, not as the main way players see battle events. */}
-          <div className="gba-battle-log-container">
-            <button
-              type="button"
-              className="gba-battle-log-toggle"
-              onClick={() => setDevLogOpen((open) => !open)}
-            >
-              {devLogOpen ? '▼' : '▶'} DEVELOPER LOG
-            </button>
-            {devLogOpen && (
-              <div className="gba-battle-log" ref={logRef}>
-                {battleLog.map((entry, index) => (
-                  <motion.p
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {entry}
-                  </motion.p>
-                ))}
               </div>
-            )}
+            </div>
+        </LcdPanel>
+      </Shell>
+
+      {/* Developer log: full event history with timestamps, collapsed by
+          default. The in-game dialog box (Phase 8) is the primary
+          gameplay feedback surface now -- this stays available for
+          debugging, not as the main way players see battle events. Lives
+          outside the GBA casing -- it's a debug tool, not part of the device. */}
+      <div className="gba-battle-log-container">
+        <button
+          type="button"
+          className="gba-battle-log-toggle"
+          onClick={() => setDevLogOpen((open) => !open)}
+        >
+          {devLogOpen ? '▼' : '▶'} DEVELOPER LOG
+        </button>
+        {devLogOpen && (
+          <div className="gba-battle-log" ref={logRef}>
+            {battleLog.map((entry, index) => (
+              <motion.p
+                key={index}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                {entry}
+              </motion.p>
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

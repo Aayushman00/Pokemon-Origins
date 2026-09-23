@@ -3,8 +3,8 @@ const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 const { createSocketAuthMiddleware } = require("./socketAuth");
 
-function fakeSocket(token) {
-	return { handshake: { auth: { token } }, trainer: undefined };
+function fakeSocket(token, extraAuth = {}) {
+	return { id: "sock-1", handshake: { auth: { token, ...extraAuth } }, trainer: undefined };
 }
 
 describe("createSocketAuthMiddleware", () => {
@@ -85,6 +85,32 @@ describe("createSocketAuthMiddleware", () => {
 		middleware(socket, (err) => {
 			assert.equal(err, undefined);
 			assert.deepEqual(socket.trainer, { trainerId: 42, name: "Ash" });
+			done();
+		});
+	});
+
+	it("admits a guest (no token) that supplies a display name", (t, done) => {
+		const middleware = createSocketAuthMiddleware({
+			verifyToken: () => { throw new Error("should not be called"); },
+			findTrainerById: async () => { throw new Error("should not be called"); },
+		});
+		const socket = fakeSocket(undefined, { name: "  Misty  " });
+		middleware(socket, (err) => {
+			assert.equal(err, undefined);
+			assert.deepEqual(socket.trainer, { trainerId: "guest-sock-1", name: "Misty" });
+			done();
+		});
+	});
+
+	it("rejects a guest (no token) with a blank display name", (t, done) => {
+		const middleware = createSocketAuthMiddleware({
+			verifyToken: () => { throw new Error("should not be called"); },
+			findTrainerById: async () => { throw new Error("should not be called"); },
+		});
+		const socket = fakeSocket(undefined, { name: "   " });
+		middleware(socket, (err) => {
+			assert.ok(err instanceof Error);
+			assert.equal(socket.trainer, undefined);
 			done();
 		});
 	});

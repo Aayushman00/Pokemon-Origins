@@ -1,9 +1,86 @@
 const { slugToTitleCase } = require("../utils/formatSlug");
-const { formatEvolutionRequirement } = require("./evolutionRequirement");
 
-function extractIdFromUrl(url) {
-  const match = String(url || "").match(/\/(\d+)\/?$/);
-  return match ? Number(match[1]) : null;
+/**
+ * Evolution chain data lives in the SQL pokedex (Evolution/Pokemon/Pokemon_Type),
+ * which only has the 151 project Pokémon — unlike PokeAPI's chain endpoint,
+ * this can never surface a later-gen species.
+ */
+function createMysqlEvolutionGraphStore(pool) {
+  return {
+    async getAllEvolutions() {
+      const [rows] = await pool.query(
+        `SELECT base_pokemon_id, evolved_pokemon_id, evolution_method, evolution_condition FROM Evolution`
+      );
+      return rows;
+    },
+    async getPokemon(pokemonId) {
+      const [rows] = await pool.query(
+        `SELECT pokemon_id, name FROM Pokemon WHERE pokemon_id = ?`,
+        [pokemonId]
+      );
+      return rows[0] || null;
+    },
+    async getTypesFor(pokemonId) {
+      const [rows] = await pool.query(
+        `SELECT t.name FROM Pokemon_Type pt
+         JOIN Type t ON pt.type_id = t.type_id
+         WHERE pt.pokemon_id = ?`,
+        [pokemonId]
+      );
+      return rows.map((r) => String(r.name).toLowerCase());
+    },
+  };
+}
+
+/** DB evolution_condition is already human text ("Level 16", "Use fire-stone"). */
+function formatDbEvolutionRequirement(row) {
+  if (!row) return null;
+  const method = String(row.evolution_method || "");
+  const condition = String(row.evolution_condition || "").trim();
+
+  if (method === "level-up") {
+    const match = /level\s*(\d+)/i.exec(condition);
+    return match ? `Lv. ${match[1]}` : condition ? slugToTitleCase(condition) : "Level Up";
+  }
+  if (method === "use-item") {
+    const match = /use\s+([a-z-]+)/i.exec(condition);
+    return match ? slugToTitleCase(match[1]) : "Use Item";
+  }
+  if (method === "trade") return "Trade";
+  return condition ? slugToTitleCase(condition) : method ? slugToTitleCase(method) : null;
+}
+
+/** Walks the Evolution table to the chain's root, then rebuilds it forward. */
+async function buildEvolutionGraph(evolutionStore, rootPokemonId) {
+  const rows = await evolutionStore.getAllEvolutions();
+  const byEvolved = new Map();
+  const byBase = new Map();
+  for (const row of rows) {
+    byEvolved.set(Number(row.evolved_pokemon_id), row);
+    const siblings = byBase.get(Number(row.base_pokemon_id)) || [];
+    siblings.push(row);
+    byBase.set(Number(row.base_pokemon_id), siblings);
+  }
+
+  let rootId = Number(rootPokemonId);
+  while (byEvolved.has(rootId)) {
+    rootId = Number(byEvolved.get(rootId).base_pokemon_id);
+  }
+
+  async function nodeFor(id, requirement) {
+    const [pokemon, types] = await Promise.all([
+      evolutionStore.getPokemon(id),
+      evolutionStore.getTypesFor(id),
+    ]);
+    const children = await Promise.all(
+      (byBase.get(id) || []).map((row) =>
+        nodeFor(Number(row.evolved_pokemon_id), formatDbEvolutionRequirement(row))
+      )
+    );
+    return { id, name: pokemon?.name, types, requirement, children };
+  }
+
+  return nodeFor(rootId, null);
 }
 
 function pickEnglish(entries, field) {
@@ -30,17 +107,13 @@ function statsFromPokemon(pokemon) {
   return stats;
 }
 
-function createPokemonDetailService({ client, typeEffectiveness }) {
-  async function buildEvolutionNode(chainNode, requirement) {
-    const id = extractIdFromUrl(chainNode.species.url);
-    const pokemon = await client.getPokemon(id);
-    const types = pokemon.types.map((t) => t.type.name);
-    const children = await Promise.all(
-      chainNode.evolves_to.map((child) =>
-        buildEvolutionNode(child, formatEvolutionRequirement(child.evolution_details[0]))
-      )
-    );
-    return { id, name: chainNode.species.name, types, requirement, children };
+function createPokemonDetailService({ client, typeEffectiveness, evolutionStore = null }) {
+  function getEvolutionStore() {
+    if (!evolutionStore) {
+      // Lazy so requiring this module never opens a DB connection.
+      evolutionStore = createMysqlEvolutionGraphStore(require("../config/db"));
+    }
+    return evolutionStore;
   }
 
   function findPathToId(node, targetId, path = []) {
@@ -71,8 +144,7 @@ function createPokemonDetailService({ client, typeEffectiveness }) {
       .filter((a) => !a.is_hidden)
       .map((a) => slugToTitleCase(a.ability.name));
 
-    const evolutionChain = await client.getEvolutionChain(species.evolution_chain.url);
-    const rootNode = await buildEvolutionNode(evolutionChain.chain, null);
+    const rootNode = await buildEvolutionGraph(getEvolutionStore(), pokemon.id);
     const path = findPathToId(rootNode, Number(pokemon.id)) || [rootNode];
     const currentNode = path[path.length - 1];
     const previous_evolutions = path.slice(0, -1).map((n) => ({

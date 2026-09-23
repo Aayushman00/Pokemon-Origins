@@ -11,6 +11,11 @@ describe("colorFor", () => {
 	it("returns a hex color string", () => {
 		assert.match(colorFor(3), /^#[0-9A-Fa-f]{6}$/);
 	});
+
+	it("handles a guest string trainerId deterministically", () => {
+		assert.match(colorFor("guest-abc123"), /^#[0-9A-Fa-f]{6}$/);
+		assert.equal(colorFor("guest-abc123"), colorFor("guest-abc123"));
+	});
 });
 
 describe("createRoomState", () => {

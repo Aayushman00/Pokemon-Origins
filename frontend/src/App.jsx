@@ -21,6 +21,7 @@ import Bag from './pages/Game/Bag';
 import Mart from './pages/Game/Mart';
 import Landing from "./pages/Landing/Landing";
 import Playground from "./pages/Playground/Playground";
+import SpriteScalePlayground from "./pages/Dev/SpriteScalePlayground";
 
 import { api } from "./api";
 
@@ -55,10 +56,9 @@ function AnimatedRoutes({ user }) {
             path="/game/mart"
             element={user ? <Mart /> : <Navigate to="/auth" replace />}
           />
-          <Route
-            path="/playground"
-            element={user ? <Playground /> : <Navigate to="/auth" replace />}
-          />
+          {/* No account needed: an unauthenticated visitor joins as a guest */}
+          <Route path="/playground" element={<Playground />} />
+          <Route path="/dev/sprite-scale" element={<SpriteScalePlayground />} />
           <Route
             path="*"
             element={<Navigate to={user ? "/game" : "/auth"} replace />}

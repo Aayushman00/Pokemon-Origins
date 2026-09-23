@@ -6,6 +6,7 @@ import { NavLink, useLocation } from "react-router-dom";
 const NAV_ITEMS = [
 	{ name: "Pokédex", path: "/pokedex" },
 	{ name: "Game", path: "/game" },
+	{ name: "Playground", path: "/playground" },
 ];
 
 const Header = () => {

@@ -18,8 +18,19 @@ const PALETTE = [
 	"#B34D4D",
 ];
 
+function hashToUint(value) {
+	let hash = 0;
+	for (const char of String(value)) {
+		hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+	}
+	return hash;
+}
+
+/** trainerId is a DB number for signed-in trainers, or a "guest-<socketId>" string. */
 function colorFor(trainerId) {
-	const index = Number(trainerId) % PALETTE.length;
+	const numeric = Number(trainerId);
+	const id = Number.isFinite(numeric) ? numeric : hashToUint(trainerId);
+	const index = id % PALETTE.length;
 	return PALETTE[index];
 }
 

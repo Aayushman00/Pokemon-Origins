@@ -5,11 +5,18 @@
 .battle-page {
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 16px 12px;
   font-family: 'Press Start 2P', monospace;
   image-rendering: pixelated;
+}
+
+/* Battle stage fills the GBA screen edge-to-edge -- no LCD bezel padding
+   around it (other pages using .lcd-panel--fixed keep the normal padding). */
+.battle-page .lcd-content {
+  padding: 0;
 }
 
 /* Fixed-size stage scales down on narrow screens via transform */
@@ -29,10 +36,10 @@
 /* Main Battle Container */
 .gba-battle-container {
   position: relative;
-  width: 768px;
-  height: 540px;
+  width: 808px;
+  height: 580px;
   margin: 0;
-  border: 8px solid #424542;
+  /* border: 8px solid #424542; */
   border-radius: 4px;
   box-shadow: 0 0 0 4px #000, 0 0 0 6px #84739c, 0 0 0 10px #000, 0 20px 20px rgba(0,0,0,0.6);
   overflow: hidden;
@@ -163,15 +170,45 @@
 .gba-enemy-container,
 .gba-player-container {
   position: absolute;
-  z-index: 2;
-}
+  align-items: flex-end;
+} 
 
 /* top/right now supplied by battleLayout.js via inline style (BattleSim.jsx) */
+.gba-hp-box.enemy-hp-box{
+    width: 250px;
+    height: 80px;
+    margin-top: -10px;
+    transform: translateX(-370px) translateY(70px);
+    animation: enemyHpBoxAppear 0.5s ease-out forwards;
+}
+
+@keyframes enemyHpBoxAppear {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.gba-pokemon-sprite.enemy-sprite {
+    margin-left: 0px;
+    margin-top: 0px;
+}
 
 /* bottom/left now supplied by battleLayout.js via inline style (BattleSim.jsx) */
-.gba-player-container {
-  flex-direction: column;
-  align-items: flex-end;
+.gba-hp-box.player-hp-box {
+    width: 270px;
+    height: 100px;
+    transform: translateX(400px) translateY(-10px);
+    margin-top: -120px;
+    animation: playerHpBoxAppear 0.5s ease-out forwards;
+}
+
+@keyframes playerHpBoxAppear {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+.gba-pokemon-sprite.player-sprite{
+    margin-bottom: -162px; 
+    margin-left: 80px;
 }
 
 /* HP Box Styling */
@@ -327,7 +364,7 @@
 .exp-bar {
   width: 100%;
   height: 6px;
-  background: #585048;
+  background: #05a8d6;
   border-radius: 3px;
   overflow: hidden;
   margin-top: 8px;
@@ -349,18 +386,17 @@
 }
 
 .gba-pokemon-sprite img {
-  width: 130px;
+  width: auto;
+  height: auto;
+  min-width: 180px;
   image-rendering: pixelated;
   filter: drop-shadow(0 10px 5px rgba(0,0,0,0.2));
   transform-origin: bottom center;
 }
 
-.enemy-sprite img {
-  animation: enemyIdle 3s infinite alternate ease-in-out;
-}
-
+.enemy-sprite img,
 .player-sprite img {
-  animation: playerIdle 3s infinite alternate ease-in-out;
+  animation: none;
 }
 
 @keyframes enemyIdle {
@@ -386,20 +422,20 @@
 /* Bottom UI - Classic Pokémon Layout */
 .gba-bottom-ui {
   width: 100%;
-  height: 140px;
+  height: 180px;
   background: linear-gradient(to bottom, #f8f8f8, #e0e0e0);
   border-top: 4px solid #506860;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   box-shadow: inset 0 4px 0 rgba(255,255,255,0.5);
-  transform: translateY(140px);
+  transform: translateY(180px);
   animation: uiSlideUp 0.5s ease-out forwards;
   animation-delay: 1.5s;
 }
 
 @keyframes uiSlideUp {
-  0% { transform: translateY(140px); }
+  0% { transform: translateY(180px); }
   100% { transform: translateY(0); }
 }
 
@@ -427,12 +463,6 @@
   height: 10px;
   border-right: 3px solid #506860;
   border-bottom: 3px solid #506860;
-  animation: arrowBounce 0.8s infinite alternate;
-}
-
-@keyframes arrowBounce {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(4px); }
 }
 
 /* FireRed reference: the message box is navy with white text; only the
@@ -444,8 +474,7 @@
 }
 
 .gba-dialog-box--message::after {
-  border-right-color: #ef4444;
-  border-bottom-color: #ef4444;
+  display: none;
 }
 
 .gba-dialog-box--message .gba-dialog-text {
@@ -470,7 +499,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr 1fr;
-  gap: 8px;
+  gap: 5px;
   width: 100%;
   height: 100%;
 }
@@ -479,7 +508,7 @@
   background: #e8e8c8;
   border: 2px solid #506860;
   border-radius: 6px;
-  padding: 6px;
+  /* padding: 10px; */
   font-size: 12px;
   font-weight: bold;
   color: #333;
@@ -564,36 +593,38 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   grid-template-rows: repeat(2, 1fr);
-  gap: 12px;
+  gap: 20px;
   width: 100%;
-  height: 100%;
+  height: auto;
   align-items: center;
   justify-items: center;
   padding: 8px;
 }
 
 .gba-main-menu button {
-  background: var(--panel-cream);
-  border: 4px solid var(--panel-border);
-  border-radius: 12px;
-  padding: 10px 8px;
+  background: transparent;
+  border: none;
+  padding: 8px 8px;
   width: 100%;
   height: 100%;
-  font-size: 14px;
+  font-size: 16px;
   cursor: pointer;
   font-family: 'Press Start 2P', monospace;
   color: #333;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
-.gba-main-menu button:hover {
-  background: #f2f2d8;
-}
-
+.gba-main-menu button:hover,
 .gba-main-menu button:active {
-  background: #d8d8b8;
+  background: transparent;
+}
+
+.gba-cursor-arrow {
+  display: inline-block;
+  width: 15px;
+  flex-shrink: 0;
 }
 
 /* Loss screen offers two exits: retry (primary) or back to the hub */

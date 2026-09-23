@@ -5,6 +5,7 @@ import LoginForm from "./LoginForm";
 import { useUser } from "../../App";
 import Shell from "../../components/Shell/Shell";
 import LcdPanel from "../../components/Shell/LcdPanel";
+import GbaControls from "../../components/Shell/GbaControls";
 
 const AuthPage = () => {
 	const { user } = useUser();
@@ -36,61 +37,17 @@ const AuthPage = () => {
 
 	return (
 		<div className="device-backdrop flex flex-col items-center justify-center min-h-screen p-4">
-			<div className="w-full max-w-md">
+			<div>
 				<Shell
 					poweredOn={poweredOn}
 					controls={
 						<>
-							{/* D-pad and A/B buttons */}
-							<div className="flex justify-between items-center mt-6 px-1">
-								<div className="relative w-24 h-24" aria-hidden="true">
-									<div className="absolute inset-0 bg-stone-900 rounded-full shadow-inner"></div>
-									<div className="absolute left-8 top-0 w-8 h-8 bg-stone-700 rounded-md shadow-md"></div>
-									<div className="absolute left-0 top-8 w-8 h-8 bg-stone-700 rounded-md shadow-md"></div>
-									<div className="absolute left-8 bottom-0 w-8 h-8 bg-stone-700 rounded-md shadow-md"></div>
-									<div className="absolute right-0 top-8 w-8 h-8 bg-stone-700 rounded-md shadow-md"></div>
-									<div className="absolute left-8 top-8 w-8 h-8 bg-stone-800 rounded-sm"></div>
-								</div>
-
-								<div className="flex space-x-4 items-center">
-									<button
-										type="button"
-										className="shell-btn-round"
-										onClick={() => setActiveTab("login")}
-										title="B — back to login"
-										aria-label="B — back to login"
-									>
-										B
-									</button>
-									<button
-										type="button"
-										className="shell-btn-round"
-										onClick={submitActiveForm}
-										title="A — confirm"
-										aria-label="A — confirm"
-									>
-										A
-									</button>
-								</div>
-							</div>
-
-							{/* SELECT switches tabs, START submits */}
-							<div className="flex justify-center mt-6 space-x-8">
-								<button
-									type="button"
-									className="shell-btn-pill -rotate-6"
-									onClick={toggleTab}
-								>
-									SELECT
-								</button>
-								<button
-									type="button"
-									className="shell-btn-pill -rotate-6"
-									onClick={submitActiveForm}
-								>
-									START
-								</button>
-							</div>
+							<GbaControls
+								onB={() => setActiveTab("login")}
+								onA={submitActiveForm}
+								onSelect={toggleTab}
+								onStart={submitActiveForm}
+							/>
 
 							{/* Speaker grill */}
 							<div
@@ -107,7 +64,7 @@ const AuthPage = () => {
 						</>
 					}
 				>
-					<LcdPanel on={poweredOn}>
+					<LcdPanel on={poweredOn} className="lcd-panel--fixed">
 						{/* Brand hero */}
 						<div className="text-center mb-6">
 							<h1
