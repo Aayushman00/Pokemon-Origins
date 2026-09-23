@@ -1037,7 +1037,7 @@ Expected: all tests pass; lint reports no errors in files this plan touched (pre
 Open the spec and confirm, with `grep` on `BattleSim.jsx`:
 - `grep -n "dealt" ` → nothing.
 - `grep -n "messageTimerRef\|logEffectiveness"` → nothing.
-- `grep -c "await addLog"` → 24 (22 from Task 4, plus the ×0 guard and the `hitResultLines` loop from Task 5).
+- `grep -v "^\s*//" src/pages/Game/BattleSim.jsx | grep -c "await addLog"` → 25 (23 call sites from Task 4 — the table's rows expand to 9 + 4 `line()` + 2 status/recoil faints + 8 = 23 — plus the ×0 guard and the `hitResultLines` loop from Task 5). Comment lines are excluded because Task 4's comment text contains "await addLog".
 - `HpBox.jsx` has no `stiffness: 120` on the HP fill (the EXP bar's spring remains).
 
 - [ ] **Step 3: Refresh the knowledge graph**
