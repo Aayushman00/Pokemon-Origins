@@ -9,3 +9,13 @@ export function playerTrainerSprite(gender) {
     ? "/sprites/trainers/player/leaf.png"
     : "/sprites/trainers/player/red.png";
 }
+
+/**
+ * 5-frame back-view Poké Ball throw strip for the encounter beat (cropped by
+ * scripts/crop_trainer_sprites.py). Same Female/other rule as above.
+ */
+export function playerTrainerThrowSprite(gender) {
+  return gender === "Female"
+    ? "/sprites/trainers/player/leaf-throw.png"
+    : "/sprites/trainers/player/red-throw.png";
+}

@@ -15,7 +15,7 @@ import GbaControls from '../../components/Shell/GbaControls';
 import './BattleGround.css';
 import { slotStyle, shadowStyle } from './battleLayout';
 import { useUser } from '../../App';
-import { playerTrainerSprite } from '../../utils/trainerSprite';
+import { playerTrainerThrowSprite } from '../../utils/trainerSprite';
 import {
   getAnimState,
   ANIMATION_VARIANTS,
@@ -1002,7 +1002,7 @@ const BattleSim = ({
 
   const grid = gridMoves();
   const isMessageOnlyPhase = !['command', 'moveSelect', 'partySelect', 'bagSelect', 'restartConfirm', 'finished'].includes(uiPhase);
-  const playerSpriteUrl = playerTrainerSprite(user?.gender);
+  const playerThrowUrl = playerTrainerThrowSprite(user?.gender);
   const introStarted = uiPhase !== 'encounter';
   const trainerName = session?.trainerName || 'The trainer';
   const party = session?.party || [];
@@ -1081,11 +1081,11 @@ const BattleSim = ({
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: motionMs(150) / 1000, duration: motionMs(350) / 1000 }}
                     >
-                      <img
-                        src={playerSpriteUrl}
-                        alt=""
+                      {/* 5-frame throw strip; CSS steps() lands the release frame as the ball launches */}
+                      <div
                         aria-hidden="true"
-                        className="gba-trainer-avatar pixelated"
+                        className="gba-player-throw"
+                        style={{ backgroundImage: `url(${playerThrowUrl})` }}
                       />
                     </motion.div>
                     <motion.h2

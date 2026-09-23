@@ -160,6 +160,25 @@
   filter: drop-shadow(2px 3px 0 rgba(0,0,0,0.5));
 }
 
+/* Player Poke Ball throw: 5 x 72px cells (crop_trainer_sprites.py), 80ms per
+   frame -- steps(5, jump-none) yields exactly the 5 offsets 0..-288px. The
+   110ms delay puts the release frame (4) at 350ms, when the .pokeball-throw
+   arc starts. Reduced motion collapses it to the last frame. */
+.gba-player-throw {
+  width: 72px;
+  height: 49px;
+  background-repeat: no-repeat;
+  background-size: 360px 49px;
+  image-rendering: pixelated;
+  filter: drop-shadow(2px 3px 0 rgba(0,0,0,0.5));
+  animation: playerThrow 400ms steps(5, jump-none) 110ms both;
+}
+
+@keyframes playerThrow {
+  from { background-position: 0 0; }
+  to { background-position: -288px 0; }
+}
+
 /* FireRed-style pokéball throw, now paired with a brief trainer-avatar
    flash on both sides (Phase 7) rather than no trainer sprites at all. */
 .pokeball-throw {

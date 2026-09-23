@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { playerTrainerSprite } from "./trainerSprite.js";
+import { playerTrainerSprite, playerTrainerThrowSprite } from "./trainerSprite.js";
 
 describe("playerTrainerSprite", () => {
   it("returns leaf.png for Female", () => {
@@ -18,5 +18,17 @@ describe("playerTrainerSprite", () => {
   it("returns red.png when gender is missing/null/undefined", () => {
     assert.equal(playerTrainerSprite(undefined), "/sprites/trainers/player/red.png");
     assert.equal(playerTrainerSprite(null), "/sprites/trainers/player/red.png");
+  });
+});
+
+describe("playerTrainerThrowSprite", () => {
+  it("returns the Leaf throw strip for Female", () => {
+    assert.equal(playerTrainerThrowSprite("Female"), "/sprites/trainers/player/leaf-throw.png");
+  });
+
+  it("returns the Red throw strip for everything else", () => {
+    for (const g of ["Male", "Other", undefined, null]) {
+      assert.equal(playerTrainerThrowSprite(g), "/sprites/trainers/player/red-throw.png");
+    }
   });
 });
