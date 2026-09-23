@@ -1,11 +1,15 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
-const { createBattleSessionService } = require("./battleSessionService");
+const { createBattleSessionService, snapshotPokemon } = require("./battleSessionService");
 const {
 	createProgressService,
 	createMemoryStore,
 } = require("./progressService");
-const { createXpService, createMemoryXpStore } = require("./xpService");
+const {
+	createXpService,
+	createMemoryXpStore,
+	xpNeededForLevel,
+} = require("./xpService");
 const {
 	createRewardService,
 	createMemoryRewardStore,
@@ -112,6 +116,29 @@ function stubEngine(results) {
 		},
 	};
 }
+
+describe("snapshotPokemon gender/xp fields", () => {
+	it("carries a raw.gender straight through unchanged", () => {
+		const snap = snapshotPokemon(playerMon({ gender: "female" }), 1);
+		assert.equal(snap.gender, "female");
+	});
+
+	it("rolls a gender when raw.gender is absent (e.g. enemy config data)", () => {
+		const snap = snapshotPokemon(enemyMon({ pokemon_id: 132 }), 1); // Ditto: genderless
+		assert.equal(snap.gender, "genderless");
+	});
+
+	it("exposes experience and xp_to_next matching xpService's curve", () => {
+		const snap = snapshotPokemon(playerMon({ level: 5, experience: 30 }), 1);
+		assert.equal(snap.experience, 30);
+		assert.equal(snap.xp_to_next, xpNeededForLevel(5));
+	});
+
+	it("defaults experience to 0 when raw.experience is absent", () => {
+		const snap = snapshotPokemon(playerMon({ experience: undefined }), 1);
+		assert.equal(snap.experience, 0);
+	});
+});
 
 function defaultParty() {
 	return [
