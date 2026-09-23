@@ -90,4 +90,18 @@ describe("partyService", () => {
 		assert.equal(rows[0].moves.length, 2);
 		assert.equal(rows[0].moves[0].move_id, 33);
 	});
+
+	it("assigns a gender to a newly added Pokémon", async () => {
+		const service = createPartyService({ store: createMemoryPartyStore() });
+		await service.addPokemon(1, mon({ pokemon_id: 132 }), []); // Ditto: genderless
+		const rows = await service.getPartyRows(1);
+		assert.equal(rows[0].gender, "genderless");
+	});
+
+	it("does not overwrite an explicitly provided gender", async () => {
+		const service = createPartyService({ store: createMemoryPartyStore() });
+		await service.addPokemon(1, mon({ gender: "female" }), []);
+		const rows = await service.getPartyRows(1);
+		assert.equal(rows[0].gender, "female");
+	});
 });

@@ -26,6 +26,8 @@ class PartyError extends Error {
 
 const PARTY_FULL_MESSAGE = `Party is full (max ${MAX_PARTY} Pokémon)`;
 
+const { rollGenderForSpecies } = require("./genderService");
+
 /** In-memory store for tests. `initialRows` maps trainerId -> array of rows. */
 function createMemoryPartyStore(initialRows = {}) {
 	const byTrainer = new Map();
@@ -93,7 +95,7 @@ function createMysqlPartyStore(pool) {
 		async list(trainerId) {
 			const [rows] = await pool.query(
 				`SELECT id, trainer_id, pokemon_id, nickname, level, current_hp, max_hp,
-                attack, defense, speed, special_atk, special_def, experience, status, position
+                attack, defense, speed, special_atk, special_def, experience, status, gender, position
          FROM trainer_pokemon WHERE trainer_id = ? ORDER BY position ASC`,
 				[trainerId]
 			);
@@ -106,8 +108,8 @@ function createMysqlPartyStore(pool) {
 				const [result] = await connection.query(
 					`INSERT INTO trainer_pokemon
              (trainer_id, pokemon_id, nickname, level, current_hp, max_hp,
-              attack, defense, speed, special_atk, special_def, experience, status, position)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              attack, defense, speed, special_atk, special_def, experience, status, gender, position)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 					[
 						trainerId,
 						mon.pokemon_id,
@@ -122,6 +124,7 @@ function createMysqlPartyStore(pool) {
 						mon.special_def,
 						mon.experience ?? 0,
 						mon.status ?? "Healthy",
+						mon.gender ?? null,
 						position,
 					]
 				);
@@ -242,7 +245,11 @@ function createPartyService(deps = {}) {
 		if (position > MAX_PARTY) {
 			throw new PartyError(400, PARTY_FULL_MESSAGE);
 		}
-		const id = await getStore().insert(trainerId, mon, moves, position);
+		const monWithGender = {
+			...mon,
+			gender: mon.gender ?? rollGenderForSpecies(mon.pokemon_id),
+		};
+		const id = await getStore().insert(trainerId, monWithGender, moves, position);
 		return { id, position };
 	}
 
