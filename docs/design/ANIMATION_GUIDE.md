@@ -22,7 +22,11 @@ Reduced motion: instant swap (no fade/bob); rotation still advances.
 
 ## Battle beat order (Phase 3 contract)
 
-`encounter` (flash + appear text) → `intro` (enemy slides in, then player + HP boxes) → `idle` (sprite bob) → `attack` (lunge → hit shake/flash → HP drain → log line) → back to menu; `faint` (sink + fade) when HP hits 0.
+`encounter` (flash + appear text) → `intro` (enemy slides in, then player + HP boxes) → `idle` (sprite bob) → `attack` → back to menu; `faint` (sink + fade) when HP hits 0.
+
+`attack` (FireRed order, spec 2026-09-24-battle-damage-feedback): "X used Move!" (painted) → attack animation (lunge / ranged flash / status sparkle) → impact tiered by effectiveness (×0 none; <1 soft blink, no stage flash, no shake; ×1 standard; >1 double blink + stronger shake; crit adds white pulse + crit shake) with the stepped HP drain and a 700ms `-N` tick on the defender HP box starting together → drain (`--dur-drain`) → crit line → effectiveness line → multi-hit line → OHKO line → faint beat.
+
+Rule: a visual beat never starts before the line that introduces it has painted (`await addLog(...)`).
 
 Beats are sequenced, never parallel spam. The player can only act when the menu is interactive again.
 

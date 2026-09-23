@@ -451,6 +451,21 @@
   100% { opacity: 1; filter: brightness(1); }
 }
 
+/* Impact tiers (spec §2) */
+.damage-effect--weak {
+  animation: damageFlashWeak 0.25s steps(2, end) 1;
+}
+
+@keyframes damageFlashWeak {
+  0% { opacity: 1; filter: brightness(1); }
+  50% { opacity: 0.6; filter: brightness(3); }
+  100% { opacity: 1; filter: brightness(1); }
+}
+
+.damage-effect--super {
+  animation: damageFlash 0.3s steps(2, end) 2;
+}
+
 /* Bottom UI - Classic Pokémon Layout */
 .gba-bottom-ui {
   width: 100%;

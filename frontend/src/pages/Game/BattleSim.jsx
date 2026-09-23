@@ -16,12 +16,24 @@ import './BattleGround.css';
 import { slotStyle, shadowStyle } from './battleLayout';
 import { useUser } from '../../App';
 import { playerTrainerSprite } from '../../utils/trainerSprite';
-import { getAnimState, ANIMATION_VARIANTS, getMoveAnimCategory } from './battleAnimation';
+import {
+  getAnimState,
+  ANIMATION_VARIANTS,
+  getMoveAnimCategory,
+  getImpactTier,
+  hitResultLines,
+  damageEffectClass,
+} from './battleAnimation';
 import { createMessageQueue } from './battleMessageQueue';
 
 // Native stage size; fixed, never scaled
 const STAGE_WIDTH = 808; // fills the GBA screen edge-to-edge (lcd-panel--fixed, .lcd-content padding zeroed for battle)
 const STAGE_TOTAL_HEIGHT = 580;
+
+// Must match --dur-drain in tokens.css (spec §4).
+const DRAIN_MS = 600;
+// -N tick visibility; deliberately NOT motionMs-wrapped (spec §5).
+const DAMAGE_TICK_MS = 700;
 
 // Gen 3 battle fidelity (Phase 14): client-side text for server events.
 // The server log carries the same lines; the client re-derives them so the
@@ -131,7 +143,7 @@ const BattleSim = ({
   const [uiPhase, setUiPhase] = useState('encounter');
   const [currentTurn, setCurrentTurn] = useState('none'); // 'player' | 'enemy' | 'none'
 
-  // Per-beat animation flags
+  // Per-beat animation flags. *DamageEffect: false | true (legacy normal) | impact tier
   const [playerAttacking, setPlayerAttacking] = useState(false);
   const [enemyAttacking, setEnemyAttacking] = useState(false);
   const [playerDamageEffect, setPlayerDamageEffect] = useState(false);
@@ -144,6 +156,9 @@ const BattleSim = ({
   const [criticalFlash, setCriticalFlash] = useState(false); // white double-pulse accent, crits only
   const [rangedFlash, setRangedFlash] = useState(null); // ranged-move projectile flash, tinted by type
   const [statusSparkle, setStatusSparkle] = useState(false); // status/heal move accent on the user
+  // -N tick on the defender's HP box: { id, amount } | null (spec §5)
+  const [playerDamageTick, setPlayerDamageTick] = useState(null);
+  const [enemyDamageTick, setEnemyDamageTick] = useState(null);
 
   const battleSoundRef = useRef(null);
   const timersRef = useRef([]);
@@ -328,13 +343,15 @@ const BattleSim = ({
     timersRef.current.push(setTimeout(() => setStatusSparkle(false), 500));
   };
 
-  const logEffectiveness = (event, defenderName) => {
-    if (event.critical_hit) addLog('A critical hit!');
-    const mult = event.type_multiplier;
-    if (typeof mult !== 'number') return;
-    if (mult === 0) addLog(`It doesn't affect ${defenderName}...`);
-    else if (mult > 1) addLog("It's super effective!");
-    else if (mult < 1) addLog("It's not very effective...");
+  // Show "-N" on the defender's HP box for DAMAGE_TICK_MS. The clear only
+  // removes *this* tick, so a second hit inside 700ms keeps its own tick.
+  const showDamageTick = (side, amount) => {
+    const setTick = side === 'player' ? setPlayerDamageTick : setEnemyDamageTick;
+    const id = Date.now() + Math.random();
+    setTick({ id, amount });
+    timersRef.current.push(
+      setTimeout(() => setTick((cur) => (cur && cur.id === id ? null : cur)), DAMAGE_TICK_MS)
+    );
   };
 
   // Fetch the server inventory and open the bag panel (battle-usable items)
@@ -721,25 +738,42 @@ const BattleSim = ({
       return;
     }
 
-    triggerHitFlash(event.moveType);
+    const tier = getImpactTier(event.type_multiplier);
+
+    // Guard (spec §3 ×0): immunity normally arrives as result 'failed'. If a
+    // hit ever gets here with ×0, show only the text -- no flash, blink,
+    // shake, tick or crit.
+    if (tier === 'none') {
+      await addLog(`It doesn't affect ${defenderName}...`);
+      await wait(motionMs(400));
+      return;
+    }
+
+    // Beat 5 -- impact, tiered (spec §2). Resisted hits skip the stage flash.
+    if (tier !== 'weak') triggerHitFlash(event.moveType);
     if (event.critical_hit) triggerCriticalFlash();
     const setDamageEffect = isPlayer ? setEnemyDamageEffect : setPlayerDamageEffect;
     const setDefender = isPlayer ? setTrainerPokemon : setUserPokemon;
     if (isPlayer) view.enemy = { ...view.enemy, current_hp: event.targetHpAfter };
     else view.player = { ...view.player, current_hp: event.targetHpAfter };
     const setCritical = isPlayer ? setEnemyCritical : setPlayerCritical;
-    setDamageEffect(true);
+    setDamageEffect(tier);
     setCritical(!!event.critical_hit);
     playSound('damage');
+    // Same tick: start the stepped drain and show the -N tick.
     setDefender((prev) => ({ ...prev, current_hp: event.targetHpAfter }));
-    await wait(motionMs(600));
+    showDamageTick(isPlayer ? 'enemy' : 'player', event.damage);
+
+    // Beat 6 -- drain.
+    await wait(motionMs(DRAIN_MS));
+    // Beat 7.
     setDamageEffect(false);
     setCritical(false);
 
-    addLog(`${attackerName} dealt ${event.damage} damage!`);
-    if (event.hits > 1) addLog(`Hit ${event.hits} time(s)!`);
-    if (event.ohko) addLog("It's a one-hit KO!");
-    logEffectiveness(event, defenderName);
+    // Beats 8-11 -- crit, effectiveness, multi-hit, OHKO; each waits for paint.
+    for (const line of hitResultLines(event)) {
+      await addLog(line);
+    }
 
     if (event.targetFainted) {
       await wait(motionMs(300));
@@ -928,6 +962,8 @@ const BattleSim = ({
     setCriticalFlash(false);
     setRangedFlash(null);
     setStatusSparkle(false);
+    setPlayerDamageTick(null);
+    setEnemyDamageTick(null);
     setOpponentMove(null);
     setProgressSave('idle');
     setProgressError('');
@@ -1119,10 +1155,11 @@ const BattleSim = ({
                     activePosition={enemyActivePosition}
                     opponentMove={opponentMove}
                     getHealthColorClass={getHealthColorClass}
+                    damageTick={enemyDamageTick}
                   />
                 )}
                 <motion.div
-                  className={`gba-pokemon-sprite enemy-sprite ${enemyDamageEffect ? 'damage-effect' : ''}`}
+                  className={`gba-pokemon-sprite enemy-sprite ${damageEffectClass(enemyDamageEffect)}`}
                   animate={
                     reduceMotion
                       ? (enemyFainted ? ANIMATION_VARIANTS.FAINT : ANIMATION_VARIANTS.IDLE)
@@ -1172,7 +1209,7 @@ const BattleSim = ({
                   style={{ ...shadowStyle('player'), imageRendering: 'pixelated' }}
                 />
                 <motion.div
-                  className={`gba-pokemon-sprite player-sprite ${playerDamageEffect ? 'damage-effect' : ''}`}
+                  className={`gba-pokemon-sprite player-sprite ${damageEffectClass(playerDamageEffect)}`}
                   animate={{
                     ...(reduceMotion
                       ? (playerFainted ? ANIMATION_VARIANTS.FAINT : ANIMATION_VARIANTS.IDLE)
@@ -1217,6 +1254,7 @@ const BattleSim = ({
                     opponentMove={null}
                     getHealthColorClass={getHealthColorClass}
                     style={{ animationDelay: reduceMotion ? '0s' : '0.45s', animationFillMode: 'both' }}
+                    damageTick={playerDamageTick}
                   />
                 )}
               </div>
