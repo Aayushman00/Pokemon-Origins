@@ -10,6 +10,7 @@ import Shell from '../../components/Shell/Shell';
 import LcdPanel from '../../components/Shell/LcdPanel';
 import HpBox from './battle/HpBox';
 import MoveMenu from './battle/MoveMenu';
+import MessageLog from './battle/MessageLog';
 import GbaControls from '../../components/Shell/GbaControls';
 import './BattleGround.css';
 import { slotStyle, shadowStyle } from './battleLayout';
@@ -101,9 +102,7 @@ const BattleSim = ({
   const [userPokemon, setUserPokemon] = useState(null);
   const [trainerPokemon, setTrainerPokemon] = useState(null);
   const [battleOutcome, setBattleOutcome] = useState(null);
-  const [battleLog, setBattleLog] = useState([]);
-  const [currentMessage, setCurrentMessage] = useState('');
-  const [devLogOpen, setDevLogOpen] = useState(false);
+  const [activeBeatLines, setActiveBeatLines] = useState([]);
   const messageQueueRef = useRef([]);
   const messageTimerRef = useRef(null);
   const [error, setError] = useState('');
@@ -139,7 +138,6 @@ const BattleSim = ({
   const [hitFlash, setHitFlash] = useState(null); // type-tinted overlay color
   const [criticalFlash, setCriticalFlash] = useState(false); // white double-pulse accent, crits only
 
-  const logRef = useRef(null);
   const battleSoundRef = useRef(null);
   const timersRef = useRef([]);
   const sessionIdRef = useRef(null);
@@ -212,13 +210,6 @@ const BattleSim = ({
     return () => timers.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [levelNumber, battleNumber]);
-
-  // Auto-scroll battle log when updated
-  useEffect(() => {
-    if (logRef.current) {
-      logRef.current.scrollTop = logRef.current.scrollHeight;
-    }
-  }, [battleLog]);
 
   // Reset the D-pad cursor to the first option whenever a cursor-driven
   // screen (command menu / move grid / restart confirm) opens.
@@ -296,14 +287,12 @@ const BattleSim = ({
       return;
     }
     const next = messageQueueRef.current.shift();
-    setCurrentMessage(next);
+    setActiveBeatLines((prev) => [...prev, next]);
     messageTimerRef.current = setTimeout(flushNextMessage, motionMs(600));
     timersRef.current.push(messageTimerRef.current);
   };
 
   const addLog = (message) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setBattleLog((prevLog) => [...prevLog, `${timestamp} - ${message}`]);
     messageQueueRef.current.push(message);
     if (!messageTimerRef.current) {
       flushNextMessage();
@@ -814,7 +803,7 @@ const BattleSim = ({
         clearTimeout(messageTimerRef.current);
         messageTimerRef.current = null;
       }
-      setCurrentMessage('');
+      setActiveBeatLines([]);
 
       if (data.state.status === 'active') {
         if (data.state.requiresSwitch) {
@@ -894,8 +883,7 @@ const BattleSim = ({
     timersRef.current = [];
     messageQueueRef.current = [];
     messageTimerRef.current = null;
-    setCurrentMessage('');
-    setBattleLog([]);
+    setActiveBeatLines([]);
     setBattleOutcome(null);
     setSelectedMove(null);
     setHoveredMove(null);
@@ -947,6 +935,7 @@ const BattleSim = ({
   };
 
   const grid = gridMoves();
+  const isMessageOnlyPhase = !['command', 'moveSelect', 'partySelect', 'bagSelect', 'restartConfirm', 'finished'].includes(uiPhase);
   const playerSpriteUrl = playerTrainerSprite(user?.gender);
   const introStarted = uiPhase !== 'encounter';
   const trainerName = session?.trainerName || 'The trainer';
@@ -1355,7 +1344,11 @@ const BattleSim = ({
                 </div>
               ) : (
                 <>
-                  <div className={`gba-dialog-box ${uiPhase !== 'moveSelect' ? 'gba-dialog-box--message' : ''}`}>
+                  <div
+                    className={`gba-dialog-box ${uiPhase !== 'moveSelect' ? 'gba-dialog-box--message' : ''} ${
+                      isMessageOnlyPhase ? 'gba-dialog-box--fullwidth' : ''
+                    }`}
+                  >
                     {uiPhase === 'moveSelect' ? (
                       <MoveMenu
                         part="grid"
@@ -1374,57 +1367,59 @@ const BattleSim = ({
                         onFocusMove={(move) => setHoveredMove(move)}
                         onBlurMove={() => setHoveredMove(null)}
                       />
+                    ) : isMessageOnlyPhase ? (
+                      <MessageLog lines={activeBeatLines} />
                     ) : (
                       <div className="gba-dialog-text">
                         {uiPhase === 'restartConfirm'
                           ? 'Restart this battle?'
                           : uiPhase === 'restarting'
                           ? 'Restarting battle...'
-                          : currentMessage
-                          ? currentMessage
                           : `What will ${userPokemon.nickname} do?`}
                       </div>
                     )}
                   </div>
-                  <div className="gba-menu-box">
-                    {uiPhase === 'moveSelect' ? (
-                      <MoveMenu part="info" grid={grid} menuCursor={menuCursor} hoveredMove={hoveredMove} />
-                    ) : uiPhase === 'command' ? (
-                      <div className="gba-main-menu">
-                        {[
-                          { action: 'FIGHT', label: 'FIGHT' },
-                          { action: 'BAG', label: 'BAG' },
-                          { action: 'POKEMON', label: 'POKéMON' },
-                          { action: 'RESTART', label: 'RESTART' },
-                        ].map(({ action, label }, index) => (
-                          <button
-                            key={action}
-                            onClick={() => {
-                              setMenuCursor(index);
-                              handleMainMenuSelection(action);
-                            }}
-                            onMouseEnter={() => setMenuCursor(index)}
-                          >
-                            <span className="gba-cursor-arrow">{menuCursor === index ? '▶' : ''}</span>
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    ) : uiPhase === 'restartConfirm' ? (
-                      <div className="gba-main-menu">
-                        {['YES', 'NO'].map((label, index) => (
-                          <button
-                            key={label}
-                            onClick={() => confirmRestart(index === 0)}
-                            onMouseEnter={() => setMenuCursor(index)}
-                          >
-                            <span className="gba-cursor-arrow">{menuCursor === index ? '▶' : ''}</span>
-                            {label}
-                          </button>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
+                  {!isMessageOnlyPhase && (
+                    <div className="gba-menu-box">
+                      {uiPhase === 'moveSelect' ? (
+                        <MoveMenu part="info" grid={grid} menuCursor={menuCursor} hoveredMove={hoveredMove} />
+                      ) : uiPhase === 'command' ? (
+                        <div className="gba-main-menu">
+                          {[
+                            { action: 'FIGHT', label: 'FIGHT' },
+                            { action: 'BAG', label: 'BAG' },
+                            { action: 'POKEMON', label: 'POKéMON' },
+                            { action: 'RESTART', label: 'RESTART' },
+                          ].map(({ action, label }, index) => (
+                            <button
+                              key={action}
+                              onClick={() => {
+                                setMenuCursor(index);
+                                handleMainMenuSelection(action);
+                              }}
+                              onMouseEnter={() => setMenuCursor(index)}
+                            >
+                              <span className="gba-cursor-arrow">{menuCursor === index ? '▶' : ''}</span>
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : uiPhase === 'restartConfirm' ? (
+                        <div className="gba-main-menu">
+                          {['YES', 'NO'].map((label, index) => (
+                            <button
+                              key={label}
+                              onClick={() => confirmRestart(index === 0)}
+                              onMouseEnter={() => setMenuCursor(index)}
+                            >
+                              <span className="gba-cursor-arrow">{menuCursor === index ? '▶' : ''}</span>
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -1433,35 +1428,6 @@ const BattleSim = ({
             </div>
         </LcdPanel>
       </Shell>
-
-      {/* Developer log: full event history with timestamps, collapsed by
-          default. The in-game dialog box (Phase 8) is the primary
-          gameplay feedback surface now -- this stays available for
-          debugging, not as the main way players see battle events. Lives
-          outside the GBA casing -- it's a debug tool, not part of the device. */}
-      <div className="gba-battle-log-container">
-        <button
-          type="button"
-          className="gba-battle-log-toggle"
-          onClick={() => setDevLogOpen((open) => !open)}
-        >
-          {devLogOpen ? '▼' : '▶'} DEVELOPER LOG
-        </button>
-        {devLogOpen && (
-          <div className="gba-battle-log" ref={logRef}>
-            {battleLog.map((entry, index) => (
-              <motion.p
-                key={index}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                {entry}
-              </motion.p>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 };
