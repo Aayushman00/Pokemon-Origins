@@ -32,6 +32,7 @@ const HpBox = ({
   opponentMove,
   getHealthColorClass,
   style,
+  damageTick = null,
 }) => {
   const healthPercent = (pokemon.current_hp / pokemon.max_hp) * 100;
   const expPercent =
@@ -65,13 +66,17 @@ const HpBox = ({
       )}
       <div className="gba-health-container">
         <div className="gba-health-bar">
-          <motion.div
+          {/* CSS-only stepped drain (--dur-drain, steps(12)); no spring. */}
+          <div
             className={`gba-health-fill ${getHealthColorClass(healthPercent)}`}
-            initial={{ width: '100%' }}
-            animate={{ width: `${healthPercent}%` }}
-            transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+            style={{ width: `${healthPercent}%` }}
           />
         </div>
+        {damageTick && (
+          <span className="gba-damage-tick" key={damageTick.id} aria-hidden="true">
+            -{damageTick.amount}
+          </span>
+        )}
         {role === 'player' && (
           <div className="gba-hp-text">
             HP: {pokemon.current_hp}/{pokemon.max_hp}

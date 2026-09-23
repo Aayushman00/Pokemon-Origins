@@ -327,7 +327,7 @@
   left: 0;
   top: 0;
   height: 100%;
-  transition: width 1s steps(10, end);
+  transition: width var(--dur-drain) steps(12, end);
 }
 
 .health-good { 
@@ -987,4 +987,20 @@
 .gba-move-btn--struggle:hover {
   background: linear-gradient(to bottom, #ffd8c0, #e8a880);
   border-color: #802020;
+}
+
+/* -N damage tick (spec §5): appears on the defender's HP row for 700ms */
+.gba-damage-tick {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: #333;
+  text-shadow: 1px 1px 0 #e8e8c8;
+  margin-left: 6px;
+  white-space: nowrap;
+  animation: damageTickIn var(--dur-fast) steps(2, end) both;
+}
+
+@keyframes damageTickIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }

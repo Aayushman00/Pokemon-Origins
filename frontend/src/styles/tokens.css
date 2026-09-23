@@ -48,6 +48,7 @@
 	--dur-med: 200ms;
 	--dur-slow: 300ms;
 	--dur-boot: 1000ms;
+	--dur-drain: 600ms; /* HP bar drain; BattleSim DRAIN_MS must match */
 	--ease-out: cubic-bezier(0, 0, 0.2, 1);
 	--ease-in: cubic-bezier(0.4, 0, 1, 1);
 	--ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);

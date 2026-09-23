@@ -10,6 +10,7 @@ Motion is game feedback, not decoration: boot, select, encounter, attack, HP, fa
 | `--dur-med` | 200ms | Route fades, tab switches |
 | `--dur-slow` | 300ms | Panel slides, HP drain steps |
 | `--dur-boot` | 1000ms | Power-on LCD fade |
+| `--dur-drain` | 600ms | HP bar drain, `steps(12, end)` (≈3 GBA frames per step); `DRAIN_MS` in `BattleSim.jsx` must match |
 
 Easings: `--ease-out` (enter), `--ease-in` (exit), `--ease-in-out` (move). Retro effects may use `steps(n, end)` (HP drain, damage flash) — steps read more "GBA" than smooth curves.
 
