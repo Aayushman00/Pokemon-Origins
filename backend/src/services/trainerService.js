@@ -13,7 +13,7 @@ async function getTrainerData(trainerId) {
 
 	const [pokemonRows] = await trainer_db.query(
 		`SELECT id, trainer_id, pokemon_id, nickname, level, current_hp, max_hp,
-            attack, defense, speed, special_atk, special_def, experience, status, position
+            attack, defense, speed, special_atk, special_def, experience, status, gender, position
      FROM trainer_pokemon WHERE trainer_id = ? ORDER BY position ASC`,
 		[trainerId]
 	);
@@ -89,6 +89,8 @@ async function getTrainerData(trainerId) {
 				special_atk: p.special_atk,
 				special_def: p.special_def,
 				status: p.status,
+				gender: p.gender,
+				experience: p.experience,
 				types,
 				ability,
 				moves,
