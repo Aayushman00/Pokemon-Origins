@@ -11,6 +11,7 @@ import { slotStyle, shadowStyle } from './battleLayout';
 import { useUser } from '../../App';
 import { playerTrainerSprite } from '../../utils/trainerSprite';
 import { getAnimState, ANIMATION_VARIANTS } from './battleAnimation';
+import HpBox from './battle/HpBox';
 
 // Native stage size; scaled down responsively, never up
 const STAGE_WIDTH = 768;
@@ -862,8 +863,6 @@ const BattleSim = ({
     );
 
   // Calculate health percentages
-  const trainerHealthPercent = (trainerPokemon.current_hp / trainerPokemon.max_hp) * 100;
-  const userHealthPercent = (userPokemon.current_hp / userPokemon.max_hp) * 100;
 
   const getHealthColorClass = (percentage) => {
     if (percentage <= 25) return 'health-critical';
@@ -1006,44 +1005,14 @@ const BattleSim = ({
                   style={{ ...shadowStyle('opponent'), imageRendering: 'pixelated' }}
                 />
                 {introStarted && (
-                  <div className="gba-hp-box enemy-hp-box">
-                    <div className="gba-pokemon-name">
-                      {trainerPokemon.nickname}{' '}
-                      <span className="gba-level-text">Lv.{trainerPokemon.level}</span>
-                      <StatusBadge status={trainerPokemon.status} />
-                    </div>
-                    {enemyParty.length > 1 && (
-                      <div className="gba-party-dots" aria-hidden="true">
-                        {enemyParty.map((mon) => {
-                          const hp =
-                            trainerPokemon && mon.position === trainerPokemon.position
-                              ? trainerPokemon.current_hp
-                              : mon.current_hp;
-                          return (
-                            <span
-                              key={mon.position}
-                              className={`gba-party-dot ${hp <= 0 ? 'fainted' : ''} ${
-                                mon.position === enemyActivePosition ? 'active' : ''
-                              }`}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
-                    <div className="gba-health-container">
-                      <div className="gba-health-bar">
-                        <motion.div
-                          className={`gba-health-fill ${getHealthColorClass(trainerHealthPercent)}`}
-                          initial={{ width: '100%' }}
-                          animate={{ width: `${trainerHealthPercent}%` }}
-                          transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-                        />
-                      </div>
-                    </div>
-                    {opponentMove && (
-                      <div className="opponent-move">Move: {opponentMove.name}</div>
-                    )}
-                  </div>
+                  <HpBox
+                    pokemon={trainerPokemon}
+                    role="enemy"
+                    party={enemyParty}
+                    activePosition={enemyActivePosition}
+                    opponentMove={opponentMove}
+                    getHealthColorClass={getHealthColorClass}
+                  />
                 )}
                 <motion.div
                   className={`gba-pokemon-sprite enemy-sprite ${enemyDamageEffect ? 'damage-effect' : ''}`}
@@ -1135,47 +1104,15 @@ const BattleSim = ({
                   />
                 </motion.div>
                 {introStarted && (
-                  <div
-                    className="gba-hp-box player-hp-box"
+                  <HpBox
+                    pokemon={userPokemon}
+                    role="player"
+                    party={party}
+                    activePosition={activePosition}
+                    opponentMove={null}
+                    getHealthColorClass={getHealthColorClass}
                     style={{ animationDelay: reduceMotion ? '0s' : '0.45s', animationFillMode: 'both' }}
-                  >
-                    <div className="gba-pokemon-name">
-                      {userPokemon.nickname}{' '}
-                      <span className="gba-level-text">Lv.{userPokemon.level}</span>
-                      <StatusBadge status={userPokemon.status} />
-                    </div>
-                    {party.length > 1 && (
-                      <div className="gba-party-dots" aria-hidden="true">
-                        {party.map((mon) => {
-                          const hp =
-                            userPokemon && mon.position === userPokemon.position
-                              ? userPokemon.current_hp
-                              : mon.current_hp;
-                          return (
-                            <span
-                              key={mon.position}
-                              className={`gba-party-dot ${hp <= 0 ? 'fainted' : ''} ${
-                                mon.position === activePosition ? 'active' : ''
-                              }`}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
-                    <div className="gba-health-container">
-                      <div className="gba-health-bar">
-                        <motion.div
-                          className={`gba-health-fill ${getHealthColorClass(userHealthPercent)}`}
-                          initial={{ width: '100%' }}
-                          animate={{ width: `${userHealthPercent}%` }}
-                          transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-                        />
-                      </div>
-                      <div className="gba-hp-text">
-                        HP: {userPokemon.current_hp}/{userPokemon.max_hp}
-                      </div>
-                    </div>
-                  </div>
+                  />
                 )}
               </div>
             </div>

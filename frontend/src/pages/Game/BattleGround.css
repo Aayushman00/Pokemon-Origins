@@ -289,6 +289,40 @@
   text-shadow: 1px 1px 0 #e8e8c8;
 }
 
+.gba-exp-container {
+  margin-top: 4px;
+}
+
+.gba-exp-bar {
+  position: relative;
+  width: 100%;
+  height: 5px;
+  background: #333;
+  border: 1px solid #000;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.gba-exp-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  background: linear-gradient(to bottom, #5b93ff, #3b82f6);
+  transition: width 1s steps(10, end);
+}
+
+.gba-gender-male {
+  color: #5b93ff;
+  font-weight: bold;
+}
+
+.gba-gender-female {
+  color: #ff6b9d;
+  font-weight: bold;
+}
+
 /* Experience Bar */
 .exp-bar {
   width: 100%;
