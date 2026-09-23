@@ -9,6 +9,7 @@ import TrainerAvatar from '../../components/TrainerAvatar/TrainerAvatar';
 import Shell from '../../components/Shell/Shell';
 import LcdPanel from '../../components/Shell/LcdPanel';
 import HpBox from './battle/HpBox';
+import MoveMenu from './battle/MoveMenu';
 import GbaControls from '../../components/Shell/GbaControls';
 import './BattleGround.css';
 import { slotStyle, shadowStyle } from './battleLayout';
@@ -1356,53 +1357,23 @@ const BattleSim = ({
                 <>
                   <div className={`gba-dialog-box ${uiPhase !== 'moveSelect' ? 'gba-dialog-box--message' : ''}`}>
                     {uiPhase === 'moveSelect' ? (
-                      session?.mustStruggle ? (
-                        // Every move is out of PP: FireRed offers Struggle.
-                        <div className="gba-move-grid">
-                          <button
-                            className="gba-move-btn gba-move-btn--struggle"
-                            onClick={() => handleSelectMove(STRUGGLE_MOVE)}
-                          >
-                            STRUGGLE
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="gba-move-grid">
-                          {grid.map((move, index) =>
-                            move ? (
-                              <button
-                                key={move.move_id}
-                                className={`gba-move-btn ${menuCursor === index ? 'selected' : ''}`}
-                                onClick={() => {
-                                  setMenuCursor(index);
-                                  handleSelectMove(move);
-                                }}
-                                onMouseEnter={() => {
-                                  setMenuCursor(index);
-                                  setHoveredMove(move);
-                                }}
-                                onMouseLeave={() => setHoveredMove(null)}
-                                onFocus={() => setHoveredMove(move)}
-                                onBlur={() => setHoveredMove(null)}
-                                disabled={
-                                  typeof move.current_pp === 'number' &&
-                                  move.current_pp <= 0
-                                }
-                              >
-                                <span className="gba-cursor-arrow">{menuCursor === index ? '▶' : ''}</span>
-                                <span className="gba-move-btn-name">{move.name}</span>
-                                {typeof move.current_pp === 'number' && (
-                                  <span className="gba-move-btn-pp">
-                                    {move.current_pp}/{move.max_pp}
-                                  </span>
-                                )}
-                              </button>
-                            ) : (
-                              <button key={index} className="gba-move-btn blank" disabled></button>
-                            )
-                          )}
-                        </div>
-                      )
+                      <MoveMenu
+                        part="grid"
+                        grid={grid}
+                        menuCursor={menuCursor}
+                        mustStruggle={session?.mustStruggle}
+                        onSelectMove={(move, index) => {
+                          if (index != null) setMenuCursor(index);
+                          handleSelectMove(move);
+                        }}
+                        onHoverMove={(move, index) => {
+                          setMenuCursor(index);
+                          setHoveredMove(move);
+                        }}
+                        onLeaveHover={() => setHoveredMove(null)}
+                        onFocusMove={(move) => setHoveredMove(move)}
+                        onBlurMove={() => setHoveredMove(null)}
+                      />
                     ) : (
                       <div className="gba-dialog-text">
                         {uiPhase === 'restartConfirm'
@@ -1417,47 +1388,7 @@ const BattleSim = ({
                   </div>
                   <div className="gba-menu-box">
                     {uiPhase === 'moveSelect' ? (
-                      <div className="gba-move-info">
-                        {(hoveredMove || grid[menuCursor]) ? (
-                          (() => {
-                            const shown = hoveredMove || grid[menuCursor];
-                            return (
-                              <>
-                                <p><strong>{shown.name}</strong></p>
-                                <p>
-                                  Type:{' '}
-                                  {(shown.type || shown.move_type) && (
-                                    <span
-                                      className="move-type"
-                                      style={{
-                                        background:
-                                          TYPE_COLORS[String(shown.type || shown.move_type).toLowerCase()] ||
-                                          '#a8a77a',
-                                      }}
-                                    >
-                                      {shown.type || shown.move_type}
-                                    </span>
-                                  )}
-                                </p>
-                                <p>
-                                  PP:{' '}
-                                  {typeof shown.current_pp === 'number'
-                                    ? `${shown.current_pp}/${shown.max_pp}`
-                                    : '—'}
-                                </p>
-                                <p>
-                                  Description:{' '}
-                                  {shown.description
-                                    ? shown.description
-                                    : 'No description available.'}
-                                </p>
-                              </>
-                            );
-                          })()
-                        ) : (
-                          <p>Hover over a move for details</p>
-                        )}
-                      </div>
+                      <MoveMenu part="info" grid={grid} menuCursor={menuCursor} hoveredMove={hoveredMove} />
                     ) : uiPhase === 'command' ? (
                       <div className="gba-main-menu">
                         {[
