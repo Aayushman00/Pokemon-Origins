@@ -17,6 +17,7 @@ import { slotStyle, shadowStyle } from './battleLayout';
 import { useUser } from '../../App';
 import { playerTrainerSprite } from '../../utils/trainerSprite';
 import { getAnimState, ANIMATION_VARIANTS, getMoveAnimCategory } from './battleAnimation';
+import { createMessageQueue } from './battleMessageQueue';
 
 // Native stage size; fixed, never scaled
 const STAGE_WIDTH = 808; // fills the GBA screen edge-to-edge (lcd-panel--fixed, .lcd-content padding zeroed for battle)
@@ -103,8 +104,12 @@ const BattleSim = ({
   const [trainerPokemon, setTrainerPokemon] = useState(null);
   const [battleOutcome, setBattleOutcome] = useState(null);
   const [activeBeatLines, setActiveBeatLines] = useState([]);
-  const messageQueueRef = useRef([]);
-  const messageTimerRef = useRef(null);
+  // Awaitable log queue (spec §1); created once, lives for the component.
+  const messageQueueRef = useRef(null);
+  // Read live by the queue's gapMs so reduced motion applies without
+  // recreating the queue.
+  const reduceMotionRef = useRef(false);
+  reduceMotionRef.current = reduceMotion;
   const [error, setError] = useState('');
   const [selectedMove, setSelectedMove] = useState(null);
   const [hoveredMove, setHoveredMove] = useState(null);
@@ -277,29 +282,22 @@ const BattleSim = ({
     }
   };
 
-  // Drains messageQueueRef one at a time, pacing the in-game dialog box
-  // independently of however many times addLog was called back-to-back
-  // (React 18 batches synchronous setState calls, so without this a
-  // multi-message beat like "dealt damage" + "critical hit" + "super
-  // effective" would silently collapse to only the last message -- see
-  // Phase 8 plan Ruling 2).
-  const flushNextMessage = () => {
-    if (messageQueueRef.current.length === 0) {
-      messageTimerRef.current = null;
-      return;
-    }
-    const next = messageQueueRef.current.shift();
-    setActiveBeatLines((prev) => [...prev, next]);
-    messageTimerRef.current = setTimeout(flushNextMessage, motionMs(600));
-    timersRef.current.push(messageTimerRef.current);
-  };
-
-  const addLog = (message) => {
-    messageQueueRef.current.push(message);
-    if (!messageTimerRef.current) {
-      flushNextMessage();
-    }
-  };
+  // Paced dialog lines. addLog resolves when *that* line paints, so a beat
+  // can `await addLog(...)` before playing the visual it introduces
+  // (spec §1). React 18 batching is why lines are queued at all -- see
+  // Phase 8 plan Ruling 2.
+  if (messageQueueRef.current === null) {
+    messageQueueRef.current = createMessageQueue({
+      onLine: (line) => setActiveBeatLines((prev) => [...prev, line]),
+      gapMs: () => (reduceMotionRef.current ? 0 : 600),
+      setTimer: (fn, ms) => {
+        const t = setTimeout(fn, ms);
+        timersRef.current.push(t);
+        return t;
+      },
+    });
+  }
+  const addLog = (message) => messageQueueRef.current.push(message);
 
   // Brief type-tinted flash over the stage on a landed hit
   const triggerHitFlash = (moveType) => {
@@ -448,7 +446,7 @@ const BattleSim = ({
       setPlayerDamageEffect(false);
       setPlayerFainted(false);
       setUserPokemon(event.pokemon);
-      addLog(`Go! ${event.pokemon.nickname}!`);
+      await addLog(`Go! ${event.pokemon.nickname}!`);
       playSound('select');
       await wait(motionMs(600));
       return;
@@ -479,7 +477,7 @@ const BattleSim = ({
       setEnemyDamageEffect(false);
       setEnemyFainted(false);
       setTrainerPokemon(event.pokemon);
-      addLog(`${session?.trainerName || 'The trainer'} sent out ${event.pokemon.nickname}!`);
+      await addLog(`${session?.trainerName || 'The trainer'} sent out ${event.pokemon.nickname}!`);
       playSound('select');
       await wait(motionMs(900));
       return;
@@ -490,7 +488,7 @@ const BattleSim = ({
     // final authoritative state.
     if (event.type === 'item') {
       setCurrentTurn('none');
-      addLog(`Used ${event.itemName}! ${event.nickname} recovered ${event.amount} HP.`);
+      await addLog(`Used ${event.itemName}! ${event.nickname} recovered ${event.amount} HP.`);
       playSound('select');
       if (view.player.position === event.position) {
         view.player = { ...view.player, current_hp: event.targetHpAfter };
@@ -502,18 +500,18 @@ const BattleSim = ({
 
     // Post-win XP/level-up beats (server-computed; text only)
     if (event.type === 'xp_gain') {
-      addLog(`${event.nickname} gained ${event.amount} XP!`);
+      await addLog(`${event.nickname} gained ${event.amount} XP!`);
       await wait(motionMs(500));
       return;
     }
     // Post-win coin award (Phase 8; server-computed, text only)
     if (event.type === 'coins') {
-      addLog(`Got ${event.amount} coins!`);
+      await addLog(`Got ${event.amount} coins!`);
       await wait(motionMs(500));
       return;
     }
     if (event.type === 'level_up') {
-      addLog(`${event.nickname} grew to Lv ${event.level}!`);
+      await addLog(`${event.nickname} grew to Lv ${event.level}!`);
       setUserPokemon((prev) =>
         prev && prev.nickname === event.nickname ? { ...prev, level: event.level } : prev
       );
@@ -522,13 +520,13 @@ const BattleSim = ({
     }
     // Phase 9: the new level meets an evolution rule — confirm on the hub
     if (event.type === 'evolution_available') {
-      addLog(`${event.nickname} can now evolve!`);
+      await addLog(`${event.nickname} can now evolve!`);
       await wait(motionMs(600));
       return;
     }
     // Move learning: a free slot learned it right away (text only)…
     if (event.type === 'move_learned') {
-      addLog(`${event.nickname} learned ${event.moveName}!`);
+      await addLog(`${event.nickname} learned ${event.moveName}!`);
       playSound('select');
       await wait(motionMs(600));
       return;
@@ -536,7 +534,7 @@ const BattleSim = ({
     // …or all 4 slots are taken — the forget-or-skip decision lives on
     // the hub (pending offer survives refresh).
     if (event.type === 'move_learn_available') {
-      addLog(`${event.nickname} wants to learn ${event.moveName}!`);
+      await addLog(`${event.nickname} wants to learn ${event.moveName}!`);
       await wait(motionMs(600));
       return;
     }
@@ -572,7 +570,7 @@ const BattleSim = ({
     if (event.type === 'cant_move') {
       setCurrentTurn('none');
       const line = CANT_MOVE_TEXT[event.status] || ((n) => `${n} can't move!`);
-      addLog(line(event.nickname));
+      await addLog(line(event.nickname));
       await wait(motionMs(700));
       return;
     }
@@ -580,7 +578,7 @@ const BattleSim = ({
     // A major status landed (from a move's effect or an ability like Static)
     if (event.type === 'status_applied') {
       const line = STATUS_APPLIED_TEXT[event.status] || ((n) => `${n} was afflicted!`);
-      addLog(line(event.nickname));
+      await addLog(line(event.nickname));
       patchSide(event.target, { status: event.status });
       await wait(motionMs(600));
       return;
@@ -589,7 +587,7 @@ const BattleSim = ({
     // Woke up / thawed out (also via a Fire-type hit)
     if (event.type === 'status_end') {
       const line = STATUS_END_TEXT[event.status] || ((n) => `${n} returned to normal!`);
-      addLog(line(event.nickname));
+      await addLog(line(event.nickname));
       patchSide(event.target, { status: null });
       await wait(motionMs(500));
       return;
@@ -599,7 +597,7 @@ const BattleSim = ({
     if (event.type === 'status_damage') {
       const side = event.target;
       const line = STATUS_HURT_TEXT[event.status] || ((n) => `${n} was hurt!`);
-      addLog(line(event.nickname));
+      await addLog(line(event.nickname));
       const setDamageFx = side === 'player' ? setPlayerDamageEffect : setEnemyDamageEffect;
       setDamageFx(true);
       playSound('damage');
@@ -609,7 +607,7 @@ const BattleSim = ({
       if (event.targetFainted) {
         const setFaint = side === 'player' ? setPlayerFainted : setEnemyFainted;
         setFaint(true);
-        addLog(`${event.nickname} fainted!`);
+        await addLog(`${event.nickname} fainted!`);
         playSound(side === 'player' ? 'defeat' : 'victory');
         await wait(motionMs(700));
       }
@@ -618,7 +616,7 @@ const BattleSim = ({
 
     // Stat stage rose/fell (or clamped at ±6: "won't go any higher!")
     if (event.type === 'stat_change') {
-      addLog(statChangeText(event));
+      await addLog(statChangeText(event));
       await wait(motionMs(450));
       return;
     }
@@ -626,7 +624,7 @@ const BattleSim = ({
     // Recoil damage to the attacker (Take-down family, Struggle)
     if (event.type === 'recoil') {
       const side = event.target;
-      addLog(`${event.nickname} is damaged by recoil!`);
+      await addLog(`${event.nickname} is damaged by recoil!`);
       const setDamageFx = side === 'player' ? setPlayerDamageEffect : setEnemyDamageEffect;
       setDamageFx(true);
       playSound('damage');
@@ -636,7 +634,7 @@ const BattleSim = ({
       if (event.targetFainted) {
         const setFaint = side === 'player' ? setPlayerFainted : setEnemyFainted;
         setFaint(true);
-        addLog(`${event.nickname} fainted!`);
+        await addLog(`${event.nickname} fainted!`);
         playSound(side === 'player' ? 'defeat' : 'victory');
         await wait(motionMs(700));
       }
@@ -645,7 +643,7 @@ const BattleSim = ({
 
     // HP drained from the defender (Absorb family)
     if (event.type === 'drain') {
-      addLog(`${event.nickname} drained energy!`);
+      await addLog(`${event.nickname} drained energy!`);
       patchSide(event.target, { current_hp: event.hpAfter });
       await wait(motionMs(500));
       return;
@@ -653,7 +651,7 @@ const BattleSim = ({
 
     // Self-heal move (Recover / Soft-boiled)
     if (event.type === 'heal_move') {
-      addLog(`${event.nickname} regained health!`);
+      await addLog(`${event.nickname} regained health!`);
       patchSide(event.target, { current_hp: event.hpAfter });
       await wait(motionMs(500));
       return;
@@ -664,7 +662,7 @@ const BattleSim = ({
     const defenderName = isPlayer ? view.enemy.nickname : view.player.nickname;
 
     setCurrentTurn(isPlayer ? 'player' : 'enemy');
-    addLog(`${attackerName} used ${event.moveName}!`);
+    await addLog(`${attackerName} used ${event.moveName}!`);
     if (!isPlayer) {
       setOpponentMove({ name: event.moveName });
       await wait(motionMs(700)); // telegraph beat
@@ -694,14 +692,14 @@ const BattleSim = ({
     }
 
     if (event.result === 'miss') {
-      addLog(`${attackerName}'s attack missed!`);
+      await addLog(`${attackerName}'s attack missed!`);
       await wait(motionMs(400));
       return;
     }
 
     // OHKO level check / status move with no possible effect
     if (event.result === 'failed') {
-      addLog(
+      await addLog(
         event.type_multiplier === 0
           ? `It doesn't affect ${defenderName}...`
           : 'But it failed!'
@@ -747,7 +745,7 @@ const BattleSim = ({
       await wait(motionMs(300));
       const setFainted = isPlayer ? setEnemyFainted : setPlayerFainted;
       setFainted(true);
-      addLog(`${defenderName} fainted!`);
+      await addLog(`${defenderName} fainted!`);
       playSound(isPlayer ? 'victory' : 'defeat');
       await wait(motionMs(700));
     }
@@ -778,11 +776,7 @@ const BattleSim = ({
     // Clear out any leftover lines from the previous beat/intro so they
     // can't leak into a new message-only phase.
     setActiveBeatLines([]);
-    messageQueueRef.current = [];
-    if (messageTimerRef.current) {
-      clearTimeout(messageTimerRef.current);
-      messageTimerRef.current = null;
-    }
+    messageQueueRef.current.clear();
 
     try {
       const { data } = await api.post('/api/battle/action', {
@@ -835,7 +829,7 @@ const BattleSim = ({
       // outlasted this round's own animation timing) finish draining into
       // activeBeatLines before we hand control back, so nothing the player
       // hasn't seen yet gets silently dropped.
-      while (messageQueueRef.current.length > 0 || messageTimerRef.current) {
+      while (!messageQueueRef.current.isIdle()) {
         await wait(100);
       }
       setActiveBeatLines([]);
@@ -916,8 +910,7 @@ const BattleSim = ({
     setUiPhase('restarting');
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
-    messageQueueRef.current = [];
-    messageTimerRef.current = null;
+    messageQueueRef.current.clear();
     setActiveBeatLines([]);
     setBattleOutcome(null);
     setSelectedMove(null);
