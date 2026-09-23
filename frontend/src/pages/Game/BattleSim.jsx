@@ -6,11 +6,21 @@ import { TYPE_COLORS } from '../../utils/typeColors';
 import PokemonSprite from '../../components/PokemonSprite/PokemonSprite';
 import BattlePokemonSprite from '../../components/PokemonSprite/BattlePokemonSprite';
 import TrainerAvatar from '../../components/TrainerAvatar/TrainerAvatar';
+import Shell from '../../components/Shell/Shell';
+import LcdPanel from '../../components/Shell/LcdPanel';
+import HpBox from './battle/HpBox';
+import MoveMenu from './battle/MoveMenu';
+import MessageLog from './battle/MessageLog';
+import GbaControls from '../../components/Shell/GbaControls';
 import './BattleGround.css';
+import { slotStyle, shadowStyle } from './battleLayout';
+import { useUser } from '../../App';
+import { playerTrainerSprite } from '../../utils/trainerSprite';
+import { getAnimState, ANIMATION_VARIANTS, getMoveAnimCategory } from './battleAnimation';
 
-// Native stage size; scaled down responsively, never up
-const STAGE_WIDTH = 768;
-const STAGE_TOTAL_HEIGHT = 698; // stage (540) + margin-top (12) + battle log container (146)
+// Native stage size; fixed, never scaled
+const STAGE_WIDTH = 808; // fills the GBA screen edge-to-edge (lcd-panel--fixed, .lcd-content padding zeroed for battle)
+const STAGE_TOTAL_HEIGHT = 580;
 
 // Gen 3 battle fidelity (Phase 14): client-side text for server events.
 // The server log carries the same lines; the client re-derives them so the
@@ -35,6 +45,7 @@ const STATUS_HURT_TEXT = {
   brn: (name) => `${name} was hurt by its burn!`,
   psn: (name) => `${name} was hurt by poison!`,
 };
+
 const STAT_LABELS = {
   atk: 'ATTACK',
   def: 'DEFENSE',
@@ -84,16 +95,22 @@ const BattleSim = ({
 }) => {
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
+  const { user } = useUser();
 
   // Server session + displayed battle state (HP animates beat-by-beat)
   const [session, setSession] = useState(null);
   const [userPokemon, setUserPokemon] = useState(null);
   const [trainerPokemon, setTrainerPokemon] = useState(null);
   const [battleOutcome, setBattleOutcome] = useState(null);
-  const [battleLog, setBattleLog] = useState([]);
+  const [activeBeatLines, setActiveBeatLines] = useState([]);
+  const messageQueueRef = useRef([]);
+  const messageTimerRef = useRef(null);
   const [error, setError] = useState('');
   const [selectedMove, setSelectedMove] = useState(null);
   const [hoveredMove, setHoveredMove] = useState(null);
+  // D-pad/A/B cursor for the command menu, move grid, and restart confirm --
+  // index into that phase's option list (2x2 grid or YES/NO pair).
+  const [menuCursor, setMenuCursor] = useState(0);
   const [opponentMove, setOpponentMove] = useState(null);
   const [progressSave, setProgressSave] = useState('idle'); // idle | saving | saved | error
   const [progressError, setProgressError] = useState('');
@@ -116,12 +133,13 @@ const BattleSim = ({
   const [enemyDamageEffect, setEnemyDamageEffect] = useState(false);
   const [playerFainted, setPlayerFainted] = useState(false);
   const [enemyFainted, setEnemyFainted] = useState(false);
+  const [playerCritical, setPlayerCritical] = useState(false);
+  const [enemyCritical, setEnemyCritical] = useState(false);
   const [hitFlash, setHitFlash] = useState(null); // type-tinted overlay color
+  const [criticalFlash, setCriticalFlash] = useState(false); // white double-pulse accent, crits only
+  const [rangedFlash, setRangedFlash] = useState(null); // ranged-move projectile flash, tinted by type
+  const [statusSparkle, setStatusSparkle] = useState(false); // status/heal move accent on the user
 
-  // Responsive stage scale
-  const [stageScale, setStageScale] = useState(1);
-
-  const logRef = useRef(null);
   const battleSoundRef = useRef(null);
   const timersRef = useRef([]);
   const sessionIdRef = useRef(null);
@@ -195,21 +213,46 @@ const BattleSim = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [levelNumber, battleNumber]);
 
-  // Scale the fixed 768px stage down on narrow screens
+  // Reset the D-pad cursor to the first option whenever a cursor-driven
+  // screen (command menu / move grid / restart confirm) opens.
   useEffect(() => {
-    const onResize = () =>
-      setStageScale(Math.min(1, (window.innerWidth - 24) / STAGE_WIDTH));
-    onResize();
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
+    setMenuCursor(0);
+  }, [uiPhase]);
 
-  // Auto-scroll battle log when updated
+  // D-pad + A/B keyboard control for the command menu, move grid, and
+  // restart confirm. Command menu is the floor for B (Ruling: never exits
+  // the battle or navigates away from it).
   useEffect(() => {
-    if (logRef.current) {
-      logRef.current.scrollTop = logRef.current.scrollHeight;
-    }
-  }, [battleLog]);
+    const cursorPhases = ['command', 'moveSelect', 'restartConfirm'];
+    if (!cursorPhases.includes(uiPhase)) return undefined;
+
+    const onKeyDown = (e) => {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        if (uiPhase === 'restartConfirm') {
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+            setMenuCursor((c) => (c === 0 ? 1 : 0));
+          }
+          return;
+        }
+        setMenuCursor((c) => {
+          const next = moveCursorInGrid(c, e.key);
+          if (uiPhase === 'moveSelect' && !session?.mustStruggle && !gridMoves()[next]) return c;
+          return next;
+        });
+      } else if (e.key === 'a' || e.key === 'A' || e.key === 'Enter') {
+        e.preventDefault();
+        confirmMenuCursor();
+      } else if (e.key === 'b' || e.key === 'B' || e.key === 'Escape') {
+        e.preventDefault();
+        pressBackButton();
+      }
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uiPhase, menuCursor, session?.mustStruggle]);
 
   // Play sound effects; missing files must never break the battle
   const playSound = (soundType) => {
@@ -234,9 +277,28 @@ const BattleSim = ({
     }
   };
 
+  // Drains messageQueueRef one at a time, pacing the in-game dialog box
+  // independently of however many times addLog was called back-to-back
+  // (React 18 batches synchronous setState calls, so without this a
+  // multi-message beat like "dealt damage" + "critical hit" + "super
+  // effective" would silently collapse to only the last message -- see
+  // Phase 8 plan Ruling 2).
+  const flushNextMessage = () => {
+    if (messageQueueRef.current.length === 0) {
+      messageTimerRef.current = null;
+      return;
+    }
+    const next = messageQueueRef.current.shift();
+    setActiveBeatLines((prev) => [...prev, next]);
+    messageTimerRef.current = setTimeout(flushNextMessage, motionMs(600));
+    timersRef.current.push(messageTimerRef.current);
+  };
+
   const addLog = (message) => {
-    const timestamp = new Date().toLocaleTimeString();
-    setBattleLog((prevLog) => [...prevLog, `${timestamp} - ${message}`]);
+    messageQueueRef.current.push(message);
+    if (!messageTimerRef.current) {
+      flushNextMessage();
+    }
   };
 
   // Brief type-tinted flash over the stage on a landed hit
@@ -245,6 +307,27 @@ const BattleSim = ({
     const typeKey = String(moveType || '').toLowerCase();
     setHitFlash(TYPE_COLORS[typeKey] || '#ffffff');
     timersRef.current.push(setTimeout(() => setHitFlash(null), 280));
+  };
+
+  // Extra white double-pulse accent layered on top of the normal hit flash,
+  // critical hits only (spec Section 6: "sharper shake + a brief screen-flash accent").
+  const triggerCriticalFlash = () => {
+    if (reduceMotion) return;
+    setCriticalFlash(true);
+    timersRef.current.push(setTimeout(() => setCriticalFlash(false), 220));
+  };
+
+  const triggerRangedFlash = (moveType) => {
+    if (reduceMotion) return;
+    const typeKey = String(moveType || '').toLowerCase();
+    setRangedFlash(TYPE_COLORS[typeKey] || '#ffffff');
+    timersRef.current.push(setTimeout(() => setRangedFlash(null), 350));
+  };
+
+  const triggerStatusSparkle = () => {
+    if (reduceMotion) return;
+    setStatusSparkle(true);
+    timersRef.current.push(setTimeout(() => setStatusSparkle(false), 500));
   };
 
   const logEffectiveness = (event, defenderName) => {
@@ -313,6 +396,45 @@ const BattleSim = ({
       grid.push(i < moves.length ? moves[i] : null);
     }
     return grid;
+  };
+
+  // D-pad cursor within a 2x2 option grid (command menu / move grid) --
+  // arrows toggle row/col, wrapping like the original games' menus.
+  const moveCursorInGrid = (cursor, key) => {
+    const row = Math.floor(cursor / 2);
+    const col = cursor % 2;
+    if (key === 'ArrowLeft' || key === 'ArrowRight') return row * 2 + (1 - col);
+    if (key === 'ArrowUp' || key === 'ArrowDown') return (1 - row) * 2 + col;
+    return cursor;
+  };
+
+  // A: confirm whatever the arrow cursor is currently on.
+  const confirmMenuCursor = () => {
+    if (uiPhase === 'command') {
+      const actions = ['FIGHT', 'BAG', 'POKEMON', 'RESTART'];
+      handleMainMenuSelection(actions[menuCursor]);
+    } else if (uiPhase === 'moveSelect') {
+      if (session?.mustStruggle) {
+        handleSelectMove(STRUGGLE_MOVE);
+        return;
+      }
+      const move = gridMoves()[menuCursor];
+      if (!move) return;
+      if (typeof move.current_pp === 'number' && move.current_pp <= 0) return;
+      handleSelectMove(move);
+    } else if (uiPhase === 'restartConfirm') {
+      confirmRestart(menuCursor === 0);
+    }
+  };
+
+  // B: back one screen. Command menu is the floor -- never leaves the battle.
+  const pressBackButton = () => {
+    if (uiPhase === 'moveSelect') {
+      playSound('select');
+      setUiPhase('command');
+    } else if (uiPhase === 'restartConfirm') {
+      confirmRestart(false);
+    }
   };
 
   // Animate one server event with the existing lunge/flash/HP/faint beats.
@@ -548,11 +670,25 @@ const BattleSim = ({
       await wait(motionMs(700)); // telegraph beat
     }
 
+    const isStatusLike = event.result === 'status' || event.result === 'heal';
+    const category = getMoveAnimCategory(event.moveType);
     const setAttacking = isPlayer ? setPlayerAttacking : setEnemyAttacking;
-    setAttacking(true);
-    playSound('attack');
-    await wait(motionMs(500));
-    setAttacking(false);
+
+    if (isStatusLike) {
+      triggerStatusSparkle();
+      playSound('attack');
+      await wait(motionMs(400));
+    } else if (category === 'physical') {
+      setAttacking(true);
+      playSound('attack');
+      await wait(motionMs(500));
+      setAttacking(false);
+    } else {
+      playSound('attack');
+      await wait(motionMs(200));
+      triggerRangedFlash(event.moveType);
+      await wait(motionMs(300));
+    }
     if (!isPlayer) {
       timersRef.current.push(setTimeout(() => setOpponentMove(null), 1500));
     }
@@ -588,15 +724,19 @@ const BattleSim = ({
     }
 
     triggerHitFlash(event.moveType);
+    if (event.critical_hit) triggerCriticalFlash();
     const setDamageEffect = isPlayer ? setEnemyDamageEffect : setPlayerDamageEffect;
     const setDefender = isPlayer ? setTrainerPokemon : setUserPokemon;
     if (isPlayer) view.enemy = { ...view.enemy, current_hp: event.targetHpAfter };
     else view.player = { ...view.player, current_hp: event.targetHpAfter };
+    const setCritical = isPlayer ? setEnemyCritical : setPlayerCritical;
     setDamageEffect(true);
+    setCritical(!!event.critical_hit);
     playSound('damage');
     setDefender((prev) => ({ ...prev, current_hp: event.targetHpAfter }));
     await wait(motionMs(600));
     setDamageEffect(false);
+    setCritical(false);
 
     addLog(`${attackerName} dealt ${event.damage} damage!`);
     if (event.hits > 1) addLog(`Hit ${event.hits} time(s)!`);
@@ -635,6 +775,14 @@ const BattleSim = ({
   const resolveServerAction = async (action) => {
     setUiPhase('acting');
     setError('');
+    // Clear out any leftover lines from the previous beat/intro so they
+    // can't leak into a new message-only phase.
+    setActiveBeatLines([]);
+    messageQueueRef.current = [];
+    if (messageTimerRef.current) {
+      clearTimeout(messageTimerRef.current);
+      messageTimerRef.current = null;
+    }
 
     try {
       const { data } = await api.post('/api/battle/action', {
@@ -683,6 +831,14 @@ const BattleSim = ({
       setCurrentTurn('none');
       setSelectedMove(null);
       setHoveredMove(null);
+      // Let any still-queued lines (e.g. a multi-line damage beat that
+      // outlasted this round's own animation timing) finish draining into
+      // activeBeatLines before we hand control back, so nothing the player
+      // hasn't seen yet gets silently dropped.
+      while (messageQueueRef.current.length > 0 || messageTimerRef.current) {
+        await wait(100);
+      }
+      setActiveBeatLines([]);
 
       if (data.state.status === 'active') {
         if (data.state.requiresSwitch) {
@@ -760,7 +916,9 @@ const BattleSim = ({
     setUiPhase('restarting');
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
-    setBattleLog([]);
+    messageQueueRef.current = [];
+    messageTimerRef.current = null;
+    setActiveBeatLines([]);
     setBattleOutcome(null);
     setSelectedMove(null);
     setHoveredMove(null);
@@ -771,7 +929,12 @@ const BattleSim = ({
     setEnemyDamageEffect(false);
     setPlayerFainted(false);
     setEnemyFainted(false);
+    setPlayerCritical(false);
+    setEnemyCritical(false);
     setHitFlash(null);
+    setCriticalFlash(false);
+    setRangedFlash(null);
+    setStatusSparkle(false);
     setOpponentMove(null);
     setProgressSave('idle');
     setProgressError('');
@@ -801,8 +964,6 @@ const BattleSim = ({
     );
 
   // Calculate health percentages
-  const trainerHealthPercent = (trainerPokemon.current_hp / trainerPokemon.max_hp) * 100;
-  const userHealthPercent = (userPokemon.current_hp / userPokemon.max_hp) * 100;
 
   const getHealthColorClass = (percentage) => {
     if (percentage <= 25) return 'health-critical';
@@ -811,6 +972,8 @@ const BattleSim = ({
   };
 
   const grid = gridMoves();
+  const isMessageOnlyPhase = !['command', 'moveSelect', 'partySelect', 'bagSelect', 'restartConfirm', 'finished'].includes(uiPhase);
+  const playerSpriteUrl = playerTrainerSprite(user?.gender);
   const introStarted = uiPhase !== 'encounter';
   const trainerName = session?.trainerName || 'The trainer';
   const party = session?.party || [];
@@ -823,17 +986,20 @@ const BattleSim = ({
 
   return (
     <div className="battle-page device-backdrop">
-      <div
-        className="battle-scale-outer"
-        style={{
-          width: STAGE_WIDTH * stageScale,
-          height: STAGE_TOTAL_HEIGHT * stageScale,
-        }}
+      <Shell
+        poweredOn
+        controls={
+          <>
+            <GbaControls onB={pressBackButton} onA={confirmMenuCursor} />
+          </>
+        }
       >
-        <div style={{ transform: `scale(${stageScale})`, transformOrigin: 'top left', width: STAGE_WIDTH }}>
-          <div className="gba-battle-container">
-            {/* Sound Effects */}
-            <audio ref={battleSoundRef} />
+        <LcdPanel scanlines={false} className="lcd-panel--fixed">
+          <div className="battle-scale-outer" style={{ width: STAGE_WIDTH, height: STAGE_TOTAL_HEIGHT }}>
+            <div style={{ width: STAGE_WIDTH }}>
+              <div className="gba-battle-container">
+                {/* Sound Effects */}
+                <audio ref={battleSoundRef} />
             <div className="gba-battle-background">
               {/* Encounter beat: flash + pokéball throw + appear text */}
               <AnimatePresence>
@@ -879,6 +1045,20 @@ const BattleSim = ({
                         />
                       </motion.div>
                     )}
+                    {/* Unlike the opponent avatar above (gated on session?.trainerSprite for wild/legendary fights), the player always throws their own Poké Ball, so this renders unconditionally on every encounter */}
+                    <motion.div
+                      className="gba-player-trainer-avatar-wrap"
+                      initial={{ x: -80, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: motionMs(150) / 1000, duration: motionMs(350) / 1000 }}
+                    >
+                      <img
+                        src={playerSpriteUrl}
+                        alt=""
+                        aria-hidden="true"
+                        className="gba-trainer-avatar pixelated"
+                      />
+                    </motion.div>
                     <motion.h2
                       initial={{ opacity: 0, y: 50 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -907,56 +1087,55 @@ const BattleSim = ({
                 )}
               </AnimatePresence>
 
+              {/* Critical-hit white double-pulse accent */}
+              <AnimatePresence>
+                {criticalFlash && (
+                  <motion.div
+                    className="hit-flash"
+                    style={{ background: '#ffffff' }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: [0, 0.7, 0, 0.5, 0] }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.22, times: [0, 0.25, 0.5, 0.75, 1] }}
+                  />
+                )}
+              </AnimatePresence>
+
+              {rangedFlash && (
+                <div
+                  className="ranged-flash"
+                  style={{ background: rangedFlash }}
+                  aria-hidden="true"
+                />
+              )}
+              {statusSparkle && <div className="status-sparkle" aria-hidden="true" />}
+
               {/* Enemy: HP box + sprite */}
-              <div className="gba-enemy-container">
+              <div className="gba-enemy-container" style={slotStyle('opponent')}>
+                <img
+                  src="/shadows/oval.png"
+                  alt=""
+                  aria-hidden="true"
+                  style={{ ...shadowStyle('opponent'), imageRendering: 'pixelated' }}
+                />
                 {introStarted && (
-                  <div className="gba-hp-box enemy-hp-box">
-                    <div className="gba-pokemon-name">
-                      {trainerPokemon.nickname}{' '}
-                      <span className="gba-level-text">Lv.{trainerPokemon.level}</span>
-                      <StatusBadge status={trainerPokemon.status} />
-                    </div>
-                    {enemyParty.length > 1 && (
-                      <div className="gba-party-dots" aria-hidden="true">
-                        {enemyParty.map((mon) => {
-                          const hp =
-                            trainerPokemon && mon.position === trainerPokemon.position
-                              ? trainerPokemon.current_hp
-                              : mon.current_hp;
-                          return (
-                            <span
-                              key={mon.position}
-                              className={`gba-party-dot ${hp <= 0 ? 'fainted' : ''} ${
-                                mon.position === enemyActivePosition ? 'active' : ''
-                              }`}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
-                    <div className="gba-health-container">
-                      <div className="gba-health-bar">
-                        <motion.div
-                          className={`gba-health-fill ${getHealthColorClass(trainerHealthPercent)}`}
-                          initial={{ width: '100%' }}
-                          animate={{ width: `${trainerHealthPercent}%` }}
-                          transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-                        />
-                      </div>
-                    </div>
-                    {opponentMove && (
-                      <div className="opponent-move">Move: {opponentMove.name}</div>
-                    )}
-                  </div>
+                  <HpBox
+                    pokemon={trainerPokemon}
+                    role="enemy"
+                    party={enemyParty}
+                    activePosition={enemyActivePosition}
+                    opponentMove={opponentMove}
+                    getHealthColorClass={getHealthColorClass}
+                  />
                 )}
                 <motion.div
                   className={`gba-pokemon-sprite enemy-sprite ${enemyDamageEffect ? 'damage-effect' : ''}`}
                   animate={
-                    enemyFainted
-                      ? { y: 46, opacity: 0 }
-                      : enemyDamageEffect && !reduceMotion
-                      ? { x: [-10, 10, -10, 10, 0], opacity: [1, 0.7, 1, 0.7, 1] }
-                      : { y: 0, opacity: 1 }
+                    reduceMotion
+                      ? (enemyFainted ? ANIMATION_VARIANTS.FAINT : ANIMATION_VARIANTS.IDLE)
+                      : ANIMATION_VARIANTS[
+                          getAnimState({ fainted: enemyFainted, critical: enemyCritical, damageEffect: enemyDamageEffect })
+                        ]
                   }
                   transition={{ duration: motionMs(500) / 1000 || 0.01, ease: 'easeIn' }}
                 >
@@ -970,13 +1149,21 @@ const BattleSim = ({
                     alt={trainerPokemon.nickname}
                     initial={{ x: 60, opacity: 0 }}
                     animate={{
-                      x: enemyAttacking && !reduceMotion ? [0, -24, 0] : introStarted ? 0 : 60,
+                      x:
+                        enemyAttacking && !reduceMotion
+                          ? [0, 8, -32, -26, 0]
+                          : introStarted
+                          ? 0
+                          : 60,
                       opacity: introStarted ? 1 : 0,
                     }}
                     transition={{
-                      x: enemyAttacking
-                        ? { duration: 0.45 }
-                        : { duration: motionMs(450) / 1000, ease: 'easeOut' },
+                      x:
+                        enemyAttacking && !reduceMotion
+                          ? { duration: 0.45, times: [0, 0.15, 0.6, 0.8, 1] }
+                          : reduceMotion
+                          ? { duration: 0 }
+                          : { type: 'spring', stiffness: 260, damping: 20 },
                       opacity: { duration: motionMs(350) / 1000 },
                     }}
                   />
@@ -984,16 +1171,21 @@ const BattleSim = ({
               </div>
 
               {/* Player: sprite + HP box */}
-              <div className="gba-player-container">
+              <div className="gba-player-container" style={slotStyle('player')}>
+                <img
+                  src="/shadows/oval.png"
+                  alt=""
+                  aria-hidden="true"
+                  style={{ ...shadowStyle('player'), imageRendering: 'pixelated' }}
+                />
                 <motion.div
                   className={`gba-pokemon-sprite player-sprite ${playerDamageEffect ? 'damage-effect' : ''}`}
                   animate={{
-                    scaleX: -1,
-                    ... (playerFainted
-                      ? { y: 46, opacity: 0 }
-                      : playerDamageEffect && !reduceMotion
-                      ? { x: [-10, 10, -10, 10, 0], opacity: [1, 0.7, 1, 0.7, 1] }
-                      : { y: 0, opacity: 1 })
+                    ...(reduceMotion
+                      ? (playerFainted ? ANIMATION_VARIANTS.FAINT : ANIMATION_VARIANTS.IDLE)
+                      : ANIMATION_VARIANTS[
+                          getAnimState({ fainted: playerFainted, critical: playerCritical, damageEffect: playerDamageEffect })
+                        ])
                   }}
                   transition={{ duration: motionMs(500) / 1000 || 0.01, ease: 'easeIn' }}
                 >
@@ -1002,62 +1194,37 @@ const BattleSim = ({
                     pokemonId={userPokemon.pokemon_id}
                     variant="back"
                     alt={userPokemon.nickname}
-                    initial={{ x: -60, opacity: 0, scaleX: -1 }}
+                    initial={{ x: -60, opacity: 0 }}
                     animate={{
-                      scaleX: -1,
-                      x: playerAttacking && !reduceMotion ? [0, 24, 0] : introStarted ? 0 : -60,
+                      x:
+                        playerAttacking && !reduceMotion
+                          ? [0, -8, 32, 26, 0]
+                          : introStarted
+                          ? 0
+                          : -60,
                       opacity: introStarted ? 1 : 0,
                     }}
                     transition={{
-                      x: playerAttacking
-                        ? { duration: 0.45 }
-                        : { duration: motionMs(450) / 1000, delay: motionMs(350) / 1000, ease: 'easeOut' },
+                      x:
+                        playerAttacking && !reduceMotion
+                          ? { duration: 0.45, times: [0, 0.15, 0.6, 0.8, 1] }
+                          : reduceMotion
+                          ? { duration: 0 }
+                          : { type: 'spring', stiffness: 260, damping: 20, delay: motionMs(350) / 1000 },
                       opacity: { duration: motionMs(350) / 1000, delay: motionMs(350) / 1000 },
                     }}
                   />
                 </motion.div>
                 {introStarted && (
-                  <div
-                    className="gba-hp-box player-hp-box"
+                  <HpBox
+                    pokemon={userPokemon}
+                    role="player"
+                    party={party}
+                    activePosition={activePosition}
+                    opponentMove={null}
+                    getHealthColorClass={getHealthColorClass}
                     style={{ animationDelay: reduceMotion ? '0s' : '0.45s', animationFillMode: 'both' }}
-                  >
-                    <div className="gba-pokemon-name">
-                      {userPokemon.nickname}{' '}
-                      <span className="gba-level-text">Lv.{userPokemon.level}</span>
-                      <StatusBadge status={userPokemon.status} />
-                    </div>
-                    {party.length > 1 && (
-                      <div className="gba-party-dots" aria-hidden="true">
-                        {party.map((mon) => {
-                          const hp =
-                            userPokemon && mon.position === userPokemon.position
-                              ? userPokemon.current_hp
-                              : mon.current_hp;
-                          return (
-                            <span
-                              key={mon.position}
-                              className={`gba-party-dot ${hp <= 0 ? 'fainted' : ''} ${
-                                mon.position === activePosition ? 'active' : ''
-                              }`}
-                            />
-                          );
-                        })}
-                      </div>
-                    )}
-                    <div className="gba-health-container">
-                      <div className="gba-health-bar">
-                        <motion.div
-                          className={`gba-health-fill ${getHealthColorClass(userHealthPercent)}`}
-                          initial={{ width: '100%' }}
-                          animate={{ width: `${userHealthPercent}%` }}
-                          transition={{ type: 'spring', stiffness: 120, damping: 20 }}
-                        />
-                      </div>
-                      <div className="gba-hp-text">
-                        HP: {userPokemon.current_hp}/{userPokemon.max_hp}
-                      </div>
-                    </div>
-                  </div>
+                  />
                 )}
               </div>
             </div>
@@ -1084,7 +1251,7 @@ const BattleSim = ({
                   {battleOutcome.outcome === 'win' ? (
                     progressSave === 'error' ? (
                       <motion.button
-                        className="gba-restart-btn"
+                        className="pixel-btn pixel-btn--primary"
                         onClick={retryProgressAward}
                         whileHover={reduceMotion ? {} : { scale: 1.05 }}
                         whileTap={reduceMotion ? {} : { scale: 0.95 }}
@@ -1093,7 +1260,7 @@ const BattleSim = ({
                       </motion.button>
                     ) : (
                       <motion.button
-                        className="gba-restart-btn"
+                        className="pixel-btn pixel-btn--primary"
                         onClick={() => (onContinue ? onContinue() : restartBattle())}
                         disabled={progressSave !== 'saved'}
                         whileHover={reduceMotion || progressSave !== 'saved' ? {} : { scale: 1.05 }}
@@ -1105,7 +1272,7 @@ const BattleSim = ({
                   ) : (
                     <div className="gba-finish-actions">
                       <motion.button
-                        className="gba-restart-btn"
+                        className="pixel-btn pixel-btn--primary"
                         onClick={restartBattle}
                         whileHover={reduceMotion ? {} : { scale: 1.05 }}
                         whileTap={reduceMotion ? {} : { scale: 0.95 }}
@@ -1113,7 +1280,7 @@ const BattleSim = ({
                         Battle Again
                       </motion.button>
                       <button
-                        className="gba-restart-btn gba-restart-btn--secondary"
+                        className="pixel-btn"
                         onClick={() => navigate('/game')}
                       >
                         Back to hub
@@ -1223,136 +1390,92 @@ const BattleSim = ({
                 </div>
               ) : (
                 <>
-                  <div className={`gba-dialog-box ${uiPhase !== 'moveSelect' ? 'gba-dialog-box--message' : ''}`}>
+                  <div
+                    className={`gba-dialog-box ${uiPhase !== 'moveSelect' ? 'gba-dialog-box--message' : ''} ${
+                      isMessageOnlyPhase ? 'gba-dialog-box--fullwidth' : ''
+                    }`}
+                  >
                     {uiPhase === 'moveSelect' ? (
-                      session?.mustStruggle ? (
-                        // Every move is out of PP: FireRed offers Struggle.
-                        <div className="gba-move-grid">
-                          <button
-                            className="gba-move-btn gba-move-btn--struggle"
-                            onClick={() => handleSelectMove(STRUGGLE_MOVE)}
-                          >
-                            STRUGGLE
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="gba-move-grid">
-                          {grid.map((move, index) =>
-                            move ? (
-                              <button
-                                key={move.move_id}
-                                className={`gba-move-btn ${selectedMove?.move_id === move.move_id ? 'selected' : ''}`}
-                                onClick={() => handleSelectMove(move)}
-                                onMouseEnter={() => setHoveredMove(move)}
-                                onMouseLeave={() => setHoveredMove(null)}
-                                onFocus={() => setHoveredMove(move)}
-                                onBlur={() => setHoveredMove(null)}
-                                disabled={
-                                  typeof move.current_pp === 'number' &&
-                                  move.current_pp <= 0
-                                }
-                              >
-                                <span className="gba-move-btn-name">{move.name}</span>
-                                {typeof move.current_pp === 'number' && (
-                                  <span className="gba-move-btn-pp">
-                                    {move.current_pp}/{move.max_pp}
-                                  </span>
-                                )}
-                              </button>
-                            ) : (
-                              <button key={index} className="gba-move-btn blank" disabled></button>
-                            )
-                          )}
-                        </div>
-                      )
+                      <MoveMenu
+                        part="grid"
+                        grid={grid}
+                        menuCursor={menuCursor}
+                        mustStruggle={session?.mustStruggle}
+                        onSelectMove={(move, index) => {
+                          if (index != null) setMenuCursor(index);
+                          handleSelectMove(move);
+                        }}
+                        onHoverMove={(move, index) => {
+                          setMenuCursor(index);
+                          setHoveredMove(move);
+                        }}
+                        onLeaveHover={() => setHoveredMove(null)}
+                        onFocusMove={(move) => setHoveredMove(move)}
+                        onBlurMove={() => setHoveredMove(null)}
+                      />
+                    ) : isMessageOnlyPhase ? (
+                      <MessageLog lines={activeBeatLines} />
                     ) : (
                       <div className="gba-dialog-text">
                         {uiPhase === 'restartConfirm'
                           ? 'Restart this battle?'
                           : uiPhase === 'restarting'
                           ? 'Restarting battle...'
-                          : currentTurn === 'player' && selectedMove
-                          ? `${userPokemon.nickname} used ${selectedMove.name}!`
-                          : currentTurn === 'enemy'
-                          ? `${trainerPokemon.nickname} is attacking...`
+                          : activeBeatLines.length > 0
+                          ? activeBeatLines[activeBeatLines.length - 1]
                           : `What will ${userPokemon.nickname} do?`}
                       </div>
                     )}
                   </div>
-                  <div className="gba-menu-box">
-                    {uiPhase === 'moveSelect' ? (
-                      <div className="gba-move-info">
-                        {hoveredMove ? (
-                          <>
-                            <p><strong>{hoveredMove.name}</strong></p>
-                            <p>
-                              Type:{' '}
-                              {(hoveredMove.type || hoveredMove.move_type) && (
-                                <span
-                                  className="move-type"
-                                  style={{
-                                    background:
-                                      TYPE_COLORS[String(hoveredMove.type || hoveredMove.move_type).toLowerCase()] ||
-                                      '#a8a77a',
-                                  }}
-                                >
-                                  {hoveredMove.type || hoveredMove.move_type}
-                                </span>
-                              )}
-                            </p>
-                            <p>
-                              PP:{' '}
-                              {typeof hoveredMove.current_pp === 'number'
-                                ? `${hoveredMove.current_pp}/${hoveredMove.max_pp}`
-                                : '—'}
-                            </p>
-                            <p>
-                              Description:{' '}
-                              {hoveredMove.description
-                                ? hoveredMove.description
-                                : 'No description available.'}
-                            </p>
-                          </>
-                        ) : (
-                          <p>Hover over a move for details</p>
-                        )}
-                      </div>
-                    ) : uiPhase === 'command' ? (
-                      <div className="gba-main-menu">
-                        <button onClick={() => handleMainMenuSelection('FIGHT')}>FIGHT</button>
-                        <button onClick={() => handleMainMenuSelection('BAG')}>BAG</button>
-                        <button onClick={() => handleMainMenuSelection('POKEMON')}>POKéMON</button>
-                        <button onClick={() => handleMainMenuSelection('RESTART')}>RESTART</button>
-                      </div>
-                    ) : uiPhase === 'restartConfirm' ? (
-                      <div className="gba-main-menu">
-                        <button onClick={() => confirmRestart(true)}>YES</button>
-                        <button onClick={() => confirmRestart(false)}>NO</button>
-                      </div>
-                    ) : null}
-                  </div>
+                  {!isMessageOnlyPhase && (
+                    <div className="gba-menu-box">
+                      {uiPhase === 'moveSelect' ? (
+                        <MoveMenu part="info" grid={grid} menuCursor={menuCursor} hoveredMove={hoveredMove} />
+                      ) : uiPhase === 'command' ? (
+                        <div className="gba-main-menu">
+                          {[
+                            { action: 'FIGHT', label: 'FIGHT' },
+                            { action: 'BAG', label: 'BAG' },
+                            { action: 'POKEMON', label: 'POKéMON' },
+                            { action: 'RESTART', label: 'RESTART' },
+                          ].map(({ action, label }, index) => (
+                            <button
+                              key={action}
+                              onClick={() => {
+                                setMenuCursor(index);
+                                handleMainMenuSelection(action);
+                              }}
+                              onMouseEnter={() => setMenuCursor(index)}
+                            >
+                              <span className="gba-cursor-arrow">{menuCursor === index ? '▶' : ''}</span>
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : uiPhase === 'restartConfirm' ? (
+                        <div className="gba-main-menu">
+                          {['YES', 'NO'].map((label, index) => (
+                            <button
+                              key={label}
+                              onClick={() => confirmRestart(index === 0)}
+                              onMouseEnter={() => setMenuCursor(index)}
+                            >
+                              <span className="gba-cursor-arrow">{menuCursor === index ? '▶' : ''}</span>
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
                 </>
               )}
             </div>
           </div>
-
-          {/* Battle log lives below the stage so it is actually visible */}
-          <div className="gba-battle-log-container">
-            <div className="gba-battle-log" ref={logRef}>
-              {battleLog.map((entry, index) => (
-                <motion.p
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {entry}
-                </motion.p>
-              ))}
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
+        </LcdPanel>
+      </Shell>
     </div>
   );
 };

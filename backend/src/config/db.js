@@ -32,6 +32,7 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD || "mypassword",
   database: process.env.DB_NAME || "pokedex", // Change to "trainer" if needed
   port: process.env.DB_PORT || 3306,
+  charset: "utf8mb4",
   connectTimeout: 10000, // 10 seconds timeout
   waitForConnections: true,
   connectionLimit: 10,

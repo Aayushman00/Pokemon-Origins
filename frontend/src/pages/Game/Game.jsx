@@ -10,6 +10,7 @@ import { useUser } from "../../App";
 import { api, getErrorMessage } from "../../api";
 import Shell from "../../components/Shell/Shell";
 import LcdPanel from "../../components/Shell/LcdPanel";
+import GbaControls from "../../components/Shell/GbaControls";
 import PokemonSprite from "../../components/PokemonSprite/PokemonSprite";
 import { MAX_CAMPAIGN_LEVEL } from "./Level";
 import { typeColor } from "../../utils/typeColors";
@@ -240,9 +241,9 @@ const Game = () => {
 	if (!user?.starterChosen) {
 		return (
 			<div className="device-backdrop flex items-center justify-center p-4">
-				<div className="w-full max-w-xl">
+				<div>
 					<Shell poweredOn>
-						<LcdPanel>
+						<LcdPanel className="lcd-panel--fixed">
 							<p
 								className="font-pixel text-[0.55rem] text-center tracking-widest"
 								style={{ color: "var(--lcd-ink-dim)" }}
@@ -365,9 +366,9 @@ const Game = () => {
 	// --- Hub (starter already chosen) ---
 	return (
 		<div className="device-backdrop flex items-center justify-center p-4">
-			<div className="w-full max-w-xl">
-				<Shell poweredOn>
-					<LcdPanel>
+			<div>
+				<Shell poweredOn controls={<GbaControls />}>
+					<LcdPanel className="lcd-panel--fixed">
 						<h1
 							className="font-pixel text-xl text-center leading-relaxed"
 							style={{
@@ -480,7 +481,7 @@ const Game = () => {
 								</div>
 							) : null}
 
-							<div className="flex-1 w-full">
+							<div className="flex-1 w-full mx-auto">
 								<p
 									className="font-pixel text-[0.75rem]"
 									style={{ color: "var(--lcd-ink-bright)" }}

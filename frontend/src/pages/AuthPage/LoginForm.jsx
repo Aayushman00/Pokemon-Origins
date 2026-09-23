@@ -41,7 +41,7 @@ const LoginForm = ({ formRef }) => {
 	};
 
 	return (
-		<form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+		<form ref={formRef} onSubmit={handleSubmit} className="space-y-4 max-w-xs mx-auto py-10">
 			<div>
 				<label htmlFor="login-email" className="lcd-label">
 					Email

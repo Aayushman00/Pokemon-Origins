@@ -220,29 +220,42 @@ def _single_hit_damage(
     stab: bool,
     ability_multiplier: float,
 ) -> Dict[str, Any]:
-    """One damage roll (own crit + random factor, per Gen 3 multi-hit rules)."""
+    """One damage roll (own crit + random factor, per Gen 3 multi-hit rules).
+
+    Gen III truncates (floors) after every single step of the calculation,
+    not just once at the end (see https://bulbapedia.bulbagarden.net/wiki/Damage):
+    the level factor, the base-damage division, and each modifier multiply
+    (critical, random, STAB, type, and this engine's own ability bonus) are
+    all floored in sequence. Doing the whole thing in continuous floats and
+    rounding once at the end silently overshoots the real games' numbers
+    whenever an intermediate value is non-integer.
+    """
     attack, defense = _offense_defense(battle, category)
-    level_factor = ((2 * battle.attacker.level) / 5) + 2
-    base_damage = ((level_factor * move_dict["power"] * (attack / defense)) / 50) + 2
+    attack = int(attack)
+    defense = max(1, int(defense))
+
+    level_factor = (2 * battle.attacker.level) // 5 + 2
+    base_before_scale = (level_factor * move_dict["power"] * attack) // defense
+    base_damage = base_before_scale // 50 + 2
 
     crit = random.random() < CRIT_RATE
     crit_multiplier = CRIT_MULTIPLIER if crit else 1.0
     stab_multiplier = STAB_MULTIPLIER if stab else 1.0
     random_factor = random.uniform(0.85, 1.0)
 
-    damage = round(
-        base_damage
-        * type_multiplier
-        * stab_multiplier
-        * ability_multiplier
-        * crit_multiplier
-        * random_factor,
-        2,
-    )
+    # Gen III modifier order: Critical -> Random -> STAB -> Type -> Other,
+    # flooring after every multiply.
+    damage = base_damage
+    damage = int(damage * crit_multiplier)
+    damage = int(damage * random_factor)
+    damage = int(damage * stab_multiplier)
+    damage = int(damage * type_multiplier)
+    damage = int(damage * ability_multiplier)
+
     return {
-        "damage": damage,
+        "damage": float(damage),
         "critical_hit": crit,
-        "base_damage": base_damage,
+        "base_damage": float(base_damage),
         "random_factor": random_factor,
     }
 

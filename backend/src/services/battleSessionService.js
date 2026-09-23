@@ -16,6 +16,8 @@ const {
 	statChangeLine,
 } = require("./battleStatus");
 const { createBattleAi } = require("./battleAi");
+const { xpNeededForLevel } = require("./xpService");
+const { rollGenderForSpecies } = require("./genderService");
 
 /**
  * Server-authoritative battle sessions (Phase 3, party-aware since Phase 4,
@@ -126,13 +128,14 @@ function sanitizeMove(move) {
 function snapshotPokemon(raw, fallbackPosition = null) {
 	const maxHp = Number(raw.max_hp);
 	const currentHp = raw.current_hp == null ? maxHp : Number(raw.current_hp);
+	const level = Number(raw.level) || 1;
 	return {
 		// DB row id (trainer_pokemon.id) — used to persist XP/PP after battle
 		id: raw.id ?? null,
 		position: raw.position != null ? Number(raw.position) : fallbackPosition,
 		pokemon_id: raw.pokemon_id,
 		nickname: raw.nickname,
-		level: Number(raw.level) || 1,
+		level,
 		max_hp: maxHp,
 		current_hp: Math.max(0, Math.min(maxHp, currentHp)),
 		attack: Number(raw.attack),
@@ -153,6 +156,17 @@ function snapshotPokemon(raw, fallbackPosition = null) {
 			: null,
 		types: Array.isArray(raw.types) && raw.types.length ? raw.types : ["Normal"],
 		moves: (raw.moves || []).map(sanitizeMove),
+		// Battle UI redesign: gender symbol + live EXP bar. Player rows carry
+		// a real assigned gender (Task 2); enemy config data has none, so one
+		// is rolled here once, at session-start snapshot time, and stays
+		// stable for the whole battle (session.player/enemyParty are mutated
+		// in place across turns, not re-snapshotted).
+		// Player rows have a real DB id and must keep a null gender as-is
+		// (pre-migration rows); only gender-less enemy config data gets a
+		// rolled fallback.
+		gender: raw.gender ?? (raw.id == null ? rollGenderForSpecies(raw.pokemon_id) : null),
+		experience: Number(raw.experience) || 0,
+		xp_to_next: xpNeededForLevel(level),
 	};
 }
 

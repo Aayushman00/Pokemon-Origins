@@ -25,6 +25,8 @@ const inventoryRoutes = require("./src/routes/inventory");
 const martRoutes = require("./src/routes/mart");
 const evolutionRoutes = require("./src/routes/evolutions");
 const moveRoutes = require("./src/routes/moves");
+const attachPlayground = require("./src/playground");
+const trainerPool = require("./src/config/trainerdb");
 
 const app = express();
 
@@ -58,7 +60,7 @@ app.use((req, res, next) => {
 
 const apiLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
-	max: 100,
+	max: 10000,
 	standardHeaders: true,
 	legacyHeaders: false,
 	message: {
@@ -69,7 +71,7 @@ const apiLimiter = rateLimit({
 
 const authLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
-	max: 20,
+	max: 100,
 	standardHeaders: true,
 	legacyHeaders: false,
 	message: {
@@ -119,94 +121,7 @@ const io = socketIo(server, {
 	},
 });
 
-const users = {};
-const CHAT_VICINITY_DISTANCE = 100;
-
-io.on("connection", (socket) => {
-	console.log("New user connected:", socket.id);
-
-	socket.on("join", (userData) => {
-		users[socket.id] = {
-			id: socket.id,
-			username: userData.username,
-			position: userData.position || {
-				x: Math.random() * 800,
-				y: Math.random() * 600,
-			},
-			color: userData.color || getRandomColor(),
-		};
-
-		socket.emit("init", {
-			id: socket.id,
-			users: users,
-		});
-
-		socket.broadcast.emit("user_joined", users[socket.id]);
-	});
-
-	socket.on("move", (position) => {
-		if (users[socket.id]) {
-			users[socket.id].position = position;
-			socket.broadcast.emit("user_moved", {
-				id: socket.id,
-				position,
-			});
-		}
-	});
-
-	socket.on("send_message", (message) => {
-		if (!users[socket.id]) return;
-
-		const sender = users[socket.id];
-
-		const usersInVicinity = Object.values(users).filter((user) => {
-			if (user.id === sender.id) return false;
-			const dx = user.position.x - sender.position.x;
-			const dy = user.position.y - sender.position.y;
-			const distance = Math.sqrt(dx * dx + dy * dy);
-			return distance <= CHAT_VICINITY_DISTANCE;
-		});
-
-		const messageData = {
-			id: Date.now(),
-			sender: sender.id,
-			senderName: sender.username,
-			text: message,
-			timestamp: new Date().toISOString(),
-		};
-
-		socket.emit("receive_message", messageData);
-
-		usersInVicinity.forEach((user) => {
-			io.to(user.id).emit("receive_message", messageData);
-		});
-	});
-
-	socket.on("disconnect", () => {
-		console.log("User disconnected:", socket.id);
-
-		if (users[socket.id]) {
-			io.emit("user_left", socket.id);
-			delete users[socket.id];
-		}
-	});
-});
-
-function getRandomColor() {
-	const colors = [
-		"#FF6633",
-		"#FFB399",
-		"#FF33FF",
-		"#FFFF99",
-		"#00B3E6",
-		"#E6B333",
-		"#3366E6",
-		"#999966",
-		"#99FF99",
-		"#B34D4D",
-	];
-	return colors[Math.floor(Math.random() * colors.length)];
-}
+attachPlayground(io, trainerPool);
 
 server.listen(PORT, () => {
 	console.log(`API + Socket.IO running on http://localhost:${PORT}`);

@@ -164,3 +164,25 @@ Win XP reuses existing `trainer_pokemon` columns: `experience` holds a **per-lev
 
 - Dump encoding is UTF-8 (converted from UTF-16 for reliable MySQL client/Docker init).
 - Reorder helper: `python scripts/reorder-sql-dump.py` (idempotent only if current order matches expected parents/children).
+
+### Re-exporting `pokedex_data.sql` from MySQL Workbench
+
+MySQL Workbench on Windows defaults to **UTF-16LE** when exporting a dump via
+"Table Data Export Wizard" / "Export Results", not UTF-8. A UTF-16LE dump
+fed into a UTF-8-assuming import path corrupts every accented character
+(e.g. `Pokémon` becomes `Pok├⌐mon`) — this has happened before with this
+exact dump.
+
+**Whenever you re-export `pokedex_data.sql` from Workbench:**
+
+1. Run `python scripts/reorder-sql-dump.py` — it detects a UTF-16LE/BE BOM
+   and rewrites the file as UTF-8. Run it once per fresh export only: it
+   also reorders `pokemon_genders`/`pokemon_species` and the `trainer`
+   tables, and asserts the *pre-reorder* order on entry — running it a
+   second time on a file it already reordered will raise
+   `SystemExit("unexpected pokedex table order")`, not silently no-op.
+2. Run `python scripts/check_encoding.py` — it exits non-zero if any
+   mojibake byte sequence is still present, so a broken export is caught
+   before it's committed.
+3. Only commit `database/pokedex_data.sql` after both scripts report
+   success.

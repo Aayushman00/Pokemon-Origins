@@ -42,7 +42,7 @@ const RegistrationForm = ({ formRef }) => {
 	};
 
 	return (
-		<form ref={formRef} onSubmit={handleSubmit} className="space-y-4">
+		<form ref={formRef} onSubmit={handleSubmit} className="space-y-4 max-w-xs mx-auto">
 			<div>
 				<label htmlFor="register-name" className="lcd-label">
 					Your Name

@@ -128,6 +128,25 @@ def test_crit_is_2x():
     assert result["damage"] == pytest.approx(12.0)
 
 
+def test_gen3_floors_after_every_step_like_the_real_games():
+    # Gen III (see https://bulbapedia.bulbagarden.net/wiki/Damage) floors
+    # after EVERY step: floor(2*Level/5) first, then floor(base-before-/50),
+    # then floor(.../50), then floor after each modifier multiply. Level 6
+    # is chosen because 2*6/5 = 2.4 is non-integer, so continuous float math
+    # (no intermediate flooring) silently overshoots the real games' number.
+    #
+    # True Gen III math (atk 50 / def 40 -> ratio 1.25, power 40, STAB):
+    #   level_factor = floor(2*6/5) + 2      = floor(2.4) + 2 = 4
+    #   step2        = floor(4 * 40 * 1.25)  = floor(200)     = 200
+    #   step3        = floor(200 / 50)       = floor(4.0)     = 4
+    #   base         = step3 + 2                              = 6
+    #   STAB         = floor(6 * 1.5)                          = 9
+    attacker = _pokemon(level=6, types=["normal"])
+    result = _resolve(_battle(attacker=attacker), rolls=[0.0, 0.9])
+    assert result["stab"] is True
+    assert result["damage"] == pytest.approx(9.0)
+
+
 def test_attack_stage_raises_damage():
     attacker = _pokemon(types=["fire"], stages={"atk": 2})
     # atk x2 -> ratio 2.5 -> base (4*40*2.5)/50 + 2 = 10
@@ -189,8 +208,11 @@ def test_pinch_ability_boosts_matching_type_at_low_hp():
 
     base = _resolve(_battle(attacker=healthy, move=vine), rolls=[0.0, 0.9])
     boosted = _resolve(_battle(attacker=low_hp, move=vine), rolls=[0.0, 0.9])
-    assert base["damage"] == pytest.approx(6.5)
-    assert boosted["damage"] == pytest.approx(6.5 * 1.5)
+    # Gen III floors after every step (see test_gen3_floors_after_every_step_
+    # like_the_real_games above): base = floor(floor(4*45*50/40)/50)+2 = 6
+    # (no STAB: attacker is Normal-type, move is Grass).
+    assert base["damage"] == pytest.approx(6.0)
+    assert boosted["damage"] == pytest.approx(9.0)  # floor(6 * 1.5) Overgrow
 
 
 def test_static_can_paralyze_physical_attacker():
@@ -225,8 +247,9 @@ def test_multi_hit_rolls_accuracy_once_and_sums_hits():
     # Rolls: hit(0.0), hit-count(0.0 -> 2 hits), crit x2 (no).
     result = _resolve(_battle(move=fury), rolls=[0.0, 0.0, 0.9, 0.9])
     assert result["hits"] == 2
-    # Single hit: (4*15*1.25)/50 + 2 = 3.5, x1.5 STAB = 5.25 -> two hits 10.5
-    assert result["damage"] == pytest.approx(10.5)
+    # Gen III floors after every step: base = floor(floor(4*15*50/40)/50)+2
+    # = floor(1.5)+2 = 3; STAB floor(3*1.5) = 4 per hit -> two hits = 8.
+    assert result["damage"] == pytest.approx(8.0)
 
     # One accuracy roll gates the whole move.
     result = _resolve(_battle(move=fury), rolls=[0.9])
