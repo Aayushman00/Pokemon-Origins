@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../config/env");
 const { createSocketAuthMiddleware } = require("./socketAuth");
 const { createRoomState } = require("./roomState");
-const { resolveMove, ROOM_WIDTH, ROOM_HEIGHT } = require("./movement");
+const { resolveMove, ROOM_WIDTH, ROOM_HEIGHT, CHAT_RADIUS_PX } = require("./movement");
 const { createChatRing, sanitizeMessage, isRateLimited, MIN_MESSAGE_INTERVAL_MS } = require("./chat");
 
 const ROOM_ID = "main";
@@ -13,6 +13,7 @@ function attachPlayground(io, pool) {
 	const chatRing = createChatRing();
 	const lastMoveAt = new Map(); // trainerId -> timestamp (ms)
 	const lastMessageAt = new Map(); // trainerId -> timestamp (ms)
+	const trainerSockets = new Map(); // trainerId -> socket, for proximity chat delivery
 
 	io.use(
 		createSocketAuthMiddleware({
@@ -46,11 +47,15 @@ function attachPlayground(io, pool) {
 		const spawn = { x: ROOM_WIDTH / 2, y: ROOM_HEIGHT / 2 };
 		const self = roomState.addPlayer(trainerId, name, spawn);
 		lastMoveAt.set(trainerId, Date.now());
+		trainerSockets.set(trainerId, socket);
 
 		socket.emit("room:init", {
 			self,
 			players: roomState.listPlayers(),
 			messages: chatRing.recent(),
+			roomWidth: ROOM_WIDTH,
+			roomHeight: ROOM_HEIGHT,
+			chatRadius: CHAT_RADIUS_PX,
 		});
 		socket.to(ROOM_ID).emit("player:joined", self);
 
@@ -74,18 +79,37 @@ function attachPlayground(io, pool) {
 			const clean = sanitizeMessage(text);
 			if (!clean) return;
 
+			const isAllBroadcast = /^\/all\s+/i.test(clean);
+			const body = isAllBroadcast ? clean.replace(/^\/all\s+/i, "").trim() : clean;
+			if (!body) return;
+
 			const now = Date.now();
 			if (isRateLimited(lastMessageAt.get(trainerId), now)) return;
 			lastMessageAt.set(trainerId, now);
 
-			const msg = { trainerId, name, text: clean, ts: now };
+			const msg = { trainerId, name, text: body, ts: now, broadcast: isAllBroadcast };
 			chatRing.push(msg);
-			io.to(ROOM_ID).emit("chat:message", msg);
+
+			if (isAllBroadcast) {
+				io.to(ROOM_ID).emit("chat:message", msg);
+				return;
+			}
+
+			// Proximity chat: only deliver to players within CHAT_RADIUS_PX of the sender.
+			const sender = roomState.getPlayer(trainerId);
+			if (!sender) return;
+			roomState.listPlayers().forEach((player) => {
+				const dist = Math.hypot(player.x - sender.x, player.y - sender.y);
+				if (dist <= CHAT_RADIUS_PX) {
+					trainerSockets.get(player.trainerId)?.emit("chat:message", msg);
+				}
+			});
 		});
 
 		socket.on("disconnect", () => {
 			roomState.removePlayer(trainerId);
 			lastMoveAt.delete(trainerId);
+			trainerSockets.delete(trainerId);
 			// lastMessageAt is deliberately NOT cleared here — see the sweep
 			// in the connection handler above.
 			io.to(ROOM_ID).emit("player:left", { trainerId });

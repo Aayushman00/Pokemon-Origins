@@ -5,9 +5,10 @@
  * network representation of that drag into an authoritative position.
  */
 
-const ROOM_WIDTH = 800;
-const ROOM_HEIGHT = 600;
+const ROOM_WIDTH = 3000;
+const ROOM_HEIGHT = 2000;
 const MAX_SPEED_PX_PER_SEC = 2000;
+const CHAT_RADIUS_PX = 250;
 
 function clamp(value, min, max) {
 	return Math.min(Math.max(value, min), max);
@@ -36,4 +37,4 @@ function resolveMove(current, target, elapsedMs) {
 	};
 }
 
-module.exports = { resolveMove, clamp, ROOM_WIDTH, ROOM_HEIGHT, MAX_SPEED_PX_PER_SEC };
+module.exports = { resolveMove, clamp, ROOM_WIDTH, ROOM_HEIGHT, MAX_SPEED_PX_PER_SEC, CHAT_RADIUS_PX };

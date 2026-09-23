@@ -9,6 +9,30 @@
   border-radius: 4px;
   overflow: hidden;
   touch-action: none;
+  cursor: grab;
+}
+
+.playground-room:active {
+  cursor: grabbing;
+}
+
+.playground-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #4a9c58;
+  background-image: linear-gradient(45deg, #438f4f 25%, transparent 25%, transparent 75%, #438f4f 75%),
+    linear-gradient(45deg, #438f4f 25%, transparent 25%, transparent 75%, #438f4f 75%);
+  background-size: 32px 32px;
+  background-position: 0 0, 16px 16px;
+}
+
+.playground-chat-radius {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.04);
+  pointer-events: none;
 }
 
 .playground-avatar {
@@ -45,9 +69,10 @@
 .playground-layout {
   display: flex;
   gap: 12px;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
   flex-wrap: wrap;
+  min-height: 100vh;
 }
 
 .playground-chat {
@@ -75,6 +100,16 @@
 
 .playground-chat-author {
   font-weight: bold;
+}
+
+.playground-chat-message.is-broadcast {
+  color: #ffd54f;
+}
+
+.playground-chat-all-tag {
+  font-size: 11px;
+  font-weight: bold;
+  opacity: 0.8;
 }
 
 .playground-chat-form {

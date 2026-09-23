@@ -2,6 +2,17 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 const attachPlayground = require("./index");
+const { ROOM_WIDTH, ROOM_HEIGHT } = require("./movement");
+
+// Blocks synchronously so a subsequent Date.now()-based elapsedMs calculation
+// (in the real move handler, which doesn't accept an injectable clock) is
+// guaranteed non-trivial instead of racing test-execution speed.
+function busyWaitMs(ms) {
+	const start = Date.now();
+	while (Date.now() - start < ms) {
+		// intentionally empty
+	}
+}
 
 /**
  * Minimal fake Socket.IO `io` object. Captures whatever handler
@@ -70,61 +81,113 @@ function chatBroadcasts(broadcasts) {
 	return broadcasts.filter((b) => b.event === "chat:message");
 }
 
+// Non-"/all" chat:send is proximity-delivered: attachPlayground looks up each
+// in-range trainer's own socket and calls socket.emit(...) directly, rather
+// than the shared io.to(room) broadcast (which only "/all" uses). Tests for
+// ordinary messages read this off the fake socket's own emits array instead.
+function chatEmits(emits) {
+	return emits.filter((e) => e.event === "chat:message");
+}
+
 const fakePool = { query: async () => [[]] }; // never hit: middleware is bypassed in these tests
 
 describe("attachPlayground chat wiring", () => {
-	it("broadcasts a valid chat:send with the correct payload shape", () => {
-		const { io, broadcasts, connect } = createFakeIo();
+	it("proximity-delivers a valid chat:send with the correct payload shape", () => {
+		const { io, connect } = createFakeIo();
 		attachPlayground(io, fakePool);
 
-		const { socket, handlers } = createFakeSocket({ trainerId: 1, name: "Ash" });
+		const { socket, handlers, emits } = createFakeSocket({ trainerId: 1, name: "Ash" });
 		connect(socket);
 
 		handlers["chat:send"]("hello world");
 
-		const sent = chatBroadcasts(broadcasts);
+		const sent = chatEmits(emits);
 		assert.equal(sent.length, 1);
-		assert.equal(sent[0].room, "main");
 		const payload = sent[0].payload;
 		assert.equal(payload.trainerId, 1);
 		assert.equal(payload.name, "Ash");
 		assert.equal(payload.text, "hello world");
+		assert.equal(payload.broadcast, false);
 		assert.ok(Number.isFinite(payload.ts));
 	});
 
-	it("does not broadcast invalid text and does not burn the rate-limit slot", () => {
-		const { io, broadcasts, connect } = createFakeIo();
+	it("does not deliver invalid text and does not burn the rate-limit slot", () => {
+		const { io, connect } = createFakeIo();
 		attachPlayground(io, fakePool);
 
-		const { socket, handlers } = createFakeSocket({ trainerId: 2, name: "Misty" });
+		const { socket, handlers, emits } = createFakeSocket({ trainerId: 2, name: "Misty" });
 		connect(socket);
 
 		handlers["chat:send"](""); // empty
 		handlers["chat:send"](42); // non-string
 		handlers["chat:send"]("a".repeat(301)); // over length cap
 
-		assert.equal(chatBroadcasts(broadcasts).length, 0);
+		assert.equal(chatEmits(emits).length, 0);
 
 		// A subsequent valid send right after should NOT be rejected as
 		// rate-limited, proving the invalid sends never touched lastMessageAt.
 		handlers["chat:send"]("finally valid");
-		assert.equal(chatBroadcasts(broadcasts).length, 1);
-		assert.equal(chatBroadcasts(broadcasts)[0].payload.text, "finally valid");
+		assert.equal(chatEmits(emits).length, 1);
+		assert.equal(chatEmits(emits)[0].payload.text, "finally valid");
 	});
 
 	it("rate-limits a second chat:send within 1000ms from the same trainer", () => {
-		const { io, broadcasts, connect } = createFakeIo();
+		const { io, connect } = createFakeIo();
 		attachPlayground(io, fakePool);
 
-		const { socket, handlers } = createFakeSocket({ trainerId: 3, name: "Brock" });
+		const { socket, handlers, emits } = createFakeSocket({ trainerId: 3, name: "Brock" });
 		connect(socket);
 
 		handlers["chat:send"]("first");
 		handlers["chat:send"]("second"); // immediately after — rate-limited
 
-		const sent = chatBroadcasts(broadcasts);
+		const sent = chatEmits(emits);
 		assert.equal(sent.length, 1);
 		assert.equal(sent[0].payload.text, "first");
+	});
+
+	it("only delivers a non-broadcast message to trainers within the chat radius", () => {
+		const { io, connect } = createFakeIo();
+		attachPlayground(io, fakePool);
+
+		const { socket: nearSocket, handlers: nearHandlers, emits: nearEmits } = createFakeSocket({
+			trainerId: 10,
+			name: "Near",
+		});
+		connect(nearSocket);
+		const { socket: farSocket, handlers: farHandlers, emits: farEmits } = createFakeSocket({
+			trainerId: 11,
+			name: "Far",
+		});
+		connect(farSocket);
+
+		// Both spawn at the room center by default (dist 0); walk Far 400px
+		// away — outside the 250px chat radius — before Near speaks. The
+		// move handler computes elapsedMs from a real Date.now() delta (no
+		// injectable clock), so wait long enough that MAX_SPEED_PX_PER_SEC
+		// comfortably covers the distance in one step.
+		busyWaitMs(300); // maxDist = 2000px/s * 0.3s = 600px > 400px needed
+		farHandlers["move"]({ x: ROOM_WIDTH / 2 + 400, y: ROOM_HEIGHT / 2 });
+
+		nearHandlers["chat:send"]("hello");
+		assert.equal(chatEmits(nearEmits).length, 1);
+		assert.equal(chatEmits(farEmits).length, 0);
+	});
+
+	it("delivers a \"/all\" message to every player via the room broadcast, stripped of the prefix", () => {
+		const { io, broadcasts, connect } = createFakeIo();
+		attachPlayground(io, fakePool);
+
+		const { socket, handlers } = createFakeSocket({ trainerId: 12, name: "Oak" });
+		connect(socket);
+
+		handlers["chat:send"]("/all everyone hello");
+
+		const sent = chatBroadcasts(broadcasts);
+		assert.equal(sent.length, 1);
+		assert.equal(sent[0].room, "main");
+		assert.equal(sent[0].payload.text, "everyone hello");
+		assert.equal(sent[0].payload.broadcast, true);
 	});
 
 	it("room:init includes a messages array from the chat ring", () => {
@@ -150,25 +213,26 @@ describe("attachPlayground chat wiring", () => {
 	});
 
 	it("a reconnect for the same trainer does not reset their rate limit", () => {
-		const { io, broadcasts, connect } = createFakeIo();
+		const { io, connect } = createFakeIo();
 		attachPlayground(io, fakePool);
 
 		const trainer = { trainerId: 6, name: "Dawn" };
 
-		const { socket: socket1, handlers: handlers1 } = createFakeSocket(trainer);
+		const { socket: socket1, handlers: handlers1, emits: emits1 } = createFakeSocket(trainer);
 		connect(socket1);
 		handlers1["chat:send"]("before disconnect");
-		assert.equal(chatBroadcasts(broadcasts).length, 1);
+		assert.equal(chatEmits(emits1).length, 1);
 
 		handlers1["disconnect"]();
 
 		// Reconnect immediately (same trainerId) and try to send again right away.
-		const { socket: socket2, handlers: handlers2 } = createFakeSocket(trainer);
+		const { socket: socket2, handlers: handlers2, emits: emits2 } = createFakeSocket(trainer);
 		connect(socket2);
 		handlers2["chat:send"]("right after reconnect");
 
-		// Still only the one broadcast from before disconnect — the
+		// Still only the one delivery from before disconnect — the
 		// reconnect must not have granted a fresh rate-limit slot.
-		assert.equal(chatBroadcasts(broadcasts).length, 1);
+		assert.equal(chatEmits(emits1).length, 1);
+		assert.equal(chatEmits(emits2).length, 0);
 	});
 });
