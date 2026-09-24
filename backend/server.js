@@ -26,6 +26,7 @@ const martRoutes = require("./src/routes/mart");
 const evolutionRoutes = require("./src/routes/evolutions");
 const moveRoutes = require("./src/routes/moves");
 const trainerProfileRoutes = require("./src/routes/trainers");
+const partyRoutes = require("./src/routes/party");
 const attachPlayground = require("./src/playground");
 const trainerPool = require("./src/config/trainerdb");
 
@@ -104,6 +105,7 @@ app.use("/api/mart", martRoutes);
 app.use("/api/evolutions", evolutionRoutes);
 app.use("/api/moves", moveRoutes);
 app.use("/api/trainers", trainerProfileRoutes);
+app.use("/api/party", partyRoutes);
 
 app.use("/pokemon", pokemonRoutes);
 app.use("/pokemon-detail", pokemonDetailRoutes);

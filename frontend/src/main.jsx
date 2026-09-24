@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client";
 import "./v2/styles/tokens.css";
 import "./v2/styles/base.css";
 import "./v2/styles/components.css";
+import "./v2/styles/night.css";
 import App from "./App.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(

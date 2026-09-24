@@ -63,6 +63,9 @@ img {
 
 .pixelated,
 img.sprite {
+	/* sprites are never native-dragged; our own drag handles moves */
+	-webkit-user-drag: none;
+	user-select: none;
 	image-rendering: pixelated;
 	image-rendering: crisp-edges;
 }

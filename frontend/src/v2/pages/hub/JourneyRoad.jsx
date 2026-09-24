@@ -29,6 +29,7 @@ const JourneyRoad = ({ user, progress, profile, lead }) => {
 	return (
 		<section className="journey" aria-labelledby="journey-title">
 			<div className="journey__sky" aria-hidden="true">
+				<span className="moon" />
 				<span className="cloud cloud--a" />
 				<span className="cloud cloud--b" />
 				<span className="cloud cloud--c" />

@@ -86,7 +86,7 @@ async function getPublicProfile(trainerId, pool = require("../config/trainerdb")
 			 FROM trainer_pokemon tp
 			 LEFT JOIN pokedex.Pokemon_Type pt ON pt.pokemon_id = tp.pokemon_id
 			 LEFT JOIN pokedex.Type t ON t.type_id = pt.type_id
-			 WHERE tp.trainer_id = ?
+			 WHERE tp.trainer_id = ? AND tp.in_pc = 0
 			 GROUP BY tp.id
 			 ORDER BY tp.position ASC`,
 			[trainerId]

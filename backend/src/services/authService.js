@@ -86,7 +86,7 @@ async function validateTrainer(trainerId) {
 	}
 
 	const [pokemonRows] = await pool.query(
-		"SELECT id, trainer_id, pokemon_id, nickname, level, current_hp, max_hp, attack, defense, speed, special_atk, special_def, experience, status, position FROM trainer_pokemon WHERE trainer_id = ?",
+		"SELECT id, trainer_id, pokemon_id, nickname, level, current_hp, max_hp, attack, defense, speed, special_atk, special_def, experience, status, position FROM trainer_pokemon WHERE trainer_id = ? AND in_pc = 0",
 		[trainerId]
 	);
 

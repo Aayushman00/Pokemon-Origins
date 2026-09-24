@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { api } from "../../../api";
+import { api, getErrorMessage } from "../../../api";
 import { fetchProfile } from "../../data/profiles";
 
 /**
@@ -14,6 +14,7 @@ export default function useHubData(user) {
 	const [profile, setProfile] = useState(null);
 	const [pendingEvos, setPendingEvos] = useState([]);
 	const [pendingLearns, setPendingLearns] = useState([]);
+	const [pc, setPc] = useState(null);
 
 	const loadParty = useCallback(async () => {
 		try {
@@ -24,6 +25,39 @@ export default function useHubData(user) {
 			setParty([]);
 		}
 	}, [user?.trainer_id]);
+
+	const loadPc = useCallback(async () => {
+		try {
+			const { data } = await api.get("/api/party/pc");
+			setPc(data?.pc || []);
+		} catch (err) {
+			console.error("Failed to load PC:", err.message);
+			setPc([]);
+		}
+	}, []);
+
+	/**
+	 * Party + PC layout write (reorder / deposit / withdraw / swap). Applies
+	 * optimistically, then re-syncs from the server; on failure the server
+	 * copy wins and the error message is returned for a toast.
+	 */
+	const arrange = useCallback(
+		async (layout) => {
+			const byId = new Map([...(party || []), ...(pc || [])].map((m) => [Number(m.id), m]));
+			setParty(layout.party.map((id, i) => ({ ...byId.get(id), position: i + 1 })));
+			setPc(layout.pc.map((id) => byId.get(id)));
+			try {
+				await api.post("/api/party/arrange", layout);
+				return null;
+			} catch (err) {
+				return getErrorMessage(err, "Couldn't move that Pokémon");
+			} finally {
+				loadParty();
+				loadPc();
+			}
+		},
+		[party, pc, loadParty, loadPc]
+	);
 
 	const loadEvos = useCallback(async () => {
 		try {
@@ -57,10 +91,11 @@ export default function useHubData(user) {
 	useEffect(() => {
 		if (!user?.starterChosen) return;
 		loadParty();
+		loadPc();
 		loadEvos();
 		loadLearns();
 		loadRest();
-	}, [user?.starterChosen, loadParty, loadEvos, loadLearns, loadRest]);
+	}, [user?.starterChosen, loadParty, loadPc, loadEvos, loadLearns, loadRest]);
 
-	return { party, progress, coins, profile, pendingEvos, pendingLearns, loadParty, loadEvos, loadLearns };
+	return { party, pc, progress, coins, profile, pendingEvos, pendingLearns, loadParty, loadEvos, loadLearns, arrange };
 }

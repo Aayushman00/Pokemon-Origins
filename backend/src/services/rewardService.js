@@ -463,7 +463,8 @@ function createRewardService(deps = {}) {
 
 		try {
 			if (replacing) {
-				await party.removeByPosition(trainerId, replacePartyPosition);
+				// The replaced member goes to the PC, not away for good.
+				await party.depositByPosition(trainerId, replacePartyPosition);
 			}
 			const mon = {
 				pokemon_id: option.pokemon_id,

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useUser } from "../../data/user";
 import useHubData from "./useHubData";
@@ -22,13 +22,14 @@ const HubScreen = () => {
 	const { hash } = useLocation();
 
 	// START menu "Party" links to /game#party; scroll once the party has loaded.
+	const scrolledRef = useRef(false);
 	useEffect(() => {
-		if (hash === "#party" && hub.party) document.getElementById("party")?.scrollIntoView({ block: "start" });
+		if (hash !== "#party" || !hub.party || scrolledRef.current) return;
+		scrolledRef.current = true;
+		document.getElementById("party")?.scrollIntoView({ block: "start" });
 	}, [hash, hub.party]);
 
 	if (!user.starterChosen) return <StarterPick user={user} setUser={setUser} />;
-
-	const xpByPosition = Object.fromEntries((hub.profile?.party || []).map((m) => [m.position, m.xp_to_next]));
 
 	return (
 		<div className="hub">
@@ -44,7 +45,9 @@ const HubScreen = () => {
 				/>
 
 				<div className="hub__grid">
-					<PartyBoard party={hub.party} xpByPosition={xpByPosition} />
+					<div className="hub__left">
+						<PartyBoard party={hub.party} pc={hub.pc} onArrange={hub.arrange} />
+					</div>
 					<TrainerRecord profile={hub.profile} coins={hub.coins} />
 				</div>
 

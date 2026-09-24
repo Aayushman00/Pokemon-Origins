@@ -39,15 +39,16 @@
 
 .title__word {
 	display: flex;
-	align-items: baseline;
-	font-size: clamp(3.2rem, 13vw, 6.5rem);
+	flex-direction: column;
+	align-items: center;
+	font-size: clamp(2.8rem, 11vw, 5.75rem);
 	line-height: 0.9;
 	letter-spacing: 0.01em;
 	animation: title-drop 500ms steps(5, end) both;
 }
 
 .title__battle {
-	color: var(--c-paper);
+	color: var(--c-on-navy);
 	text-shadow: 4px 4px 0 var(--c-navy-deep), 8px 8px 0 rgba(24, 35, 57, 0.4);
 }
 

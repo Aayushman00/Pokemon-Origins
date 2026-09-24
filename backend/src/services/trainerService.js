@@ -1,5 +1,6 @@
 const trainer_db = require("../config/trainerdb");
 const { ServiceError } = require("./authService");
+const { xpNeededForLevel } = require("./xpService");
 
 async function getTrainerData(trainerId) {
 	const [trainerRows] = await trainer_db.query(
@@ -14,7 +15,7 @@ async function getTrainerData(trainerId) {
 	const [pokemonRows] = await trainer_db.query(
 		`SELECT id, trainer_id, pokemon_id, nickname, level, current_hp, max_hp,
             attack, defense, speed, special_atk, special_def, experience, status, gender, position
-     FROM trainer_pokemon WHERE trainer_id = ? ORDER BY position ASC`,
+     FROM trainer_pokemon WHERE trainer_id = ? AND in_pc = 0 ORDER BY position ASC`,
 		[trainerId]
 	);
 
@@ -91,6 +92,7 @@ async function getTrainerData(trainerId) {
 				status: p.status,
 				gender: p.gender,
 				experience: p.experience,
+				xp_to_next: xpNeededForLevel(p.level),
 				types,
 				ability,
 				moves,

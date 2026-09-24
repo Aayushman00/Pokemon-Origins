@@ -74,6 +74,7 @@ const BattlePokemonSprite = ({
 			alt={label}
 			className={className}
 			onError={handleError}
+			draggable={false}
 			{...rest}
 		/>
 	);

@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "../data/user";
 import MenuList from "../ui/MenuList";
 import PixelAvatar from "../ui/PixelAvatar";
+import useTheme from "../data/theme";
 import "./shell.css";
 
 const Crest = () => (
@@ -33,6 +34,7 @@ const AppShell = ({ children }) => {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const [menuOpen, setMenuOpen] = useState(false);
+	const [theme, toggleTheme] = useTheme();
 	const startRef = useRef(null);
 	const menuRef = useRef(null);
 
@@ -86,10 +88,10 @@ const AppShell = ({ children }) => {
 				Skip to content
 			</a>
 			<header className="topbar">
-				<NavLink to={user ? "/game" : "/"} className="brand" aria-label="BattleSIM home">
+				<NavLink to={user ? "/game" : "/"} className="brand" aria-label="Pokémon Origins home">
 					<Crest />
 					<span className="brand__word">
-						Battle<span>SIM</span>
+						Pokémon <span>Origins</span>
 					</span>
 				</NavLink>
 
@@ -108,6 +110,17 @@ const AppShell = ({ children }) => {
 							<span>{user.name}</span>
 						</NavLink>
 					)}
+					<button
+						type="button"
+						className="theme-btn"
+						onClick={toggleTheme}
+						aria-pressed={theme === "dark"}
+						aria-label="Night mode"
+						title={theme === "dark" ? "Switch to day" : "Switch to night"}
+					>
+						<span className={`theme-btn__icon theme-btn__icon--${theme === "dark" ? "moon" : "sun"}`} aria-hidden="true" />
+						<span className="theme-btn__label">{theme === "dark" ? "Night" : "Day"}</span>
+					</button>
 					<button
 						ref={startRef}
 						type="button"

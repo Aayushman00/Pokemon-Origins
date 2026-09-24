@@ -117,8 +117,8 @@
 	place-items: center;
 	width: 100%;
 	aspect-ratio: 4 / 3;
-	background: linear-gradient(180deg, #d7ecf5 0 65%, #bfe0a8 65%);
-	box-shadow: 0 0 0 3px var(--c-ink);
+	background: linear-gradient(180deg, var(--c-scene-sky) 0 65%, var(--c-scene-ground) 65%);
+	box-shadow: 0 0 0 3px var(--c-line);
 	margin: 3px;
 }
 
@@ -166,8 +166,8 @@
 	display: grid;
 	place-items: center;
 	aspect-ratio: 1;
-	background: linear-gradient(180deg, #d7ecf5 0 68%, #bfe0a8 68%);
-	box-shadow: 0 0 0 3px var(--c-ink);
+	background: linear-gradient(180deg, var(--c-scene-sky) 0 68%, var(--c-scene-ground) 68%);
+	box-shadow: 0 0 0 3px var(--c-line);
 	margin: 3px;
 }
 
@@ -256,7 +256,7 @@
 .chain__req {
 	padding: 2px 6px;
 	font-size: var(--fs-xs);
-	color: var(--c-paper);
+	color: var(--c-on-navy);
 	background: var(--c-navy);
 }
 
@@ -282,7 +282,7 @@
 
 .chain__step.is-current .chain__mon {
 	background: rgba(243, 198, 75, 0.3);
-	box-shadow: 0 0 0 2px var(--c-ink);
+	box-shadow: 0 0 0 2px var(--c-line);
 }
 
 .chain__sprite {

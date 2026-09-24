@@ -40,7 +40,7 @@
 	background: var(--c-paper);
 	font-family: var(--font-pixel);
 	font-size: var(--fs-sm);
-	box-shadow: 0 0 0 2px var(--c-ink), inset 0 -3px 0 var(--c-cream-dark);
+	box-shadow: 0 0 0 2px var(--c-line), inset 0 -3px 0 var(--c-cream-dark);
 	margin: 2px;
 }
 
@@ -64,7 +64,7 @@
 
 .battle__frame {
 	padding: 6px;
-	background: var(--c-ink);
+	background: var(--c-line);
 	box-shadow: 0 0 0 3px var(--c-navy-deep), 6px 6px 0 rgba(43, 33, 28, 0.28);
 }
 
@@ -614,7 +614,7 @@
 	padding: 0.2cqw 1.2cqw;
 	font-size: clamp(10px, 1.7cqw, 15px);
 	font-weight: 700;
-	color: var(--c-paper);
+	color: var(--c-on-navy);
 	background: var(--c-navy);
 	box-shadow: 0 0 0 2px var(--c-navy-deep);
 }
@@ -634,7 +634,7 @@
 	font-weight: 700;
 	letter-spacing: 0.04em;
 	color: var(--c-sun);
-	text-shadow: 0.5cqw 0.5cqw 0 var(--c-ink), -2px -2px 0 var(--c-ink), 2px -2px 0 var(--c-ink), -2px 2px 0 var(--c-ink);
+	text-shadow: 0.5cqw 0.5cqw 0 var(--c-line), -2px -2px 0 var(--c-line), 2px -2px 0 var(--c-line), -2px 2px 0 var(--c-line);
 	animation: banner-in 420ms steps(5, end) both;
 	pointer-events: none;
 }
@@ -665,7 +665,7 @@
 	padding: 1.1cqw 1.6cqw 1.2cqw;
 	font-size: clamp(11px, 2.3cqw, 20px);
 	background: var(--c-paper);
-	box-shadow: 0 0 0 0.45cqw var(--c-ink), inset 0 0 0 0.35cqw var(--c-paper), inset 0 0 0 0.7cqw var(--c-sand), 0.9cqw 0.9cqw 0 rgba(43, 33, 28, 0.3);
+	box-shadow: 0 0 0 0.45cqw var(--c-line), inset 0 0 0 0.35cqw var(--c-paper), inset 0 0 0 0.7cqw var(--c-sand), 0.9cqw 0.9cqw 0 rgba(43, 33, 28, 0.3);
 	animation: panel-in 300ms steps(4, end) both;
 }
 
@@ -749,8 +749,8 @@
 .ball {
 	width: clamp(7px, 1.4cqw, 12px);
 	height: clamp(7px, 1.4cqw, 12px);
-	background: linear-gradient(180deg, var(--c-red) 0 45%, var(--c-ink) 45% 58%, #fff 58%);
-	box-shadow: 0 0 0 2px var(--c-ink);
+	background: linear-gradient(180deg, var(--c-red) 0 45%, var(--c-line) 45% 58%, #fff 58%);
+	box-shadow: 0 0 0 2px var(--c-line);
 	clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
 }
 
@@ -837,7 +837,7 @@
 	height: 22px;
 	flex: none;
 	background: var(--type);
-	box-shadow: 0 0 0 2px var(--c-ink);
+	box-shadow: 0 0 0 2px var(--c-line);
 }
 
 .move-info {
@@ -917,7 +917,7 @@
 	padding: var(--s-3) var(--s-4);
 	list-style: none;
 	background: var(--c-cream);
-	box-shadow: 0 0 0 2px var(--c-ink);
+	box-shadow: 0 0 0 2px var(--c-line);
 }
 
 .result__rewards li::before {
@@ -983,6 +983,7 @@
 }
 
 .reward-card[aria-pressed="true"] {
+	color: var(--c-ink-fixed);
 	--frame-fill: #fff3c4;
 	--frame-rule: var(--c-sun);
 	translate: 0 -4px;

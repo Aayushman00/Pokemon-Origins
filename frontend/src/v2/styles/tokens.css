@@ -1,9 +1,20 @@
-/* BattleSIM V2 — design tokens. Every screen reads from these. */
+/* Pokémon Origins V2 — design tokens. Every screen reads from these. */
 :root {
 	/* Palette */
 	--c-ink: #2b211c;
 	--c-ink-soft: #5e4c3f;
 	--c-ink-faint: #8a7662;
+	/* Outlines and hard shadows stay dark in both themes */
+	--c-line: #2b211c;
+	/* Text that sits on a fixed light fill (signs, name tags) */
+	--c-ink-fixed: #2b211c;
+	/* Text on navy / dark fills */
+	--c-on-navy: #fbf6e6;
+	/* Little diorama backdrops behind sprites */
+	--c-scene-sky: #d7ecf5;
+	--c-scene-ground: #bfe0a8;
+	--c-card: #e9f1f7;
+	--c-card-rule: #c8d9e8;
 	--c-paper: #fbf6e6;
 	--c-cream: #f1e6c8;
 	--c-cream-dark: #e6d6ab;
@@ -68,6 +79,29 @@
 
 	--maxw: 1200px;
 	--topbar-h: 56px;
+}
+
+/* Night: the same world after sundown. Surfaces go deep slate, text goes
+   cream, outlines stay near-black, accents keep their hue. */
+:root[data-theme="dark"] {
+	color-scheme: dark;
+	--c-ink: #efe6cf;
+	--c-ink-soft: #bcb3a2;
+	--c-ink-faint: #8c877b;
+	--c-line: #0a0d18;
+	--c-paper: #262c42;
+	--c-cream: #141827;
+	--c-cream-dark: #191e30;
+	--c-sand: #3f4868;
+	--c-navy: #1a2340;
+	--c-navy-deep: #0b1020;
+	--c-navy-line: #5064a0;
+	--c-bar-track: #0f1322;
+	--c-scene-sky: #22325a;
+	--c-scene-ground: #2c4a3a;
+	--c-card: #222a44;
+	--c-card-rule: #3a4670;
+	--c-earth-dark: #5e4226;
 }
 
 @media (prefers-reduced-motion: reduce) {

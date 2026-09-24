@@ -235,7 +235,9 @@ describe("rewardService", () => {
 		assert.equal(
 			rows.some((r) => r.nickname === "Member2"),
 			false
-		);
+		);		// Replaced, not released: Member2 now waits in the PC.
+		const pc = await party.getPcRows(9);
+		assert.deepEqual(pc.map((r) => r.nickname), ["Member2"]);
 	});
 
 	it("a claim is one-time", async () => {

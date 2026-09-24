@@ -153,7 +153,11 @@ const moveLearnResolveSchema = z.object({
 	forgetMoveId: z.number().int().positive().optional(),
 });
 
+const idList = z.array(z.number().int().positive()).max(1000);
+const partyArrangeSchema = z.object({ party: idList, pc: idList });
+
 module.exports = {
+	partyArrangeSchema,
 	validateBody,
 	validateParams,
 	loginSchema,

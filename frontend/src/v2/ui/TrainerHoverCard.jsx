@@ -53,10 +53,10 @@ function CardBody({ state, name, trainerId, online }) {
 				</div>
 				<p className="hovercard__section read">
 					{guest
-						? "Exploring without a BattleSIM account, so there's no journey, party, or battle record to show."
+						? "Exploring without a Pokémon Origins account, so there's no journey, party, or battle record to show."
 						: state.status === "error"
 						? "Trainer records couldn't be reached. Hover again in a moment."
-						: "No BattleSIM profile matches this trainer."}
+						: "No Pokémon Origins profile matches this trainer."}
 				</p>
 				<Presence online={online} guest={guest} />
 			</div>

@@ -19,6 +19,7 @@ services:
       - ./database/migrations/004_trainer_wallet.sql:/docker-entrypoint-initdb.d/05_trainer_wallet.sql
       - ./database/migrations/005_pending_move_learns.sql:/docker-entrypoint-initdb.d/06_pending_move_learns.sql
       - ./database/migrations/006_backfill_move_pp.sql:/docker-entrypoint-initdb.d/07_backfill_move_pp.sql
+      - ./database/migrations/008_trainer_pokemon_pc.sql:/docker-entrypoint-initdb.d/09_trainer_pokemon_pc.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
       interval: 10s

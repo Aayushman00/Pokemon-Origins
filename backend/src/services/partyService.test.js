@@ -105,3 +105,50 @@ describe("partyService", () => {
 		assert.equal(rows[0].gender, "female");
 	});
 });
+
+describe("party + PC layout (arrange)", () => {
+	async function setup() {
+		const svc = createPartyService({ store: createMemoryPartyStore() });
+		const ids = [];
+		for (const name of ["A", "B", "C"]) ids.push((await svc.addPokemon(1, mon({ nickname: name }))).id);
+		return { svc, ids };
+	}
+	const names = (rows) => rows.map((r) => r.nickname);
+
+	it("reorders the party and renumbers positions from 1", async () => {
+		const { svc, ids } = await setup();
+		const out = await svc.arrange(1, { party: [ids[2], ids[0], ids[1]], pc: [] });
+		assert.deepEqual(names(out.party), ["C", "A", "B"]);
+		assert.deepEqual(out.party.map((r) => r.position), [1, 2, 3]);
+	});
+
+	it("deposits to and withdraws from the PC, and swaps in one write", async () => {
+		const { svc, ids } = await setup();
+		let out = await svc.arrange(1, { party: [ids[0], ids[1]], pc: [ids[2]] });
+		assert.deepEqual(names(out.pc), ["C"]);
+		assert.deepEqual(names(await svc.getPartyRows(1)), ["A", "B"]);
+		out = await svc.arrange(1, { party: [ids[2], ids[1]], pc: [ids[0]] });
+		assert.deepEqual(names(out.party), ["C", "B"]);
+		assert.deepEqual(names(out.pc), ["A"]);
+	});
+
+	it("rejects an empty party, more than MAX_PARTY, and unknown or duplicate ids", async () => {
+		const { svc, ids } = await setup();
+		const bad = (layout) => assert.rejects(() => svc.arrange(1, layout), (e) => e instanceof PartyError && e.status === 400);
+		await bad({ party: [], pc: ids });
+		await bad({ party: [ids[0], ids[0], ids[1]], pc: [ids[2]] });
+		await bad({ party: [ids[0], ids[1]], pc: [] }); // omits C
+		await bad({ party: [ids[0], ids[1], ids[2], 999], pc: [] });
+		await svc.arrange(1, { party: [ids[0]], pc: [ids[1], ids[2]] });
+		assert.equal(MAX_PARTY, 3);
+		await bad({ party: [ids[0], ids[1], ids[2], ids[2]], pc: [] });
+	});
+
+	it("depositByPosition keeps the freed slot for the next addPokemon", async () => {
+		const { svc } = await setup();
+		await svc.depositByPosition(1, 2);
+		const added = await svc.addPokemon(1, mon({ nickname: "D" }));
+		assert.equal(added.position, 2);
+		assert.deepEqual(names(await svc.getPcRows(1)), ["B"]);
+	});
+});

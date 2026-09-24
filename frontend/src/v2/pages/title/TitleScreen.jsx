@@ -61,8 +61,8 @@ const TitleScreen = () => {
 			<div className="title__sky" aria-hidden="true" />
 			<div className="title__inner">
 				<h1 className="title__word">
-					<span className="title__battle">Battle</span>
-					<span className="title__sim">SIM</span>
+					<span className="title__battle">Pokémon</span>
+					<span className="title__sim">Origins</span>
 				</h1>
 				<p className="title__tag read">Build a party, clear ten towns, and meet other trainers along the way.</p>
 

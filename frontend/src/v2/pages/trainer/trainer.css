@@ -5,8 +5,8 @@
 }
 
 .tcard {
-	--frame-fill: #e9f1f7;
-	--frame-rule: #c8d9e8;
+	--frame-fill: var(--c-card);
+	--frame-rule: var(--c-card-rule);
 	--frame-edge: var(--c-navy-deep);
 	overflow: hidden;
 }
@@ -17,7 +17,7 @@
 	gap: var(--s-3);
 	padding: var(--s-2) var(--s-5);
 	font-weight: 700;
-	color: var(--c-paper);
+	color: var(--c-on-navy);
 	background: var(--c-navy);
 	box-shadow: inset 0 -3px 0 var(--c-navy-deep);
 }
@@ -45,7 +45,7 @@
 	font-size: var(--fs-3xl);
 	line-height: 1;
 	word-break: break-word;
-	text-shadow: 3px 3px 0 #c8d9e8;
+	text-shadow: 3px 3px 0 var(--c-card-rule);
 }
 
 .tcard__title {
@@ -67,7 +67,7 @@
 	display: grid;
 	place-items: end center;
 	padding: var(--s-3);
-	background: linear-gradient(180deg, #cfe9f3 0 70%, #a6d86f 70%);
+	background: linear-gradient(180deg, var(--c-scene-sky) 0 70%, var(--c-scene-ground) 70%);
 	box-shadow: 0 0 0 3px var(--c-navy-deep);
 	margin: 3px;
 }
@@ -106,8 +106,8 @@
 	width: 80px;
 	height: 80px;
 	flex: none;
-	background: #d7ecf5;
-	box-shadow: 0 0 0 2px var(--c-ink);
+	background: var(--c-scene-sky);
+	box-shadow: 0 0 0 2px var(--c-line);
 	margin: 2px;
 }
 

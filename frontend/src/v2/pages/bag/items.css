@@ -41,7 +41,7 @@
 	height: 120px;
 	margin-top: var(--s-4);
 	background: #c7773a;
-	box-shadow: 0 0 0 4px var(--c-ink), inset -10px -10px 0 #9a5526, inset 8px 8px 0 #de9a5e;
+	box-shadow: 0 0 0 4px var(--c-line), inset -10px -10px 0 #9a5526, inset 8px 8px 0 #de9a5e;
 	clip-path: polygon(8% 12%, 92% 12%, 100% 26%, 100% 100%, 0 100%, 0 26%);
 }
 
@@ -53,7 +53,7 @@
 	right: 30%;
 	top: 0;
 	height: 16px;
-	border: 6px solid var(--c-ink);
+	border: 6px solid var(--c-line);
 	border-bottom: 0;
 }
 
@@ -76,13 +76,13 @@
 	height: 14px;
 	translate: -50% 0;
 	background: var(--c-sun);
-	box-shadow: 0 0 0 3px var(--c-ink);
+	box-shadow: 0 0 0 3px var(--c-line);
 }
 
 .items__pocket {
 	padding: 2px var(--s-3);
 	font-weight: 700;
-	color: var(--c-paper);
+	color: var(--c-on-navy);
 	background: var(--c-navy);
 }
 

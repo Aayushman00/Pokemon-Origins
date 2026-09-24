@@ -54,7 +54,7 @@ const TrainerScreen = () => {
 					<p className="read">
 						{state.status === "error"
 							? "Trainer records couldn't be loaded. Try again in a moment."
-							: "No BattleSIM trainer has this ID. They may have been a guest, who don't get trainer cards."}
+							: "No Pokémon Origins trainer has this ID. They may have been a guest, who don't get trainer cards."}
 					</p>
 					<div className="result__actions">
 						<Button to="/playground">Back to Playground</Button>

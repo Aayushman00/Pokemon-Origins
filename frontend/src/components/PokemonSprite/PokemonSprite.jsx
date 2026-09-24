@@ -62,6 +62,7 @@ const PokemonSprite = ({
 			alt={label}
 			className={className}
 			onError={handleError}
+			draggable={false}
 			{...rest}
 		/>
 	);

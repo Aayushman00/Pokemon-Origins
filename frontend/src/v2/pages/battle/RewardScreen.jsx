@@ -103,10 +103,10 @@ const RewardScreen = ({ onDone }) => {
 		return (
 			<div className="page reward">
 				<h1 className="reward__title">Your party is full</h1>
-				<Panel lift plate={`Who makes room for ${option.nickname}?`}>
+				<Panel lift plate={`Who goes to the PC to make room for ${option.nickname}?`}>
 					<div className="hud__rows">
 						{party.map((m) => (
-							<PartyRow key={m.position} mon={m} tag="Send away" onSelect={() => !busy && claim(m.position)} />
+							<PartyRow key={m.position} mon={m} tag="To PC" onSelect={() => !busy && claim(m.position)} />
 						))}
 					</div>
 					{error && (
