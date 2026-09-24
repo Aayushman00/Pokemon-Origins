@@ -16,7 +16,7 @@ const {
 	statChangeLine,
 } = require("./battleStatus");
 const { createBattleAi } = require("./battleAi");
-const { xpNeededForLevel } = require("./xpService");
+const { xpNeededForLevel, xpGainForWin } = require("./xpService");
 const { rollGenderForSpecies } = require("./genderService");
 
 /**
@@ -312,6 +312,32 @@ function createMemoryPpStore() {
 	};
 }
 
+/** Persists end-of-battle HP back to trainer_pokemon. */
+function createMysqlHpStore() {
+	return {
+		async saveHp(entries) {
+			const pool = require("../config/trainerdb");
+			for (const entry of entries) {
+				await pool.query(
+					`UPDATE trainer_pokemon SET current_hp = ? WHERE id = ?`,
+					[entry.currentHp, entry.trainerPokemonId]
+				);
+			}
+		},
+	};
+}
+
+/** In-memory hpStore for tests; exposes `saved` for assertions. */
+function createMemoryHpStore() {
+	const saved = [];
+	return {
+		saved,
+		async saveHp(entries) {
+			saved.push(...entries.map((e) => ({ ...e })));
+		},
+	};
+}
+
 // Battle types that may create a boss reward offer on a first-time win
 // (rewardService still requires a matching level pool `source`).
 const OFFER_BATTLE_TYPES = new Set(["gym_boss", "champion", "legendary"]);
@@ -326,6 +352,9 @@ function createBattleSessionService(deps = {}) {
 	let mysqlPpStore = null;
 	const getPpStore = () =>
 		deps.ppStore || (mysqlPpStore ||= createMysqlPpStore());
+	let mysqlHpStore = null;
+	const getHpStore = () =>
+		deps.hpStore || (mysqlHpStore ||= createMysqlHpStore());
 	let mysqlHistoryStore = null;
 	const getHistoryStore = () =>
 		deps.history || (mysqlHistoryStore ||= createMysqlHistoryStore());
@@ -446,6 +475,10 @@ function createBattleSessionService(deps = {}) {
 			player: active,
 			activePosition: active.position,
 			requiresSwitch: false,
+			// Party positions that were ever the active mon this battle — win
+			// XP is split evenly across these, not dumped on whoever landed
+			// the finishing blow.
+			participants: new Set([active.position]),
 			// `enemy` references the active enemyParty entry the same way.
 			enemyParty,
 			enemy: enemyParty[0],
@@ -965,6 +998,7 @@ function createBattleSessionService(deps = {}) {
 		session.player = target;
 		session.activePosition = target.position;
 		session.requiresSwitch = false;
+		session.participants.add(target.position);
 		session.log.push(`Go! ${target.nickname}!`);
 
 		const events = [
@@ -1078,25 +1112,11 @@ function createBattleSessionService(deps = {}) {
 	}
 
 	/**
-	 * Grants win XP to the Pokémon active at the moment of victory and
-	 * returns the xp_gain / level_up events (persisting via xpService).
-	 * Multi-enemy battles (Phase 10) pay XP for the whole beaten party:
-	 * the gain formula is 6 × (sum of enemy party levels), identical to
-	 * before for one-mon battles.
+	 * Applies one already-computed XP award to a single participant: log +
+	 * xp_gain/level_up events, evolution-available check, move learning, and
+	 * reflecting the new level/stats onto the session mon in place.
 	 */
-	async function grantWinXp(session, trainerId) {
-		const totalEnemyLevels = session.enemyParty.reduce(
-			(sum, mon) => sum + mon.level,
-			0
-		);
-		const award = await getXpService().awardWinXp({
-			trainerId,
-			pokemonRowId: session.player.id,
-			enemy: { level: totalEnemyLevels },
-		});
-		if (!award) return [];
-
-		const mon = session.player;
+	async function applyWinAward(session, trainerId, mon, award) {
 		const events = [];
 		session.log.push(`${mon.nickname} gained ${award.gained} XP!`);
 		events.push({
@@ -1210,6 +1230,90 @@ function createBattleSessionService(deps = {}) {
 			mon.special_def = award.after.special_def;
 		}
 		return events;
+	}
+
+	/**
+	 * Grants win XP split evenly across every party mon that took the field
+	 * this battle (`session.participants`), not just whoever landed the
+	 * finishing blow. Multi-enemy battles (Phase 10) pay XP for the whole
+	 * beaten party — gain formula is 6 × (sum of enemy party levels) — and
+	 * that total is what gets divided; any remainder from the division goes
+	 * to the earliest participants (by party position) so no XP is lost to
+	 * rounding.
+	 */
+	async function grantWinXp(session, trainerId) {
+		const totalEnemyLevels = session.enemyParty.reduce(
+			(sum, mon) => sum + mon.level,
+			0
+		);
+		const totalGain = xpGainForWin({ level: totalEnemyLevels });
+		const participants = session.party.filter(
+			(mon) => mon.id != null && session.participants.has(mon.position)
+		);
+		if (!participants.length) return [];
+
+		const share = Math.floor(totalGain / participants.length);
+		const remainder = totalGain - share * participants.length;
+
+		const events = [];
+		for (const [index, mon] of participants.entries()) {
+			const gained = share + (index < remainder ? 1 : 0);
+			if (gained <= 0) continue;
+			const award = await getXpService().awardWinXp({
+				trainerId,
+				pokemonRowId: mon.id,
+				gained,
+			});
+			if (!award) continue;
+			events.push(...(await applyWinAward(session, trainerId, mon, award)));
+		}
+		return events;
+	}
+
+	/**
+	 * Full-restore rule: a boss-tier win (gym_boss/champion/legendary — same
+	 * set that can offer a reward) or ANY loss fully heals the whole party's
+	 * HP and PP, like a Pokémon Center visit. A regular trainer win instead
+	 * carries battle damage/PP forward as-is (only leveling grows HP). Runs
+	 * once per session, before the HP/PP persistence below, so the healed
+	 * values are what get written and what the client sees in the response.
+	 */
+	function fullHealPartyIfEarned(session) {
+		if (session.status === "active" || session.fullHealApplied) return false;
+		session.fullHealApplied = true;
+		const earnsFullHeal =
+			session.status === "lost" ||
+			(session.status === "won" && OFFER_BATTLE_TYPES.has(session.battleType));
+		if (!earnsFullHeal) return false;
+		for (const mon of session.party) {
+			// Revives fainted mons too, Pokémon Center-style — a loss shouldn't
+			// leave the party unable to fight when they return to the hub.
+			mon.current_hp = mon.max_hp;
+			for (const move of mon.moves) {
+				if (typeof move.max_pp === "number") move.current_pp = move.max_pp;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Persists the party's end-of-battle HP once per session (win AND loss)
+	 * through the hpStore. Mons without a DB row id are skipped, and a
+	 * fainted mon's 0 HP is persisted too (it stays fainted outside battle
+	 * unless healed) — a store failure never breaks the battle result.
+	 */
+	async function persistHpOnBattleEnd(session) {
+		if (session.status === "active" || session.hpPersisted) return;
+		session.hpPersisted = true;
+		const entries = session.party
+			.filter((mon) => mon.id != null)
+			.map((mon) => ({ trainerPokemonId: mon.id, currentHp: mon.current_hp }));
+		if (!entries.length) return;
+		try {
+			await getHpStore().saveHp(entries);
+		} catch (err) {
+			console.error("Failed to persist HP after battle:", err.message);
+		}
 	}
 
 	/**
@@ -1396,6 +1500,12 @@ function createBattleSessionService(deps = {}) {
 				}
 			}
 
+			// Boss win / any loss: full-heal the party before it's persisted.
+			if (fullHealPartyIfEarned(session)) {
+				session.log.push("Your party was fully healed!");
+				events.push({ actor: "player", type: "party_full_heal" });
+			}
+			await persistHpOnBattleEnd(session);
 			// Phase 14: PP persists at battle end — after a win AND a loss.
 			await persistPpOnBattleEnd(session);
 			await recordResultOnBattleEnd(session, trainerId);
@@ -1437,6 +1547,7 @@ module.exports = {
 	hasWonBattle: defaultService.hasWonBattle,
 	createBattleSessionService,
 	createMemoryPpStore,
+	createMemoryHpStore,
 	createMemoryHistoryStore,
 	snapshotPokemon,
 	STRUGGLE_MOVE_ID,

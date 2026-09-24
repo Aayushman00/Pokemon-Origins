@@ -200,6 +200,8 @@ function makeService({
 	ai = createBattleAi({ chart: {}, random: () => 0 }),
 	// Memory ppStore so battle-end PP persistence never opens a DB pool.
 	ppStore = { savePp: async () => {} },
+	// Same for HP persistence.
+	hpStore = { saveHp: async () => {} },
 	// Memory battle history so win/loss recording never opens a DB pool.
 	history = createMemoryHistoryStore(),
 	random = () => 0,
@@ -243,6 +245,7 @@ function makeService({
 		moveLearn,
 		ai,
 		ppStore,
+		hpStore,
 		history,
 		...(rewards ? { rewards } : {}),
 		...(inventory ? { inventory } : {}),
@@ -865,9 +868,12 @@ describe("battleSessionService", () => {
 		// Enemy is faster and one-shots the weakened player: whole party down
 		assert.equal(result.state.status, "lost");
 		assert.equal(result.state.requiresSwitch, false);
-		assert.equal(result.events.length, 1);
+		// A loss fully heals the party (Pokémon Center-style), so the enemy
+		// beat is followed by a party_full_heal event.
+		assert.equal(result.events.length, 2);
 		assert.equal(result.events[0].actor, "enemy");
-		assert.equal(result.state.player.current_hp, 0);
+		assert.equal(result.events[1].type, "party_full_heal");
+		assert.equal(result.state.player.current_hp, result.state.player.max_hp);
 		assert.equal(result.progress, undefined);
 		assert.equal(service.hasWonBattle(9, 1, 1), false);
 		assert.deepEqual(history.rows, [
@@ -951,13 +957,19 @@ describe("battleSessionService", () => {
 		const after = await progress.getProgress(13);
 		assert.equal(after.current_battle, 2);
 
-		// XP goes to the mon active at the win (Squirtle), not the fainted lead
-		const xpEvent = round2.events.find((e) => e.type === "xp_gain");
-		assert.equal(xpEvent.nickname, "Squirtle");
+		// XP is split evenly between every mon that took the field this battle:
+		// the fainted lead (Charmander) AND the mon that finished it (Squirtle).
+		// Total gain 4*6=24 over 2 participants = 12 each.
+		const xpEvents = round2.events.filter((e) => e.type === "xp_gain");
+		assert.equal(xpEvents.length, 2);
+		assert.deepEqual(
+			xpEvents.map((e) => e.nickname).sort(),
+			["Charmander", "Squirtle"]
+		);
 		const squirtle = await xpStore.getMon(13, 102);
-		assert.equal(squirtle.experience, 24);
+		assert.equal(squirtle.experience, 12);
 		const lead = await xpStore.getMon(13, 101);
-		assert.equal(lead.experience, 0);
+		assert.equal(lead.experience, 12);
 	});
 
 	it("a voluntary switch consumes the turn: the enemy hits the incoming mon", async () => {
@@ -2016,5 +2028,127 @@ describe("battleSessionService", () => {
 			{ trainerPokemonId: 101, moveId: 33, currentPp: 2 },
 			{ trainerPokemonId: 101, moveId: 52, currentPp: 5 },
 		]);
+	});
+
+	it("persists HP as battle-damaged after a regular trainer win (no free heal)", async () => {
+		const { createMemoryHpStore } = require("./battleSessionService");
+		const hpStore = createMemoryHpStore();
+		const party = [
+			// Slower than the enemy (speed 30): the enemy hits first, then the
+			// player's counter-hit (also 10 dmg) finishes the weak enemy.
+			playerMon({ id: 101, position: 1, current_hp: 40, max_hp: 40, speed: 10 }),
+		];
+		const { service } = makeService({
+			party,
+			trainerId: 83,
+			enemy: enemyMon({ current_hp: 10, max_hp: 10 }),
+			engine: stubEngine([{ result: "hit", damage: 10 }]),
+			hpStore,
+		});
+		const { state } = await service.startBattle(83, {
+			level: 1,
+			battleNumber: 1,
+		});
+		const result = await service.performAction(83, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		assert.equal(result.state.status, "won");
+		// Took one enemy hit (10 dmg): 30/40, carried forward, not reset to full.
+		assert.equal(result.state.player.current_hp, 30);
+		assert.deepEqual(hpStore.saved, [{ trainerPokemonId: 101, currentHp: 30 }]);
+		assert.equal(
+			result.events.some((e) => e.type === "party_full_heal"),
+			false
+		);
+	});
+
+	it("fully heals HP and PP on a boss win, and persists the healed values", async () => {
+		const { createMemoryHpStore, createMemoryPpStore } = require("./battleSessionService");
+		const hpStore = createMemoryHpStore();
+		const ppStore = createMemoryPpStore();
+		const party = [
+			playerMon({
+				id: 101,
+				position: 1,
+				current_hp: 10,
+				max_hp: 40,
+				moves: ppMoves(),
+			}),
+		];
+		const { service } = makeService({
+			party,
+			trainerId: 84,
+			battleType: "gym_boss",
+			engine: stubEngine([{ result: "hit", damage: 30 }]),
+			hpStore,
+			ppStore,
+			// gym_boss wins try to create a reward offer; stub it out so this
+			// test doesn't need a matching reward pool.
+			rewards: { createOfferForWin: async () => null },
+		});
+		const { state } = await service.startBattle(84, {
+			level: 1,
+			battleNumber: 1,
+		});
+		const result = await service.performAction(84, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		assert.equal(result.state.status, "won");
+		assert.equal(result.state.player.current_hp, 40);
+		assert.deepEqual(hpStore.saved, [{ trainerPokemonId: 101, currentHp: 40 }]);
+		assert.deepEqual(ppStore.saved, [
+			{ trainerPokemonId: 101, moveId: 33, currentPp: 2 },
+			{ trainerPokemonId: 101, moveId: 52, currentPp: 5 },
+		]);
+		assert.ok(result.events.some((e) => e.type === "party_full_heal"));
+	});
+
+	it("splits win XP evenly across every mon that took the field", async () => {
+		const party = [
+			// Slower than the enemy (speed 30): the enemy strikes first and KOs it.
+			playerMon({ id: 101, position: 1, current_hp: 1, speed: 10 }),
+			playerMon({
+				id: 102,
+				position: 2,
+				nickname: "Squirtle",
+				current_hp: 40,
+				speed: 90,
+			}),
+		];
+		const { service, xpStore } = makeService({
+			party,
+			trainerId: 85,
+			// Every hit deals 40: enough to KO the weakened lead AND the enemy.
+			engine: stubEngine([{ result: "hit", damage: 40 }]),
+		});
+		const { state } = await service.startBattle(85, {
+			level: 1,
+			battleNumber: 1,
+		});
+		const fainted = await service.performAction(85, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		assert.equal(fainted.state.requiresSwitch, true);
+		await service.performAction(85, {
+			sessionId: state.sessionId,
+			action: { type: "switch", partyPosition: 2 },
+		});
+		const win = await service.performAction(85, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		assert.equal(win.state.status, "won");
+		// enemy level 4 * 6 = 24 total, split 2 ways = 12 each.
+		const xpEvents = win.events.filter((e) => e.type === "xp_gain");
+		assert.equal(xpEvents.length, 2);
+		assert.deepEqual(
+			xpEvents.map((e) => e.amount),
+			[12, 12]
+		);
+		assert.equal((await xpStore.getMon(85, 101)).experience, 12);
+		assert.equal((await xpStore.getMon(85, 102)).experience, 12);
 	});
 });

@@ -141,13 +141,17 @@ function createXpService(deps = {}) {
 	 * Awards win XP to the trainer's Pokémon stored at `pokemonRowId` and
 	 * persists level/stat changes. Returns an award summary, or null when
 	 * the row cannot be found (e.g. stale session snapshot).
+	 *
+	 * `gained` overrides the computed enemy-level yield — battles split XP
+	 * across every participant, so the caller passes each mon's share
+	 * directly instead of the whole-battle amount `enemy` would produce.
 	 */
-	async function awardWinXp({ trainerId, pokemonRowId, enemy }) {
+	async function awardWinXp({ trainerId, pokemonRowId, enemy, gained: gainedOverride }) {
 		if (pokemonRowId == null) return null;
 		const row = await getStore().getMon(trainerId, pokemonRowId);
 		if (!row) return null;
 
-		const gained = xpGainForWin(enemy);
+		const gained = gainedOverride != null ? gainedOverride : xpGainForWin(enemy);
 		const progression = applyExperience(row, gained);
 		const inc = LEVEL_INCREMENTS;
 		const n = progression.levelsGained;
