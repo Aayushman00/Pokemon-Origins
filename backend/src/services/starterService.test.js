@@ -109,4 +109,11 @@ describe("starterService", () => {
 		// Sanity: the fix must actually lower stats vs. the unscaled raw values.
 		assert.ok(mon.attack < raw.attack);
 	});
+
+	it("lists every starter with the id chooseStarter accepts and its types", async () => {
+		const svc = createStarterService({ getTypes: async (id) => (id === 1 ? ["Grass", "Poison"] : ["X"]) });
+		const list = await svc.listStarters();
+		assert.deepEqual(list.map((s) => s.id), ["bulbasaur", "charmander", "squirtle"]);
+		assert.deepEqual(list[0], { id: "bulbasaur", pokemon_id: 1, name: "Bulbasaur", types: ["Grass", "Poison"] });
+	});
 });

@@ -51,13 +51,41 @@ function createStarterService(deps = {}) {
 		return { message: "Starter chosen successfully", chosenPokemon };
 	}
 
-	return { chooseStarter, scaleStarterStats };
+	/**
+	 * The choosable starters, in starterStats order: the id the choose
+	 * endpoint accepts, dex number, name and species types. Types come from
+	 * the pokedex DB (injectable `getTypes` for tests).
+	 */
+	async function listStarters() {
+		const getTypes =
+			deps.getTypes ||
+			(async (pokemonId) => {
+				const db = require("../config/db");
+				const [rows] = await db.query(
+					`SELECT t.name FROM Pokemon_Type pt JOIN Type t ON t.type_id = pt.type_id
+					 WHERE pt.pokemon_id = ? ORDER BY pt.type_id`,
+					[pokemonId]
+				);
+				return rows.map((r) => r.name);
+			});
+		return Promise.all(
+			Object.entries(starterStats).map(async ([id, s]) => ({
+				id,
+				pokemon_id: s.pokemon_id,
+				name: s.nickname,
+				types: await getTypes(s.pokemon_id),
+			}))
+		);
+	}
+
+	return { chooseStarter, scaleStarterStats, listStarters };
 }
 
 const defaultService = createStarterService();
 
 module.exports = {
 	chooseStarter: defaultService.chooseStarter,
+	listStarters: defaultService.listStarters,
 	createStarterService,
 	scaleStarterStats,
 	STARTER_POKEMON_IDS,

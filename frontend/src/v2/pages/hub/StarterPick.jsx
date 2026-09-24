@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import PokemonSprite from "../../../components/PokemonSprite/PokemonSprite";
 import { api, getErrorMessage } from "../../../api";
@@ -6,13 +6,6 @@ import DialogueBox from "../../ui/DialogueBox";
 import Button from "../../ui/Button";
 import { TypeBadge } from "../../ui/Badges";
 import Cursor from "../../ui/Cursor";
-
-// The backend accepts exactly these ids (POST /api/choose-starter).
-const STARTERS = [
-	{ id: "bulbasaur", name: "Bulbasaur", dex: 1, type: "Grass", blurb: "the Grass type" },
-	{ id: "charmander", name: "Charmander", dex: 4, type: "Fire", blurb: "the Fire type" },
-	{ id: "squirtle", name: "Squirtle", dex: 7, type: "Water", blurb: "the Water type" },
-];
 
 /** First-run lab scene: pick a partner, confirm in the text box. */
 const StarterPick = ({ user, setUser }) => {
@@ -22,7 +15,24 @@ const StarterPick = ({ user, setUser }) => {
 	const [saving, setSaving] = useState(false);
 	const [joined, setJoined] = useState(null);
 	const [error, setError] = useState("");
+	const [starters, setStarters] = useState(null);
 	const refs = useRef([]);
+
+	// The lab offers whatever the server's starter table holds.
+	useEffect(() => {
+		api
+			.get("/api/starters")
+			.then(({ data }) => setStarters(data?.starters || []))
+			.catch((err) => setError(getErrorMessage(err, "The lab is closed right now. Reload to try again.")));
+	}, []);
+
+	const STARTERS = (starters || []).map((s) => ({
+		id: s.id,
+		name: s.name,
+		dex: s.pokemon_id,
+		type: s.types?.[0],
+		blurb: s.types?.[0] ? `the ${s.types[0]} type` : "a fine partner",
+	}));
 
 	const onKey = (e) => {
 		if (picked) return;
@@ -55,7 +65,9 @@ const StarterPick = ({ user, setUser }) => {
 		? error
 		: picked
 		? `So you want ${picked.name.toUpperCase()}, ${picked.blurb}?`
-		: `${user.name}, three Pokémon are waiting on the table. Which one will be your partner?`;
+		: starters === null
+		? "Welcome to the lab…"
+		: `${user.name}, ${STARTERS.length} Pokémon are waiting on the table. Which one will be your partner?`;
 
 	return (
 		<div className="page starter">
