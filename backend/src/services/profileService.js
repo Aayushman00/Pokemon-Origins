@@ -8,6 +8,16 @@ const { xpNeededForLevel } = require("./xpService");
 
 const MAX_LEVEL_NUMBER = 10;
 const RECENT_LIMIT = 5;
+const STREAK_WINDOW = 50;
+const HISTORY_MAX = 50;
+const CARD_THEMES = ["sky", "grass", "ember", "ocean", "dusk", "gold"];
+const MOTTO_MAX = 40;
+
+function profileError(status, message) {
+	// Lazy: authService opens a DB pool at import (keeps tests alive).
+	const { ServiceError } = require("./authService");
+	return new ServiceError(status, message);
+}
 
 /** Campaign position -> cleared/total battle counts. Pure. */
 function summarizeCampaign(progress, countBattles = loader.countBattles) {
@@ -29,6 +39,24 @@ function summarizeCampaign(progress, countBattles = loader.countBattles) {
 		total_battles: total,
 		champion: currentLevel > MAX_LEVEL_NUMBER,
 	};
+}
+
+/** Current streak from results newest-first ("Win" | "Loss"). Pure. */
+function summarizeStreak(results) {
+	if (!results.length) return null;
+	const type = results[0];
+	let count = 0;
+	while (count < results.length && results[count] === type) count++;
+	return { type, count };
+}
+
+/** Validates a card edit against what the trainer owns. Pure. */
+function validateCard({ theme, motto, favoriteId }, ownedIds) {
+	if (!CARD_THEMES.includes(theme)) return "Unknown card theme";
+	const cleanMotto = typeof motto === "string" ? motto.trim() : "";
+	if (cleanMotto.length > MOTTO_MAX) return `Motto can be at most ${MOTTO_MAX} characters`;
+	if (favoriteId != null && !ownedIds.has(Number(favoriteId))) return "Favourite must be one of your Pokémon";
+	return null;
 }
 
 /** Win/loss rows -> record numbers. Pure. */
@@ -57,14 +85,10 @@ async function getPublicProfile(trainerId, pool = require("../config/trainerdb")
 		"SELECT trainer_id, name, gender, created_at FROM trainers WHERE trainer_id = ?",
 		[trainerId]
 	);
-	if (!trainerRows.length) {
-		// Lazy: authService opens a DB pool at import (keeps tests alive).
-		const { ServiceError } = require("./authService");
-		throw new ServiceError(404, "Trainer not found");
-	}
+	if (!trainerRows.length) throw profileError(404, "Trainer not found");
 	const trainer = trainerRows[0];
 
-	const [[progressRows], [countRows], [recentRows], [partyRows]] = await Promise.all([
+	const [[progressRows], [countRows], [recentRows], [partyRows], [streakRows], [cardRows]] = await Promise.all([
 		pool.query(
 			"SELECT current_level, current_battle, unlocked_level FROM trainer_progress WHERE trainer_id = ?",
 			[trainerId]
@@ -91,7 +115,16 @@ async function getPublicProfile(trainerId, pool = require("../config/trainerdb")
 			 ORDER BY tp.position ASC`,
 			[trainerId]
 		),
+		pool.query("SELECT result FROM battles WHERE trainer_id = ? ORDER BY battle_id DESC LIMIT ?", [trainerId, STREAK_WINDOW]),
+		pool.query(
+			`SELECT c.theme, c.motto, tp.id AS fav_id, tp.pokemon_id AS fav_pokemon_id, tp.nickname AS fav_nickname, tp.level AS fav_level
+			 FROM trainer_card c
+			 LEFT JOIN trainer_pokemon tp ON tp.id = c.favorite_pokemon_row_id AND tp.trainer_id = c.trainer_id
+			 WHERE c.trainer_id = ?`,
+			[trainerId]
+		),
 	]);
+	const card = cardRows[0];
 
 	const campaign = summarizeCampaign(progressRows[0]);
 	return {
@@ -107,7 +140,14 @@ async function getPublicProfile(trainerId, pool = require("../config/trainerdb")
 				name: levelName(i + 1),
 			})),
 		},
-		record: summarizeRecord(countRows[0]),
+		record: { ...summarizeRecord(countRows[0]), streak: summarizeStreak(streakRows.map((r) => r.result)) },
+		card: {
+			theme: card?.theme || "sky",
+			motto: card?.motto || null,
+			favorite: card?.fav_id
+				? { id: card.fav_id, pokemon_id: card.fav_pokemon_id, nickname: card.fav_nickname, level: card.fav_level }
+				: null,
+		},
 		recent: recentRows.map((r) => ({
 			opponent: r.opponent,
 			result: r.result,
@@ -128,4 +168,45 @@ async function getPublicProfile(trainerId, pool = require("../config/trainerdb")
 	};
 }
 
-module.exports = { getPublicProfile, summarizeCampaign, summarizeRecord };
+/** Paged battle log, newest first. `before` is the last battle_id seen. */
+async function getBattleHistory(trainerId, { limit = 20, before } = {}, pool = require("../config/trainerdb")) {
+	const [exists] = await pool.query("SELECT 1 FROM trainers WHERE trainer_id = ?", [trainerId]);
+	if (!exists.length) throw profileError(404, "Trainer not found");
+	const size = Math.max(1, Math.min(HISTORY_MAX, Number(limit) || 20));
+	const [rows] = await pool.query(
+		`SELECT battle_id, opponent, result, battle_date FROM battles
+		 WHERE trainer_id = ? ${before ? "AND battle_id < ?" : ""}
+		 ORDER BY battle_id DESC LIMIT ?`,
+		before ? [trainerId, Number(before), size + 1] : [trainerId, size + 1]
+	);
+	const page = rows.slice(0, size);
+	return {
+		battles: page.map((r) => ({ id: r.battle_id, opponent: r.opponent, result: r.result, date: r.battle_date })),
+		next: rows.length > size ? page[page.length - 1].battle_id : null,
+	};
+}
+
+/** Saves the caller's own card. Favourite may be any owned Pokémon (party or PC). */
+async function updateCard(trainerId, input, pool = require("../config/trainerdb")) {
+	const [owned] = await pool.query("SELECT id FROM trainer_pokemon WHERE trainer_id = ?", [trainerId]);
+	const problem = validateCard(input, new Set(owned.map((r) => Number(r.id))));
+	if (problem) throw profileError(400, problem);
+	const motto = typeof input.motto === "string" && input.motto.trim() ? input.motto.trim() : null;
+	await pool.query(
+		`INSERT INTO trainer_card (trainer_id, theme, motto, favorite_pokemon_row_id) VALUES (?, ?, ?, ?)
+		 ON DUPLICATE KEY UPDATE theme = VALUES(theme), motto = VALUES(motto), favorite_pokemon_row_id = VALUES(favorite_pokemon_row_id)`,
+		[trainerId, input.theme, motto, input.favoriteId ?? null]
+	);
+	return getPublicProfile(trainerId, pool);
+}
+
+module.exports = {
+	getPublicProfile,
+	getBattleHistory,
+	updateCard,
+	summarizeCampaign,
+	summarizeRecord,
+	summarizeStreak,
+	validateCard,
+	CARD_THEMES,
+};

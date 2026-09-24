@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../config/env");
 const { createSocketAuthMiddleware } = require("./socketAuth");
 const { createRoomState } = require("./roomState");
-const { resolveMove, ROOM_WIDTH, ROOM_HEIGHT, CHAT_RADIUS_PX } = require("./movement");
+const { resolveMove, spawnPoint, CHAT_RADIUS_PX, ROOM_WIDTH, ROOM_HEIGHT } = require("./movement");
 const { createChatRing, sanitizeMessage, isRateLimited, MIN_MESSAGE_INTERVAL_MS } = require("./chat");
 
 const ROOM_ID = "main";
@@ -44,7 +44,7 @@ function attachPlayground(io, pool) {
 			}
 		}
 
-		const spawn = { x: ROOM_WIDTH / 2, y: ROOM_HEIGHT / 2 };
+		const spawn = spawnPoint();
 		const self = roomState.addPlayer(trainerId, name, spawn);
 		lastMoveAt.set(trainerId, Date.now());
 		trainerSockets.set(trainerId, socket);

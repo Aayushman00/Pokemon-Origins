@@ -1,6 +1,6 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
-const { summarizeCampaign, summarizeRecord } = require("./profileService");
+const { summarizeCampaign, summarizeRecord, summarizeStreak, validateCard } = require("./profileService");
 
 const fiveEach = () => 5;
 
@@ -37,5 +37,30 @@ describe("summarizeRecord", () => {
 
 	it("has no win rate before the first battle", () => {
 		assert.equal(summarizeRecord({ wins: null, losses: null }).win_rate, null);
+	});
+});
+
+describe("summarizeStreak", () => {
+	it("counts the run of the newest result", () => {
+		assert.deepEqual(summarizeStreak(["Win", "Win", "Loss", "Win"]), { type: "Win", count: 2 });
+		assert.deepEqual(summarizeStreak(["Loss"]), { type: "Loss", count: 1 });
+	});
+
+	it("has no streak before the first battle", () => {
+		assert.equal(summarizeStreak([]), null);
+	});
+});
+
+describe("validateCard", () => {
+	const owned = new Set([5, 6]);
+	it("accepts a known theme, a short motto and an owned favourite", () => {
+		assert.equal(validateCard({ theme: "ember", motto: "Fire first!", favoriteId: 6 }, owned), null);
+		assert.equal(validateCard({ theme: "sky", motto: "", favoriteId: null }, owned), null);
+	});
+
+	it("rejects unknown themes, long mottos and Pokémon the trainer doesn't own", () => {
+		assert.match(validateCard({ theme: "neon" }, owned), /theme/);
+		assert.match(validateCard({ theme: "sky", motto: "x".repeat(41) }, owned), /40/);
+		assert.match(validateCard({ theme: "sky", favoriteId: 99 }, owned), /your Pokémon/);
 	});
 });

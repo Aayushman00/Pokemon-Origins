@@ -1,7 +1,7 @@
 // backend/src/playground/movement.test.js
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
-const { resolveMove, ROOM_WIDTH, ROOM_HEIGHT, MAX_SPEED_PX_PER_SEC, clamp } = require("./movement");
+const { resolveMove, ROOM_WIDTH, ROOM_HEIGHT, MAX_SPEED_PX_PER_SEC, clamp, spawnPoint, SPAWN_RADIUS_PX, CHAT_RADIUS_PX } = require("./movement");
 
 describe("clamp", () => {
 	it("passes values already in range through unchanged", () => {
@@ -66,3 +66,20 @@ describe("resolveMove", () => {
 		assert.deepEqual(result, { x: 42, y: 17 });
 	});
 });
+
+describe("spawnPoint", () => {
+	it("stays within the spawn radius of the room center", () => {
+		for (let i = 0; i < 200; i++) {
+			const p = spawnPoint();
+			assert.ok(Math.hypot(p.x - ROOM_WIDTH / 2, p.y - ROOM_HEIGHT / 2) <= SPAWN_RADIUS_PX + 1);
+		}
+	});
+
+	it("spreads players out but keeps any two spawns within chat range", () => {
+		const a = spawnPoint(() => 0.999);
+		const b = spawnPoint(() => 0.5);
+		assert.notDeepEqual(a, b);
+		assert.ok(SPAWN_RADIUS_PX * 2 < CHAT_RADIUS_PX);
+	});
+});
+

@@ -20,6 +20,7 @@ services:
       - ./database/migrations/005_pending_move_learns.sql:/docker-entrypoint-initdb.d/06_pending_move_learns.sql
       - ./database/migrations/006_backfill_move_pp.sql:/docker-entrypoint-initdb.d/07_backfill_move_pp.sql
       - ./database/migrations/008_trainer_pokemon_pc.sql:/docker-entrypoint-initdb.d/09_trainer_pokemon_pc.sql
+      - ./database/migrations/009_trainer_card.sql:/docker-entrypoint-initdb.d/10_trainer_card.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
       interval: 10s

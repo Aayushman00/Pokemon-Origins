@@ -153,11 +153,23 @@ const moveLearnResolveSchema = z.object({
 	forgetMoveId: z.number().int().positive().optional(),
 });
 
+const trainerCardSchema = z.object({
+	theme: z.string().max(16),
+	motto: z.string().max(80).optional().nullable(),
+	favoriteId: z.number().int().positive().nullable().optional(),
+});
+const battleHistoryQuerySchema = z.object({
+	limit: z.coerce.number().int().positive().max(50).optional(),
+	before: z.coerce.number().int().positive().optional(),
+});
+
 const idList = z.array(z.number().int().positive()).max(1000);
 const partyArrangeSchema = z.object({ party: idList, pc: idList });
 
 module.exports = {
 	partyArrangeSchema,
+	trainerCardSchema,
+	battleHistoryQuerySchema,
 	validateBody,
 	validateParams,
 	loginSchema,

@@ -37,4 +37,20 @@ function resolveMove(current, target, elapsedMs) {
 	};
 }
 
-module.exports = { resolveMove, clamp, ROOM_WIDTH, ROOM_HEIGHT, MAX_SPEED_PX_PER_SEC, CHAT_RADIUS_PX };
+const SPAWN_RADIUS_PX = 110;
+
+/**
+ * Random spawn inside the plaza, within SPAWN_RADIUS_PX of the room center.
+ * Keeps new trainers from stacking on one pixel while staying close enough
+ * (2 x 110 < CHAT_RADIUS_PX) that everyone who just joined can hear each other.
+ */
+function spawnPoint(random = Math.random) {
+	const angle = random() * Math.PI * 2;
+	const dist = Math.sqrt(random()) * SPAWN_RADIUS_PX;
+	return {
+		x: Math.round(ROOM_WIDTH / 2 + Math.cos(angle) * dist),
+		y: Math.round(ROOM_HEIGHT / 2 + Math.sin(angle) * dist),
+	};
+}
+
+module.exports = { resolveMove, clamp, spawnPoint, SPAWN_RADIUS_PX, ROOM_WIDTH, ROOM_HEIGHT, MAX_SPEED_PX_PER_SEC, CHAT_RADIUS_PX };
