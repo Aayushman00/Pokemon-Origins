@@ -1,0 +1,147 @@
+.skip-link {
+	position: absolute;
+	left: -9999px;
+	top: 8px;
+	z-index: 100;
+	padding: var(--s-2) var(--s-3);
+	background: var(--c-sun);
+	color: var(--c-ink);
+}
+
+.skip-link:focus {
+	left: 8px;
+}
+
+.topbar {
+	position: sticky;
+	top: 0;
+	z-index: 60;
+	display: flex;
+	align-items: center;
+	gap: var(--s-4);
+	height: var(--topbar-h);
+	padding: 0 var(--s-4);
+	background: var(--c-navy);
+	color: var(--c-paper);
+	box-shadow: 0 3px 0 var(--c-navy-deep), 0 6px 0 rgba(24, 35, 57, 0.25);
+}
+
+.brand {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-2);
+	text-decoration: none;
+	color: var(--c-paper);
+}
+
+.brand__crest {
+	width: 28px;
+	height: 28px;
+}
+
+.brand__word {
+	font-size: var(--fs-lg);
+	font-weight: 700;
+	letter-spacing: 0.02em;
+	text-shadow: 2px 2px 0 var(--c-navy-deep);
+}
+
+.brand__word span {
+	color: var(--c-sun);
+}
+
+.topbar__nav {
+	display: none;
+	gap: var(--s-1);
+	margin-left: var(--s-4);
+}
+
+.topbar__link {
+	position: relative;
+	padding: var(--s-2) var(--s-3);
+	color: #c3cfe6;
+	text-decoration: none;
+	font-size: var(--fs-md);
+}
+
+.topbar__link:hover {
+	color: var(--c-paper);
+}
+
+.topbar__link.active {
+	color: var(--c-paper);
+}
+
+.topbar__link.active::after {
+	/* pixel underline: a 3px stepped bar */
+	content: "";
+	position: absolute;
+	left: var(--s-3);
+	right: var(--s-3);
+	bottom: 2px;
+	height: 3px;
+	background: var(--c-sun);
+}
+
+.topbar__right {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	margin-left: auto;
+}
+
+.topbar__me {
+	display: none;
+	align-items: center;
+	gap: var(--s-2);
+	color: var(--c-paper);
+	text-decoration: none;
+	font-size: var(--fs-sm);
+}
+
+.start-btn {
+	min-height: 36px;
+	padding: 0 var(--s-3);
+	border: 0;
+	background: var(--c-red);
+	color: #fff;
+	font-family: var(--font-pixel);
+	font-size: var(--fs-sm);
+	font-weight: 700;
+	letter-spacing: 0.08em;
+	box-shadow: 0 0 0 2px var(--c-navy-deep), inset 0 -3px 0 var(--c-red-dark);
+}
+
+.start-btn[aria-expanded="true"] {
+	background: var(--c-red-dark);
+	box-shadow: 0 0 0 2px var(--c-navy-deep), inset 0 3px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* FRLG puts START on the right edge as a tall narrow list */
+.start-menu {
+	position: absolute;
+	top: calc(var(--topbar-h) + 6px);
+	right: 12px;
+	width: 240px;
+	padding: var(--s-3) var(--s-2);
+	color: var(--c-ink);
+	animation: start-in var(--t-med) steps(3, end);
+}
+
+@keyframes start-in {
+	from {
+		clip-path: inset(0 0 100% 0);
+	}
+	to {
+		clip-path: inset(0 0 0 0);
+	}
+}
+
+@media (min-width: 900px) {
+	.topbar__nav {
+		display: flex;
+	}
+	.topbar__me {
+		display: inline-flex;
+	}
+}

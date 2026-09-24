@@ -1,11 +1,13 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+// Design-system CSS must load before App so page styles can override it.
+import "./v2/styles/tokens.css";
+import "./v2/styles/base.css";
+import "./v2/styles/components.css";
 import App from "./App.jsx";
-import "./index.css";
-import "./styles/tokens.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+	<React.StrictMode>
+		<App />
+	</React.StrictMode>
 );

@@ -1,16 +1,13 @@
 /**
- * Paced battle-log queue (spec §1). push() returns a promise that resolves
- * when *that* line is handed to onLine, so beats can `await` their text
- * before playing the visual it introduces. Lines are spaced by gapMs()
- * after each paint. clear() resolves every unpainted line so no beat is
- * left awaiting forever (restart / new action).
+ * Paced battle-log queue. push() returns a promise that resolves when
+ * *that* line is handed to onLine, so beats can `await` their text before
+ * playing the visual it introduces. Each line holds for gapMs(line) after
+ * it paints (V2: long lines hold longer so the typewriter can finish).
+ * skip() cuts the current hold short (player fast-forward). clear()
+ * resolves every unpainted line so no beat awaits forever (restart / new
+ * action).
  */
-export function createMessageQueue({
-  onLine,
-  gapMs,
-  setTimer = setTimeout,
-  clearTimer = clearTimeout,
-}) {
+export function createMessageQueue({ onLine, gapMs, setTimer = setTimeout, clearTimer = clearTimeout }) {
   let pending = [];
   let timer = null;
 
@@ -22,7 +19,7 @@ export function createMessageQueue({
     const { message, resolve } = pending.shift();
     onLine(message);
     resolve();
-    timer = setTimer(flush, gapMs());
+    timer = setTimer(flush, gapMs(message));
   };
 
   return {
@@ -31,6 +28,11 @@ export function createMessageQueue({
         pending.push({ message, resolve });
         if (timer === null) flush();
       });
+    },
+    skip() {
+      if (timer === null) return;
+      clearTimer(timer);
+      flush();
     },
     clear() {
       if (timer !== null) clearTimer(timer);

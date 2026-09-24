@@ -1,0 +1,119 @@
+.title {
+	position: relative;
+	min-height: calc(100vh - var(--topbar-h));
+	overflow: hidden;
+	display: grid;
+	place-items: center;
+	padding: var(--s-6) var(--s-4);
+}
+
+.title__sky {
+	position: absolute;
+	inset: 0;
+	background: linear-gradient(180deg, var(--c-navy) 0 22%, #33497a 22% 38%, #4a6ca3 38% 50%, #6f98c6 50% 60%, var(--c-cream) 60%);
+}
+
+.title__sky::after {
+	content: "";
+	position: absolute;
+	inset: 0 0 45% 0;
+	background-image: radial-gradient(#fff 1.5px, transparent 2px);
+	background-size: 64px 48px;
+	opacity: 0.6;
+	animation: twinkle 3s steps(2, end) infinite;
+}
+
+@keyframes twinkle {
+	50% {
+		opacity: 0.3;
+	}
+}
+
+.title__inner {
+	position: relative;
+	display: grid;
+	justify-items: center;
+	gap: var(--s-5);
+	width: min(560px, 100%);
+}
+
+.title__word {
+	display: flex;
+	align-items: baseline;
+	font-size: clamp(3.2rem, 13vw, 6.5rem);
+	line-height: 0.9;
+	letter-spacing: 0.01em;
+	animation: title-drop 500ms steps(5, end) both;
+}
+
+.title__battle {
+	color: var(--c-paper);
+	text-shadow: 4px 4px 0 var(--c-navy-deep), 8px 8px 0 rgba(24, 35, 57, 0.4);
+}
+
+.title__sim {
+	color: var(--c-sun);
+	text-shadow: 4px 4px 0 var(--c-red-dark), 8px 8px 0 rgba(24, 35, 57, 0.4);
+}
+
+@keyframes title-drop {
+	from {
+		transform: translateY(-40px);
+		opacity: 0;
+	}
+	to {
+		transform: none;
+		opacity: 1;
+	}
+}
+
+.title__tag {
+	color: #dfe7f5;
+	text-align: center;
+	max-width: 40ch;
+}
+
+.title__stage {
+	position: relative;
+	display: grid;
+	place-items: end center;
+	width: 220px;
+	height: 190px;
+}
+
+.title__plat {
+	position: absolute;
+	bottom: 6px;
+	width: 200px;
+	height: 36px;
+	background: radial-gradient(ellipse at 50% 40%, #b8dd88 0 55%, #62b14f 56% 100%);
+	clip-path: polygon(10% 18%, 22% 6%, 38% 0, 62% 0, 78% 6%, 90% 18%, 100% 38%, 100% 62%, 90% 82%, 78% 94%, 62% 100%, 38% 100%, 22% 94%, 10% 82%, 0 62%, 0 38%);
+	box-shadow: inset 0 -6px 0 var(--c-grass-dark);
+}
+
+.title__mon {
+	position: relative;
+	width: 176px;
+	height: 176px;
+	margin-bottom: 14px;
+	animation: title-mon 520ms steps(6, end) both;
+}
+
+@keyframes title-mon {
+	from {
+		transform: translateX(80px);
+		filter: brightness(0);
+	}
+	60% {
+		filter: brightness(0);
+	}
+	to {
+		transform: none;
+		filter: none;
+	}
+}
+
+.title__menu {
+	width: min(360px, 100%);
+	padding: var(--s-3);
+}

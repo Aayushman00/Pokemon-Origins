@@ -1,0 +1,79 @@
+/* BattleSIM V2 — design tokens. Every screen reads from these. */
+:root {
+	/* Palette */
+	--c-ink: #2b211c;
+	--c-ink-soft: #5e4c3f;
+	--c-ink-faint: #8a7662;
+	--c-paper: #fbf6e6;
+	--c-cream: #f1e6c8;
+	--c-cream-dark: #e6d6ab;
+	--c-sand: #d9c595;
+	--c-navy: #243452;
+	--c-navy-deep: #182339;
+	--c-navy-line: #7088b8;
+	--c-sky: #9fd3ec;
+	--c-sky-deep: #6fb4d8;
+	--c-grass: #62b14f;
+	--c-grass-dark: #3f7f37;
+	--c-leaf: #a6d86f;
+	--c-earth: #b98a52;
+	--c-earth-dark: #8a6236;
+	--c-sun: #f3c64b;
+	--c-sun-dark: #c9972a;
+	--c-red: #d5473a;
+	--c-red-dark: #9e2f25;
+
+	/* HP / progression */
+	--c-hp-hi: #4fc35b;
+	--c-hp-mid: #f0b429;
+	--c-hp-lo: #e0452f;
+	--c-xp: #4a9fe0;
+	--c-bar-track: #4a3f38;
+
+	/* Status */
+	--c-online: #4fc35b;
+	--c-away: #c9972a;
+
+	/* Type */
+	--font-pixel: "DotGothic16", "Courier New", monospace;
+	/* Display face only for big titles: its small sizes blur 5/S and C/O */
+	--font-display: "Pixelify Sans", "DotGothic16", monospace;
+	--font-read: "Atkinson Hyperlegible", system-ui, sans-serif;
+	--fs-xs: 0.8125rem;
+	--fs-sm: 0.9375rem;
+	--fs-md: 1.0625rem;
+	--fs-lg: 1.375rem;
+	--fs-xl: 1.875rem;
+	--fs-2xl: 2.75rem;
+	--fs-3xl: clamp(2.5rem, 7vw, 4.75rem);
+
+	/* Space (4px pixel grid) */
+	--s-1: 4px;
+	--s-2: 8px;
+	--s-3: 12px;
+	--s-4: 16px;
+	--s-5: 24px;
+	--s-6: 32px;
+	--s-7: 48px;
+	--s-8: 64px;
+
+	/* Pixel border width */
+	--px: 3px;
+
+	/* Motion */
+	--t-fast: 120ms;
+	--t-med: 200ms;
+	--t-slow: 300ms;
+	--ease-step: steps(4, end);
+
+	--maxw: 1200px;
+	--topbar-h: 56px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--t-fast: 0ms;
+		--t-med: 0ms;
+		--t-slow: 0ms;
+	}
+}

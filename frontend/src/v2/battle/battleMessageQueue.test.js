@@ -85,4 +85,28 @@ describe("createMessageQueue", () => {
     t.tick();
     assert.equal(q.isIdle(), true);
   });
+
+  it("passes each painted line to gapMs so long lines can hold longer", async () => {
+    const t = manualTimers();
+    const q = createMessageQueue({ onLine: () => {}, gapMs: (m) => m.length * 10, ...t });
+    q.push("hello");
+    assert.equal(t.lastDelay(), 50);
+  });
+
+  it("skip() paints the next line without waiting for the gap", async () => {
+    const painted = [];
+    const t = manualTimers();
+    const q = createMessageQueue({ onLine: (m) => painted.push(m), gapMs: () => 600, ...t });
+    q.push("a");
+    const b = q.push("b");
+    q.skip();
+    await b;
+    assert.deepEqual(painted, ["a", "b"]);
+  });
+
+  it("skip() on an idle queue does nothing", () => {
+    const q = createMessageQueue({ onLine: () => {}, gapMs: () => 600 });
+    q.skip();
+    assert.equal(q.isIdle(), true);
+  });
 });

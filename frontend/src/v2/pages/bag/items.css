@@ -1,0 +1,122 @@
+/* Bag + Mart share the FRLG item screen: side art, list, text box below */
+.items {
+	display: grid;
+	gap: var(--s-4) var(--s-6);
+	max-width: 920px;
+	grid-template-areas: "side" "list" "desc";
+}
+
+@media (min-width: 760px) {
+	.items {
+		grid-template-columns: 220px minmax(0, 1fr);
+		grid-template-areas: "side list" "desc desc";
+		align-items: start;
+	}
+}
+
+.items__side {
+	grid-area: side;
+	display: grid;
+	justify-items: center;
+	gap: var(--s-3);
+}
+
+.items__list {
+	grid-area: list;
+	padding-top: var(--s-5);
+}
+
+.items__desc {
+	grid-area: desc;
+}
+
+.items__back {
+	margin-top: var(--s-4);
+}
+
+/* Original bag illustration: a satchel drawn in blocks */
+.items__bag {
+	position: relative;
+	width: 140px;
+	height: 120px;
+	margin-top: var(--s-4);
+	background: #c7773a;
+	box-shadow: 0 0 0 4px var(--c-ink), inset -10px -10px 0 #9a5526, inset 8px 8px 0 #de9a5e;
+	clip-path: polygon(8% 12%, 92% 12%, 100% 26%, 100% 100%, 0 100%, 0 26%);
+}
+
+.items__bag::before {
+	/* strap */
+	content: "";
+	position: absolute;
+	left: 30%;
+	right: 30%;
+	top: 0;
+	height: 16px;
+	border: 6px solid var(--c-ink);
+	border-bottom: 0;
+}
+
+.items__bag-flap {
+	position: absolute;
+	left: 10%;
+	right: 10%;
+	top: 22%;
+	height: 36%;
+	background: #de9a5e;
+	box-shadow: inset 0 -6px 0 #9a5526;
+}
+
+.items__bag-flap::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: -8px;
+	width: 16px;
+	height: 14px;
+	translate: -50% 0;
+	background: var(--c-sun);
+	box-shadow: 0 0 0 3px var(--c-ink);
+}
+
+.items__pocket {
+	padding: 2px var(--s-3);
+	font-weight: 700;
+	color: var(--c-paper);
+	background: var(--c-navy);
+}
+
+.items__wallet {
+	display: grid;
+	gap: var(--s-1);
+	width: 100%;
+	padding: var(--s-3) var(--s-4);
+}
+
+.items__wallet-label {
+	font-size: var(--fs-sm);
+	color: var(--c-ink-soft);
+}
+
+.items__wallet-value {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--fs-xl);
+	font-variant-numeric: tabular-nums;
+}
+
+.items__targets {
+	grid-template-columns: 1fr !important;
+	margin-bottom: var(--s-3);
+}
+
+.mart-line {
+	display: flex;
+	gap: var(--s-2);
+	align-items: baseline;
+}
+
+.mart-line__own {
+	font-size: var(--fs-xs);
+}
