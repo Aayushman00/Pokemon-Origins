@@ -1,21 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import { api, getErrorMessage } from "../../api";
-import { TYPE_COLORS } from "../../utils/typeColors";
 import { invalidateProfile } from "../data/profiles";
 import { createMessageQueue } from "./battleMessageQueue";
-import { getImpactTier, getMoveAnimCategory, hitResultLines } from "./battleAnimation";
-import {
-	STATUS_APPLIED_TEXT,
-	CANT_MOVE_TEXT,
-	STATUS_END_TEXT,
-	STATUS_HURT_TEXT,
-	statChangeText,
-	rewardLine,
-	REWARD_EVENT_TYPES,
-} from "./battleText";
+import { planEvent, DRAIN_MS } from "./battleBeats";
+import { play as sfx } from "./sfx";
+import { rewardLine, REWARD_EVENT_TYPES } from "./battleText";
 
-export const DRAIN_MS = 600;
+export { DRAIN_MS };
 const TICK_MS = 900;
 export const STRUGGLE_MOVE = { move_id: -1, name: "Struggle", move_type: "Normal" };
 export const TEXT_SPEEDS = { normal: 22, fast: 8 };
@@ -118,6 +110,7 @@ export default function useBattle({ levelNumber, battleNumber, trainerId, onBatt
 			await wait(500);
 			if (myGen !== gen.current) return;
 			patchFx("enemy", { hidden: false, entering: true });
+			sfx("sendOut");
 			await say(`${state.trainerName || "The trainer"} sent out ${state.enemy.nickname}!`);
 			later(() => patchFx("enemy", { entering: false }), 600);
 		}
@@ -125,6 +118,7 @@ export default function useBattle({ levelNumber, battleNumber, trainerId, onBatt
 		if (myGen !== gen.current) return;
 		if (state.player.current_hp > 0) {
 			patchFx("player", { entering: true, hidden: false });
+			sfx("sendOut");
 			await say(`Go! ${state.player.nickname}!`);
 			await wait(600);
 			patchFx("player", { entering: false });
@@ -185,225 +179,59 @@ export default function useBattle({ levelNumber, battleNumber, trainerId, onBatt
 		};
 	}, [start]);
 
-	// ---- One server event → one beat ----------------------------------------
-	const faintBeat = async (side, nickname) => {
-		patchFx(side, { fainted: true });
-		await say(`${nickname} fainted!`);
-		await wait(700);
+	// ---- Run one server event's beats (sequencing lives in battleBeats) -----
+	const runStep = async (step) => {
+		if (step.say !== undefined) return say(step.say);
+		if (step.wait !== undefined) return wait(step.wait);
+		if (step.turn) return setTurn(step.turn);
+		if (step.sfx) return sfx(step.sfx);
+		if (step.fx) return patchFx(step.fx, step.patch);
+		if (step.replaceFx) return setFx((prev) => ({ ...prev, [step.replaceFx]: { ...IDLE_FX, entering: !!step.entering } }));
+		if (step.mon) return setSideMon(step.mon, (prev) => (prev ? { ...prev, ...step.patch } : prev));
+		if (step.setMon) return setSideMon(step.setMon, () => step.pokemon);
+		if (step.stage) return patchStage(step.stage);
+		if (step.stageClear) {
+			return later(() => patchStage(Object.fromEntries(step.keys.map((k) => [k, k === "critFlash" ? false : null]))), step.after);
+		}
+		if (step.tick) {
+			patchFx(step.tick, { tick: { id: step.id, amount: step.amount } });
+			return later(() => setFx((prev) => (prev[step.tick].tick?.id === step.id ? { ...prev, [step.tick]: { ...prev[step.tick], tick: null } } : prev)), TICK_MS);
+		}
+		if (step.enemyFainted !== undefined) {
+			return setSession((prev) =>
+				prev
+					? {
+							...prev,
+							enemyParty: (prev.enemyParty || []).map((m) => (m.position === step.enemyFainted ? { ...m, current_hp: 0 } : m)),
+							enemyActivePosition: step.position,
+					}
+					: prev
+			);
+		}
+		if (step.levelUp) return setPlayer((prev) => (prev && prev.nickname === step.levelUp ? { ...prev, level: step.level } : prev));
+		if (step.xp !== undefined) {
+			return setPlayer((prev) =>
+				prev && prev.position === step.xp ? { ...prev, experience: step.experience, xp_to_next: step.xp_to_next, level: step.level } : prev
+			);
+		}
+		return undefined;
 	};
 
-	const chipBeat = async (side, text, hpAfter, nickname, fainted) => {
-		await say(text);
-		patchFx(side, { hit: "normal" });
-		setSideMon(side, (prev) => (prev ? { ...prev, current_hp: hpAfter } : prev));
-		await wait(DRAIN_MS);
-		patchFx(side, { hit: null });
-		if (fainted) await faintBeat(side, nickname);
-	};
-
-	const playEvent = async (event, view) => {
-		const patchSide = (side, patch) => {
-			view[side] = { ...view[side], ...patch };
-			setSideMon(side, (prev) => (prev ? { ...prev, ...patch } : prev));
-		};
-
-		switch (event.type) {
-			case "switch": {
-				setTurn("none");
-				view.player = { ...event.pokemon };
-				setFx((prev) => ({ ...prev, player: { ...IDLE_FX, entering: true } }));
-				setPlayer(event.pokemon);
-				await say(`Go! ${event.pokemon.nickname}!`);
-				await wait(600);
-				patchFx("player", { entering: false });
-				return;
-			}
-			case "enemy_send": {
-				setTurn("none");
-				const prevPos = view.enemy.position;
-				view.enemy = { ...event.pokemon };
-				setSession((prev) =>
-					prev
-						? {
-								...prev,
-								enemyParty: (prev.enemyParty || []).map((m) => (m.position === prevPos ? { ...m, current_hp: 0 } : m)),
-								enemyActivePosition: event.position,
-						}
-						: prev
-				);
-				setFx((prev) => ({ ...prev, enemy: { ...IDLE_FX, entering: true } }));
-				setEnemy(event.pokemon);
-				await say(`${liveRef.current.session?.trainerName || "The trainer"} sent out ${event.pokemon.nickname}!`);
-				await wait(700);
-				patchFx("enemy", { entering: false });
-				return;
-			}
-			case "item": {
-				setTurn("none");
-				await say(`Used ${event.itemName}! ${event.nickname} recovered ${event.amount} HP.`);
-				if (view.player.position === event.position) {
-					patchFx("player", { sparkle: true });
-					patchSide("player", { current_hp: event.targetHpAfter });
-					await wait(DRAIN_MS);
-					patchFx("player", { sparkle: false });
-				}
-				return;
-			}
-			case "pp_change": {
-				if (event.actor === "player") {
-					const patch = (moves) => (moves || []).map((m) => (m.move_id === event.moveId ? { ...m, current_pp: event.currentPp } : m));
-					view.player = { ...view.player, moves: patch(view.player.moves) };
-					setPlayer((prev) => (prev ? { ...prev, moves: patch(prev.moves) } : prev));
-				}
-				return;
-			}
-			case "level_up": {
-				await say(`${event.nickname} grew to Lv. ${event.level}!`);
-				setPlayer((prev) => (prev && prev.nickname === event.nickname ? { ...prev, level: event.level } : prev));
-				await wait(300);
-				return;
-			}
-			case "xp_gain": {
-				await say(rewardLine(event, { forBattle: true }));
-				// Fill the EXP bar to the server's post-award buffer.
-				setPlayer((prev) =>
-					prev && prev.position === event.position
-						? { ...prev, experience: event.xp, xp_to_next: event.xpToNext, level: event.level }
-						: prev
-				);
-				await wait(DRAIN_MS);
-				return;
-			}
-			case "coins":
-			case "evolution_available":
-			case "move_learned":
-			case "move_learn_available": {
-				await say(rewardLine(event, { forBattle: true }));
-				await wait(250);
-				return;
-			}
-			case "cant_move": {
-				setTurn("none");
-				await say((CANT_MOVE_TEXT[event.status] || ((n) => `${n} can't move!`))(event.nickname));
-				await wait(400);
-				return;
-			}
-			case "status_applied": {
-				await say((STATUS_APPLIED_TEXT[event.status] || ((n) => `${n} was afflicted!`))(event.nickname));
-				patchSide(event.target, { status: event.status });
-				await wait(300);
-				return;
-			}
-			case "status_end": {
-				await say((STATUS_END_TEXT[event.status] || ((n) => `${n} returned to normal!`))(event.nickname));
-				patchSide(event.target, { status: null });
-				await wait(250);
-				return;
-			}
-			case "status_damage": {
-				view[event.target] = { ...view[event.target], current_hp: event.targetHpAfter };
-				await chipBeat(
-					event.target,
-					(STATUS_HURT_TEXT[event.status] || ((n) => `${n} was hurt!`))(event.nickname),
-					event.targetHpAfter,
-					event.nickname,
-					event.targetFainted
-				);
-				return;
-			}
-			case "recoil": {
-				view[event.target] = { ...view[event.target], current_hp: event.hpAfter };
-				await chipBeat(event.target, `${event.nickname} is damaged by recoil!`, event.hpAfter, event.nickname, event.targetFainted);
-				return;
-			}
-			case "stat_change": {
-				await say(statChangeText(event));
-				await wait(250);
-				return;
-			}
-			case "drain":
-			case "heal_move": {
-				await say(event.type === "drain" ? `${event.nickname} drained energy!` : `${event.nickname} regained health!`);
-				patchFx(event.target, { sparkle: true });
-				patchSide(event.target, { current_hp: event.hpAfter });
-				await wait(DRAIN_MS);
-				patchFx(event.target, { sparkle: false });
-				return;
-			}
-			default:
-				break;
-		}
-
-		// ---- A move ----
-		const isPlayer = event.actor === "player";
-		const atk = isPlayer ? "player" : "enemy";
-		const def = isPlayer ? "enemy" : "player";
-		const attackerName = view[atk].nickname;
-		const defenderName = view[def].nickname;
-		const color = TYPE_COLORS[String(event.moveType || "").toLowerCase()] || "#ffffff";
-
-		setTurn(atk);
-		await say(`${attackerName} used ${String(event.moveName || "").toUpperCase()}!`);
-
-		const statusLike = event.result === "status" || event.result === "heal";
-		if (statusLike) {
-			patchFx(atk, { sparkle: true });
-			await wait(450);
-			patchFx(atk, { sparkle: false });
-		} else if (getMoveAnimCategory(event.moveType) === "physical") {
-			patchFx(atk, { lunge: true });
-			await wait(260); // wind-up + contact frame
-			patchFx(atk, { lunge: false });
-		} else {
-			patchStage({ projectile: { from: atk, color, key: Date.now() } });
-			await wait(360);
-			patchStage({ projectile: null });
-		}
-
-		if (event.result === "miss") {
-			await say(`${attackerName}'s attack missed!`);
-			await wait(200);
-			return;
-		}
-		if (event.result === "failed") {
-			await say(event.type_multiplier === 0 ? `It doesn't affect ${defenderName}...` : "But it failed!");
-			await wait(200);
-			return;
-		}
-		if (statusLike) return; // follow-up status/stat/heal events carry the outcome
-
-		const tier = getImpactTier(event.type_multiplier);
-		if (tier === "none") {
-			await say(`It doesn't affect ${defenderName}...`);
-			return;
-		}
-
-		// Impact: flash + shake + defender blink, then tick + stepped drain.
-		if (!reduce) {
-			if (tier !== "weak") patchStage({ flash: color });
-			if (event.critical_hit) patchStage({ critFlash: true });
-			patchStage({ shake: event.critical_hit ? "crit" : tier });
-			later(() => patchStage({ flash: null, critFlash: false }), 180);
-			later(() => patchStage({ shake: null }), 320);
-		}
-		view[def] = { ...view[def], current_hp: event.targetHpAfter };
-		patchFx(def, { hit: tier, crit: !!event.critical_hit, tick: event.damage > 0 ? { id: Date.now(), amount: event.damage } : null });
-		setSideMon(def, (prev) => ({ ...prev, current_hp: event.targetHpAfter }));
-		later(() => setFx((prev) => ({ ...prev, [def]: { ...prev[def], tick: null } })), TICK_MS);
-		await wait(DRAIN_MS);
-		patchFx(def, { hit: null, crit: false });
-
-		for (const text of hitResultLines(event)) await say(text);
-
-		if (event.targetFainted) {
-			await wait(250);
-			await faintBeat(def, defenderName);
+	const playEvent = async (event, view, myGen) => {
+		const { steps, view: next } = planEvent(event, view, {
+			trainerName: liveRef.current.session?.trainerName || "The trainer",
+		});
+		Object.assign(view, next);
+		for (const step of steps) {
+			if (myGen !== gen.current) return;
+			await runStep(step);
 		}
 	};
 
 	// ---- Actions -------------------------------------------------------------
 	const finish = (state, progress) => {
 		invalidateProfile(trainerId);
+		sfx(state.status === "won" ? "victory" : "defeat");
 		if (state.status === "won") {
 			setOutcome({ result: "win", name: state.player.nickname });
 			if (progress) {
@@ -430,7 +258,7 @@ export default function useBattle({ levelNumber, battleNumber, trainerId, onBatt
 			const view = { player: { ...p }, enemy: { ...e } };
 			for (const event of data.events || []) {
 				if (myGen !== gen.current) return;
-				await playEvent(event, view);
+				await playEvent(event, view, myGen);
 			}
 			if (myGen !== gen.current) return;
 			const lines = (data.events || []).filter((ev) => REWARD_EVENT_TYPES.has(ev.type)).map((ev) => rewardLine(ev));

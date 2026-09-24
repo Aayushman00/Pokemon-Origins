@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../data/user";
 import useBattle, { TEXT_SPEEDS } from "../../battle/useBattle";
+import { isSoundOn, setSoundOn } from "../../battle/sfx";
 import DialogueBox from "../../ui/DialogueBox";
 import Button from "../../ui/Button";
 import Panel from "../../ui/Panel";
@@ -23,6 +24,7 @@ const BattleView = ({ levelNumber, battleNumber, levelName, onBattleWon, onConti
 	const navigate = useNavigate();
 	const { user } = useUser();
 	const [speed, setSpeed] = useState(readSpeed);
+	const [soundOn, setSound] = useState(isSoundOn);
 	const battle = useBattle({ levelNumber, battleNumber, trainerId: user?.trainer_id, onBattleWon, textSpeed: speed });
 	const { phase, player, session } = battle;
 
@@ -90,6 +92,17 @@ const BattleView = ({ levelNumber, battleNumber, levelName, onBattleWon, onConti
 				<div className="battle__controls">
 					<button type="button" className="chip-btn" onClick={toggleSpeed} aria-pressed={speed === "fast"} title="Text speed">
 						Text: {speed === "fast" ? "Fast" : "Normal"}
+					</button>
+					<button
+						type="button"
+						className="chip-btn"
+						aria-pressed={soundOn}
+						onClick={() => {
+							setSoundOn(!soundOn);
+							setSound(!soundOn);
+						}}
+					>
+						Sound: {soundOn ? "On" : "Off"}
 					</button>
 					<button type="button" className="chip-btn" onClick={() => navigate("/game")} title="Your battle is saved on the server; you can resume it">
 						Leave

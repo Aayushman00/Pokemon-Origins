@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Cursor from "./Cursor";
 import { moveCursor } from "./moveCursor";
+import { play } from "../battle/sfx";
 
 const ARROWS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
 
@@ -12,7 +13,7 @@ const ARROWS = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"];
  * `globalKeys` listens on window so the battle menu works without focus
  * (Enter/Z select, Escape/X back).
  */
-const MenuList = ({ items, columns = 1, label, globalKeys = false, autoFocus = false, onBack, onActiveChange, initialIndex, className = "" }) => {
+const MenuList = ({ items, columns = 1, label, globalKeys = false, autoFocus = false, onBack, onActiveChange, initialIndex, sound = false, className = "" }) => {
 	const [active, setActive] = useState(() => initialIndex ?? Math.max(0, items.findIndex((i) => !i.disabled)));
 	const refs = useRef([]);
 
@@ -20,7 +21,10 @@ const MenuList = ({ items, columns = 1, label, globalKeys = false, autoFocus = f
 		if (active >= items.length) setActive(0);
 	}, [items.length, active]);
 
+	const firstRef = useRef(true);
 	useEffect(() => {
+		if (sound && !firstRef.current) play("cursor");
+		firstRef.current = false;
 		onActiveChange?.(items[active], active);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [active]);
@@ -49,6 +53,7 @@ const MenuList = ({ items, columns = 1, label, globalKeys = false, autoFocus = f
 			const item = items[active];
 			if (item && !item.disabled) {
 				e.preventDefault();
+				if (sound) play("select");
 				item.onSelect?.();
 			}
 		}
@@ -91,7 +96,10 @@ const MenuList = ({ items, columns = 1, label, globalKeys = false, autoFocus = f
 								{body}
 							</Link>
 						) : (
-							<button type="button" {...common} disabled={item.disabled} aria-label={item.ariaLabel} onClick={() => item.onSelect?.()}>
+							<button type="button" {...common} disabled={item.disabled} aria-label={item.ariaLabel} onClick={() => {
+								if (sound) play("select");
+								item.onSelect?.();
+							}}>
 								{body}
 							</button>
 						)}

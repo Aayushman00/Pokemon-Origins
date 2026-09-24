@@ -14,6 +14,7 @@ export const CommandMenu = ({ battle }) => (
 			label="Battle commands"
 			columns={2}
 			globalKeys
+			sound
 			items={[
 				{ id: "fight", label: "Fight", onSelect: () => battle.setPhase("moveSelect") },
 				{ id: "bag", label: "Bag", onSelect: battle.openBag },
@@ -39,6 +40,7 @@ export const MoveMenu = ({ battle }) => {
 					<MenuList
 						label="Moves"
 						globalKeys
+			sound
 						onBack={back}
 						items={[{ id: "struggle", label: "STRUGGLE", hint: "No PP left", onSelect: () => battle.chooseMove(STRUGGLE_MOVE) }]}
 					/>
@@ -71,7 +73,8 @@ export const MoveMenu = ({ battle }) => {
 	return (
 		<div className="hud__split">
 			<div className="frame panel move-box">
-				<MenuList label="Moves" columns={2} globalKeys onBack={back} items={items} onActiveChange={setFocus} />
+				<MenuList label="Moves" columns={2} globalKeys
+			sound onBack={back} items={items} onActiveChange={setFocus} />
 			</div>
 			<div className="frame panel move-info" aria-live="polite">
 				{m && (
@@ -137,6 +140,7 @@ export const BagMenu = ({ battle }) => (
 		<MenuList
 			label="Battle items"
 			globalKeys
+			sound
 			autoFocus
 			onBack={() => battle.setPhase("command")}
 			items={battle.bagItems.map((item) => ({
@@ -162,6 +166,7 @@ export const RestartMenu = ({ battle }) => (
 		<MenuList
 			label="Restart this battle?"
 			globalKeys
+			sound
 			initialIndex={1}
 			onBack={() => battle.setPhase("command")}
 			items={[
