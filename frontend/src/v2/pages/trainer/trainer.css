@@ -12,14 +12,15 @@
 }
 
 .tcard__band {
+	align-items: center;
 	display: flex;
 	justify-content: space-between;
 	gap: var(--s-3);
 	padding: var(--s-2) var(--s-5);
 	font-weight: 700;
 	color: var(--c-on-navy);
-	background: var(--c-navy);
-	box-shadow: inset 0 -3px 0 var(--c-navy-deep);
+	background: var(--card-band, var(--c-navy));
+	box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3);
 }
 
 .tcard__id {
@@ -67,7 +68,7 @@
 	display: grid;
 	place-items: end center;
 	padding: var(--s-3);
-	background: linear-gradient(180deg, var(--c-scene-sky) 0 70%, var(--c-scene-ground) 70%);
+	background: linear-gradient(180deg, var(--card-sky, var(--c-scene-sky)) 0 70%, var(--c-scene-ground) 70%);
 	box-shadow: 0 0 0 3px var(--c-navy-deep);
 	margin: 3px;
 }
@@ -132,4 +133,160 @@
 	gap: var(--s-3);
 	justify-items: start;
 	max-width: 460px;
+}
+
+/* Battle history */
+.history {
+	display: grid;
+	gap: var(--s-5);
+	max-width: 980px;
+}
+
+.history__head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	justify-content: space-between;
+	gap: var(--s-3);
+}
+
+.history__title {
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: var(--fs-2xl);
+}
+
+.history__grid {
+	display: grid;
+	gap: var(--s-6);
+	align-items: start;
+}
+
+@media (min-width: 820px) {
+	.history__grid {
+		grid-template-columns: minmax(0, 1.6fr) minmax(220px, 1fr);
+	}
+}
+
+.history__day {
+	margin-top: var(--s-4);
+}
+
+.history__date {
+	margin-bottom: var(--s-2);
+	font-size: var(--fs-sm);
+	color: var(--c-ink-soft);
+}
+
+.history__empty {
+	margin-top: var(--s-4);
+}
+
+.history__more {
+	margin-top: var(--s-4);
+}
+
+/* Card themes (band + portrait sky) */
+.tcard[data-card="sky"] { --card-band: #243452; }
+.tcard[data-card="grass"] { --card-band: #3f7f37; --card-sky: #cfe9c0; }
+.tcard[data-card="ember"] { --card-band: #b0402b; --card-sky: #f6d3b8; }
+.tcard[data-card="ocean"] { --card-band: #1f6f8b; --card-sky: #bfe4ef; }
+.tcard[data-card="dusk"] { --card-band: #5a3f8a; --card-sky: #d9c9ee; }
+.tcard[data-card="gold"] { --card-band: #9a7418; --card-sky: #f4e3a6; }
+
+:root[data-theme="dark"] .tcard { --card-sky: var(--c-scene-sky); }
+
+.tcard__edit {
+	margin-left: auto;
+	margin-right: var(--s-3);
+	padding: 0 var(--s-2);
+	border: 0;
+	font-family: var(--font-pixel);
+	font-size: var(--fs-sm);
+	color: var(--c-ink-fixed);
+	background: var(--c-sun);
+	box-shadow: 0 0 0 2px var(--c-line);
+}
+
+.tcard__motto {
+	margin: calc(var(--s-2) * -1) 0 var(--s-4);
+	font-style: italic;
+	color: var(--c-ink-soft);
+}
+
+.tcard__portrait {
+	position: relative;
+}
+
+.tcard__fav {
+	position: absolute;
+	right: -6px;
+	bottom: 4px;
+	width: 72px;
+	height: 72px;
+}
+
+/* Card editor */
+.card-editor {
+	display: grid;
+	gap: var(--s-4);
+}
+
+.card-editor__group {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.card-editor__swatches,
+.card-editor__mons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+	margin-top: var(--s-2);
+}
+
+.swatch,
+.fav-pick {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-2);
+	min-height: 40px;
+	padding: 0 var(--s-3);
+	border: 0;
+	font-family: var(--font-pixel);
+	color: var(--c-ink);
+	background: var(--c-paper);
+	box-shadow: 0 0 0 2px var(--c-line);
+	margin: 2px;
+}
+
+.swatch[aria-checked="true"],
+.fav-pick[aria-checked="true"] {
+	box-shadow: 0 0 0 2px var(--c-line), 0 0 0 5px var(--c-sun);
+}
+
+.swatch__chip {
+	width: 16px;
+	height: 16px;
+	box-shadow: 0 0 0 2px var(--c-line);
+}
+
+.swatch--sky .swatch__chip { background: #243452; }
+.swatch--grass .swatch__chip { background: #3f7f37; }
+.swatch--ember .swatch__chip { background: #b0402b; }
+.swatch--ocean .swatch__chip { background: #1f6f8b; }
+.swatch--dusk .swatch__chip { background: #5a3f8a; }
+.swatch--gold .swatch__chip { background: #9a7418; }
+
+.fav-pick {
+	width: 56px;
+	height: 56px;
+	padding: 0;
+	justify-content: center;
+}
+
+.fav-pick img {
+	width: 48px;
+	height: 48px;
 }

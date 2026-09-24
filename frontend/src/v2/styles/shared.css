@@ -219,3 +219,27 @@
 	background-size: 4px 5px;
 	opacity: 0.6;
 }
+
+.streak {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-2);
+	margin: var(--s-1) 0 var(--s-2);
+	padding: 1px var(--s-2);
+	font-size: var(--fs-sm);
+	color: var(--c-ink-fixed);
+	background: var(--c-sun);
+	box-shadow: 0 0 0 2px var(--c-line);
+}
+
+.streak--loss {
+	color: #fff;
+	background: var(--c-red);
+}
+
+.streak__flame {
+	width: 10px;
+	height: 12px;
+	background: currentColor;
+	clip-path: polygon(50% 0, 70% 30%, 100% 45%, 90% 100%, 10% 100%, 0 55%, 25% 35%, 35% 55%);
+}

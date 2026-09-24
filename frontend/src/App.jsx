@@ -9,6 +9,7 @@ import HubScreen from "./v2/pages/hub/HubScreen";
 import JourneyScreen from "./v2/pages/battle/JourneyScreen";
 import PlaygroundScreen from "./v2/pages/playground/PlaygroundScreen";
 import TrainerScreen from "./v2/pages/trainer/TrainerScreen";
+import HistoryScreen from "./v2/pages/trainer/HistoryScreen";
 import BagScreen from "./v2/pages/bag/BagScreen";
 import MartScreen from "./v2/pages/mart/MartScreen";
 import DexScreen from "./v2/pages/dex/DexScreen";
@@ -67,6 +68,7 @@ function App() {
 							<Route path="/pokedex/:id" element={<DexEntryScreen />} />
 							<Route path="/playground" element={<PlaygroundScreen />} />
 							<Route path="/trainer/:trainerId" element={<TrainerScreen />} />
+							<Route path="/trainer/:trainerId/battles" element={<HistoryScreen />} />
 							<Route path="/trainer" element={<Protected user={user}><TrainerScreen /></Protected>} />
 							<Route path="/game" element={<Protected user={user}><HubScreen /></Protected>} />
 							<Route path="/game/bag" element={<Protected user={user}><BagScreen /></Protected>} />

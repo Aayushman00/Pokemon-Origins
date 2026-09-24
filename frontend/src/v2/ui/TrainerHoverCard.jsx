@@ -75,6 +75,7 @@ function CardBody({ state, name, trainerId, online }) {
 					<p className="hovercard__sub">
 						{c.champion ? "Champion" : `Stage ${c.current_level}: ${c.level_name || "Kanto"}`}
 					</p>
+					{p.card?.motto && <p className="hovercard__motto read">&ldquo;{p.card.motto}&rdquo;</p>}
 				</div>
 			</div>
 
@@ -88,6 +89,7 @@ function CardBody({ state, name, trainerId, online }) {
 				<Stat label="Losses" value={r.losses} />
 				<Stat label="Win rate" value={r.win_rate == null ? "No battles yet" : `${r.win_rate}%`} />
 				<Stat label="Badges" value={`${badgeCount(c)} / 8`} />
+				{r.streak && <Stat label="Streak" value={`${r.streak.count} ${r.streak.type === "Win" ? "wins" : "losses"}`} />}
 			</dl>
 
 			<div className="hovercard__section">

@@ -38,3 +38,12 @@ export const RecentBattles = ({ recent }) =>
 	) : (
 		<p className="muted read">No battles recorded yet. Your next win or loss will show up here.</p>
 	);
+
+/** "3-win streak" / "2-loss streak"; nothing before the first battle. */
+export const StreakLine = ({ streak }) =>
+	streak ? (
+		<p className={`streak streak--${streak.type === "Win" ? "win" : "loss"}`}>
+			<span className="streak__flame" aria-hidden="true" />
+			{streak.count}-{streak.type === "Win" ? "win" : "loss"} streak
+		</p>
+	) : null;

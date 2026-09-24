@@ -8,7 +8,9 @@ import Button from "../../ui/Button";
 import PixelTrainer from "../../ui/PixelTrainer";
 import { ProgressBar, XpBar } from "../../ui/Bars";
 import { GenderMark, TypeList } from "../../ui/Badges";
-import { BadgeCase, RecentBattles } from "../../ui/TrainerStats";
+import { BadgeCase, RecentBattles, StreakLine } from "../../ui/TrainerStats";
+import CardEditor from "./CardEditor";
+import { invalidateProfile } from "../../data/profiles";
 import "./trainer.css";
 
 const Row = ({ label, value }) => (
@@ -25,6 +27,7 @@ const TrainerScreen = () => {
 	const { user } = useUser();
 	const id = param || user?.trainer_id;
 	const [state, setState] = useState({ status: "loading" });
+	const [editing, setEditing] = useState(false);
 
 	useEffect(() => {
 		let alive = true;
@@ -69,9 +72,14 @@ const TrainerScreen = () => {
 
 	return (
 		<div className="page tpage">
-			<article className="tcard frame frame--lift" aria-labelledby="tcard-name">
+			<article className="tcard frame frame--lift" data-card={p.card?.theme || "sky"} aria-labelledby="tcard-name">
 				<header className="tcard__band">
 					<span>Trainer card</span>
+					{mine && (
+						<button type="button" className="tcard__edit" onClick={() => setEditing(true)}>
+							Customize
+						</button>
+					)}
 					<span className="tcard__id">ID No. {String(p.trainer_id).padStart(5, "0")}</span>
 				</header>
 				<div className="tcard__body">
@@ -82,6 +90,7 @@ const TrainerScreen = () => {
 						<p className="tcard__title">
 							{c.champion ? "Champion of the journey" : `On the road to ${c.level_name || `stage ${c.current_level}`}`}
 						</p>
+						{p.card?.motto && <p className="tcard__motto read">&ldquo;{p.card.motto}&rdquo;</p>}
 						<dl className="stats tcard__stats">
 							<Row label="Wins" value={r.wins} />
 							<Row label="Losses" value={r.losses} />
@@ -98,12 +107,28 @@ const TrainerScreen = () => {
 					</div>
 					<div className="tcard__portrait" aria-hidden="true">
 						<PixelTrainer gender={p.gender} size={168} />
+						{p.card?.favorite && (
+							<PokemonSprite pokemonId={p.card.favorite.pokemon_id} variant="front" alt="" className="sprite tcard__fav bob" />
+						)}
 					</div>
 				</div>
 				<footer className="tcard__badges">
 					<BadgeCase campaign={c} />
 				</footer>
 			</article>
+
+			{mine && (
+				<CardEditor
+					open={editing}
+					onClose={() => setEditing(false)}
+					trainerId={p.trainer_id}
+					card={p.card || { theme: "sky" }}
+					onSaved={(profile) => {
+						invalidateProfile(p.trainer_id);
+						setState({ status: "ok", profile });
+					}}
+				/>
+			)}
 
 			<div className="tpage__grid">
 				<Panel plate="Party">
@@ -134,7 +159,11 @@ const TrainerScreen = () => {
 				</Panel>
 
 				<Panel plate="Recent battles">
+					<StreakLine streak={r.streak} />
 					<RecentBattles recent={p.recent} />
+					<Button size="sm" to={`/trainer/${p.trainer_id}/battles`} className="tpage__more">
+						Full history
+					</Button>
 				</Panel>
 			</div>
 		</div>

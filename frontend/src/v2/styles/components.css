@@ -840,3 +840,9 @@
 	box-shadow: 0 0 0 2px var(--c-line), inset -2px -2px 0 var(--c-sun-dark);
 	vertical-align: -1px;
 }
+
+.hovercard__motto {
+	font-size: var(--fs-xs);
+	font-style: italic;
+	color: var(--c-ink-soft);
+}

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import Panel from "../../ui/Panel";
 import { ProgressBar } from "../../ui/Bars";
 import { badgeCount } from "../../data/profiles";
-import { BadgeCase, RecentBattles } from "../../ui/TrainerStats";
+import { BadgeCase, RecentBattles, StreakLine } from "../../ui/TrainerStats";
 
 const TrainerRecord = ({ profile, coins }) => {
 	if (!profile) {
@@ -51,7 +51,10 @@ const TrainerRecord = ({ profile, coins }) => {
 			)}
 
 			<div className="record__block">
-				<p className="record__heading">Recent battles</p>
+				<p className="record__heading">
+					Recent battles <Link to={`/trainer/${profile.trainer_id}/battles`}>All</Link>
+				</p>
+				<StreakLine streak={r.streak} />
 				<RecentBattles recent={profile.recent} />
 			</div>
 
