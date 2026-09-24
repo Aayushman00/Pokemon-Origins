@@ -36,3 +36,26 @@ export function hitResultLines({ critical_hit, type_multiplier, hits, ohko }) {
   if (ohko) lines.push("It's a one-hit KO!");
   return lines;
 }
+
+// Visual family for per-type move effects (projectile + impact art).
+const FX_FAMILY = {
+  fire: "flame",
+  water: "bubble",
+  ice: "shard",
+  electric: "bolt",
+  grass: "leaf",
+  bug: "leaf",
+  psychic: "ring",
+  fairy: "ring",
+  dragon: "ring",
+  flying: "gust",
+  rock: "rock",
+  ground: "rock",
+  poison: "toxic",
+  ghost: "shadow",
+  dark: "shadow",
+};
+
+export function fxFamily(moveType) {
+  return FX_FAMILY[String(moveType || "").toLowerCase()] || "strike";
+}

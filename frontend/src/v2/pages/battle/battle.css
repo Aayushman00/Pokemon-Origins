@@ -1006,3 +1006,112 @@
 	width: 100%;
 	font-size: var(--fs-sm);
 }
+
+/* =========================================================
+   Touch pad (phones / coarse pointers only)
+   ========================================================= */
+.pad {
+	display: none;
+}
+
+@media (max-width: 760px), (pointer: coarse) {
+	.pad {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-top: var(--s-4);
+		padding: var(--s-4) var(--s-5);
+		background: #6c5a8e;
+		box-shadow: 0 0 0 3px var(--c-line), inset 0 -6px 0 rgba(0, 0, 0, 0.25), inset 0 4px 0 rgba(255, 255, 255, 0.15);
+		margin-left: 3px;
+		margin-right: 3px;
+		user-select: none;
+		touch-action: manipulation;
+	}
+	.battle__keys {
+		display: none;
+	}
+}
+
+.pad__dpad {
+	display: grid;
+	grid-template-columns: repeat(3, 44px);
+	grid-template-rows: repeat(3, 44px);
+}
+
+.pad__key,
+.pad__hub {
+	border: 0;
+	padding: 0;
+	background: #2b2433;
+	display: grid;
+	place-items: center;
+}
+
+.pad__key:active {
+	background: #16121b;
+}
+
+.pad__up {
+	grid-area: 1 / 2;
+	border-radius: 4px 4px 0 0;
+}
+.pad__left {
+	grid-area: 2 / 1;
+	border-radius: 4px 0 0 4px;
+}
+.pad__hub {
+	grid-area: 2 / 2;
+}
+.pad__right {
+	grid-area: 2 / 3;
+	border-radius: 0 4px 4px 0;
+}
+.pad__down {
+	grid-area: 3 / 2;
+	border-radius: 0 0 4px 4px;
+}
+
+.pad__key span {
+	width: 12px;
+	height: 12px;
+	background: #7a6f86;
+	clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.pad__left span {
+	transform: rotate(-90deg);
+}
+.pad__right span {
+	transform: rotate(90deg);
+}
+.pad__down span {
+	transform: rotate(180deg);
+}
+
+.pad__ab {
+	display: flex;
+	gap: var(--s-4);
+	transform: rotate(-18deg);
+}
+
+.pad__btn {
+	width: 58px;
+	height: 58px;
+	border: 0;
+	border-radius: 50%;
+	font-family: var(--font-pixel);
+	font-size: var(--fs-lg);
+	color: #fff;
+	background: var(--c-red);
+	box-shadow: 0 4px 0 var(--c-red-dark), 0 0 0 3px var(--c-line);
+}
+
+.pad__btn--a {
+	margin-top: -18px;
+}
+
+.pad__btn:active {
+	transform: translateY(3px);
+	box-shadow: 0 1px 0 var(--c-red-dark), 0 0 0 3px var(--c-line);
+}

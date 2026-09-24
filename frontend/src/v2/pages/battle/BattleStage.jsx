@@ -1,6 +1,9 @@
 import React from "react";
 import BattlePokemonSprite from "../../../components/PokemonSprite/BattlePokemonSprite";
 import HpPanel from "./HpPanel";
+import { fxFamily } from "../../battle/battleAnimation";
+import { TYPE_COLORS } from "../../../utils/typeColors";
+import "./fx.css";
 
 // Original backdrops per battle type (no ripped battle backgrounds).
 const THEMES = {
@@ -82,8 +85,16 @@ const BattleStage = ({ battle }) => {
 			{stage.projectile && (
 				<span
 					key={stage.projectile.key}
-					className={`projectile projectile--from-${stage.projectile.from}`}
+					className={`projectile projectile--from-${stage.projectile.from} fx-${fxFamily(stage.projectile.type)}`}
 					style={{ "--fx": stage.projectile.color }}
+					aria-hidden="true"
+				/>
+			)}
+			{stage.impact && (
+				<span
+					key={stage.impact.key}
+					className={`impact impact--at-${stage.impact.side} fx-${fxFamily(stage.impact.type)}`}
+					style={{ "--fx": TYPE_COLORS[stage.impact.type] || "#fff" }}
 					aria-hidden="true"
 				/>
 			)}

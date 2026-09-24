@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { getMoveAnimCategory, getImpactTier, hitResultLines } from "./battleAnimation.js";
+import { getMoveAnimCategory, getImpactTier, hitResultLines, fxFamily } from "./battleAnimation.js";
 
 describe("getMoveAnimCategory", () => {
   it("classifies contact-feel types as physical", () => {
@@ -72,5 +72,14 @@ describe("hitResultLines", () => {
 
   it("immunity gives no hit lines at all, even with crit set", () => {
     assert.deepEqual(hitResultLines({ critical_hit: true, type_multiplier: 0, hits: 2 }), []);
+  });
+});
+
+describe("fxFamily", () => {
+  it("maps types to an effect family and defaults to a strike", () => {
+    assert.equal(fxFamily("Fire"), "flame");
+    assert.equal(fxFamily("electric"), "bolt");
+    assert.equal(fxFamily("Normal"), "strike");
+    assert.equal(fxFamily(undefined), "strike");
   });
 });
