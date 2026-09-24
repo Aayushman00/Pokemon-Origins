@@ -5,41 +5,10 @@ import Button from "../../ui/Button";
 import { HpBar, XpBar } from "../../ui/Bars";
 import { GenderMark, TypeList } from "../../ui/Badges";
 import usePointerDrag from "../../ui/usePointerDrag";
+import PartyRow, { Grip } from "../../ui/PartyRow";
 import { useToast } from "../../ui/toastContext";
 import { applyDrop, MAX_PARTY } from "../../data/partyLayout";
 import { typeColor } from "../../../utils/typeColors";
-
-/** Pixel "grip" — the touch drag handle (mouse can drag the whole row). */
-const Grip = ({ label }) => (
-	<span className="grip" data-drag-handle aria-hidden="true" title={label}>
-		<span />
-	</span>
-);
-
-/** One compact party row. Also used by the battle switch menu and rewards. */
-export const PartyRow = ({ mon, selected, onSelect, tag, dragProps, grip }) => {
-	const fainted = mon.current_hp <= 0;
-	return (
-		<button
-			type="button"
-			className={`party-row ${selected ? "is-selected" : ""} ${fainted ? "is-fainted" : ""}`}
-			onClick={onSelect}
-			aria-pressed={onSelect ? !!selected : undefined}
-			{...dragProps}
-		>
-			{grip}
-			<PokemonSprite pokemonId={mon.pokemon_id} variant="front" alt="" className="sprite party-row__sprite" />
-			<span className="party-row__body">
-				<span className="party-row__name">
-					<span className="caps">{mon.nickname}</span> <GenderMark gender={mon.gender} />
-					<span className="party-row__lv">Lv. {mon.level}</span>
-				</span>
-				<HpBar current={mon.current_hp} max={mon.max_hp} showValue />
-			</span>
-			{(tag || fainted) && <span className="party-row__tag">{tag || "Fainted"}</span>}
-		</button>
-	);
-};
 
 const MoveLine = ({ move }) => (
 	<li className="move-line" style={{ "--type": typeColor(move.move_type) }}>

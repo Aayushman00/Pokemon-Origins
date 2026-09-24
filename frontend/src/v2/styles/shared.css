@@ -1,0 +1,221 @@
+/* Pieces shared by the hub, trainer card, battle, rewards and bag:
+   party rows + drag grip, badge case, recent battles, evolution reveal. */
+
+.party-row {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+	width: calc(100% - 6px);
+	min-height: 64px;
+	margin: 3px;
+	padding: var(--s-2) var(--s-3);
+	border: 0;
+	text-align: left;
+	background: #6fb4d8;
+	color: var(--c-ink-fixed);
+	box-shadow: 0 0 0 3px var(--c-line), inset 0 -4px 0 rgba(0, 0, 0, 0.15);
+	transition: transform var(--t-fast) steps(2, end);
+}
+
+.party-row:hover:not(:disabled) {
+	transform: translateX(3px);
+}
+
+.party-row.is-selected {
+	background: var(--c-sun);
+}
+
+.party-row.is-fainted {
+	background: #d9a79d;
+}
+
+.party-row:disabled {
+	cursor: not-allowed;
+}
+
+.party-row__sprite {
+	width: 48px;
+	height: 48px;
+	flex: none;
+}
+
+.party-row__body {
+	display: grid;
+	gap: var(--s-1);
+	flex: 1;
+	min-width: 0;
+}
+
+.party-row__name {
+	display: flex;
+	align-items: baseline;
+	gap: var(--s-1);
+	font-weight: 700;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.party-row__lv {
+	margin-left: auto;
+	font-weight: 500;
+	font-size: var(--fs-sm);
+}
+
+.party-row__tag {
+	align-self: start;
+	padding: 0 5px;
+	font-size: var(--fs-xs);
+	font-weight: 700;
+	background: #fbf6e6;
+	box-shadow: 0 0 0 2px var(--c-line);
+}
+
+.party-row--empty {
+	justify-content: center;
+	background: transparent;
+	color: var(--c-ink-soft);
+	font-size: var(--fs-sm);
+	box-shadow: none;
+	outline: 3px dashed var(--c-ink-faint);
+	outline-offset: -3px;
+}
+
+.record__heading {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: var(--s-2);
+	font-weight: 700;
+}
+
+.badge-case {
+	display: grid;
+	grid-template-columns: repeat(8, minmax(0, 44px));
+	justify-content: space-between;
+	gap: var(--s-2);
+	margin: 0;
+	padding: var(--s-2);
+	list-style: none;
+	background: var(--c-navy);
+	box-shadow: 0 0 0 3px var(--c-navy-deep);
+	margin: 3px;
+}
+
+.badge-gem {
+	aspect-ratio: 1;
+	background: #3a4c70;
+	clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%);
+}
+
+.badge-gem.is-lit {
+	background: var(--gem, var(--c-sun));
+	box-shadow: inset -3px -3px 0 rgba(0, 0, 0, 0.25), inset 3px 3px 0 rgba(255, 255, 255, 0.45);
+}
+
+.badge-gem--0 { --gem: #b8a48a; }
+
+.badge-gem--1 { --gem: #6fb4d8; }
+
+.badge-gem--2 { --gem: #f3c64b; }
+
+.badge-gem--3 { --gem: #62b14f; }
+
+.badge-gem--4 { --gem: #d97fb0; }
+
+.badge-gem--5 { --gem: #e0a33a; }
+
+.badge-gem--6 { --gem: #d5473a; }
+
+.badge-gem--7 { --gem: #6d9f5a; }
+
+.recent {
+	display: grid;
+	gap: 2px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.recent__row {
+	display: grid;
+	grid-template-columns: 24px 1fr auto;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--fs-sm);
+}
+
+.recent__result {
+	display: grid;
+	place-items: center;
+	height: 22px;
+	font-weight: 700;
+	color: #fff;
+	background: var(--c-grass-dark);
+	box-shadow: 0 0 0 2px var(--c-line);
+}
+
+.recent__row--loss .recent__result {
+	background: var(--c-red);
+}
+
+.recent__opp {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.hub-event__text {
+	font-size: var(--fs-lg);
+	line-height: 1.4;
+	text-shadow: 2px 2px 0 var(--c-navy-deep);
+}
+
+.evo-reveal {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-4);
+}
+
+.evo-reveal__from {
+	width: 72px;
+	height: 72px;
+	opacity: 0.45;
+}
+
+.evo-reveal__to {
+	width: 112px;
+	height: 112px;
+	animation: pop-in 400ms steps(4, end);
+}
+
+.evo-reveal__arrow {
+	width: 18px;
+	height: 24px;
+	background: var(--c-sun);
+	clip-path: polygon(0 0, 50% 0, 100% 50%, 50% 100%, 0 100%, 50% 50%);
+}
+
+.party-row,
+.pc__cell {
+	cursor: grab;
+	user-select: none;
+}
+
+.grip {
+	display: grid;
+	place-items: center;
+	width: 20px;
+	height: 40px;
+	flex: none;
+	margin-left: -6px;
+	touch-action: none;
+	cursor: grab;
+}
+
+.grip span {
+	width: 8px;
+	height: 20px;
+	background-image: radial-gradient(var(--c-line) 1.5px, transparent 2px);
+	background-size: 4px 5px;
+	opacity: 0.6;
+}

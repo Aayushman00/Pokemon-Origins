@@ -3,7 +3,7 @@ import MenuList from "../../ui/MenuList";
 import Button from "../../ui/Button";
 import Panel from "../../ui/Panel";
 import { TypeBadge } from "../../ui/Badges";
-import { PartyRow } from "../hub/PartyBoard";
+import PartyRow from "../../ui/PartyRow";
 import { STRUGGLE_MOVE } from "../../battle/useBattle";
 import { typeColor } from "../../../utils/typeColors";
 

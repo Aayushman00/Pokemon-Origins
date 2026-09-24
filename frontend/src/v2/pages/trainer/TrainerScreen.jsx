@@ -8,8 +8,7 @@ import Button from "../../ui/Button";
 import PixelTrainer from "../../ui/PixelTrainer";
 import { ProgressBar, XpBar } from "../../ui/Bars";
 import { GenderMark, TypeList } from "../../ui/Badges";
-import { BadgeCase, RecentBattles } from "../hub/TrainerRecord";
-import "../hub/hub.css";
+import { BadgeCase, RecentBattles } from "../../ui/TrainerStats";
 import "./trainer.css";
 
 const Row = ({ label, value }) => (

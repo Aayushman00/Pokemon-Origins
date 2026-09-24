@@ -8,8 +8,7 @@ import MenuList from "../../ui/MenuList";
 import Modal from "../../ui/Modal";
 import DialogueBox from "../../ui/DialogueBox";
 import { useToast } from "../../ui/toastContext";
-import { PartyRow } from "../hub/PartyBoard";
-import "../hub/hub.css";
+import PartyRow from "../../ui/PartyRow";
 import "./items.css";
 
 const NEEDS_TARGET = new Set(["healing", "evolution_stone", "pp_restore"]);

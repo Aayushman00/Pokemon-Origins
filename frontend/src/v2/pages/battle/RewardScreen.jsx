@@ -4,7 +4,7 @@ import { api, getErrorMessage } from "../../../api";
 import Panel from "../../ui/Panel";
 import Button from "../../ui/Button";
 import { TypeList } from "../../ui/Badges";
-import { PartyRow } from "../hub/PartyBoard";
+import PartyRow from "../../ui/PartyRow";
 
 const MAX_PARTY = 3;
 const TITLES = {
