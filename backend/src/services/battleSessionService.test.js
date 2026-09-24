@@ -205,6 +205,12 @@ function makeService({
 	// Memory battle history so win/loss recording never opens a DB pool.
 	history = createMemoryHistoryStore(),
 	random = () => 0,
+	// Controllable clock for staleness/resume tests; defaults to real time.
+	now,
+	// Override when a test needs the "DB" party to change between two
+	// startBattle calls (e.g. simulating an evolution while a session sat
+	// idle). Defaults to always returning the same fixture array.
+	getPlayerParty = async () => party,
 } = {}) {
 	const progress = createProgressService({
 		store: createMemoryStore(),
@@ -250,7 +256,8 @@ function makeService({
 		...(rewards ? { rewards } : {}),
 		...(inventory ? { inventory } : {}),
 		random,
-		getPlayerParty: async () => party,
+		...(now ? { now } : {}),
+		getPlayerParty,
 		getEnemyBattle: async (level, battleNumber) => ({
 			trainerName,
 			trainerSprite,
@@ -405,6 +412,35 @@ describe("battleSessionService", () => {
 		assert.equal(restarted.state.enemy.current_hp, 30);
 		assert.equal(restarted.state.player.current_hp, 40);
 		assert.equal(restarted.state.status, "active");
+	});
+
+	it("an idle session past the abandoned threshold re-snapshots from the party instead of resuming", async () => {
+		let clock = 1_000_000;
+		let party = defaultParty();
+		const { service } = makeService({
+			now: () => clock,
+			getPlayerParty: async () => party,
+		});
+		const started = await service.startBattle(1, { level: 1, battleNumber: 1 });
+		assert.equal(started.state.player.pokemon_id, 4); // Charmander
+
+		// Still fresh a moment later: resumes the same session unchanged.
+		clock += 60 * 1000; // +1 minute
+		const soon = await service.startBattle(1, { level: 1, battleNumber: 1 });
+		assert.equal(soon.resumed, true);
+		assert.equal(soon.state.sessionId, started.state.sessionId);
+
+		// The player evolves Charmander via some other flow (a stone, a
+		// different battle) while this session sits untouched, then comes
+		// back after the idle window: the stale snapshot must not stick.
+		party = defaultParty().map((mon) =>
+			mon.position === 1 ? { ...mon, pokemon_id: 5, nickname: "Charmeleon" } : mon
+		);
+		clock += 11 * 60 * 1000; // +11 minutes: past the 10-minute threshold
+		const stale = await service.startBattle(1, { level: 1, battleNumber: 1 });
+		assert.equal(stale.resumed, false);
+		assert.notEqual(stale.state.sessionId, started.state.sessionId);
+		assert.equal(stale.state.player.pokemon_id, 5); // Charmeleon, not the stale Charmander
 	});
 
 	it("start exposes trainerSprite for trainer battles and null for legendary encounters", async () => {

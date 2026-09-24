@@ -342,12 +342,21 @@ function createMemoryHpStore() {
 // (rewardService still requires a matching level pool `source`).
 const OFFER_BATTLE_TYPES = new Set(["gym_boss", "champion", "legendary"]);
 
+// An "active" session idle longer than this is treated as abandoned rather
+// than resumed: the player left without finishing (closed the tab, backed
+// out to the hub) and may since have evolved or leveled a party member
+// through some other flow (a stone, another battle). Resuming the old
+// snapshot past this point would show stale pre-change data; falling
+// through to a fresh snapshot picks up whatever the DB says now.
+const ABANDONED_SESSION_MS = 10 * 60 * 1000;
+
 function createBattleSessionService(deps = {}) {
 	const sessions = new Map(); // sessionId -> session
 	const sessionByTrainer = new Map(); // trainerId -> sessionId
 	const wonBattles = new Set(); // "trainerId:level:battleNumber"
 
 	const random = deps.random || Math.random;
+	const clock = deps.now || (() => Date.now());
 	const ai = deps.ai || createBattleAi({ random });
 	let mysqlPpStore = null;
 	const getPpStore = () =>
@@ -403,15 +412,23 @@ function createBattleSessionService(deps = {}) {
 		// Resume a live session for this exact battle instead of resetting it,
 		// unless the caller explicitly asked for a forced restart (mid-battle
 		// RESTART command) — force always falls through to a fresh session.
+		// A session idle past ABANDONED_SESSION_MS is treated the same as a
+		// forced restart: the player left it behind, and re-snapshotting from
+		// the DB picks up any evolution/level-up that happened meanwhile
+		// instead of showing the stale pre-change party.
 		const existingId = sessionByTrainer.get(Number(trainerId));
 		if (existingId) {
 			const existing = sessions.get(existingId);
+			const idleMs = existing
+				? clock() - new Date(existing.updatedAt).getTime()
+				: Infinity;
 			if (
 				!force &&
 				existing &&
 				existing.status === "active" &&
 				existing.level === level &&
-				existing.battleNumber === battleNumber
+				existing.battleNumber === battleNumber &&
+				idleMs < ABANDONED_SESSION_MS
 			) {
 				return { state: toPublicState(existing), resumed: true };
 			}
@@ -460,7 +477,7 @@ function createBattleSessionService(deps = {}) {
 			}
 		}
 
-		const now = new Date().toISOString();
+		const now = new Date(clock()).toISOString();
 		const session = {
 			sessionId: crypto.randomUUID(),
 			trainerId: Number(trainerId),
@@ -1390,7 +1407,7 @@ function createBattleSessionService(deps = {}) {
 					? await resolveItem(session, action, trainerId)
 					: await resolveMove(session, action);
 
-			session.updatedAt = new Date().toISOString();
+			session.updatedAt = new Date(clock()).toISOString();
 
 			// Win-path order (documented): battle beats resolve above, then
 			// progress completeBattle → XP award → coin award → boss reward
