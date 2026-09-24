@@ -235,4 +235,22 @@ describe("attachPlayground chat wiring", () => {
 		assert.equal(chatEmits(emits1).length, 1);
 		assert.equal(chatEmits(emits2).length, 0);
 	});
+
+	it("an older tab disconnecting does not remove a trainer who reconnected in another tab", () => {
+		const { io, broadcasts, connect } = createFakeIo();
+		attachPlayground(io, fakePool);
+
+		const trainer = { trainerId: 20, name: "TwoTabs" };
+		const first = createFakeSocket(trainer);
+		connect(first.socket);
+		const second = createFakeSocket(trainer);
+		connect(second.socket);
+
+		first.handlers["disconnect"]();
+		assert.equal(broadcasts.filter((b) => b.event === "player:left").length, 0);
+
+		second.handlers["disconnect"]();
+		assert.equal(broadcasts.filter((b) => b.event === "player:left").length, 1);
+	});
 });
+

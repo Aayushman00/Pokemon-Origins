@@ -107,6 +107,9 @@ function attachPlayground(io, pool) {
 		});
 
 		socket.on("disconnect", () => {
+			// Same trainer in two tabs: a newer socket owns the slot, so an
+			// older tab closing must not remove the trainer who is still here.
+			if (trainerSockets.get(trainerId) !== socket) return;
 			roomState.removePlayer(trainerId);
 			lastMoveAt.delete(trainerId);
 			trainerSockets.delete(trainerId);

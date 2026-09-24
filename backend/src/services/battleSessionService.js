@@ -277,6 +277,30 @@ function createMysqlPpStore() {
 	};
 }
 
+/** Appends one finished battle to the (previously unused) `battles` table. */
+function createMysqlHistoryStore() {
+	return {
+		async record({ trainerId, opponent, result }) {
+			const pool = require("../config/trainerdb");
+			await pool.query(
+				"INSERT INTO battles (trainer_id, opponent, result) VALUES (?, ?, ?)",
+				[trainerId, String(opponent || "Unknown").slice(0, 50), result]
+			);
+		},
+	};
+}
+
+/** In-memory history store for tests; exposes `rows`. */
+function createMemoryHistoryStore() {
+	const rows = [];
+	return {
+		rows,
+		async record(row) {
+			rows.push({ ...row });
+		},
+	};
+}
+
 /** In-memory ppStore for tests; exposes `saved` for assertions. */
 function createMemoryPpStore() {
 	const saved = [];
@@ -302,6 +326,9 @@ function createBattleSessionService(deps = {}) {
 	let mysqlPpStore = null;
 	const getPpStore = () =>
 		deps.ppStore || (mysqlPpStore ||= createMysqlPpStore());
+	let mysqlHistoryStore = null;
+	const getHistoryStore = () =>
+		deps.history || (mysqlHistoryStore ||= createMysqlHistoryStore());
 	const getProgressService = () =>
 		deps.progress || require("./progressService");
 	const getXpService = () => deps.xp || require("./xpService");
@@ -1219,6 +1246,22 @@ function createBattleSessionService(deps = {}) {
 		}
 	}
 
+	// Win/loss record for trainer profiles. Best-effort, once per session:
+	// a history write failure must never break the battle response.
+	async function recordResultOnBattleEnd(session, trainerId) {
+		if (session.status === "active" || session.historyRecorded) return;
+		session.historyRecorded = true;
+		try {
+			await getHistoryStore().record({
+				trainerId: Number(trainerId),
+				opponent: session.trainerName,
+				result: session.status === "won" ? "Win" : "Loss",
+			});
+		} catch (err) {
+			console.error("Failed to record battle result:", err.message);
+		}
+	}
+
 	async function performAction(trainerId, { sessionId, action }) {
 		const session = getOwnedSession(trainerId, sessionId);
 		if (session.status !== "active") {
@@ -1355,6 +1398,7 @@ function createBattleSessionService(deps = {}) {
 
 			// Phase 14: PP persists at battle end — after a win AND a loss.
 			await persistPpOnBattleEnd(session);
+			await recordResultOnBattleEnd(session, trainerId);
 
 			return {
 				state: toPublicState(session),
@@ -1393,6 +1437,7 @@ module.exports = {
 	hasWonBattle: defaultService.hasWonBattle,
 	createBattleSessionService,
 	createMemoryPpStore,
+	createMemoryHistoryStore,
 	snapshotPokemon,
 	STRUGGLE_MOVE_ID,
 };

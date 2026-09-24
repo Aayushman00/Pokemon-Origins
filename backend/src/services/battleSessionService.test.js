@@ -1,6 +1,10 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
-const { createBattleSessionService, snapshotPokemon } = require("./battleSessionService");
+const {
+	createBattleSessionService,
+	createMemoryHistoryStore,
+	snapshotPokemon,
+} = require("./battleSessionService");
 const {
 	createProgressService,
 	createMemoryStore,
@@ -196,6 +200,8 @@ function makeService({
 	ai = createBattleAi({ chart: {}, random: () => 0 }),
 	// Memory ppStore so battle-end PP persistence never opens a DB pool.
 	ppStore = { savePp: async () => {} },
+	// Memory battle history so win/loss recording never opens a DB pool.
+	history = createMemoryHistoryStore(),
 	random = () => 0,
 } = {}) {
 	const progress = createProgressService({
@@ -237,6 +243,7 @@ function makeService({
 		moveLearn,
 		ai,
 		ppStore,
+		history,
 		...(rewards ? { rewards } : {}),
 		...(inventory ? { inventory } : {}),
 		random,
@@ -248,7 +255,7 @@ function makeService({
 			battleType,
 		}),
 	});
-	return { service, progress, engine, xp, xpStore, wallet };
+	return { service, progress, engine, xp, xpStore, wallet, history };
 }
 
 /**
@@ -516,7 +523,7 @@ describe("battleSessionService", () => {
 	});
 
 	it("win completes progress exactly once and grants XP once", async () => {
-		const { service, progress, xpStore, wallet } = makeService({
+		const { service, progress, xpStore, wallet, history } = makeService({
 			engine: stubEngine([{ result: "hit", damage: 30 }]),
 			trainerId: 7,
 		});
@@ -543,6 +550,9 @@ describe("battleSessionService", () => {
 		assert.equal(result.state.progressAwarded, true);
 		assert.equal(result.progress.current_battle, 2);
 		assert.equal(service.hasWonBattle(7, 1, 1), true);
+		assert.deepEqual(history.rows, [
+			{ trainerId: 7, opponent: "Youngster Joey", result: "Win" },
+		]);
 
 		// XP persisted exactly once to the active mon's row
 		const savedRow = await xpStore.getMon(7, 101);
@@ -829,7 +839,7 @@ describe("battleSessionService", () => {
 	it("all-faint loss does not advance progress and grants no XP", async () => {
 		// Only the lead can fight (5 HP); the bench has already fainted,
 		// so its members must not count as reserves.
-		const { service, progress, xpStore, wallet } = makeService({
+		const { service, progress, xpStore, wallet, history } = makeService({
 			party: [
 				playerMon({
 					id: 101,
@@ -860,6 +870,9 @@ describe("battleSessionService", () => {
 		assert.equal(result.state.player.current_hp, 0);
 		assert.equal(result.progress, undefined);
 		assert.equal(service.hasWonBattle(9, 1, 1), false);
+		assert.deepEqual(history.rows, [
+			{ trainerId: 9, opponent: "Youngster Joey", result: "Loss" },
+		]);
 
 		// No XP and no coins on a loss
 		const lead = await xpStore.getMon(9, 101);
