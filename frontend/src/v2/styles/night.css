@@ -49,16 +49,19 @@
 	opacity: 0.22;
 }
 
-:root[data-theme="dark"] .journey__hills,
-:root[data-theme="dark"] .journey__roadwrap {
-	filter: brightness(0.5) saturate(0.75) hue-rotate(10deg);
+:root[data-theme="dark"] .journey__hills {
+	filter: brightness(0.5) saturate(0.75);
 }
 
-:root[data-theme="dark"] .journey__road .stop__name,
-:root[data-theme="dark"] .journey__road .stop__marker,
-:root[data-theme="dark"] .stop__party {
-	/* town signs are lit: undo the land filter on them */
-	filter: brightness(2) saturate(1.3) hue-rotate(-10deg);
+/* Land is recoloured (not filtered) so the lit town signs stay readable */
+:root[data-theme="dark"] .journey__roadwrap {
+	background-color: #2f5436;
+	box-shadow: inset 0 4px 0 #1f3a25;
+}
+
+:root[data-theme="dark"] .journey__road::before {
+	background: #6d5236;
+	box-shadow: 0 -3px 0 #3e2f1c, 0 3px 0 #3e2f1c, inset 0 4px 0 #86684a;
 }
 
 /* ---- Battle: field fights happen under the night sky ---- */

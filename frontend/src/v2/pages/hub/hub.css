@@ -84,7 +84,7 @@
 
 .journey__hello {
 	font-size: var(--fs-md);
-	color: var(--c-ink-soft);
+	color: #5e4c3f;
 }
 
 .journey__name {
@@ -207,7 +207,7 @@
 }
 
 .stop--locked .stop__name {
-	color: var(--c-ink-soft);
+	color: #6e5c4d;
 	background: rgba(230, 214, 171, 0.9);
 }
 
@@ -451,7 +451,7 @@
 	padding: 0 5px;
 	font-size: var(--fs-xs);
 	font-weight: 700;
-	background: var(--c-paper);
+	background: #fbf6e6;
 	box-shadow: 0 0 0 2px var(--c-line);
 }
 
