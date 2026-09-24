@@ -238,7 +238,8 @@ def _single_hit_damage(
     base_before_scale = (level_factor * move_dict["power"] * attack) // defense
     base_damage = base_before_scale // 50 + 2
 
-    crit = random.random() < CRIT_RATE
+    # Confusion self-hit damage is typeless AND cannot crit in the real games.
+    crit = False if move_dict.get("no_crit") else random.random() < CRIT_RATE
     crit_multiplier = CRIT_MULTIPLIER if crit else 1.0
     stab_multiplier = STAB_MULTIPLIER if stab else 1.0
     random_factor = random.uniform(0.85, 1.0)
@@ -392,8 +393,43 @@ def calculate_damage_result(battle: BattleRequest) -> Dict[str, Any]:
             "details": details,
         }
 
+    # --- Disable (locks the target's last-used move; session tracks which
+    # move that is, since this engine is stateless) -------------------------
+    if effect_type == "disable":
+        if not _hit_check(battle, move_dict, details):
+            return {"result": "miss", "damage": 0, "details": details}
+        return {
+            "result": "status",
+            "damage": 0,
+            "disable_applied": True,
+            "details": details,
+        }
+
     # --- Pure status / stat-change moves ------------------------------------
     if effect_type == "status":
+        # Volatile effects (confusion/attract) are mutually exclusive with
+        # major-status/stat-change moves in move_effects.json and have no
+        # type-immunity rule, so they short-circuit the rest of this branch.
+        volatile = move_dict.get("volatile_effect")
+        if volatile:
+            if not _hit_check(battle, move_dict, details):
+                return {"result": "miss", "damage": 0, "details": details}
+            chance = move_dict.get("effect_chance")
+            chance = 1.0 if chance is None else float(chance)
+            roll = random.random()
+            details["volatile_roll"] = roll
+            details["volatile_chance"] = chance
+            if roll >= chance:
+                return {"result": "failed", "damage": 0, "details": details}
+            return {
+                "result": "status",
+                "damage": 0,
+                "status_effect_applied": None,
+                "volatile_effect_applied": volatile,
+                "stat_changes": [],
+                "details": details,
+            }
+
         type_multiplier = _type_multiplier(battle, move_dict)
         targets_enemy = bool(move_dict.get("status_effect")) or any(
             (change.get("target", "enemy") == "enemy")
@@ -494,6 +530,15 @@ def calculate_damage_result(battle: BattleRequest) -> Dict[str, Any]:
 
     stat_changes = _stat_changes_verdict(move_dict, details)
 
+    # Secondary flinch (Bite/Stomp/Rock-slide family): only rolled on a hit
+    # that actually dealt damage, same as every other secondary effect above.
+    flinch_applied = False
+    flinch_chance = move_dict.get("flinch_chance")
+    if flinch_chance and total_damage > 0:
+        flinch_roll = random.random()
+        details["flinch_roll"] = flinch_roll
+        flinch_applied = flinch_roll < float(flinch_chance)
+
     result: Dict[str, Any] = {
         "result": "hit",
         "damage": total_damage,
@@ -504,6 +549,7 @@ def calculate_damage_result(battle: BattleRequest) -> Dict[str, Any]:
         "status_effect_applied": status_applied,
         "attacker_status_applied": attacker_status_applied,
         "stat_changes": stat_changes,
+        "flinch_applied": flinch_applied,
         "details": details,
     }
     if num_hits > 1 or effect_type == "multi_hit":

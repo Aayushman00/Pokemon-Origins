@@ -7,13 +7,18 @@ const {
 	effectiveSpeed,
 	chipDamage,
 	rollSleepTurns,
+	rollConfusionTurns,
+	rollDisableTurns,
 	statusGate,
+	volatileGate,
 	movePriority,
 	statusAppliedLine,
 	cantMoveLine,
 	statusEndLine,
 	chipLine,
 	statChangeLine,
+	volatileAppliedLine,
+	volatileEndLine,
 } = require("./battleStatus");
 const { createBattleAi } = require("./battleAi");
 const { xpNeededForLevel, xpGainForWin } = require("./xpService");
@@ -79,6 +84,7 @@ const { rollGenderForSpecies } = require("./genderService");
  */
 
 const STRUGGLE_MOVE_ID = -1;
+const CONFUSION_SELF_HIT_MOVE_ID = -2;
 
 /** Synthetic Struggle (Gen 2-3 style): typeless 50 BP, always hits, 1/4
  * damage recoil — the effects live in the engine's move_effects.json. */
@@ -147,6 +153,14 @@ function snapshotPokemon(raw, fallbackPosition = null) {
 		// starts clean (the DB's cosmetic status string is ignored).
 		status: null,
 		statusTurns: 0,
+		// Volatile conditions (Phase 15): independent of the major status
+		// above, cleared on switch, never persisted.
+		confusionTurns: 0,
+		disabledMoveId: null,
+		disableTurns: 0,
+		flinched: false,
+		attracted: false,
+		lastMoveId: null,
 		stages: freshStages(),
 		ability: raw.ability
 			? {
@@ -180,12 +194,14 @@ function clonePokemon(pokemon) {
 	};
 }
 
-/** True when every tracked move is out of PP (Struggle time). */
+/** True when every tracked move is out of PP or disabled (Struggle time). */
 function outOfPp(mon) {
 	return (
 		mon.moves.length > 0 &&
 		mon.moves.every(
-			(m) => typeof m.current_pp === "number" && m.current_pp <= 0
+			(m) =>
+				(typeof m.current_pp === "number" && m.current_pp <= 0) ||
+				m.move_id === mon.disabledMoveId
 		)
 	);
 }
@@ -568,6 +584,116 @@ function createBattleSessionService(deps = {}) {
 		});
 	}
 
+	/** Applies confusion (no-op if fainted or already confused). */
+	function applyConfusion(session, side, events) {
+		const mon = session[side];
+		if (mon.current_hp <= 0 || mon.confusionTurns > 0) return;
+		mon.confusionTurns = rollConfusionTurns(random);
+		session.log.push(volatileAppliedLine(mon.nickname, "confusion"));
+		events.push({
+			target: side,
+			type: "volatile_applied",
+			position: mon.position,
+			nickname: mon.nickname,
+			volatile: "confusion",
+		});
+	}
+
+	/**
+	 * Applies infatuation. Requires an opposite, non-genderless gender match
+	 * between attacker and defender — engine can't check this itself (it has
+	 * no gender concept), so the session verifies it after the move connects.
+	 */
+	function applyAttract(session, attackerKey, defenderKey, events) {
+		const attacker = session[attackerKey];
+		const defender = session[defenderKey];
+		if (defender.current_hp <= 0 || defender.attracted) return;
+		const compatible =
+			(attacker.gender === "male" && defender.gender === "female") ||
+			(attacker.gender === "female" && defender.gender === "male");
+		if (!compatible) {
+			session.log.push("But it failed!");
+			return;
+		}
+		defender.attracted = true;
+		session.log.push(volatileAppliedLine(defender.nickname, "attract"));
+		events.push({
+			target: defenderKey,
+			type: "volatile_applied",
+			position: defender.position,
+			nickname: defender.nickname,
+			volatile: "attract",
+		});
+	}
+
+	/**
+	 * Locks the defender's last-used move (Disable). Fails if it hasn't
+	 * moved yet this battle or is already disabled — the engine can't check
+	 * either since it's stateless and doesn't track move history.
+	 */
+	function applyDisable(session, defenderKey, events) {
+		const mon = session[defenderKey];
+		if (mon.current_hp <= 0 || mon.disabledMoveId != null || mon.lastMoveId == null) {
+			session.log.push("But it failed!");
+			return;
+		}
+		const disabledMove = mon.moves.find((m) => m.move_id === mon.lastMoveId);
+		mon.disabledMoveId = mon.lastMoveId;
+		mon.disableTurns = rollDisableTurns(random);
+		session.log.push(`${mon.nickname}'s ${disabledMove?.name || "move"} was disabled!`);
+		events.push({
+			target: defenderKey,
+			type: "disable_applied",
+			position: mon.position,
+			nickname: mon.nickname,
+			moveId: mon.disabledMoveId,
+		});
+	}
+
+	/**
+	 * Confusion self-hit: Gen 3-exact typeless 40 BP physical hit against the
+	 * mon's own stats via the normal damage engine (move_effects.json marks
+	 * the synthetic move typeless + no_crit, matching how confusion damage
+	 * works in the real games — it can never be a critical hit).
+	 */
+	async function confusionSelfHit(session, attackerKey) {
+		const attacker = session[attackerKey];
+		const engine = getEngine();
+		const move = {
+			move_id: CONFUSION_SELF_HIT_MOVE_ID,
+			name: "confusion_self_hit",
+			power: 40,
+			accuracy: 1,
+			move_type: "Normal",
+			status_effect: null,
+			effect_chance: null,
+			current_pp: null,
+			max_pp: null,
+		};
+		const result = await engine.calculateDamage({
+			attacker: clonePokemon(attacker),
+			defender: clonePokemon(attacker),
+			move,
+		});
+		const damage = Math.max(0, Math.round(Number(result.damage) || 0));
+		attacker.current_hp = Math.max(0, attacker.current_hp - damage);
+		session.log.push(`${attacker.nickname} hurt itself in its confusion!`);
+		const event = {
+			actor: attackerKey,
+			type: "confusion_self_hit",
+			position: attacker.position,
+			nickname: attacker.nickname,
+			damage,
+			targetHpAfter: attacker.current_hp,
+			targetFainted: attacker.current_hp <= 0,
+		};
+		const events = [event];
+		if (attacker.current_hp <= 0 && session.status === "active") {
+			processFaint(session, attackerKey);
+		}
+		return events;
+	}
+
 	/** Applies engine stat-change verdicts with clamping + events. */
 	function applyStatChanges(session, attackerKey, changes, events) {
 		const defenderKey = attackerKey === "player" ? "enemy" : "player";
@@ -674,6 +800,14 @@ function createBattleSessionService(deps = {}) {
 			if (result.status_effect_applied) {
 				applyStatus(session, defenderKey, result.status_effect_applied, events);
 			}
+			if (result.volatile_effect_applied === "confusion") {
+				applyConfusion(session, defenderKey, events);
+			} else if (result.volatile_effect_applied === "attract") {
+				applyAttract(session, attackerKey, defenderKey, events);
+			}
+			if (result.disable_applied) {
+				applyDisable(session, defenderKey, events);
+			}
 			applyStatChanges(session, attackerKey, result.stat_changes, events);
 			return events;
 		}
@@ -719,6 +853,11 @@ function createBattleSessionService(deps = {}) {
 		} else {
 			if (result.status_effect_applied) {
 				applyStatus(session, defenderKey, result.status_effect_applied, events);
+			}
+			// Secondary flinch (Bite/Stomp/Rock-slide family): consumed at
+			// the start of the defender's own next beat this round.
+			if (result.flinch_applied) {
+				defender.flinched = true;
 			}
 			applyStatChanges(session, attackerKey, result.stat_changes, events);
 		}
@@ -780,8 +919,10 @@ function createBattleSessionService(deps = {}) {
 	}
 
 	/**
-	 * A full beat: pre-move status gate, PP spend, then the attack itself.
-	 * Blocked turns (sleep/para/freeze) consume the beat but not PP.
+	 * A full beat: major-status gate, then the volatile gate (confusion /
+	 * attract / flinch — only reached once the major-status gate clears the
+	 * mon to act), PP spend and last-move tracking, then the attack itself.
+	 * Any blocked turn consumes the beat but not PP.
 	 */
 	async function runBeat(session, attackerKey, move) {
 		const attacker = session[attackerKey];
@@ -808,6 +949,60 @@ function createBattleSessionService(deps = {}) {
 				status: gate.blocked,
 			});
 			return events;
+		}
+
+		const vGate = volatileGate(attacker, random);
+		if (vGate.nextTurns != null) attacker.confusionTurns = vGate.nextTurns;
+		if (vGate.curedConfusion) {
+			session.log.push(volatileEndLine(attacker.nickname, "confusion"));
+			events.push({
+				actor: attackerKey,
+				type: "volatile_end",
+				position: attacker.position,
+				nickname: attacker.nickname,
+				volatile: "confusion",
+			});
+		}
+		// Flinch is single-use: consumed by this check whether or not it was
+		// actually set, so it never lingers into a later round.
+		attacker.flinched = false;
+		if (!vGate.act) {
+			if (vGate.selfHit) {
+				events.push(...(await confusionSelfHit(session, attackerKey)));
+			} else {
+				session.log.push(cantMoveLine(attacker.nickname, vGate.blocked));
+				events.push({
+					actor: attackerKey,
+					type: "cant_move",
+					position: attacker.position,
+					nickname: attacker.nickname,
+					status: vGate.blocked,
+				});
+			}
+			return events;
+		}
+
+		if (move.move_id !== STRUGGLE_MOVE_ID) {
+			attacker.lastMoveId = move.move_id;
+		}
+
+		// Disable counts down once per turn its mon actually attempts to
+		// move (ponytail simplification: real Gen 3 ticks it down even on
+		// turns blocked by sleep/paralysis/etc.).
+		if (attacker.disabledMoveId != null) {
+			attacker.disableTurns -= 1;
+			if (attacker.disableTurns <= 0) {
+				attacker.disabledMoveId = null;
+				attacker.disableTurns = 0;
+				session.log.push(volatileEndLine(attacker.nickname, "disable"));
+				events.push({
+					actor: attackerKey,
+					type: "volatile_end",
+					position: attacker.position,
+					nickname: attacker.nickname,
+					volatile: "disable",
+				});
+			}
 		}
 
 		if (
@@ -921,6 +1116,9 @@ function createBattleSessionService(deps = {}) {
 			if (!playerMove) {
 				throw new CampaignError(400, "Unknown move for this Pokémon");
 			}
+			if (session.player.disabledMoveId === action.moveId) {
+				throw new CampaignError(400, `${playerMove.name} is disabled!`);
+			}
 			if (
 				typeof playerMove.current_pp === "number" &&
 				playerMove.current_pp <= 0
@@ -1009,8 +1207,14 @@ function createBattleSessionService(deps = {}) {
 
 		const forced = session.requiresSwitch;
 		const outgoing = session.player;
-		// Stat stages reset when a mon leaves the field (status persists).
+		// Stat stages AND volatile conditions reset when a mon leaves the
+		// field (major status and current_hp persist).
 		outgoing.stages = freshStages();
+		outgoing.confusionTurns = 0;
+		outgoing.disabledMoveId = null;
+		outgoing.disableTurns = 0;
+		outgoing.attracted = false;
+		outgoing.flinched = false;
 		const fromPosition = session.activePosition;
 		session.player = target;
 		session.activePosition = target.position;

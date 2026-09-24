@@ -8,9 +8,15 @@ const {
 	normalizeStatus,
 	chipDamage,
 	rollSleepTurns,
+	rollConfusionTurns,
+	rollDisableTurns,
 	statusGate,
+	volatileGate,
 	movePriority,
 	statChangeLine,
+	cantMoveLine,
+	volatileAppliedLine,
+	volatileEndLine,
 } = require("./battleStatus");
 
 describe("battleStatus stage math", () => {
@@ -118,6 +124,95 @@ describe("battleStatus status helpers", () => {
 		assert.deepEqual(statusGate({ status: null }, () => 0), { act: true });
 		assert.deepEqual(statusGate({ status: "brn" }, () => 0), { act: true });
 		assert.deepEqual(statusGate({ status: "psn" }, () => 0), { act: true });
+	});
+});
+
+describe("battleStatus volatile conditions", () => {
+	it("rolls 1-4 confusion turns and 2-5 disable turns", () => {
+		assert.equal(rollConfusionTurns(() => 0), 1);
+		assert.equal(rollConfusionTurns(() => 0.99), 4);
+		assert.equal(rollDisableTurns(() => 0), 2);
+		assert.equal(rollDisableTurns(() => 0.99), 5);
+	});
+
+	it("flinch blocks the beat and is meant to be cleared by the caller", () => {
+		assert.deepEqual(volatileGate({ flinched: true }, () => 0), {
+			act: false,
+			blocked: "flinch",
+		});
+	});
+
+	it("confusion decrements each turn and self-hits 1/3 of the time", () => {
+		const confused = { confusionTurns: 2 };
+		assert.deepEqual(volatileGate(confused, () => 0), {
+			act: false,
+			blocked: "confusion",
+			selfHit: true,
+			nextTurns: 1,
+			curedConfusion: false,
+		});
+		assert.deepEqual(volatileGate(confused, () => 0.9), {
+			act: true,
+			nextTurns: 1,
+			curedConfusion: false,
+		});
+	});
+
+	it("the last confused turn still rolls a self-hit chance, then snaps out", () => {
+		// Self-hit still lands on the final confused turn — it isn't skipped.
+		assert.deepEqual(volatileGate({ confusionTurns: 1 }, () => 0), {
+			act: false,
+			blocked: "confusion",
+			selfHit: true,
+			nextTurns: 0,
+			curedConfusion: true,
+		});
+		assert.deepEqual(volatileGate({ confusionTurns: 1 }, () => 0.9), {
+			act: true,
+			nextTurns: 0,
+			curedConfusion: true,
+		});
+	});
+
+	it("attract skips the turn half the time when infatuated", () => {
+		assert.deepEqual(volatileGate({ attracted: true }, () => 0.1), {
+			act: false,
+			blocked: "attract",
+		});
+		assert.deepEqual(volatileGate({ attracted: true }, () => 0.9), {
+			act: true,
+		});
+	});
+
+	it("a mon with no volatile conditions always acts", () => {
+		assert.deepEqual(volatileGate({}, () => 0), { act: true });
+	});
+
+	it("volatile log lines cover attract/flinch cant-move and applied/end text", () => {
+		assert.equal(
+			cantMoveLine("Nidoran", "attract"),
+			"Nidoran is immobilized by love!"
+		);
+		assert.equal(
+			cantMoveLine("Nidoran", "flinch"),
+			"Nidoran flinched and couldn't move!"
+		);
+		assert.equal(
+			volatileAppliedLine("Nidoran", "confusion"),
+			"Nidoran became confused!"
+		);
+		assert.equal(
+			volatileAppliedLine("Nidoran", "attract"),
+			"Nidoran fell in love!"
+		);
+		assert.equal(
+			volatileEndLine("Nidoran", "confusion"),
+			"Nidoran snapped out of its confusion!"
+		);
+		assert.equal(
+			volatileEndLine("Nidoran", "disable"),
+			"Nidoran's move is no longer disabled!"
+		);
 	});
 });
 

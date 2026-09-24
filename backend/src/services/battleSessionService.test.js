@@ -2187,4 +2187,144 @@ describe("battleSessionService", () => {
 		assert.equal((await xpStore.getMon(85, 101)).experience, 12);
 		assert.equal((await xpStore.getMon(85, 102)).experience, 12);
 	});
+
+	it("Confuse-ray applies confusion, and a confused mon can self-hit on its next beat", async () => {
+		const party = [
+			playerMon({
+				id: 101,
+				position: 1,
+				moves: [
+					{ move_id: 700, name: "Confuse-ray", power: 0, accuracy: 1, move_type: "Ghost" },
+				],
+			}),
+		];
+		// random()=>0 rolls the minimum 1-turn confusion AND always wins the
+		// 1/3 self-hit roll, so the enemy's very next beat (same round, since
+		// the player is faster) hits itself instead of attacking.
+		const engine = stubEngine([
+			{ result: "status", damage: 0, volatile_effect_applied: "confusion" }, // player's Confuse-ray
+			{ result: "hit", damage: 7 }, // enemy's confusion self-hit
+		]);
+		const { service } = makeService({ party, trainerId: 90, engine });
+		const { state } = await service.startBattle(90, { level: 1, battleNumber: 1 });
+		const result = await service.performAction(90, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 700 },
+		});
+		assert.ok(
+			result.events.some(
+				(e) => e.type === "volatile_applied" && e.volatile === "confusion"
+			)
+		);
+		const selfHit = result.events.find((e) => e.type === "confusion_self_hit");
+		assert.ok(selfHit);
+		assert.equal(selfHit.actor, "enemy");
+		assert.equal(selfHit.damage, 7);
+		assert.equal(result.state.enemy.current_hp, 23); // 30 max_hp - 7
+		// Duration was 1, and it was just consumed: confusion is over.
+		assert.equal(result.state.enemy.confusionTurns, 0);
+	});
+
+	it("Disable locks the target's last-used move; the AI avoids it once out of alternatives", async () => {
+		const party = [
+			playerMon({
+				id: 101,
+				position: 1,
+				moves: [
+					{ move_id: 33, name: "Tackle", power: 40, accuracy: 1, move_type: "Normal" },
+					{ move_id: 500, name: "Disable", power: 0, accuracy: 1, move_type: "Normal" },
+				],
+			}),
+		];
+		// enemyMon()'s only move is Tackle (33) — once disabled, the AI has
+		// nothing left and must Struggle.
+		const engine = stubEngine([
+			{ result: "hit", damage: 5 }, // r1 player Tackle
+			{ result: "hit", damage: 5 }, // r1 enemy Tackle (sets lastMoveId)
+			{ result: "status", damage: 0, disable_applied: true }, // r2 player Disable
+			{ result: "hit", damage: 5 }, // r2 enemy Tackle (already picked before Disable landed)
+			{ result: "hit", damage: 5 }, // r3 player Tackle
+			{ result: "hit", damage: 5 }, // r3 enemy Struggle
+		]);
+		const { service } = makeService({ party, trainerId: 92, engine });
+		const { state } = await service.startBattle(92, { level: 1, battleNumber: 1 });
+
+		await service.performAction(92, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		const disabled = await service.performAction(92, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 500 },
+		});
+		assert.equal(disabled.state.enemy.disabledMoveId, 33);
+		assert.ok(
+			disabled.events.some((e) => e.type === "disable_applied")
+		);
+
+		const forcedStruggle = await service.performAction(92, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		const enemyMoveEvent = forcedStruggle.events.find(
+			(e) => e.actor === "enemy" && e.type === "move"
+		);
+		assert.equal(enemyMoveEvent.moveId, -1); // Struggle: Tackle is its only move and it's disabled
+	});
+
+	it("Attract requires a compatible gender and fails otherwise", async () => {
+		const attractMove = [
+			{ move_id: 600, name: "Attract", power: 0, accuracy: 1, move_type: "Normal" },
+		];
+		const engineResults = () =>
+			stubEngine([
+				{ result: "status", damage: 0, volatile_effect_applied: "attract" },
+				{ result: "miss", damage: 0 },
+			]);
+
+		const compatible = makeService({
+			party: [playerMon({ id: 101, position: 1, gender: "male", moves: attractMove })],
+			enemy: enemyMon({ gender: "female" }),
+			trainerId: 93,
+			engine: engineResults(),
+		});
+		const started = await compatible.service.startBattle(93, { level: 1, battleNumber: 1 });
+		const hit = await compatible.service.performAction(93, {
+			sessionId: started.state.sessionId,
+			action: { type: "move", moveId: 600 },
+		});
+		assert.equal(hit.state.enemy.attracted, true);
+
+		const incompatible = makeService({
+			party: [playerMon({ id: 101, position: 1, gender: "male", moves: attractMove })],
+			enemy: enemyMon({ gender: "male" }),
+			trainerId: 94,
+			engine: engineResults(),
+		});
+		const started2 = await incompatible.service.startBattle(94, { level: 1, battleNumber: 1 });
+		const failed = await incompatible.service.performAction(94, {
+			sessionId: started2.state.sessionId,
+			action: { type: "move", moveId: 600 },
+		});
+		assert.equal(failed.state.enemy.attracted, false);
+	});
+
+	it("a secondary flinch effect prevents the defender's next beat this round", async () => {
+		const party = [playerMon({ id: 101, position: 1 })];
+		const engine = stubEngine([{ result: "hit", damage: 5, flinch_applied: true }]);
+		const { service } = makeService({ party, trainerId: 95, engine });
+		const { state } = await service.startBattle(95, { level: 1, battleNumber: 1 });
+		const result = await service.performAction(95, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		// Player (faster) hits and flinches the enemy; the enemy's own beat
+		// this round is blocked instead of attacking, and never reaches the
+		// engine at all.
+		const enemyBeat = result.events.find((e) => e.actor === "enemy");
+		assert.equal(enemyBeat.type, "cant_move");
+		assert.equal(enemyBeat.status, "flinch");
+		assert.equal(engine.calls.length, 1);
+		assert.equal(result.state.enemy.flinched, false);
+	});
 });
