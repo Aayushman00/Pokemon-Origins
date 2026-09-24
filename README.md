@@ -6,11 +6,12 @@ Full-stack Pokemon app: React Pokedex UI, Node/Express trainer API, and a Python
 
 ```
 Pokemon-Origins/
-├── frontend/              # React + Vite client
-├── backend/               # Express API + Socket.IO (BFF for battle)
+├── frontend/              # React + Vite client (screens live under src/v2/)
+├── backend/               # Express API + Socket.IO (BFF for battle + campaign + playground)
 ├── battle-engine/         # FastAPI combat microservice
-├── database/              # SQL seed / schema dumps
+├── database/              # SQL seed / schema dumps + migrations
 ├── docs/design/           # STYLE_GUIDE + ANIMATION_GUIDE
+├── docs/superpowers/      # Working plans / specs for past feature phases
 ├── scripts/               # Cross-platform start/setup helpers
 ├── package.json           # Root workspace + one-command `npm run dev`
 ├── docker-compose.yml     # MySQL (default) + optional full stack
@@ -73,6 +74,8 @@ Then open:
 | `npm run docker:db` | Start MySQL via Compose |
 | `npm run docker:up` | Full stack containers (`--profile full`) |
 | `npm run docker:down` | Stop Compose services |
+| `npm run sprites:bootstrap` | Fetch/prep dev sprite assets |
+| `npm run validate:sprites` | Validate sprite sheet coverage |
 
 Full stack Docker:
 
@@ -148,9 +151,11 @@ Browser → frontend (:5173)
 
 Health: `GET http://localhost:5000/health`, `GET http://localhost:8000/health`.
 
-### Removed prototypes
+### Feature surface (current)
 
-The unrouted ChatGround vicinity-chat prototype has been **deleted** from the frontend (UI/UX cleanup pass). The backend Socket.IO chat endpoint still exists but has no product surface; a future multiplayer feature would need a new client and a Redis Socket.IO adapter.
+- **Campaign**: 10 story levels (`backend/src/campaign/`, `backend/src/routes/campaign.js`), server-tracked progress (`trainer_progress`), gym/E4/champion/legendary bosses, multi-mon enemy parties.
+- **Rewards, mart, evolution, move-learning, inventory**: `backend/src/routes/{rewards,mart,evolutions,moves,inventory}.js` — see [`database/README.md`](database/README.md) for the full migration-by-migration writeup of each system.
+- **Playground**: a live vicinity-chat + movement room (`backend/src/playground/`, `frontend/src/v2/pages/playground/`) reachable at `/playground` for logged-in and guest visitors alike — this superseded the earlier unrouted "ChatGround" prototype.
 
 The live battle service is `battle-engine/` (the legacy `battle-logic-service/` directory has been deleted from the repo).
 
@@ -167,11 +172,11 @@ See [HLD.md](HLD.md) for architecture, routes, BFF contracts, and what is explic
 
 ## Frontend UI
 
-The frontend is one continuous **GBA / FireRed–LeafGreen handheld experience**: Auth boots a GameBoy shell, the post-login hub and Pokedex render as green LCD screens, and battles use the classic cream-panel GBA stage. Design tokens (colors, fonts, motion) live in `frontend/src/styles/tokens.css`; shared shell primitives in `frontend/src/components/Shell/`. Guides: [`docs/design/STYLE_GUIDE.md`](docs/design/STYLE_GUIDE.md) and [`docs/design/ANIMATION_GUIDE.md`](docs/design/ANIMATION_GUIDE.md).
+Screens live under `frontend/src/v2/` (the older `frontend/src/pages/` tree and the "Shell/LCD" GBA-device look have been replaced). It's still a retro, pixel-panel game feel — notched paper/navy/sign/inset panels, a day/night theme toggle, a top `AppShell` bar with a START menu for navigation — just not the literal handheld-device chrome. Design tokens (colors, fonts, motion) live in `frontend/src/v2/styles/tokens.css`; shared primitives in `frontend/src/v2/ui/` (`Panel`, `Button`, `MenuList`, `DialogueBox`, `Modal`, `Tabs`, `Toast`, …) and layout chrome in `frontend/src/v2/layout/AppShell.jsx`. Guides: [`docs/design/STYLE_GUIDE.md`](docs/design/STYLE_GUIDE.md) and [`docs/design/ANIMATION_GUIDE.md`](docs/design/ANIMATION_GUIDE.md).
 
 - Run it with `npm run dev` (frontend on `:5173`).
-- `/` is a public landing page (`frontend/src/pages/Landing/Landing.jsx`): hero brand + CTAs and a live rotating Pokémon showcase fed by `GET /pokemon`. Logged-out visitors are pointed to `/auth`, logged-in ones to `/game`; unknown routes still redirect by session.
-- On the Auth screen the physical controls work: SELECT switches login/register, START or A submits, B backs out to login.
+- `/` is `TitleScreen` (`frontend/src/v2/pages/title/TitleScreen.jsx`): a GBA-style main menu with a live rotating Pokémon sprite fed by `GET /pokemon`. Menu options differ for guests (New game / Continue / Playground / Pokédex) vs. logged-in trainers (Continue / Playground / Pokédex); unknown routes still redirect by session (`/game` if logged in, else `/`).
+- On the Auth screen (`/auth`) the physical controls work: SELECT switches login/register, START or A submits, B backs out to login.
 - Motion honors `prefers-reduced-motion`: boot/encounter/attack choreography is skipped while HP and text updates still happen.
 
 ## Troubleshooting

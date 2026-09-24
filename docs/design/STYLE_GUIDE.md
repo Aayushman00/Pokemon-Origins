@@ -1,38 +1,43 @@
 # Style Guide — Pokemon Origins
 
-One continuous GBA / FireRed–LeafGreen handheld experience across **Landing → Auth → Hub → Pokedex → Battle**. Screens are **in-device compositions**, not dashboards. Token source: `frontend/src/styles/tokens.css`. Type hex map: `frontend/src/utils/typeColors.js`.
+One continuous retro, pixel-panel game feel across **Title → Auth → Hub → Pokedex → Battle → Playground**. Screens are **in-device compositions**, not dashboards. Token source: `frontend/src/v2/styles/tokens.css`. Type hex map: `frontend/src/utils/typeColors.js`.
 
 ## Palette
 
-| Token | Value | Use |
+Tokens are defined once in `tokens.css` and swapped per theme (`<html data-theme="light|dark">`, toggled from `AppShell`, default follows OS preference). Key groups:
+
+| Token group | Examples | Use |
 |-------|-------|-----|
-| `--charcoal` / `--charcoal-deep` | `#262220` / `#171412` | Page backdrop behind the device |
-| `--shell` / `--shell-hi` / `--shell-dark` | `#b9b1a6` / `#d6cfc6` / `#8d857b` | Plastic casing gradient |
-| `--shell-edge` / `--shell-inset` | `#57504a` / `#3f3a36` | Case border, screen bezel |
-| `--lcd-bg` / `--lcd-panel` / `--lcd-raised` | `#0f3d26` / `#175236` / `#1f6a45` | LCD surfaces (bg → raised) |
-| `--lcd-ink` / `--lcd-ink-dim` / `--lcd-ink-bright` | `#9ff4b8` / `#5fae7e` / `#d2ffe0` | LCD text hierarchy |
-| `--lcd-accent` | `#7fe9a6` | Primary actions, cursor, focus ring |
-| `--panel-cream` / `--panel-border` | `#e8e8c8` / `#506860` | Battle dialog family (existing) |
-| `--hp-green` / `--hp-yellow` / `--hp-red` | `#48d232` / `#f8d030` / `#f05858` | HP bars only |
+| `--c-ink*` | `--c-ink`, `--c-ink-soft`, `--c-ink-faint` | Body/heading text, outlines |
+| `--c-card*` / `--c-paper` / `--c-cream*` / `--c-sand` | — | Panel fills (paper/notched-card look) |
+| `--c-navy*` | `--c-navy`, `--c-navy-deep`, `--c-navy-line` | Dark/inverted panels, header chrome |
+| `--c-scene-*` | `--c-scene-sky`, `--c-scene-ground` | Diorama backdrops behind sprites |
+| `--c-sun`, `--c-red`, `--c-grass`, `--c-earth`, `--c-sky` (+`-dark`/`-deep`) | — | Accent/brand colors |
+| `--c-hp-hi` / `--c-hp-mid` / `--c-hp-lo` | `#4fc35b` / `#f0b429` / `#e0452f` | HP bars only |
 
 Pokémon type colors are reserved for Pokémon data (dex accents, move badges) — never for chrome.
 
 ## Typography
 
 - `--font-pixel` (`Press Start 2P`, loaded in `index.html`): headings, menus, buttons, HUD. Small sizes (0.6–0.9rem); it is dense.
-- `--font-body` (`Gilroy`): longer copy, form input values.
+- `--font-body`: longer copy, form input values.
 - `.font-pixel` utility applies the pixel font.
 
-## Primitives
+## Primitives (`frontend/src/v2/ui/`)
 
-- `Shell` (`frontend/src/components/Shell/Shell.jsx`): plastic case + power LED + bezel. Props: `poweredOn`, `className`.
-- `LcdPanel` (`LcdPanel.jsx`): green LCD with scanlines. Props: `on` (boot fade), `scanlines`, `className`.
-- CSS classes: `.device-backdrop` (page bg), `.pixel-btn` / `.pixel-btn--primary`, `.menu-row` / `.menu-row--active` (GBA ▶ cursor), `.lcd-field` + `.lcd-label` (forms), `.bg-scanlines`.
+- `Panel` (`Panel.jsx`): notched pixel panel. `variant`: `paper` (default) | `navy` | `sign` | `inset`. `plate` renders a title tab on the top edge; `title`/`meta` a header row.
+- `Button` (`Button.jsx`): pixel button.
+- `MenuList` (`MenuList.jsx`): GBA-style ▶-cursor menu, used on the title screen and `AppShell` START menu.
+- `DialogueBox` (`DialogueBox.jsx`): typewriter dialogue/log box, shared by battle and playground chat.
+- `Modal` (`Modal.jsx`), `Tabs` (`Tabs.jsx`), `Toast` (`Toast.jsx`): overlay/nav/feedback primitives.
+- `Bars` (`Bars.jsx`), `Badges` (`Badges.jsx`), `PartyRow` (`PartyRow.jsx`), `PixelAvatar` / `PixelTrainer`, `TrainerStats` / `TrainerHoverCard`: game-data display primitives.
+- Layout chrome: `AppShell.jsx` — slim top bar with brand crest + the START menu (site-wide nav: Hub, Playground, Pokédex, Trainer card).
+- CSS classes: `.frame` / `.panel` (see `Panel` variants above), `.pixel-btn` / `.pixel-btn--primary`, `.menu-row` / `.menu-row--active` (▶ cursor), `.bg-scanlines`.
 
 ## Rules
 
-- Brand **Pokemon Origins** is a hero-level signal on Landing, Auth and Hub.
+- Brand **Pokemon Origins** is a hero-level signal on Title and Auth.
 - Forbidden: purple/indigo SaaS gradients, white card grids as heroes, Inter/Roboto/Arial as display, glow stacks, pill-stat strips, multi-layer decorative shadows.
 - Cards only when they are the interaction container (e.g. a dex entry tap target).
-- Home (`/`) is the public landing page: hero brand + one headline + CTA group and a Shell/LCD-framed rotating Pokémon showcase from the live `/pokemon` API. Session-aware CTAs (logged out → `/auth`, logged in → `/game`); unknown routes still redirect by session.
-- Battle keeps its existing cream/grass GBA stage; LCD greens are for menus/hub/dex chrome.
+- Home (`/`) is the title screen: GBA main menu with session-aware options and a live rotating Pokémon sprite from the `/pokemon` API. Unknown routes still redirect by session.
+- Battle keeps its existing cream/grass GBA stage; other screens use the `Panel` paper/navy/sign/inset system.

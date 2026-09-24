@@ -1,6 +1,6 @@
 # Animation Guide — Pokemon Origins
 
-Motion is game feedback, not decoration: boot, select, encounter, attack, HP, faint, landing showcase. Tokens in `frontend/src/styles/tokens.css`.
+Motion is game feedback, not decoration: boot, select, encounter, attack, HP, faint, title showcase. Tokens in `frontend/src/v2/styles/tokens.css`.
 
 ## Timing
 
@@ -14,9 +14,9 @@ Motion is game feedback, not decoration: boot, select, encounter, attack, HP, fa
 
 Easings: `--ease-out` (enter), `--ease-in` (exit), `--ease-in-out` (move). Retro effects may use `steps(n, end)` (HP drain, damage flash) — steps read more "GBA" than smooth curves.
 
-## Landing showcase
+## Title showcase
 
-Featured Pokémon crossfades (~280ms) every 4s; subtle idle bob on the sprite. Pause the interval on hover/focus of the device. Budget: those two motions plus existing `.pixel-btn:active` — nothing else on `/`.
+Featured Pokémon rotates every `ROTATE_MS` (3.2s, `TitleScreen.jsx`); subtle idle bob on the sprite. Budget: those motions plus existing `.pixel-btn:active` — nothing else on `/`.
 
 Reduced motion: instant swap (no fade/bob); rotation still advances.
 
