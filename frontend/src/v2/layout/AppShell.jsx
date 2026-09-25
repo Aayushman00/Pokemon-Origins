@@ -88,7 +88,7 @@ const AppShell = ({ children }) => {
 				Skip to content
 			</a>
 			<header className="topbar">
-				<NavLink to={user ? "/game" : "/"} className="brand" aria-label="Pokémon Origins home">
+				<NavLink to="/" end className="brand" aria-label="Pokémon Origins title screen">
 					<Crest />
 					<span className="brand__word">
 						Pokémon <span>Origins</span>

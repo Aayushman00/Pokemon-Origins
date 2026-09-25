@@ -71,7 +71,9 @@ function createBattleAi({ chart = null, loadChart = defaultLoadChart, random = M
 	 * is out of PP (caller sends Struggle).
 	 */
 	async function pickMove(attacker, defender) {
-		const usable = (attacker.moves || []).filter(hasPp);
+		const usable = (attacker.moves || []).filter(
+			(m) => hasPp(m) && m.move_id !== attacker.disabledMoveId
+		);
 		if (!usable.length) return null;
 
 		const typeChart = await getChart();

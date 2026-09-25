@@ -7,16 +7,21 @@ const {
 	effectiveSpeed,
 	chipDamage,
 	rollSleepTurns,
+	rollConfusionTurns,
+	rollDisableTurns,
 	statusGate,
+	volatileGate,
 	movePriority,
 	statusAppliedLine,
 	cantMoveLine,
 	statusEndLine,
 	chipLine,
 	statChangeLine,
+	volatileAppliedLine,
+	volatileEndLine,
 } = require("./battleStatus");
 const { createBattleAi } = require("./battleAi");
-const { xpNeededForLevel } = require("./xpService");
+const { xpNeededForLevel, xpGainForWin } = require("./xpService");
 const { rollGenderForSpecies } = require("./genderService");
 
 /**
@@ -79,6 +84,7 @@ const { rollGenderForSpecies } = require("./genderService");
  */
 
 const STRUGGLE_MOVE_ID = -1;
+const CONFUSION_SELF_HIT_MOVE_ID = -2;
 
 /** Synthetic Struggle (Gen 2-3 style): typeless 50 BP, always hits, 1/4
  * damage recoil — the effects live in the engine's move_effects.json. */
@@ -147,6 +153,14 @@ function snapshotPokemon(raw, fallbackPosition = null) {
 		// starts clean (the DB's cosmetic status string is ignored).
 		status: null,
 		statusTurns: 0,
+		// Volatile conditions (Phase 15): independent of the major status
+		// above, cleared on switch, never persisted.
+		confusionTurns: 0,
+		disabledMoveId: null,
+		disableTurns: 0,
+		flinched: false,
+		attracted: false,
+		lastMoveId: null,
 		stages: freshStages(),
 		ability: raw.ability
 			? {
@@ -180,12 +194,14 @@ function clonePokemon(pokemon) {
 	};
 }
 
-/** True when every tracked move is out of PP (Struggle time). */
+/** True when every tracked move is out of PP or disabled (Struggle time). */
 function outOfPp(mon) {
 	return (
 		mon.moves.length > 0 &&
 		mon.moves.every(
-			(m) => typeof m.current_pp === "number" && m.current_pp <= 0
+			(m) =>
+				(typeof m.current_pp === "number" && m.current_pp <= 0) ||
+				m.move_id === mon.disabledMoveId
 		)
 	);
 }
@@ -312,9 +328,43 @@ function createMemoryPpStore() {
 	};
 }
 
+/** Persists end-of-battle HP back to trainer_pokemon. */
+function createMysqlHpStore() {
+	return {
+		async saveHp(entries) {
+			const pool = require("../config/trainerdb");
+			for (const entry of entries) {
+				await pool.query(
+					`UPDATE trainer_pokemon SET current_hp = ? WHERE id = ?`,
+					[entry.currentHp, entry.trainerPokemonId]
+				);
+			}
+		},
+	};
+}
+
+/** In-memory hpStore for tests; exposes `saved` for assertions. */
+function createMemoryHpStore() {
+	const saved = [];
+	return {
+		saved,
+		async saveHp(entries) {
+			saved.push(...entries.map((e) => ({ ...e })));
+		},
+	};
+}
+
 // Battle types that may create a boss reward offer on a first-time win
 // (rewardService still requires a matching level pool `source`).
 const OFFER_BATTLE_TYPES = new Set(["gym_boss", "champion", "legendary"]);
+
+// An "active" session idle longer than this is treated as abandoned rather
+// than resumed: the player left without finishing (closed the tab, backed
+// out to the hub) and may since have evolved or leveled a party member
+// through some other flow (a stone, another battle). Resuming the old
+// snapshot past this point would show stale pre-change data; falling
+// through to a fresh snapshot picks up whatever the DB says now.
+const ABANDONED_SESSION_MS = 10 * 60 * 1000;
 
 function createBattleSessionService(deps = {}) {
 	const sessions = new Map(); // sessionId -> session
@@ -322,10 +372,14 @@ function createBattleSessionService(deps = {}) {
 	const wonBattles = new Set(); // "trainerId:level:battleNumber"
 
 	const random = deps.random || Math.random;
+	const clock = deps.now || (() => Date.now());
 	const ai = deps.ai || createBattleAi({ random });
 	let mysqlPpStore = null;
 	const getPpStore = () =>
 		deps.ppStore || (mysqlPpStore ||= createMysqlPpStore());
+	let mysqlHpStore = null;
+	const getHpStore = () =>
+		deps.hpStore || (mysqlHpStore ||= createMysqlHpStore());
 	let mysqlHistoryStore = null;
 	const getHistoryStore = () =>
 		deps.history || (mysqlHistoryStore ||= createMysqlHistoryStore());
@@ -374,15 +428,23 @@ function createBattleSessionService(deps = {}) {
 		// Resume a live session for this exact battle instead of resetting it,
 		// unless the caller explicitly asked for a forced restart (mid-battle
 		// RESTART command) — force always falls through to a fresh session.
+		// A session idle past ABANDONED_SESSION_MS is treated the same as a
+		// forced restart: the player left it behind, and re-snapshotting from
+		// the DB picks up any evolution/level-up that happened meanwhile
+		// instead of showing the stale pre-change party.
 		const existingId = sessionByTrainer.get(Number(trainerId));
 		if (existingId) {
 			const existing = sessions.get(existingId);
+			const idleMs = existing
+				? clock() - new Date(existing.updatedAt).getTime()
+				: Infinity;
 			if (
 				!force &&
 				existing &&
 				existing.status === "active" &&
 				existing.level === level &&
-				existing.battleNumber === battleNumber
+				existing.battleNumber === battleNumber &&
+				idleMs < ABANDONED_SESSION_MS
 			) {
 				return { state: toPublicState(existing), resumed: true };
 			}
@@ -431,7 +493,7 @@ function createBattleSessionService(deps = {}) {
 			}
 		}
 
-		const now = new Date().toISOString();
+		const now = new Date(clock()).toISOString();
 		const session = {
 			sessionId: crypto.randomUUID(),
 			trainerId: Number(trainerId),
@@ -446,6 +508,10 @@ function createBattleSessionService(deps = {}) {
 			player: active,
 			activePosition: active.position,
 			requiresSwitch: false,
+			// Party positions that were ever the active mon this battle — win
+			// XP is split evenly across these, not dumped on whoever landed
+			// the finishing blow.
+			participants: new Set([active.position]),
 			// `enemy` references the active enemyParty entry the same way.
 			enemyParty,
 			enemy: enemyParty[0],
@@ -516,6 +582,116 @@ function createBattleSessionService(deps = {}) {
 			status,
 			reason,
 		});
+	}
+
+	/** Applies confusion (no-op if fainted or already confused). */
+	function applyConfusion(session, side, events) {
+		const mon = session[side];
+		if (mon.current_hp <= 0 || mon.confusionTurns > 0) return;
+		mon.confusionTurns = rollConfusionTurns(random);
+		session.log.push(volatileAppliedLine(mon.nickname, "confusion"));
+		events.push({
+			target: side,
+			type: "volatile_applied",
+			position: mon.position,
+			nickname: mon.nickname,
+			volatile: "confusion",
+		});
+	}
+
+	/**
+	 * Applies infatuation. Requires an opposite, non-genderless gender match
+	 * between attacker and defender — engine can't check this itself (it has
+	 * no gender concept), so the session verifies it after the move connects.
+	 */
+	function applyAttract(session, attackerKey, defenderKey, events) {
+		const attacker = session[attackerKey];
+		const defender = session[defenderKey];
+		if (defender.current_hp <= 0 || defender.attracted) return;
+		const compatible =
+			(attacker.gender === "male" && defender.gender === "female") ||
+			(attacker.gender === "female" && defender.gender === "male");
+		if (!compatible) {
+			session.log.push("But it failed!");
+			return;
+		}
+		defender.attracted = true;
+		session.log.push(volatileAppliedLine(defender.nickname, "attract"));
+		events.push({
+			target: defenderKey,
+			type: "volatile_applied",
+			position: defender.position,
+			nickname: defender.nickname,
+			volatile: "attract",
+		});
+	}
+
+	/**
+	 * Locks the defender's last-used move (Disable). Fails if it hasn't
+	 * moved yet this battle or is already disabled — the engine can't check
+	 * either since it's stateless and doesn't track move history.
+	 */
+	function applyDisable(session, defenderKey, events) {
+		const mon = session[defenderKey];
+		if (mon.current_hp <= 0 || mon.disabledMoveId != null || mon.lastMoveId == null) {
+			session.log.push("But it failed!");
+			return;
+		}
+		const disabledMove = mon.moves.find((m) => m.move_id === mon.lastMoveId);
+		mon.disabledMoveId = mon.lastMoveId;
+		mon.disableTurns = rollDisableTurns(random);
+		session.log.push(`${mon.nickname}'s ${disabledMove?.name || "move"} was disabled!`);
+		events.push({
+			target: defenderKey,
+			type: "disable_applied",
+			position: mon.position,
+			nickname: mon.nickname,
+			moveId: mon.disabledMoveId,
+		});
+	}
+
+	/**
+	 * Confusion self-hit: Gen 3-exact typeless 40 BP physical hit against the
+	 * mon's own stats via the normal damage engine (move_effects.json marks
+	 * the synthetic move typeless + no_crit, matching how confusion damage
+	 * works in the real games — it can never be a critical hit).
+	 */
+	async function confusionSelfHit(session, attackerKey) {
+		const attacker = session[attackerKey];
+		const engine = getEngine();
+		const move = {
+			move_id: CONFUSION_SELF_HIT_MOVE_ID,
+			name: "confusion_self_hit",
+			power: 40,
+			accuracy: 1,
+			move_type: "Normal",
+			status_effect: null,
+			effect_chance: null,
+			current_pp: null,
+			max_pp: null,
+		};
+		const result = await engine.calculateDamage({
+			attacker: clonePokemon(attacker),
+			defender: clonePokemon(attacker),
+			move,
+		});
+		const damage = Math.max(0, Math.round(Number(result.damage) || 0));
+		attacker.current_hp = Math.max(0, attacker.current_hp - damage);
+		session.log.push(`${attacker.nickname} hurt itself in its confusion!`);
+		const event = {
+			actor: attackerKey,
+			type: "confusion_self_hit",
+			position: attacker.position,
+			nickname: attacker.nickname,
+			damage,
+			targetHpAfter: attacker.current_hp,
+			targetFainted: attacker.current_hp <= 0,
+		};
+		const events = [event];
+		if (attacker.current_hp <= 0 && session.status === "active") {
+			processFaint(session, attackerKey);
+		}
+		return events;
 	}
 
 	/** Applies engine stat-change verdicts with clamping + events. */
@@ -624,6 +800,14 @@ function createBattleSessionService(deps = {}) {
 			if (result.status_effect_applied) {
 				applyStatus(session, defenderKey, result.status_effect_applied, events);
 			}
+			if (result.volatile_effect_applied === "confusion") {
+				applyConfusion(session, defenderKey, events);
+			} else if (result.volatile_effect_applied === "attract") {
+				applyAttract(session, attackerKey, defenderKey, events);
+			}
+			if (result.disable_applied) {
+				applyDisable(session, defenderKey, events);
+			}
 			applyStatChanges(session, attackerKey, result.stat_changes, events);
 			return events;
 		}
@@ -669,6 +853,11 @@ function createBattleSessionService(deps = {}) {
 		} else {
 			if (result.status_effect_applied) {
 				applyStatus(session, defenderKey, result.status_effect_applied, events);
+			}
+			// Secondary flinch (Bite/Stomp/Rock-slide family): consumed at
+			// the start of the defender's own next beat this round.
+			if (result.flinch_applied) {
+				defender.flinched = true;
 			}
 			applyStatChanges(session, attackerKey, result.stat_changes, events);
 		}
@@ -730,8 +919,10 @@ function createBattleSessionService(deps = {}) {
 	}
 
 	/**
-	 * A full beat: pre-move status gate, PP spend, then the attack itself.
-	 * Blocked turns (sleep/para/freeze) consume the beat but not PP.
+	 * A full beat: major-status gate, then the volatile gate (confusion /
+	 * attract / flinch — only reached once the major-status gate clears the
+	 * mon to act), PP spend and last-move tracking, then the attack itself.
+	 * Any blocked turn consumes the beat but not PP.
 	 */
 	async function runBeat(session, attackerKey, move) {
 		const attacker = session[attackerKey];
@@ -758,6 +949,60 @@ function createBattleSessionService(deps = {}) {
 				status: gate.blocked,
 			});
 			return events;
+		}
+
+		const vGate = volatileGate(attacker, random);
+		if (vGate.nextTurns != null) attacker.confusionTurns = vGate.nextTurns;
+		if (vGate.curedConfusion) {
+			session.log.push(volatileEndLine(attacker.nickname, "confusion"));
+			events.push({
+				actor: attackerKey,
+				type: "volatile_end",
+				position: attacker.position,
+				nickname: attacker.nickname,
+				volatile: "confusion",
+			});
+		}
+		// Flinch is single-use: consumed by this check whether or not it was
+		// actually set, so it never lingers into a later round.
+		attacker.flinched = false;
+		if (!vGate.act) {
+			if (vGate.selfHit) {
+				events.push(...(await confusionSelfHit(session, attackerKey)));
+			} else {
+				session.log.push(cantMoveLine(attacker.nickname, vGate.blocked));
+				events.push({
+					actor: attackerKey,
+					type: "cant_move",
+					position: attacker.position,
+					nickname: attacker.nickname,
+					status: vGate.blocked,
+				});
+			}
+			return events;
+		}
+
+		if (move.move_id !== STRUGGLE_MOVE_ID) {
+			attacker.lastMoveId = move.move_id;
+		}
+
+		// Disable counts down once per turn its mon actually attempts to
+		// move (ponytail simplification: real Gen 3 ticks it down even on
+		// turns blocked by sleep/paralysis/etc.).
+		if (attacker.disabledMoveId != null) {
+			attacker.disableTurns -= 1;
+			if (attacker.disableTurns <= 0) {
+				attacker.disabledMoveId = null;
+				attacker.disableTurns = 0;
+				session.log.push(volatileEndLine(attacker.nickname, "disable"));
+				events.push({
+					actor: attackerKey,
+					type: "volatile_end",
+					position: attacker.position,
+					nickname: attacker.nickname,
+					volatile: "disable",
+				});
+			}
 		}
 
 		if (
@@ -871,6 +1116,9 @@ function createBattleSessionService(deps = {}) {
 			if (!playerMove) {
 				throw new CampaignError(400, "Unknown move for this Pokémon");
 			}
+			if (session.player.disabledMoveId === action.moveId) {
+				throw new CampaignError(400, `${playerMove.name} is disabled!`);
+			}
 			if (
 				typeof playerMove.current_pp === "number" &&
 				playerMove.current_pp <= 0
@@ -959,12 +1207,19 @@ function createBattleSessionService(deps = {}) {
 
 		const forced = session.requiresSwitch;
 		const outgoing = session.player;
-		// Stat stages reset when a mon leaves the field (status persists).
+		// Stat stages AND volatile conditions reset when a mon leaves the
+		// field (major status and current_hp persist).
 		outgoing.stages = freshStages();
+		outgoing.confusionTurns = 0;
+		outgoing.disabledMoveId = null;
+		outgoing.disableTurns = 0;
+		outgoing.attracted = false;
+		outgoing.flinched = false;
 		const fromPosition = session.activePosition;
 		session.player = target;
 		session.activePosition = target.position;
 		session.requiresSwitch = false;
+		session.participants.add(target.position);
 		session.log.push(`Go! ${target.nickname}!`);
 
 		const events = [
@@ -1078,25 +1333,11 @@ function createBattleSessionService(deps = {}) {
 	}
 
 	/**
-	 * Grants win XP to the Pokémon active at the moment of victory and
-	 * returns the xp_gain / level_up events (persisting via xpService).
-	 * Multi-enemy battles (Phase 10) pay XP for the whole beaten party:
-	 * the gain formula is 6 × (sum of enemy party levels), identical to
-	 * before for one-mon battles.
+	 * Applies one already-computed XP award to a single participant: log +
+	 * xp_gain/level_up events, evolution-available check, move learning, and
+	 * reflecting the new level/stats onto the session mon in place.
 	 */
-	async function grantWinXp(session, trainerId) {
-		const totalEnemyLevels = session.enemyParty.reduce(
-			(sum, mon) => sum + mon.level,
-			0
-		);
-		const award = await getXpService().awardWinXp({
-			trainerId,
-			pokemonRowId: session.player.id,
-			enemy: { level: totalEnemyLevels },
-		});
-		if (!award) return [];
-
-		const mon = session.player;
+	async function applyWinAward(session, trainerId, mon, award) {
 		const events = [];
 		session.log.push(`${mon.nickname} gained ${award.gained} XP!`);
 		events.push({
@@ -1213,6 +1454,90 @@ function createBattleSessionService(deps = {}) {
 	}
 
 	/**
+	 * Grants win XP split evenly across every party mon that took the field
+	 * this battle (`session.participants`), not just whoever landed the
+	 * finishing blow. Multi-enemy battles (Phase 10) pay XP for the whole
+	 * beaten party — gain formula is 6 × (sum of enemy party levels) — and
+	 * that total is what gets divided; any remainder from the division goes
+	 * to the earliest participants (by party position) so no XP is lost to
+	 * rounding.
+	 */
+	async function grantWinXp(session, trainerId) {
+		const totalEnemyLevels = session.enemyParty.reduce(
+			(sum, mon) => sum + mon.level,
+			0
+		);
+		const totalGain = xpGainForWin({ level: totalEnemyLevels });
+		const participants = session.party.filter(
+			(mon) => mon.id != null && session.participants.has(mon.position)
+		);
+		if (!participants.length) return [];
+
+		const share = Math.floor(totalGain / participants.length);
+		const remainder = totalGain - share * participants.length;
+
+		const events = [];
+		for (const [index, mon] of participants.entries()) {
+			const gained = share + (index < remainder ? 1 : 0);
+			if (gained <= 0) continue;
+			const award = await getXpService().awardWinXp({
+				trainerId,
+				pokemonRowId: mon.id,
+				gained,
+			});
+			if (!award) continue;
+			events.push(...(await applyWinAward(session, trainerId, mon, award)));
+		}
+		return events;
+	}
+
+	/**
+	 * Full-restore rule: a boss-tier win (gym_boss/champion/legendary — same
+	 * set that can offer a reward) or ANY loss fully heals the whole party's
+	 * HP and PP, like a Pokémon Center visit. A regular trainer win instead
+	 * carries battle damage/PP forward as-is (only leveling grows HP). Runs
+	 * once per session, before the HP/PP persistence below, so the healed
+	 * values are what get written and what the client sees in the response.
+	 */
+	function fullHealPartyIfEarned(session) {
+		if (session.status === "active" || session.fullHealApplied) return false;
+		session.fullHealApplied = true;
+		const earnsFullHeal =
+			session.status === "lost" ||
+			(session.status === "won" && OFFER_BATTLE_TYPES.has(session.battleType));
+		if (!earnsFullHeal) return false;
+		for (const mon of session.party) {
+			// Revives fainted mons too, Pokémon Center-style — a loss shouldn't
+			// leave the party unable to fight when they return to the hub.
+			mon.current_hp = mon.max_hp;
+			for (const move of mon.moves) {
+				if (typeof move.max_pp === "number") move.current_pp = move.max_pp;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Persists the party's end-of-battle HP once per session (win AND loss)
+	 * through the hpStore. Mons without a DB row id are skipped, and a
+	 * fainted mon's 0 HP is persisted too (it stays fainted outside battle
+	 * unless healed) — a store failure never breaks the battle result.
+	 */
+	async function persistHpOnBattleEnd(session) {
+		if (session.status === "active" || session.hpPersisted) return;
+		session.hpPersisted = true;
+		const entries = session.party
+			.filter((mon) => mon.id != null)
+			.map((mon) => ({ trainerPokemonId: mon.id, currentHp: mon.current_hp }));
+		if (!entries.length) return;
+		try {
+			await getHpStore().saveHp(entries);
+		} catch (err) {
+			console.error("Failed to persist HP after battle:", err.message);
+		}
+	}
+
+	/**
 	 * Persists the party's end-of-battle PP once per session (win AND loss)
 	 * through the ppStore. Moves without tracked PP (legacy fixtures) and
 	 * mons without a DB row id are skipped; a store failure never breaks
@@ -1286,7 +1611,7 @@ function createBattleSessionService(deps = {}) {
 					? await resolveItem(session, action, trainerId)
 					: await resolveMove(session, action);
 
-			session.updatedAt = new Date().toISOString();
+			session.updatedAt = new Date(clock()).toISOString();
 
 			// Win-path order (documented): battle beats resolve above, then
 			// progress completeBattle → XP award → coin award → boss reward
@@ -1396,6 +1721,12 @@ function createBattleSessionService(deps = {}) {
 				}
 			}
 
+			// Boss win / any loss: full-heal the party before it's persisted.
+			if (fullHealPartyIfEarned(session)) {
+				session.log.push("Your party was fully healed!");
+				events.push({ actor: "player", type: "party_full_heal" });
+			}
+			await persistHpOnBattleEnd(session);
 			// Phase 14: PP persists at battle end — after a win AND a loss.
 			await persistPpOnBattleEnd(session);
 			await recordResultOnBattleEnd(session, trainerId);
@@ -1437,6 +1768,7 @@ module.exports = {
 	hasWonBattle: defaultService.hasWonBattle,
 	createBattleSessionService,
 	createMemoryPpStore,
+	createMemoryHpStore,
 	createMemoryHistoryStore,
 	snapshotPokemon,
 	STRUGGLE_MOVE_ID,

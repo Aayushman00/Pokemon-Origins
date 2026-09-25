@@ -341,6 +341,58 @@ def test_heal_move_restores_fraction_of_max_hp():
     assert result["heal_amount"] == pytest.approx(20.0)  # 50% of 40
 
 
+def test_flinch_chance_secondary_effect():
+    bite = _move(move_id=44, name="Bite", power=60, move_type="Dark", accuracy=1.0)
+    # Rolls: hit, crit(no), flinch(0.1 < 0.3 -> applied).
+    result = _resolve(_battle(move=bite), rolls=[0.0, 0.9, 0.1])
+    assert result["result"] == "hit"
+    assert result["flinch_applied"] is True
+
+    # Chance not met.
+    result = _resolve(_battle(move=bite), rolls=[0.0, 0.9, 0.5])
+    assert result["flinch_applied"] is False
+
+
+def test_confusion_self_hit_is_typeless_and_never_crits():
+    hit = Move(
+        move_id=-2, name="confusion_self_hit", power=40, accuracy=1.0, move_type="Normal"
+    )
+    ghost = _pokemon(pokemon_id=2, nickname="Foe", types=["ghost"])
+    # always_hit skips the accuracy roll; no_crit skips the crit roll too, so
+    # no random.random() calls are needed for this move at all.
+    result = _resolve(_battle(defender=ghost, move=hit), rolls=[])
+    assert result["result"] == "hit"
+    assert result["critical_hit"] is False
+    assert result["type_multiplier"] == 1.0  # typeless ignores Normal->Ghost immunity
+    assert result["stab"] is False
+
+
+def test_disable_effect_type_is_accuracy_gated_only():
+    disable = _move(move_id=50, name="Disable", power=0, accuracy=0.55)
+    result = _resolve(_battle(move=disable), rolls=[0.9])
+    assert result["result"] == "miss"
+
+    result = _resolve(_battle(move=disable), rolls=[0.0])
+    assert result["result"] == "status"
+    assert result["disable_applied"] is True
+
+
+def test_confuse_ray_applies_volatile_confusion():
+    confuse_ray = _move(move_id=109, name="Confuse-ray", power=0, accuracy=1.0)
+    # Rolls: hit, volatile chance.
+    result = _resolve(_battle(move=confuse_ray), rolls=[0.0, 0.0])
+    assert result["result"] == "status"
+    assert result["volatile_effect_applied"] == "confusion"
+    assert result["status_effect_applied"] is None
+
+
+def test_attract_applies_volatile_effect():
+    attract = _move(move_id=213, name="Attract", power=0, accuracy=1.0)
+    result = _resolve(_battle(move=attract), rolls=[0.0, 0.0])
+    assert result["result"] == "status"
+    assert result["volatile_effect_applied"] == "attract"
+
+
 def test_calculate_damage_hit_non_negative():
     battle = BattleRequest(
         attacker=_pokemon(),

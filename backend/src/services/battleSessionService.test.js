@@ -200,9 +200,17 @@ function makeService({
 	ai = createBattleAi({ chart: {}, random: () => 0 }),
 	// Memory ppStore so battle-end PP persistence never opens a DB pool.
 	ppStore = { savePp: async () => {} },
+	// Same for HP persistence.
+	hpStore = { saveHp: async () => {} },
 	// Memory battle history so win/loss recording never opens a DB pool.
 	history = createMemoryHistoryStore(),
 	random = () => 0,
+	// Controllable clock for staleness/resume tests; defaults to real time.
+	now,
+	// Override when a test needs the "DB" party to change between two
+	// startBattle calls (e.g. simulating an evolution while a session sat
+	// idle). Defaults to always returning the same fixture array.
+	getPlayerParty = async () => party,
 } = {}) {
 	const progress = createProgressService({
 		store: createMemoryStore(),
@@ -243,11 +251,13 @@ function makeService({
 		moveLearn,
 		ai,
 		ppStore,
+		hpStore,
 		history,
 		...(rewards ? { rewards } : {}),
 		...(inventory ? { inventory } : {}),
 		random,
-		getPlayerParty: async () => party,
+		...(now ? { now } : {}),
+		getPlayerParty,
 		getEnemyBattle: async (level, battleNumber) => ({
 			trainerName,
 			trainerSprite,
@@ -402,6 +412,35 @@ describe("battleSessionService", () => {
 		assert.equal(restarted.state.enemy.current_hp, 30);
 		assert.equal(restarted.state.player.current_hp, 40);
 		assert.equal(restarted.state.status, "active");
+	});
+
+	it("an idle session past the abandoned threshold re-snapshots from the party instead of resuming", async () => {
+		let clock = 1_000_000;
+		let party = defaultParty();
+		const { service } = makeService({
+			now: () => clock,
+			getPlayerParty: async () => party,
+		});
+		const started = await service.startBattle(1, { level: 1, battleNumber: 1 });
+		assert.equal(started.state.player.pokemon_id, 4); // Charmander
+
+		// Still fresh a moment later: resumes the same session unchanged.
+		clock += 60 * 1000; // +1 minute
+		const soon = await service.startBattle(1, { level: 1, battleNumber: 1 });
+		assert.equal(soon.resumed, true);
+		assert.equal(soon.state.sessionId, started.state.sessionId);
+
+		// The player evolves Charmander via some other flow (a stone, a
+		// different battle) while this session sits untouched, then comes
+		// back after the idle window: the stale snapshot must not stick.
+		party = defaultParty().map((mon) =>
+			mon.position === 1 ? { ...mon, pokemon_id: 5, nickname: "Charmeleon" } : mon
+		);
+		clock += 11 * 60 * 1000; // +11 minutes: past the 10-minute threshold
+		const stale = await service.startBattle(1, { level: 1, battleNumber: 1 });
+		assert.equal(stale.resumed, false);
+		assert.notEqual(stale.state.sessionId, started.state.sessionId);
+		assert.equal(stale.state.player.pokemon_id, 5); // Charmeleon, not the stale Charmander
 	});
 
 	it("start exposes trainerSprite for trainer battles and null for legendary encounters", async () => {
@@ -865,9 +904,12 @@ describe("battleSessionService", () => {
 		// Enemy is faster and one-shots the weakened player: whole party down
 		assert.equal(result.state.status, "lost");
 		assert.equal(result.state.requiresSwitch, false);
-		assert.equal(result.events.length, 1);
+		// A loss fully heals the party (Pokémon Center-style), so the enemy
+		// beat is followed by a party_full_heal event.
+		assert.equal(result.events.length, 2);
 		assert.equal(result.events[0].actor, "enemy");
-		assert.equal(result.state.player.current_hp, 0);
+		assert.equal(result.events[1].type, "party_full_heal");
+		assert.equal(result.state.player.current_hp, result.state.player.max_hp);
 		assert.equal(result.progress, undefined);
 		assert.equal(service.hasWonBattle(9, 1, 1), false);
 		assert.deepEqual(history.rows, [
@@ -951,13 +993,19 @@ describe("battleSessionService", () => {
 		const after = await progress.getProgress(13);
 		assert.equal(after.current_battle, 2);
 
-		// XP goes to the mon active at the win (Squirtle), not the fainted lead
-		const xpEvent = round2.events.find((e) => e.type === "xp_gain");
-		assert.equal(xpEvent.nickname, "Squirtle");
+		// XP is split evenly between every mon that took the field this battle:
+		// the fainted lead (Charmander) AND the mon that finished it (Squirtle).
+		// Total gain 4*6=24 over 2 participants = 12 each.
+		const xpEvents = round2.events.filter((e) => e.type === "xp_gain");
+		assert.equal(xpEvents.length, 2);
+		assert.deepEqual(
+			xpEvents.map((e) => e.nickname).sort(),
+			["Charmander", "Squirtle"]
+		);
 		const squirtle = await xpStore.getMon(13, 102);
-		assert.equal(squirtle.experience, 24);
+		assert.equal(squirtle.experience, 12);
 		const lead = await xpStore.getMon(13, 101);
-		assert.equal(lead.experience, 0);
+		assert.equal(lead.experience, 12);
 	});
 
 	it("a voluntary switch consumes the turn: the enemy hits the incoming mon", async () => {
@@ -2016,5 +2064,267 @@ describe("battleSessionService", () => {
 			{ trainerPokemonId: 101, moveId: 33, currentPp: 2 },
 			{ trainerPokemonId: 101, moveId: 52, currentPp: 5 },
 		]);
+	});
+
+	it("persists HP as battle-damaged after a regular trainer win (no free heal)", async () => {
+		const { createMemoryHpStore } = require("./battleSessionService");
+		const hpStore = createMemoryHpStore();
+		const party = [
+			// Slower than the enemy (speed 30): the enemy hits first, then the
+			// player's counter-hit (also 10 dmg) finishes the weak enemy.
+			playerMon({ id: 101, position: 1, current_hp: 40, max_hp: 40, speed: 10 }),
+		];
+		const { service } = makeService({
+			party,
+			trainerId: 83,
+			enemy: enemyMon({ current_hp: 10, max_hp: 10 }),
+			engine: stubEngine([{ result: "hit", damage: 10 }]),
+			hpStore,
+		});
+		const { state } = await service.startBattle(83, {
+			level: 1,
+			battleNumber: 1,
+		});
+		const result = await service.performAction(83, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		assert.equal(result.state.status, "won");
+		// Took one enemy hit (10 dmg): 30/40, carried forward, not reset to full.
+		assert.equal(result.state.player.current_hp, 30);
+		assert.deepEqual(hpStore.saved, [{ trainerPokemonId: 101, currentHp: 30 }]);
+		assert.equal(
+			result.events.some((e) => e.type === "party_full_heal"),
+			false
+		);
+	});
+
+	it("fully heals HP and PP on a boss win, and persists the healed values", async () => {
+		const { createMemoryHpStore, createMemoryPpStore } = require("./battleSessionService");
+		const hpStore = createMemoryHpStore();
+		const ppStore = createMemoryPpStore();
+		const party = [
+			playerMon({
+				id: 101,
+				position: 1,
+				current_hp: 10,
+				max_hp: 40,
+				moves: ppMoves(),
+			}),
+		];
+		const { service } = makeService({
+			party,
+			trainerId: 84,
+			battleType: "gym_boss",
+			engine: stubEngine([{ result: "hit", damage: 30 }]),
+			hpStore,
+			ppStore,
+			// gym_boss wins try to create a reward offer; stub it out so this
+			// test doesn't need a matching reward pool.
+			rewards: { createOfferForWin: async () => null },
+		});
+		const { state } = await service.startBattle(84, {
+			level: 1,
+			battleNumber: 1,
+		});
+		const result = await service.performAction(84, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		assert.equal(result.state.status, "won");
+		assert.equal(result.state.player.current_hp, 40);
+		assert.deepEqual(hpStore.saved, [{ trainerPokemonId: 101, currentHp: 40 }]);
+		assert.deepEqual(ppStore.saved, [
+			{ trainerPokemonId: 101, moveId: 33, currentPp: 2 },
+			{ trainerPokemonId: 101, moveId: 52, currentPp: 5 },
+		]);
+		assert.ok(result.events.some((e) => e.type === "party_full_heal"));
+	});
+
+	it("splits win XP evenly across every mon that took the field", async () => {
+		const party = [
+			// Slower than the enemy (speed 30): the enemy strikes first and KOs it.
+			playerMon({ id: 101, position: 1, current_hp: 1, speed: 10 }),
+			playerMon({
+				id: 102,
+				position: 2,
+				nickname: "Squirtle",
+				current_hp: 40,
+				speed: 90,
+			}),
+		];
+		const { service, xpStore } = makeService({
+			party,
+			trainerId: 85,
+			// Every hit deals 40: enough to KO the weakened lead AND the enemy.
+			engine: stubEngine([{ result: "hit", damage: 40 }]),
+		});
+		const { state } = await service.startBattle(85, {
+			level: 1,
+			battleNumber: 1,
+		});
+		const fainted = await service.performAction(85, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		assert.equal(fainted.state.requiresSwitch, true);
+		await service.performAction(85, {
+			sessionId: state.sessionId,
+			action: { type: "switch", partyPosition: 2 },
+		});
+		const win = await service.performAction(85, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		assert.equal(win.state.status, "won");
+		// enemy level 4 * 6 = 24 total, split 2 ways = 12 each.
+		const xpEvents = win.events.filter((e) => e.type === "xp_gain");
+		assert.equal(xpEvents.length, 2);
+		assert.deepEqual(
+			xpEvents.map((e) => e.amount),
+			[12, 12]
+		);
+		assert.equal((await xpStore.getMon(85, 101)).experience, 12);
+		assert.equal((await xpStore.getMon(85, 102)).experience, 12);
+	});
+
+	it("Confuse-ray applies confusion, and a confused mon can self-hit on its next beat", async () => {
+		const party = [
+			playerMon({
+				id: 101,
+				position: 1,
+				moves: [
+					{ move_id: 700, name: "Confuse-ray", power: 0, accuracy: 1, move_type: "Ghost" },
+				],
+			}),
+		];
+		// random()=>0 rolls the minimum 1-turn confusion AND always wins the
+		// 1/3 self-hit roll, so the enemy's very next beat (same round, since
+		// the player is faster) hits itself instead of attacking.
+		const engine = stubEngine([
+			{ result: "status", damage: 0, volatile_effect_applied: "confusion" }, // player's Confuse-ray
+			{ result: "hit", damage: 7 }, // enemy's confusion self-hit
+		]);
+		const { service } = makeService({ party, trainerId: 90, engine });
+		const { state } = await service.startBattle(90, { level: 1, battleNumber: 1 });
+		const result = await service.performAction(90, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 700 },
+		});
+		assert.ok(
+			result.events.some(
+				(e) => e.type === "volatile_applied" && e.volatile === "confusion"
+			)
+		);
+		const selfHit = result.events.find((e) => e.type === "confusion_self_hit");
+		assert.ok(selfHit);
+		assert.equal(selfHit.actor, "enemy");
+		assert.equal(selfHit.damage, 7);
+		assert.equal(result.state.enemy.current_hp, 23); // 30 max_hp - 7
+		// Duration was 1, and it was just consumed: confusion is over.
+		assert.equal(result.state.enemy.confusionTurns, 0);
+	});
+
+	it("Disable locks the target's last-used move; the AI avoids it once out of alternatives", async () => {
+		const party = [
+			playerMon({
+				id: 101,
+				position: 1,
+				moves: [
+					{ move_id: 33, name: "Tackle", power: 40, accuracy: 1, move_type: "Normal" },
+					{ move_id: 500, name: "Disable", power: 0, accuracy: 1, move_type: "Normal" },
+				],
+			}),
+		];
+		// enemyMon()'s only move is Tackle (33) — once disabled, the AI has
+		// nothing left and must Struggle.
+		const engine = stubEngine([
+			{ result: "hit", damage: 5 }, // r1 player Tackle
+			{ result: "hit", damage: 5 }, // r1 enemy Tackle (sets lastMoveId)
+			{ result: "status", damage: 0, disable_applied: true }, // r2 player Disable
+			{ result: "hit", damage: 5 }, // r2 enemy Tackle (already picked before Disable landed)
+			{ result: "hit", damage: 5 }, // r3 player Tackle
+			{ result: "hit", damage: 5 }, // r3 enemy Struggle
+		]);
+		const { service } = makeService({ party, trainerId: 92, engine });
+		const { state } = await service.startBattle(92, { level: 1, battleNumber: 1 });
+
+		await service.performAction(92, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		const disabled = await service.performAction(92, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 500 },
+		});
+		assert.equal(disabled.state.enemy.disabledMoveId, 33);
+		assert.ok(
+			disabled.events.some((e) => e.type === "disable_applied")
+		);
+
+		const forcedStruggle = await service.performAction(92, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		const enemyMoveEvent = forcedStruggle.events.find(
+			(e) => e.actor === "enemy" && e.type === "move"
+		);
+		assert.equal(enemyMoveEvent.moveId, -1); // Struggle: Tackle is its only move and it's disabled
+	});
+
+	it("Attract requires a compatible gender and fails otherwise", async () => {
+		const attractMove = [
+			{ move_id: 600, name: "Attract", power: 0, accuracy: 1, move_type: "Normal" },
+		];
+		const engineResults = () =>
+			stubEngine([
+				{ result: "status", damage: 0, volatile_effect_applied: "attract" },
+				{ result: "miss", damage: 0 },
+			]);
+
+		const compatible = makeService({
+			party: [playerMon({ id: 101, position: 1, gender: "male", moves: attractMove })],
+			enemy: enemyMon({ gender: "female" }),
+			trainerId: 93,
+			engine: engineResults(),
+		});
+		const started = await compatible.service.startBattle(93, { level: 1, battleNumber: 1 });
+		const hit = await compatible.service.performAction(93, {
+			sessionId: started.state.sessionId,
+			action: { type: "move", moveId: 600 },
+		});
+		assert.equal(hit.state.enemy.attracted, true);
+
+		const incompatible = makeService({
+			party: [playerMon({ id: 101, position: 1, gender: "male", moves: attractMove })],
+			enemy: enemyMon({ gender: "male" }),
+			trainerId: 94,
+			engine: engineResults(),
+		});
+		const started2 = await incompatible.service.startBattle(94, { level: 1, battleNumber: 1 });
+		const failed = await incompatible.service.performAction(94, {
+			sessionId: started2.state.sessionId,
+			action: { type: "move", moveId: 600 },
+		});
+		assert.equal(failed.state.enemy.attracted, false);
+	});
+
+	it("a secondary flinch effect prevents the defender's next beat this round", async () => {
+		const party = [playerMon({ id: 101, position: 1 })];
+		const engine = stubEngine([{ result: "hit", damage: 5, flinch_applied: true }]);
+		const { service } = makeService({ party, trainerId: 95, engine });
+		const { state } = await service.startBattle(95, { level: 1, battleNumber: 1 });
+		const result = await service.performAction(95, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		// Player (faster) hits and flinches the enemy; the enemy's own beat
+		// this round is blocked instead of attacking, and never reaches the
+		// engine at all.
+		const enemyBeat = result.events.find((e) => e.actor === "enemy");
+		assert.equal(enemyBeat.type, "cant_move");
+		assert.equal(enemyBeat.status, "flinch");
+		assert.equal(engine.calls.length, 1);
+		assert.equal(result.state.enemy.flinched, false);
 	});
 });

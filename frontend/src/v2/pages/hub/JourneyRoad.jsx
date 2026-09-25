@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from "react";
-import PokemonSprite from "../../../components/PokemonSprite/PokemonSprite";
+import PixelSprite from "../../ui/PixelSprite";
 import PixelTrainer from "../../ui/PixelTrainer";
 import Button from "../../ui/Button";
+import GymBadge from "../../ui/GymBadge";
+import SkyFlock from "../../ui/SkyFlock";
 import { MAX_CAMPAIGN_LEVEL } from "../battle/JourneyScreen";
 
 /**
@@ -29,10 +31,12 @@ const JourneyRoad = ({ user, progress, profile, lead }) => {
 	return (
 		<section className="journey" aria-labelledby="journey-title">
 			<div className="journey__sky" aria-hidden="true">
+				<span className="sun" />
 				<span className="moon" />
 				<span className="cloud cloud--a" />
 				<span className="cloud cloud--b" />
 				<span className="cloud cloud--c" />
+				<SkyFlock />
 			</div>
 			<div className="journey__hills" aria-hidden="true" />
 
@@ -72,17 +76,12 @@ const JourneyRoad = ({ user, progress, profile, lead }) => {
 								{isHere && (
 									<span className="stop__party" aria-hidden="true">
 										<PixelTrainer gender={user.gender} size={44} className="stop__trainer" />
-										{lead && (
-											<PokemonSprite
-												pokemonId={lead.pokemon_id}
-												variant="front"
-												alt=""
-												className="sprite stop__mon"
-											/>
-										)}
+										{lead && <PixelSprite pokemonId={lead.pokemon_id} className="stop__mon" />}
 									</span>
 								)}
-								<span className="stop__marker" aria-hidden="true" />
+								<span className="stop__marker" aria-hidden="true">
+									<GymBadge index={stop.level - 1} state={cleared ? "won" : isHere ? "here" : "locked"} />
+								</span>
 								<span className="stop__name">
 									{stop.name || `Stage ${stop.level}`}
 									<span className="sr-only">

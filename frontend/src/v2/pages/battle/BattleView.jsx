@@ -59,7 +59,9 @@ const BattleView = ({ levelNumber, battleNumber, levelName, onBattleWon, onConti
 
 	const opponent = session ? (session.battleType === "legendary" ? `Wild ${session.enemy?.nickname}` : session.trainerName) : null;
 	const prompt = player ? `What will ${player.nickname} do?` : "";
-	const messageText = battle.line || (phase === "acting" ? "" : phase === "loading" || phase === "restarting" ? "…" : prompt);
+	// This branch only ever renders for loading/encounter/intro/acting/restarting
+	// (command has its own dialogue box below, which is where `prompt` belongs).
+	const messageText = battle.line || (phase === "loading" || phase === "restarting" ? "…" : "");
 
 	let hud;
 	if (phase === "moveSelect") hud = <MoveMenu battle={battle} />;

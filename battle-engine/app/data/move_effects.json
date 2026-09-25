@@ -1,9 +1,12 @@
 {
   "_readme": {
     "keys": "Exact pokedex.Move names. Unlisted moves default to plain damage.",
-    "effect_type": "damage (default) | multi_hit | status | heal | ohko",
-    "status_effect": "brn | par | psn | slp | frz (major statuses only; flinch/confusion are out of scope)",
-    "effect_chance": "0..1 roll for status_effect (default 1.0)",
+    "effect_type": "damage (default) | multi_hit | status | heal | ohko | disable",
+    "status_effect": "brn | par | psn | slp | frz (major statuses only)",
+    "effect_chance": "0..1 roll for status_effect or volatile_effect (default 1.0)",
+    "volatile_effect": "confusion | attract (effect_type: status only) — session-tracked, can stack with a major status",
+    "flinch_chance": "0..1 secondary roll on a damaging hit that dealt >0 damage (Bite/Stomp/Rock-slide family)",
+    "no_crit": "damage roll never crits (confusion self-hit)",
     "stat_changes": "[{stat: atk|def|spa|spd|spe|acc|eva, delta, target: self|enemy}]; stat_change_chance gates the whole list",
     "recoil": "fraction of damage dealt taken by the attacker",
     "drain": "fraction of damage dealt healed by the attacker",
@@ -14,6 +17,19 @@
   },
 
   "Struggle": { "typeless": true, "always_hit": true, "recoil": 0.25 },
+  "confusion_self_hit": { "typeless": true, "always_hit": true, "no_crit": true },
+
+  "Disable": { "effect_type": "disable" },
+  "Confuse-ray": { "effect_type": "status", "volatile_effect": "confusion" },
+  "Supersonic": { "effect_type": "status", "volatile_effect": "confusion" },
+  "Sweet-kiss": { "effect_type": "status", "volatile_effect": "confusion" },
+  "Attract": { "effect_type": "status", "volatile_effect": "attract" },
+
+  "Bite": { "flinch_chance": 0.3 },
+  "Stomp": { "flinch_chance": 0.3 },
+  "Rock-slide": { "flinch_chance": 0.3 },
+  "Headbutt": { "flinch_chance": 0.3 },
+  "Astonish": { "flinch_chance": 0.3 },
 
   "Fire-punch": { "status_effect": "brn", "effect_chance": 0.1 },
   "Ember": { "status_effect": "brn", "effect_chance": 0.1 },
