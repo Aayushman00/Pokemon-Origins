@@ -1,9 +1,10 @@
 import React from "react";
 import { badgeCount } from "../data/profiles";
+import GymBadge from "./GymBadge";
 
 const GYM_LEVELS = 8;
 
-/** Eight original gem emblems; lit ones are gyms actually cleared. */
+/** The eight pixel gym badges; won ones in colour, the rest as silhouettes. */
 export const BadgeCase = ({ campaign }) => {
 	const earned = badgeCount(campaign);
 	const route = campaign?.route || [];
@@ -13,7 +14,8 @@ export const BadgeCase = ({ campaign }) => {
 				const lit = i < earned;
 				const town = route[i]?.name || `Stage ${i + 1}`;
 				return (
-					<li key={i} className={`badge-gem badge-gem--${i} ${lit ? "is-lit" : ""}`} title={lit ? `${town} badge` : `${town}: not yet earned`}>
+					<li key={i} className="badge-case__slot" title={lit ? `${town} badge` : `${town}: not yet earned`}>
+						<GymBadge index={i} state={lit ? "won" : "locked"} />
 						<span className="sr-only">{lit ? `${town} badge earned` : `${town} badge not earned`}</span>
 					</li>
 				);

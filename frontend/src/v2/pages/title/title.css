@@ -13,24 +13,189 @@
 	background: linear-gradient(180deg, var(--c-navy) 0 22%, #33497a 22% 38%, #4a6ca3 38% 50%, #6f98c6 50% 60%, var(--c-cream) 60%);
 }
 
-.title__sky::after {
+/* background-image can't be transitioned directly; crossfade a light-mode
+   copy on top of the (always-present) night gradient instead. */
+.title__sky::before {
 	content: "";
 	position: absolute;
+	inset: 0;
+	background: linear-gradient(180deg, #3a8fd6 0 22%, #57a6e0 22% 38%, #7fbdea 38% 50%, #a9d3ef 50% 60%, #dcd0a8 60%);
+	opacity: 0;
+	transition: opacity 1.6s ease;
+}
+
+:root[data-theme="light"] .title__sky::before {
+	opacity: 1;
+}
+
+.title__stars {
+	position: absolute;
 	inset: 0 0 45% 0;
-	background-image: radial-gradient(#fff 1.5px, transparent 2px);
+	background-image: radial-gradient(currentColor 1px, transparent 2px);
+	color: #fff;
+	pointer-events: none;
+}
+
+.title__stars--a {
 	background-size: 64px 48px;
-	opacity: 0.6;
-	animation: twinkle 3s steps(2, end) infinite;
+	opacity: 0.7;
+	animation: twinkle 2.6s steps(3, end) infinite;
+}
+
+.title__stars--b {
+	background-size: 96px 64px;
+	background-position: 32px 20px;
+	opacity: 0.5;
+	animation: twinkle 3.4s steps(3, end) infinite reverse;
+	animation-delay: -1.1s;
+}
+
+:root[data-theme="light"] .title__stars {
+	display: none;
 }
 
 @keyframes twinkle {
-	50% {
-		opacity: 0.3;
+	0%,
+	100% {
+		opacity: 0.15;
+	}
+	40% {
+		opacity: 1;
+	}
+	70% {
+		opacity: 0.4;
+	}
+}
+
+/* Pixel sun & moon (blocky stepped disc, like the hub's pixel clouds) —
+   moon lives on the right at night, sun takes over the left by day. */
+.title__moon,
+.title__sun {
+	position: absolute;
+	/* same 44px stepped disc as the hub's .moon/.sun; outer box-shadows would be
+	   clipped away, so all shading is inset */
+	width: 44px;
+	height: 44px;
+	clip-path: polygon(30% 0, 70% 0, 70% 9%, 85% 9%, 85% 18%, 93% 18%, 93% 30%, 100% 30%, 100% 70%, 93% 70%, 93% 82%, 85% 82%, 85% 91%, 70% 91%, 70% 100%, 30% 100%, 30% 91%, 15% 91%, 15% 82%, 7% 82%, 7% 70%, 0 70%, 0 30%, 7% 30%, 7% 18%, 15% 18%, 15% 9%, 30% 9%);
+	/* different left/top speeds bow the path into an arc instead of a straight line */
+	transition: left 1.7s cubic-bezier(0.3, 0, 0.2, 1), top 1.4s ease-in-out, opacity 1s ease;
+}
+
+/* resting spots match the hub's .sun/.moon (26px down, 12% in from each side)
+   so the sky doesn't jump when you land on the hub */
+.title__moon {
+	top: 26px;
+	left: calc(88% - 44px);
+	background: linear-gradient(#dccf98 0 0) 10px 8px / 8px 8px no-repeat, linear-gradient(#dccf98 0 0) 20px 22px / 6px 6px no-repeat,
+		linear-gradient(#dccf98 0 0) 8px 26px / 4px 4px no-repeat, #f3e8b8;
+	box-shadow: inset -12px -6px 0 #c9bf8d;
+}
+
+.title__sun {
+	top: 22%;
+	left: -30%;
+	opacity: 0;
+	background: #ffcf4d;
+	box-shadow: inset -10px -6px 0 #e8a92e, inset 6px 6px 0 #ffe38a;
+}
+
+:root[data-theme="light"] .title__moon {
+	top: 26%;
+	left: 120%;
+}
+
+:root[data-theme="light"] .title__sun {
+	top: 26px;
+	left: 12%;
+	opacity: 1;
+}
+
+/* Pixel clouds — the hub's .cloud shape (8px blocks, shaded underside),
+   drawn in currentColor so the day/night colour transition still works.
+   Three depth layers: far = small/faint/slow, near = big/bright/faster. */
+.title__cloud {
+	--shade: color-mix(in srgb, currentColor 82%, #7f9bc0);
+	position: absolute;
+	width: 8px;
+	height: 8px;
+	background: currentColor;
+	box-shadow: 8px 0 currentColor, 16px 0 currentColor, 24px 0 currentColor, -8px 8px currentColor, 0 8px currentColor,
+		8px 8px currentColor, 16px 8px currentColor, 24px 8px currentColor, 32px 8px currentColor, 40px 8px currentColor,
+		-16px 16px var(--shade), -8px 16px var(--shade), 0 16px var(--shade), 8px 16px var(--shade), 16px 16px var(--shade),
+		24px 16px var(--shade), 32px 16px var(--shade), 40px 16px var(--shade), 48px 16px var(--shade);
+	color: rgba(200, 210, 235, 0.3);
+	animation: cloud-drift 90s steps(180, end) infinite;
+	transition: color 1.4s ease;
+}
+
+:root[data-theme="light"] .title__cloud {
+	color: #fff;
+}
+
+/* far layer */
+.title__cloud--1,
+.title__cloud--2 {
+	scale: 0.5;
+	opacity: 0.6;
+	animation-duration: 160s;
+}
+
+.title__cloud--1 {
+	top: 30%;
+	left: 4%;
+}
+
+.title__cloud--2 {
+	top: 36%;
+	left: 62%;
+	animation-delay: -70s;
+}
+
+/* mid layer */
+.title__cloud--3,
+.title__cloud--4 {
+	scale: 0.75;
+	opacity: 0.85;
+	animation-duration: 120s;
+}
+
+.title__cloud--3 {
+	top: 20%;
+	left: 34%;
+	animation-delay: -40s;
+}
+
+.title__cloud--4 {
+	top: 26%;
+	left: 86%;
+	animation-delay: -95s;
+}
+
+/* near layer */
+.title__cloud--5 {
+	top: 10%;
+	left: 10%;
+}
+
+.title__cloud--6 {
+	top: 6%;
+	left: 58%;
+	animation-delay: -50s;
+}
+
+@keyframes cloud-drift {
+	from {
+		translate: 0 0;
+	}
+	to {
+		translate: 40vw 0;
 	}
 }
 
 .title__inner {
 	position: relative;
+	/* own stacking context so the stage's z-index:-1 ground stays above the sky */
+	z-index: 0;
 	display: grid;
 	justify-items: center;
 	gap: var(--s-5);
@@ -80,23 +245,127 @@
 	place-items: end center;
 	width: 220px;
 	height: 190px;
+	/* above the platform's top edge (148px) so the platform sits fully on grass */
+	--ground-top: 138px;
+	/* room for the name plate hanging under the platform */
+	margin-bottom: 30px;
 }
 
+/* Name plate under the base: "#025 PIKACHU [ELECTRIC]". Fixed colours (like the
+   menu sign) so it doesn't flash on the day/night toggle. */
+.title__plate {
+	position: absolute;
+	top: calc(100% + 8px);
+	left: 50%;
+	translate: -50% 0;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 0;
+	padding: 3px 8px;
+	white-space: nowrap;
+	font-size: var(--fs-xs);
+	color: #2b211c;
+	background: #fbf6e6;
+	box-shadow: 0 0 0 2px #2b211c, 3px 3px 0 2px rgba(43, 33, 28, 0.3);
+	animation: plate-in 360ms steps(3, end) both;
+}
+
+.title__plate-name {
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.title__plate-type {
+	padding: 1px 5px;
+	color: #fff;
+	text-transform: uppercase;
+	text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.45);
+	box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+}
+
+@keyframes plate-in {
+	from {
+		opacity: 0;
+		translate: -50% -6px;
+	}
+	to {
+		opacity: 1;
+		translate: -50% 0;
+	}
+}
+
+/* Ground: hub's dithered grass field + pixel hill line, full-bleed from the
+   platform down; .title's overflow:hidden clips it at the screen edges. */
+.title__stage::before,
+.title__stage::after,
+.title__plat,
+.title__digg::after {
+	/* night dims the land; day crossfades it back, in step with the sky */
+	filter: brightness(0.5) saturate(0.7) hue-rotate(15deg);
+	transition: filter 1.6s ease;
+}
+
+:root[data-theme="light"] .title__stage::before,
+:root[data-theme="light"] .title__stage::after,
+:root[data-theme="light"] .title__plat,
+:root[data-theme="light"] .title__digg::after {
+	filter: none;
+}
+
+.title__stage::before,
+.title__stage::after {
+	content: "";
+	position: absolute;
+	left: 50%;
+	width: 100vw;
+	translate: -50% 0;
+	z-index: -1;
+	pointer-events: none;
+}
+
+.title__stage::before {
+	top: var(--ground-top);
+	height: 100vh;
+	background-color: var(--c-grass);
+	background-image: var(--grass-tex);
+	background-size: 96px 96px, 136px 136px;
+	background-position: center top;
+	box-shadow: inset 0 4px 0 var(--c-grass-dark);
+}
+
+/* shared hub hill line at x3 (hub draws it at x4) */
+.title__stage::after {
+	top: calc(var(--ground-top) - 54px);
+	height: 54px;
+	background-image: var(--hills-tex);
+	background-size: 288px 54px;
+	background-repeat: repeat-x;
+	background-position: bottom center;
+	image-rendering: pixelated;
+}
+
+/* Battle base, drawn as 4px pixel art (50x13 grid): dirt side with a dark
+   underside, grass rim, lighter top face, and a soft contact shadow in the
+   middle where the mon's feet land. */
 .title__plat {
 	position: absolute;
-	bottom: 6px;
+	bottom: -4px;
 	width: 200px;
-	height: 36px;
-	background: radial-gradient(ellipse at 50% 40%, #b8dd88 0 55%, #62b14f 56% 100%);
-	clip-path: polygon(10% 18%, 22% 6%, 38% 0, 62% 0, 78% 6%, 90% 18%, 100% 38%, 100% 62%, 90% 82%, 78% 94%, 62% 100%, 38% 100%, 22% 94%, 10% 82%, 0 62%, 0 38%);
-	box-shadow: inset 0 -6px 0 var(--c-grass-dark);
+	height: 52px;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 13' shape-rendering='crispEdges'%3E%3Cpath fill='%236e4c2a' d='M14 4h22v1H14zM8 5h34v1H8zM4 6h42v1H4zM2 7h46v1H2zM1 8h48v1H1zM2 9h46v1H2zM4 10h42v1H4zM8 11h34v1H8zM14 12h22v1H14z'/%3E%3Cpath fill='%23b98a52' d='M14 3h22v1H14zM8 4h34v1H8zM4 5h42v1H4zM2 6h46v1H2zM1 7h48v1H1zM2 8h46v1H2zM4 9h42v1H4zM8 10h34v1H8zM14 11h22v1H14z'/%3E%3Cpath fill='%238cc865' d='M14 0h22v1H14zM8 1h34v1H8zM4 2h42v1H4zM2 3h46v1H2zM1 4h48v1H1zM2 5h46v1H2zM4 6h42v1H4zM8 7h34v1H8zM14 8h22v1H14z'/%3E%3Cpath fill='%23c8e69a' d='M16 1h18v1H16zM9 2h32v1H9zM6 3h38v1H6zM6 4h38v1H6zM9 5h32v1H9zM16 6h18v1H16z'/%3E%3Cpath fill='%23000' fill-opacity='.16' d='M18 3h14v1H18zM16 4h18v1H16zM18 5h14v1H18z'/%3E%3C/svg%3E")
+		center / 100% 100% no-repeat;
+	image-rendering: pixelated;
 }
 
 .title__mon {
 	position: relative;
 	width: 176px;
 	height: 176px;
-	margin-bottom: 14px;
+	/* sprites carry ~20px of empty space under the feet; this lands them on the
+	   base's contact shadow */
+	margin-bottom: 4px;
 	animation: title-mon 520ms steps(6, end) both;
 }
 
@@ -114,7 +383,208 @@
 	}
 }
 
+/* Diglett cameo: every 2 minutes a mound heaves up, dirt sprays, Diglett pops
+   out of the (clipping) hole, glances around and sinks back. All stepped.
+   One 120s cycle, so 1% = 1.2s. */
+.title__digg {
+	--digg-cycle: 120s;
+	--digg-delay: 15s;
+	/* left/top/scale set from JS each cycle (random grass spot, smaller near
+	   the horizon); sits above the ground layer inside .title__inner */
+	position: absolute;
+	z-index: 1;
+	width: 64px;
+	height: 48px;
+	transform-origin: bottom center;
+}
+
+.title__digg-hole {
+	position: absolute;
+	inset: 0;
+	overflow: hidden;
+}
+
+.title__digg-mon {
+	position: absolute;
+	left: 4px;
+	/* last two pixel rows stay underground */
+	bottom: -8px;
+	width: 56px;
+	height: 56px;
+	transform: translateY(100%);
+	animation: digg-pop var(--digg-cycle) var(--digg-delay) infinite both;
+}
+
+.title__digg-lids {
+	opacity: 0;
+	animation: digg-blink 3.2s steps(1, end) infinite;
+}
+
+@keyframes digg-blink {
+	0%,
+	90%,
+	100% {
+		opacity: 0;
+	}
+	92%,
+	96% {
+		opacity: 1;
+	}
+	94% {
+		opacity: 0;
+	}
+}
+
+/* dirt mound at the hole's mouth */
+.title__digg::after {
+	content: "";
+	position: absolute;
+	left: 4px;
+	top: 42px;
+	width: 56px;
+	height: 12px;
+	background: var(--c-earth);
+	box-shadow: inset 0 -4px 0 var(--c-earth-dark);
+	clip-path: polygon(14% 0, 86% 0, 86% 33%, 100% 33%, 100% 100%, 0 100%, 0 33%, 14% 33%);
+	transform: scaleY(0);
+	transform-origin: bottom;
+	animation: digg-mound var(--digg-cycle) var(--digg-delay) infinite both;
+}
+
+/* flying dirt clods (8px blocks) while digging out and back in */
+.title__digg::before {
+	content: "";
+	position: absolute;
+	left: 28px;
+	top: 36px;
+	width: 6px;
+	height: 6px;
+	background: var(--c-earth-dark);
+	box-shadow: -20px -6px var(--c-earth-dark), 18px -10px var(--c-earth), -10px -16px var(--c-earth), 12px -2px var(--c-earth-dark);
+	opacity: 0;
+	animation: digg-spray var(--digg-cycle) var(--digg-delay) infinite both;
+}
+
+@keyframes digg-mound {
+	0%,
+	1% {
+		transform: scaleY(0);
+		animation-timing-function: steps(3, end);
+	}
+	2%,
+	7% {
+		transform: scaleY(1);
+		animation-timing-function: steps(3, end);
+	}
+	8%,
+	100% {
+		transform: scaleY(0);
+	}
+}
+
+@keyframes digg-pop {
+	0%,
+	2% {
+		transform: translateY(100%);
+		animation-timing-function: steps(4, end);
+	}
+	2.8% {
+		transform: translateY(0);
+		animation-timing-function: steps(1, end);
+	}
+	/* glance left, right */
+	3.8% {
+		transform: translateX(-3px);
+		animation-timing-function: steps(1, end);
+	}
+	4.8% {
+		transform: translateX(3px);
+		animation-timing-function: steps(1, end);
+	}
+	5.8% {
+		transform: translateY(0);
+		animation-timing-function: steps(4, end);
+	}
+	6.6%,
+	100% {
+		transform: translateY(100%);
+	}
+}
+
+@keyframes digg-spray {
+	0%,
+	1.3% {
+		opacity: 0;
+		translate: 0 0;
+		animation-timing-function: steps(3, end);
+	}
+	1.4% {
+		opacity: 1;
+		translate: 0 0;
+		animation-timing-function: steps(3, end);
+	}
+	2.4% {
+		opacity: 1;
+		translate: 0 -14px;
+		animation-timing-function: steps(1, end);
+	}
+	2.5%,
+	5.9% {
+		opacity: 0;
+		translate: 0 0;
+		animation-timing-function: steps(1, end);
+	}
+	6% {
+		opacity: 1;
+		translate: 0 0;
+		animation-timing-function: steps(3, end);
+	}
+	6.8% {
+		opacity: 1;
+		translate: 0 -10px;
+		animation-timing-function: steps(1, end);
+	}
+	6.9%,
+	100% {
+		opacity: 0;
+	}
+}
+
+/* Menu is a signpost (hub's panel--sign) planted in the grass on two posts.
+   Edge/post colours are fixed rather than theme tokens: tokens swap instantly on
+   the day/night toggle while the land fades over 1.6s, which made the sign's
+   outline flash too dark / too bright against the ground mid-fade. */
 .title__menu {
+	--frame-edge: #6e4c2a;
 	width: min(360px, 100%);
 	padding: var(--s-3);
+	margin-bottom: 28px;
+}
+
+.title__menu::before,
+.title__menu::after {
+	content: "";
+	position: absolute;
+	top: calc(100% + var(--px));
+	width: 10px;
+	height: 26px;
+	background: #7a5530;
+	box-shadow: 0 0 0 2px #2b211c;
+}
+
+.title__menu::before {
+	left: 28px;
+}
+
+.title__menu::after {
+	right: 28px;
+}
+
+/* the sign's tan fill stays light in dark mode, so keep its text dark */
+.title__menu .menu__hint {
+	color: #4a3a2c;
+}
+
+.title__menu .menu__item.is-active {
+	background: rgba(251, 246, 230, 0.45);
 }

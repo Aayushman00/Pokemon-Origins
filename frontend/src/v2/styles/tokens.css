@@ -34,6 +34,18 @@
 	--c-red: #d5473a;
 	--c-red-dark: #9e2f25;
 
+	/* Grass ground texture (hub road field, title ground). Two pixel tiles of
+	   coprime-ish size (96px tufts, 136px flowers) so the combined pattern only
+	   repeats every ~1.6k px. Tufts are translucent so they follow whatever base
+	   green sits underneath (night recolours it). */
+	--grass-tufts: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' shape-rendering='crispEdges'%3E%3Cpath fill='%23000' fill-opacity='.16' d='M2 4h1v2H2zM4 3h1v3H4zM6 4h1v2H6zM14 2h1v2h-1zM16 1h1v3h-1zM18 2h1v2h-1zM8 12h1v2H8zM10 11h1v3h-1zM12 12h1v2h-1zM18 14h1v2h-1zM20 13h1v3h-1zM22 14h1v2h-1zM2 19h1v2H2zM4 18h1v3H4zM6 19h1v2H6zM12 20h1v2h-1zM14 19h1v3h-1zM16 20h1v2h-1z'/%3E%3Cpath fill='%23fff' fill-opacity='.16' d='M9 7h1v1H9zM21 8h1v1h-1zM1 12h1v1H1zM15 15h1v1h-1zM9 22h1v1H9zM21 21h1v1h-1zM5 14h1v1H5zM17 6h1v1h-1z'/%3E%3C/svg%3E");
+	--grass-flowers: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 34 34' shape-rendering='crispEdges'%3E%3Cpath fill='%23fbf6e6' d='M6 7h1v1H6zM5 8h1v1H5zM7 8h1v1H7zM6 9h1v1H6z'/%3E%3Cpath fill='%23e86a5c' d='M25 22h1v1h-1zM24 23h1v1h-1zM26 23h1v1h-1zM25 24h1v1h-1z'/%3E%3Cpath fill='%23f3c64b' d='M6 8h1v1H6zM25 23h1v1h-1z'/%3E%3Cpath fill='%23d8cfb4' d='M18 5h2v1h-2z'/%3E%3Cpath fill='%23000' fill-opacity='.16' d='M18 6h2v1h-2zM9 27h1v2H9zM11 26h1v3h-1zM13 27h1v2h-1zM27 11h1v2h-1zM29 10h1v3h-1zM31 11h1v2h-1z'/%3E%3C/svg%3E");
+	--grass-tex: var(--grass-tufts), var(--grass-flowers);
+	/* Horizon hills (hub + title): one 96x18 tile of uneven rolling hills with two
+	   pines (each on a flat hilltop so no pixel overhangs sky) and a lower front ridge on a different rhythm. Render at a whole-number
+	   scale (x3 / x4) so tile seams land on pixel edges. */
+	--hills-tex: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 18' shape-rendering='crispEdges'%3E%3Cpath fill='%237fbf5f' d='M0 18V12h3V10h3V8h4V7h6V8h3V10h4V11h5V9h3V6h3V4h8V5h3V7h3V9h5V11h6V10h3V8h4V7h4V8h3V10h4V12h5V11h4V10h4V11h3V12h3V18z'/%3E%3Cpath fill='%234f9a44' d='M38 0h1v1h-1zM37 1h3v2h-3zM36 3h5v1h-5zM13 3h1v1h-1zM12 4h3v2h-3zM11 6h5v1h-5z'/%3E%3Cpath fill='%2362b14f' d='M0 18V15h5V14h4V13h7V14h3V15h6V16h4V15h3V14h5V12h6V13h3V14h4V15h5V16h6V15h4V14h3V13h5V14h4V15h9V16h5V15h5V18z'/%3E%3C/svg%3E");
+
 	/* HP / progression */
 	--c-hp-hi: #4fc35b;
 	--c-hp-mid: #f0b429;
