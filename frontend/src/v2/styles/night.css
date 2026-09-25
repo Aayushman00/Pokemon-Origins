@@ -10,21 +10,37 @@
 	background: linear-gradient(180deg, #0b1230 0 30%, #121c45 30% 50%, #1a2757 50% 64%, #243467 64%);
 }
 
-:root[data-theme="dark"] .journey__sky::before {
-	/* two offset star fields so the pattern doesn't read as a grid */
-	content: "";
+/* Individually-placed stars (random spot per load), each popping in and
+   out on its own cycle. Hidden in light mode, same as the moon. */
+.journey__star-field {
 	position: absolute;
-	inset: 0;
-	background-image: radial-gradient(#fff 1.5px, transparent 2px), radial-gradient(#cfd8ff 1px, transparent 1.5px);
-	background-size: 90px 70px, 53px 41px;
-	background-position: 12px 8px, 40px 30px;
-	opacity: 0.8;
-	animation: twinkle 3.2s steps(2, end) infinite;
+	inset: 0 0 45% 0;
+	pointer-events: none;
+	display: none;
 }
 
-@keyframes twinkle {
+:root[data-theme="dark"] .journey__star-field {
+	display: block;
+}
+
+.journey__star {
+	position: absolute;
+	width: 2px;
+	height: 2px;
+	background: #fff;
+	border-radius: 50%;
+	animation: star-pop 3s ease-in-out infinite;
+}
+
+@keyframes star-pop {
+	0%,
+	100% {
+		opacity: 0;
+		scale: 0.4;
+	}
 	50% {
-		opacity: 0.45;
+		opacity: 1;
+		scale: 1;
 	}
 }
 

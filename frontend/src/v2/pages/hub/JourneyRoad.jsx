@@ -1,10 +1,13 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import PixelSprite from "../../ui/PixelSprite";
 import PixelTrainer from "../../ui/PixelTrainer";
 import Button from "../../ui/Button";
 import GymBadge from "../../ui/GymBadge";
 import SkyFlock from "../../ui/SkyFlock";
+import { scatter } from "../../ui/scatter";
 import { MAX_CAMPAIGN_LEVEL } from "../battle/JourneyScreen";
+
+const STAR_COUNT = 36;
 
 /**
  * Hub hero: the campaign drawn as an overworld road. Every town is a real
@@ -20,6 +23,9 @@ const JourneyRoad = ({ user, progress, profile, lead }) => {
 		Array.from({ length: MAX_CAMPAIGN_LEVEL }, (_, i) => ({ level: i + 1, name: null }));
 	const here = route.find((r) => r.level === entryLevel);
 
+	// Randomized once per mount; only reshuffles on a fresh load.
+	const stars = useMemo(() => scatter(STAR_COUNT, { minTop: 0, maxTop: 55, dur: [2.5, 5] }), []);
+
 	// Keep the trainer's town in view on narrow screens (horizontal road).
 	useEffect(() => {
 		const road = roadRef.current;
@@ -31,6 +37,15 @@ const JourneyRoad = ({ user, progress, profile, lead }) => {
 	return (
 		<section className="journey" aria-labelledby="journey-title">
 			<div className="journey__sky" aria-hidden="true">
+				<span className="journey__star-field">
+					{stars.map((s, i) => (
+						<span
+							key={i}
+							className="journey__star"
+							style={{ left: `${s.left}%`, top: `${s.top}%`, animationDelay: `${s.delay}s`, animationDuration: `${s.dur}s` }}
+						/>
+					))}
+				</span>
 				<span className="sun" />
 				<span className="moon" />
 				<span className="cloud cloud--a" />

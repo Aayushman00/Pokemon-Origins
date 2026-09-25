@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../../data/user";
 import { api } from "../../../api";
@@ -6,6 +6,7 @@ import BattlePokemonSprite from "../../../components/PokemonSprite/BattlePokemon
 import MenuList from "../../ui/MenuList";
 import PixelArt from "../../ui/PixelArt";
 import SkyFlock from "../../ui/SkyFlock";
+import { scatter } from "../../ui/scatter";
 import { typeColor } from "../../../utils/typeColors";
 import "./title.css";
 
@@ -33,6 +34,8 @@ const DIGLETT_PAL = { K: "#3a2618", B: "#a0663a", H: "#c98a55", D: "#7a4a28", E:
 
 const DIGG_W = 64;
 const DIGG_H = 56; // hole box + mound lip
+
+const STAR_COUNT = 36;
 
 /**
  * Random spot for Diglett on the grass: below `groundTop`, inside `w`x`h`,
@@ -129,6 +132,9 @@ const TitleScreen = () => {
 
 	const featured = pool[idx];
 
+	// Randomized once per mount; each re-picks its spot only on a fresh load.
+	const stars = useMemo(() => scatter(STAR_COUNT, { minTop: 0, maxTop: 55, dur: [2.5, 5] }), []);
+
 	// Diglett re-spawns somewhere new on the grass each cycle (called while it is
 	// underground, so the jump is never seen).
 	const titleRef = useRef(null);
@@ -163,8 +169,15 @@ const TitleScreen = () => {
 	return (
 		<div className="title" ref={titleRef}>
 			<div className="title__sky" aria-hidden="true">
-				<span className="title__stars title__stars--a" />
-				<span className="title__stars title__stars--b" />
+				<span className="title__star-field">
+					{stars.map((s, i) => (
+						<span
+							key={i}
+							className="title__star"
+							style={{ left: `${s.left}%`, top: `${s.top}%`, animationDelay: `${s.delay}s`, animationDuration: `${s.dur}s` }}
+						/>
+					))}
+				</span>
 				<span className="title__moon" />
 				<span className="title__sun" />
 				<span className="title__cloud title__cloud--1" />
