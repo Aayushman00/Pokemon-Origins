@@ -78,13 +78,13 @@ describe("createSocketAuthMiddleware", () => {
 			verifyToken: () => ({ trainer_id: 42 }),
 			findTrainerById: async (trainerId) => {
 				assert.equal(trainerId, 42);
-				return { trainer_id: 42, name: "Ash" };
+				return { trainer_id: 42, name: "Ash", gender: "Male" };
 			},
 		});
 		const socket = fakeSocket("some-token");
 		middleware(socket, (err) => {
 			assert.equal(err, undefined);
-			assert.deepEqual(socket.trainer, { trainerId: 42, name: "Ash" });
+			assert.deepEqual(socket.trainer, { trainerId: 42, name: "Ash", gender: "Male" });
 			done();
 		});
 	});

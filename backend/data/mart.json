@@ -1,8 +1,8 @@
 {
   "source": "level1_mart",
   "unlock": {
-    "requiredUnlockedLevel": 2,
-    "hint": "Defeat the Level 1 Gym Leader to open the Mart."
+    "requiredUnlockedLevel": 1,
+    "hint": ""
   },
   "stock": [
     { "itemId": 1, "price": 100 },

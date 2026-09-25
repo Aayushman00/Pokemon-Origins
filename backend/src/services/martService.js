@@ -4,10 +4,11 @@
  * Stock and prices are data-driven: backend/data/mart.json lists itemIds
  * (resolved against the items.json catalog) with prices, plus the unlock
  * rule. The mart opens once the trainer's `unlocked_level` reaches
- * `unlock.requiredUnlockedLevel` (2 — set exactly when the Level 1
- * gym_boss is first completed). A locked mart rejects purchases with 403
- * (code MART_LOCKED); GET still answers so the client can render the
- * locked state.
+ * `unlock.requiredUnlockedLevel` (1 — every trainer starts unlocked, so
+ * the Mart is open from the very first town). A locked mart (if the
+ * config ever raises the threshold) rejects purchases with 403 (code
+ * MART_LOCKED); GET still answers so the client can render the locked
+ * state.
  *
  * Purchases are transactional: coin debit and inventory credit succeed
  * together or not at all. The MySQL store runs both writes in one DB

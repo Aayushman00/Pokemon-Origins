@@ -20,7 +20,7 @@ function attachPlayground(io, pool) {
 			verifyToken: (token) => jwt.verify(token, JWT_SECRET),
 			findTrainerById: async (trainerId) => {
 				const [rows] = await pool.query(
-					"SELECT trainer_id, name FROM trainers WHERE trainer_id = ?",
+					"SELECT trainer_id, name, gender FROM trainers WHERE trainer_id = ?",
 					[trainerId]
 				);
 				return rows[0] || null;
@@ -29,7 +29,7 @@ function attachPlayground(io, pool) {
 	);
 
 	io.on("connection", (socket) => {
-		const { trainerId, name } = socket.trainer;
+		const { trainerId, name, gender } = socket.trainer;
 		socket.join(ROOM_ID);
 
 		// lastMessageAt is intentionally keyed by trainerId (not per-socket)
@@ -45,7 +45,7 @@ function attachPlayground(io, pool) {
 		}
 
 		const spawn = spawnPoint();
-		const self = roomState.addPlayer(trainerId, name, spawn);
+		const self = roomState.addPlayer(trainerId, name, spawn, gender);
 		lastMoveAt.set(trainerId, Date.now());
 		trainerSockets.set(trainerId, socket);
 
