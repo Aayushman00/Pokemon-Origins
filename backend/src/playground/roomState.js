@@ -37,10 +37,11 @@ function colorFor(trainerId) {
 function createRoomState() {
 	const players = new Map();
 
-	function addPlayer(trainerId, name, spawn) {
+	function addPlayer(trainerId, name, spawn, gender) {
 		const state = {
 			trainerId,
 			name,
+			gender: gender || null,
 			initial: name.charAt(0).toUpperCase(),
 			color: colorFor(trainerId),
 			x: spawn.x,

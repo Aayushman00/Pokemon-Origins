@@ -55,7 +55,7 @@ function createSocketAuthMiddleware({ verifyToken, findTrainerById }) {
 					next(new Error("Trainer not found"));
 					return;
 				}
-				socket.trainer = { trainerId: trainer.trainer_id, name: trainer.name };
+				socket.trainer = { trainerId: trainer.trainer_id, name: trainer.name, gender: trainer.gender };
 				next();
 			},
 			() => next(new Error("Trainer lookup failed"))

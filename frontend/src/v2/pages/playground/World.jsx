@@ -271,7 +271,7 @@ const World = ({ play, bubbles }) => {
 									{names[p.trainerId] || p.name}
 								</TrainerTrigger>
 							)}
-							<PixelTrainer gender={null} tint={p.color} size={40} />
+							<PixelTrainer gender={p.gender} tint={p.color} size={40} />
 							<span className="token__shadow" aria-hidden="true" />
 						</div>
 					);

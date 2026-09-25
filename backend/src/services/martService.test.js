@@ -4,7 +4,6 @@ const {
 	createMartService,
 	createMemoryMartStore,
 	MartError,
-	MART_LOCKED,
 	INSUFFICIENT_FUNDS,
 	loadMartConfig,
 } = require("./martService");
@@ -171,25 +170,15 @@ describe("martService", () => {
 		assert.ok(!ids.includes(LEAF_STONE)); // "not sold" test hook
 	});
 
-	it("is locked before the boss is completed: no stock, purchase 403", async () => {
-		const { mart, wallet } = makeMart({ unlockedLevel: 1 });
+	it("is open from the start, before any gym is beaten", async () => {
+		const { mart } = makeMart({ unlockedLevel: 1 });
 		const view = await mart.getMart(TRAINER);
-		assert.equal(view.available, false);
-		assert.deepEqual(view.stock, []);
-		assert.equal(view.coins, STARTING_COINS); // wallet still lazily created
-		assert.ok(view.unlockHint.length > 0);
-
-		await assert.rejects(
-			() => mart.purchase(TRAINER, { itemId: POTION }),
-			(err) =>
-				err instanceof MartError &&
-				err.status === 403 &&
-				err.code === MART_LOCKED
-		);
-		assert.equal(await wallet.getBalance(TRAINER), STARTING_COINS);
+		assert.equal(view.available, true);
+		assert.equal(view.coins, STARTING_COINS);
+		assert.ok(view.stock.length > 0);
 	});
 
-	it("opens after the unlock rule with catalog-merged prices", async () => {
+	it("stays open with catalog-merged prices at later levels too", async () => {
 		const { mart } = makeMart({ unlockedLevel: 2 });
 		const view = await mart.getMart(TRAINER);
 		assert.equal(view.available, true);
