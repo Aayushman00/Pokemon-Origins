@@ -28,43 +28,37 @@
 	opacity: 1;
 }
 
-.title__stars {
+/* Individually-placed stars (random spot per load) that pop in and out on
+   their own cycle. */
+.title__star-field {
 	position: absolute;
 	inset: 0 0 45% 0;
-	background-image: radial-gradient(currentColor 1px, transparent 2px);
-	color: #fff;
 	pointer-events: none;
 }
 
-.title__stars--a {
-	background-size: 64px 48px;
-	opacity: 0.7;
-	animation: twinkle 2.6s steps(3, end) infinite;
+.title__star {
+	position: absolute;
+	width: 2px;
+	height: 2px;
+	background: #fff;
+	border-radius: 50%;
+	animation: star-pop 3s ease-in-out infinite;
 }
 
-.title__stars--b {
-	background-size: 96px 64px;
-	background-position: 32px 20px;
-	opacity: 0.5;
-	animation: twinkle 3.4s steps(3, end) infinite reverse;
-	animation-delay: -1.1s;
-}
-
-:root[data-theme="light"] .title__stars {
-	display: none;
-}
-
-@keyframes twinkle {
+@keyframes star-pop {
 	0%,
 	100% {
-		opacity: 0.15;
+		opacity: 0;
+		scale: 0.4;
 	}
-	40% {
+	50% {
 		opacity: 1;
+		scale: 1;
 	}
-	70% {
-		opacity: 0.4;
-	}
+}
+
+:root[data-theme="light"] .title__star-field {
+	display: none;
 }
 
 /* Pixel sun & moon (blocky stepped disc, like the hub's pixel clouds) —
