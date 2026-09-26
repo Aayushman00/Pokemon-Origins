@@ -140,6 +140,10 @@ def determine_turn_order(
 
 def _hit_check(battle: BattleRequest, move_dict: dict, details: Dict[str, Any]) -> bool:
     """One accuracy roll with Gen 3 acc/eva stages. Accuracy is a 0..1 fraction."""
+    if battle.force_hit is not None:
+        details["hit"] = battle.force_hit
+        details["forced_hit"] = True
+        return battle.force_hit
     if move_dict.get("always_hit"):
         details["hit"] = True
         details["always_hit"] = True
@@ -239,7 +243,12 @@ def _single_hit_damage(
     base_damage = base_before_scale // 50 + 2
 
     # Confusion self-hit damage is typeless AND cannot crit in the real games.
-    crit = False if move_dict.get("no_crit") else random.random() < CRIT_RATE
+    if move_dict.get("no_crit"):
+        crit = False
+    elif battle.force_crit is not None:
+        crit = battle.force_crit
+    else:
+        crit = random.random() < CRIT_RATE
     crit_multiplier = CRIT_MULTIPLIER if crit else 1.0
     stab_multiplier = STAB_MULTIPLIER if stab else 1.0
     random_factor = random.uniform(0.85, 1.0)
@@ -274,6 +283,9 @@ def _status_verdict(battle: BattleRequest, move_dict: dict, details: Dict[str, A
     if immune_types & defender_types:
         details["status_blocked"] = "type_immune"
         return None
+    if battle.force_secondary is not None:
+        details["forced_secondary"] = battle.force_secondary
+        return status if battle.force_secondary else None
     chance = move_dict.get("effect_chance")
     chance = 1.0 if chance is None else float(chance)
     roll = random.random()
@@ -282,17 +294,21 @@ def _status_verdict(battle: BattleRequest, move_dict: dict, details: Dict[str, A
     return status if roll < chance else None
 
 
-def _stat_changes_verdict(move_dict: dict, details: Dict[str, Any]) -> List[dict]:
+def _stat_changes_verdict(battle: BattleRequest, move_dict: dict, details: Dict[str, Any]) -> List[dict]:
     """Echo the move's stat changes when their (optional) chance passes."""
     changes = move_dict.get("stat_changes") or []
     if not changes:
         return []
     chance = move_dict.get("stat_change_chance")
     if chance is not None:
-        roll = random.random()
-        details["stat_change_roll"] = roll
-        if roll >= float(chance):
-            return []
+        if battle.force_secondary is not None:
+            if not battle.force_secondary:
+                return []
+        else:
+            roll = random.random()
+            details["stat_change_roll"] = roll
+            if roll >= float(chance):
+                return []
     return [
         {
             "stat": change.get("stat"),
@@ -447,7 +463,7 @@ def calculate_damage_result(battle: BattleRequest) -> Dict[str, Any]:
         if not _hit_check(battle, move_dict, details):
             return {"result": "miss", "damage": 0, "details": details}
         status_applied = _status_verdict(battle, move_dict, details)
-        stat_changes = _stat_changes_verdict(move_dict, details)
+        stat_changes = _stat_changes_verdict(battle, move_dict, details)
         if move_dict.get("status_effect") and not status_applied and not stat_changes:
             # Connected but had no possible effect (target already statused /
             # type-immune to the status): "But it failed!"
@@ -528,16 +544,19 @@ def calculate_damage_result(battle: BattleRequest) -> Dict[str, Any]:
         if static_roll < 0.3:
             attacker_status_applied = "par"
 
-    stat_changes = _stat_changes_verdict(move_dict, details)
+    stat_changes = _stat_changes_verdict(battle, move_dict, details)
 
     # Secondary flinch (Bite/Stomp/Rock-slide family): only rolled on a hit
     # that actually dealt damage, same as every other secondary effect above.
     flinch_applied = False
     flinch_chance = move_dict.get("flinch_chance")
     if flinch_chance and total_damage > 0:
-        flinch_roll = random.random()
-        details["flinch_roll"] = flinch_roll
-        flinch_applied = flinch_roll < float(flinch_chance)
+        if battle.force_secondary is not None:
+            flinch_applied = bool(battle.force_secondary)
+        else:
+            flinch_roll = random.random()
+            details["flinch_roll"] = flinch_roll
+            flinch_applied = flinch_roll < float(flinch_chance)
 
     result: Dict[str, Any] = {
         "result": "hit",

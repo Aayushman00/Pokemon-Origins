@@ -60,6 +60,12 @@ class BattleRequest(BaseModel):
     attacker: Pokemon
     defender: Pokemon
     move: Move
+    # Move Lab overrides (RNG-forcing test playground). None = normal RNG.
+    # Never sent by real battles — battleSessionService.js only forwards
+    # these when a move object explicitly carries them.
+    force_hit: Optional[bool] = None
+    force_crit: Optional[bool] = None
+    force_secondary: Optional[bool] = None
 
 # Model for experience update
 class XPUpdateRequest(BaseModel):
