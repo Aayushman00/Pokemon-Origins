@@ -166,7 +166,42 @@ const battleHistoryQuerySchema = z.object({
 const idList = z.array(z.number().int().positive()).max(1000);
 const partyArrangeSchema = z.object({ party: idList, pc: idList });
 
+const playgroundStagesSchema = z
+	.object({
+		atk: z.number().int().min(-6).max(6).optional(),
+		def: z.number().int().min(-6).max(6).optional(),
+		spa: z.number().int().min(-6).max(6).optional(),
+		spd: z.number().int().min(-6).max(6).optional(),
+		acc: z.number().int().min(-6).max(6).optional(),
+		eva: z.number().int().min(-6).max(6).optional(),
+	})
+	.default({});
+
+const playgroundMonSchema = z.object({
+	pokemonId: z.number().int().positive(),
+	level: z.number().int().min(1).max(100),
+	moveId: z.number().int(),
+	status: z
+		.enum(["Healthy", "brn", "par", "psn", "slp", "frz"], {
+			errorMap: () => ({
+				message: "status must be Healthy, brn, par, psn, slp, or frz",
+			}),
+		})
+		.default("Healthy"),
+	hpPercent: z.number().min(0).max(100).default(100),
+	stages: playgroundStagesSchema,
+	forceHit: z.boolean().optional(),
+	forceCrit: z.boolean().optional(),
+	forceSecondary: z.boolean().optional(),
+});
+
+const playgroundExchangeSchema = z.object({
+	monA: playgroundMonSchema,
+	monB: playgroundMonSchema,
+});
+
 module.exports = {
+	playgroundExchangeSchema,
 	partyArrangeSchema,
 	trainerCardSchema,
 	battleHistoryQuerySchema,
