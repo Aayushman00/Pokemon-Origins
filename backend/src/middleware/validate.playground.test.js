@@ -57,6 +57,14 @@ describe("playgroundExchangeSchema", () => {
 		assert.equal(result.success, false);
 	});
 
+	it("accepts explicit null for an RNG override (the frontend's 'Normal RNG' state)", () => {
+		const result = playgroundExchangeSchema.safeParse({
+			monA: validMon({ forceHit: null, forceCrit: null, forceSecondary: null }),
+			monB: validMon({ pokemonId: 7, moveId: 33 }),
+		});
+		assert.equal(result.success, true);
+	});
+
 	it("accepts tri-state RNG overrides (true/false/omitted)", () => {
 		const result = playgroundExchangeSchema.safeParse({
 			monA: validMon({ forceHit: true, forceCrit: false }),

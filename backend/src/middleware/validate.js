@@ -190,9 +190,9 @@ const playgroundMonSchema = z.object({
 		.default("Healthy"),
 	hpPercent: z.number().min(0).max(100).default(100),
 	stages: playgroundStagesSchema,
-	forceHit: z.boolean().optional(),
-	forceCrit: z.boolean().optional(),
-	forceSecondary: z.boolean().optional(),
+	forceHit: z.boolean().nullable().optional(),
+	forceCrit: z.boolean().nullable().optional(),
+	forceSecondary: z.boolean().nullable().optional(),
 });
 
 const playgroundExchangeSchema = z.object({
