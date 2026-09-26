@@ -158,7 +158,7 @@ function snapshotPokemon(raw, fallbackPosition = null) {
 		// for Move Lab's debugStatus override (never present on real
 		// trainer/campaign rows).
 		status: raw.debugStatus ?? null,
-		statusTurns: 0,
+		statusTurns: raw.debugStatus === "slp" ? rollSleepTurns(Math.random) : 0,
 		// Volatile conditions (Phase 15): independent of the major status
 		// above, cleared on switch, never persisted.
 		confusionTurns: 0,

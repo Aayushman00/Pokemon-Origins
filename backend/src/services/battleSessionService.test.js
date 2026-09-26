@@ -168,6 +168,16 @@ describe("snapshotPokemon debug overrides (Move Lab)", () => {
 		assert.equal(snap.stages.spe, -1);
 		assert.equal(snap.stages.def, 0);
 	});
+
+	it("rolls real sleep turns for debugStatus: slp instead of waking immediately", () => {
+		const snap = snapshotPokemon(playerMon({ debugStatus: "slp" }), 1);
+		assert.ok(snap.statusTurns >= 1 && snap.statusTurns <= 4);
+	});
+
+	it("leaves statusTurns at 0 for a non-sleep debugStatus", () => {
+		const snap = snapshotPokemon(playerMon({ debugStatus: "brn" }), 1);
+		assert.equal(snap.statusTurns, 0);
+	});
 });
 
 describe("sanitizeMove RNG overrides (Move Lab)", () => {
