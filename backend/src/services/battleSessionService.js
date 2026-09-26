@@ -128,6 +128,10 @@ function sanitizeMove(move) {
 		effect_chance: move.effect_chance ?? null,
 		current_pp: currentPp,
 		max_pp: maxPp,
+		// Move Lab RNG overrides; null on every real move.
+		force_hit: move.force_hit ?? null,
+		force_crit: move.force_crit ?? null,
+		force_secondary: move.force_secondary ?? null,
 	};
 }
 
@@ -150,8 +154,10 @@ function snapshotPokemon(raw, fallbackPosition = null) {
 		special_atk: Number(raw.special_atk),
 		special_def: Number(raw.special_def),
 		// Major battle status (brn/par/psn/slp/frz) — session-scoped, always
-		// starts clean (the DB's cosmetic status string is ignored).
-		status: null,
+		// starts clean (the DB's cosmetic status string is ignored), except
+		// for Move Lab's debugStatus override (never present on real
+		// trainer/campaign rows).
+		status: raw.debugStatus ?? null,
 		statusTurns: 0,
 		// Volatile conditions (Phase 15): independent of the major status
 		// above, cleared on switch, never persisted.
@@ -161,7 +167,11 @@ function snapshotPokemon(raw, fallbackPosition = null) {
 		flinched: false,
 		attracted: false,
 		lastMoveId: null,
-		stages: freshStages(),
+		// Move Lab's debugStages overrides individual stages on top of the
+		// fresh baseline; absent on every real trainer/campaign row.
+		stages: raw.debugStages
+			? { ...freshStages(), ...raw.debugStages }
+			: freshStages(),
 		ability: raw.ability
 			? {
 					id: raw.ability.id ?? raw.ability.ability_id ?? null,
@@ -739,6 +749,11 @@ function createBattleSessionService(deps = {}) {
 			attacker: clonePokemon(attacker),
 			defender: clonePokemon(defender),
 			move: { ...move },
+			...(move.force_hit != null ? { force_hit: move.force_hit } : {}),
+			...(move.force_crit != null ? { force_crit: move.force_crit } : {}),
+			...(move.force_secondary != null
+				? { force_secondary: move.force_secondary }
+				: {}),
 		});
 
 		const kind = ["miss", "failed", "status", "heal"].includes(result.result)
@@ -886,12 +901,14 @@ function createBattleSessionService(deps = {}) {
 			}
 		}
 
-		// Recoil (Take-down family, Struggle): fraction of damage dealt.
+		// Recoil (Take-down family): fraction of damage dealt. Struggle is a
+		// special case in Gen 3 — its recoil is a flat 1/4 of the user's own
+		// max HP, independent of the damage it dealt.
 		if (result.recoil_fraction && damage > 0) {
-			const recoil = Math.max(
-				1,
-				Math.round(damage * Number(result.recoil_fraction))
-			);
+			const recoil =
+				move.move_id === STRUGGLE_MOVE_ID
+					? Math.max(1, Math.round(attacker.max_hp * Number(result.recoil_fraction)))
+					: Math.max(1, Math.round(damage * Number(result.recoil_fraction)));
 			attacker.current_hp = Math.max(0, attacker.current_hp - recoil);
 			session.log.push(`${attacker.nickname} is damaged by recoil!`);
 			events.push({

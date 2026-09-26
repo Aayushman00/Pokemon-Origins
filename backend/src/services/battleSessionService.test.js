@@ -151,6 +151,48 @@ describe("snapshotPokemon gender/xp fields", () => {
 	});
 });
 
+describe("snapshotPokemon debug overrides (Move Lab)", () => {
+	it("applies a debugStatus instead of always starting healthy", () => {
+		const snap = snapshotPokemon(playerMon({ debugStatus: "brn" }), 1);
+		assert.equal(snap.status, "brn");
+	});
+
+	it("defaults status to null when debugStatus is absent", () => {
+		const snap = snapshotPokemon(playerMon({}), 1);
+		assert.equal(snap.status, null);
+	});
+
+	it("merges debugStages onto the fresh stage baseline", () => {
+		const snap = snapshotPokemon(playerMon({ debugStages: { atk: 2, spe: -1 } }), 1);
+		assert.equal(snap.stages.atk, 2);
+		assert.equal(snap.stages.spe, -1);
+		assert.equal(snap.stages.def, 0);
+	});
+});
+
+describe("sanitizeMove RNG overrides (Move Lab)", () => {
+	it("passes force_hit/force_crit/force_secondary through when present", () => {
+		const snap = snapshotPokemon(
+			playerMon({
+				moves: [
+					{ move_id: 1, name: "Tackle", power: 40, accuracy: 1, move_type: "Normal", force_hit: true, force_crit: false, force_secondary: true },
+				],
+			}),
+			1
+		);
+		assert.equal(snap.moves[0].force_hit, true);
+		assert.equal(snap.moves[0].force_crit, false);
+		assert.equal(snap.moves[0].force_secondary, true);
+	});
+
+	it("defaults the override fields to null for ordinary moves", () => {
+		const snap = snapshotPokemon(playerMon(), 1);
+		assert.equal(snap.moves[0].force_hit, null);
+		assert.equal(snap.moves[0].force_crit, null);
+		assert.equal(snap.moves[0].force_secondary, null);
+	});
+});
+
 function defaultParty() {
 	return [
 		playerMon({ id: 101, position: 1 }),
@@ -267,6 +309,47 @@ function makeService({
 	});
 	return { service, progress, engine, xp, xpStore, wallet, history };
 }
+
+describe("executeBeat forwards RNG overrides to the engine (Move Lab)", () => {
+	it("adds force_hit/force_crit/force_secondary to the calculateDamage payload when the move carries them", async () => {
+		const engine = stubEngine([{ result: "hit", damage: 5 }]);
+		const { service } = makeService({
+			engine,
+			party: [
+				playerMon({
+					id: 101,
+					position: 1,
+					moves: [
+						{ move_id: 33, name: "Tackle", power: 40, accuracy: 1, move_type: "Normal", force_hit: true, force_crit: true, force_secondary: false },
+					],
+				}),
+			],
+		});
+		const { state } = await service.startBattle(1, { level: 1, battleNumber: 1 });
+		await service.performAction(1, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		const call = engine.calls.find((c) => c.move.move_id === 33);
+		assert.equal(call.force_hit, true);
+		assert.equal(call.force_crit, true);
+		assert.equal(call.force_secondary, false);
+	});
+
+	it("omits the override keys entirely for an ordinary move", async () => {
+		const engine = stubEngine([{ result: "hit", damage: 5 }]);
+		const { service } = makeService({ engine });
+		const { state } = await service.startBattle(1, { level: 1, battleNumber: 1 });
+		await service.performAction(1, {
+			sessionId: state.sessionId,
+			action: { type: "move", moveId: 33 },
+		});
+		const call = engine.calls.find((c) => c.move.move_id === 33);
+		assert.equal("force_hit" in call, false);
+		assert.equal("force_crit" in call, false);
+		assert.equal("force_secondary" in call, false);
+	});
+});
 
 /**
  * Real inventory service on a memory store (real items.json catalog), for
@@ -1703,9 +1786,9 @@ describe("battleSessionService", () => {
 		);
 		const recoil = result.events.find((e) => e.type === "recoil");
 		assert.equal(recoil.target, "player");
-		assert.equal(recoil.damage, 2); // 1/4 of 8
-		// 40 - 2 recoil - 3 enemy hit
-		assert.equal(result.state.player.current_hp, 35);
+		assert.equal(recoil.damage, 10); // 1/4 of the user's own 40 max HP, not the 8 damage dealt
+		// 40 - 10 recoil - 3 enemy hit
+		assert.equal(result.state.player.current_hp, 27);
 		assert.equal(result.state.mustStruggle, true);
 	});
 
