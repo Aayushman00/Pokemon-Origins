@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useUser } from "../../data/user";
+import { api, getErrorMessage } from "../../../api";
 import PokemonSprite from "../../../components/PokemonSprite/PokemonSprite";
 import { fetchProfile } from "../../data/profiles";
 import Panel from "../../ui/Panel";
 import Button from "../../ui/Button";
+import Modal from "../../ui/Modal";
 import PixelTrainer from "../../ui/PixelTrainer";
 import { ProgressBar, XpBar } from "../../ui/Bars";
 import { GenderMark, TypeList } from "../../ui/Badges";
 import { BadgeCase, RecentBattles, StreakLine } from "../../ui/TrainerStats";
+import { useToast } from "../../ui/toastContext";
 import CardEditor from "./CardEditor";
 import { invalidateProfile } from "../../data/profiles";
 import "./trainer.css";
@@ -24,10 +27,31 @@ const Row = ({ label, value }) => (
 /** FRLG-style trainer card for yourself (/trainer) or anyone (/trainer/:id). */
 const TrainerScreen = () => {
 	const { trainerId: param } = useParams();
-	const { user } = useUser();
+	const { user, setUser } = useUser();
 	const id = param || user?.trainer_id;
 	const [state, setState] = useState({ status: "loading" });
 	const [editing, setEditing] = useState(false);
+	const [confirmingReset, setConfirmingReset] = useState(false);
+	const [resetting, setResetting] = useState(false);
+	const toast = useToast();
+	const navigate = useNavigate();
+
+	const resetSave = async () => {
+		setResetting(true);
+		try {
+			await api.post("/api/trainers/me/reset");
+			const updated = { ...user, starterChosen: false, starter: null };
+			localStorage.setItem("trainer", JSON.stringify(updated));
+			setUser(updated);
+			invalidateProfile(user.trainer_id);
+			setConfirmingReset(false);
+			navigate("/game");
+		} catch (err) {
+			toast(getErrorMessage(err, "Couldn't restart your save"), { tone: "error" });
+		} finally {
+			setResetting(false);
+		}
+	};
 
 	useEffect(() => {
 		let alive = true;
@@ -80,6 +104,11 @@ const TrainerScreen = () => {
 							Customize
 						</button>
 					)}
+					{mine && (
+						<button type="button" className="tcard__edit" onClick={() => setConfirmingReset(true)}>
+							Restart save
+						</button>
+					)}
 					<span className="tcard__id">ID No. {String(p.trainer_id).padStart(5, "0")}</span>
 				</header>
 				<div className="tcard__body">
@@ -128,6 +157,23 @@ const TrainerScreen = () => {
 						setState({ status: "ok", profile });
 					}}
 				/>
+			)}
+
+			{mine && (
+				<Modal open={confirmingReset} onClose={() => (resetting ? null : setConfirmingReset(false))} title="Restart your save?">
+					<p className="read">
+						This wipes your party, PC, bag, badges, and campaign progress, and resets your coins to a fresh start. Your battle
+						history and trainer card stay as they are. This can&apos;t be undone.
+					</p>
+					<div className="result__actions">
+						<Button variant="danger" onClick={resetSave} disabled={resetting}>
+							{resetting ? "Restarting…" : "Yes, restart"}
+						</Button>
+						<Button onClick={() => setConfirmingReset(false)} disabled={resetting}>
+							Cancel
+						</Button>
+					</div>
+				</Modal>
 			)}
 
 			<div className="tpage__grid">
