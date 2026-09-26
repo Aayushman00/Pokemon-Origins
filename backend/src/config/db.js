@@ -1,45 +1,24 @@
-// const mysql = require("mysql2");
-
-// const pool = mysql.createPool({
-// 	host: process.env.DB_HOST || "127.0.0.1",
-// 	user: process.env.DB_USER || "myuser",
-// 	password: process.env.DB_PASSWORD || "mypassword",
-// 	database: process.env.DB_NAME || "pokedex",
-// 	port: process.env.DB_PORT || 3306,
-// 	connectTimeout: 10000, // 10 seconds timeout
-// 	waitForConnections: true,
-// 	connectionLimit: 10,
-// 	queueLimit: 0,
-//   });
-  
-// pool.getConnection((err, connection) => {
-// 	if (err) {
-// 		console.error("Database Connection Failed:", err);
-// 	} else {
-// 		console.log("Connected to MySQL Database");
-// 		connection.release();
-// 	}
-// });
-
-// module.exports = pool.promise();
-
-// config/db.js (or config/trainerDb.js)
+// config/db.js
 const mysql = require("mysql2");
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || "127.0.0.1",
   user: process.env.DB_USER || "myuser",
   password: process.env.DB_PASSWORD || "mypassword",
-  database: process.env.DB_NAME || "pokedex", // Change to "trainer" if needed
+  database: process.env.DB_NAME || "pokedex",
   port: process.env.DB_PORT || 3306,
   charset: "utf8mb4",
   connectTimeout: 10000, // 10 seconds timeout
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  // The DB runs behind a remote proxy (see DB_HOST). It silently drops
+  // connections that sit idle in the pool; keepalive pings stop that from
+  // happening instead of finding out via a failed query.
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
 });
 
-// Optionally test connection using callback, but the exported pool will be promise-based.
 pool.getConnection((err, connection) => {
   if (err) {
     console.error("Database Connection Failed:", err);
@@ -49,44 +28,30 @@ pool.getConnection((err, connection) => {
   }
 });
 
-// Export the promise-enabled pool
-module.exports = pool.promise();
+const promisePool = pool.promise();
+const rawQuery = promisePool.query.bind(promisePool);
 
+// A connection can still go stale between the keepalive ping and the next
+// query (proxy-side idle cut, network blip). Those failures are transient —
+// retrying once against a fresh pooled connection clears them instead of
+// bubbling a 500 up for what is really just a dead connection.
+const TRANSIENT_ERROR_CODES = new Set([
+  "PROTOCOL_CONNECTION_LOST",
+  "ECONNRESET",
+  "ETIMEDOUT",
+  "ECONNREFUSED",
+]);
 
-// Create a wrapper function that logs queries
-const createLoggingPool = () => {
-  // Get the promise-based pool
-  const promisePool = pool.promise();
-  
-  // Store the original query method
-  const originalQuery = promisePool.query.bind(promisePool);
-  
-  // Override the query method to add logging
-  promisePool.query = async (...args) => {
-    const sql = args[0];
-    const params = args[1];
-    
-    // Log the SQL query
-    console.log("Executing query:", typeof sql === 'string' ? sql : sql.sql);
-    
-    // Log parameters if they exist
-    if (params) {
-      console.log("Query parameters:", params);
-    }
-    
-    // Execute the original query
-    try {
-      const result = await originalQuery(...args);
-      console.log("------------------------------------------------------------");
-      return result;
-    } catch (error) {
-      console.error("Query failed:", error);
+promisePool.query = async (...args) => {
+  try {
+    return await rawQuery(...args);
+  } catch (error) {
+    if (!error.fatal && !TRANSIENT_ERROR_CODES.has(error.code)) {
       throw error;
     }
-  };
-  
-  return promisePool;
+    console.warn("Query failed on a stale connection, retrying once:", error.code || error.message);
+    return rawQuery(...args);
+  }
 };
 
-// Create and export the logging pool
-module.exports = createLoggingPool();
+module.exports = promisePool;
