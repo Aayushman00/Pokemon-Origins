@@ -1786,9 +1786,9 @@ describe("battleSessionService", () => {
 		);
 		const recoil = result.events.find((e) => e.type === "recoil");
 		assert.equal(recoil.target, "player");
-		assert.equal(recoil.damage, 10); // 1/4 of the user's own 40 max HP, not the 8 damage dealt
-		// 40 - 10 recoil - 3 enemy hit
-		assert.equal(result.state.player.current_hp, 27);
+		assert.equal(recoil.damage, 2); // 1/4 of 8
+		// 40 - 2 recoil - 3 enemy hit
+		assert.equal(result.state.player.current_hp, 35);
 		assert.equal(result.state.mustStruggle, true);
 	});
 
