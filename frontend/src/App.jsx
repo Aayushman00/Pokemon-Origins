@@ -15,6 +15,8 @@ import MartScreen from "./v2/pages/mart/MartScreen";
 import DexScreen from "./v2/pages/dex/DexScreen";
 import DexEntryScreen from "./v2/pages/dex/DexEntryScreen";
 import MoveLabScreen from "./v2/pages/movelab/MoveLabScreen";
+import OverworldScreen from "./v2/overworld/ui/OverworldScreen";
+import { isEnabled } from "./flags";
 import { api } from "./api";
 import { UserContext } from "./v2/data/user";
 
@@ -76,6 +78,7 @@ function App() {
 							<Route path="/game/mart" element={<Protected user={user}><MartScreen /></Protected>} />
 							<Route path="/level/:levelNumber" element={<Protected user={user}><JourneyScreen /></Protected>} />
 							<Route path="/game/movelab" element={<Protected user={user}><MoveLabScreen /></Protected>} />
+							{isEnabled("OVERWORLD") && <Route path="/overworld" element={<OverworldScreen />} />}
 							<Route path="*" element={<Navigate to={user ? "/game" : "/"} replace />} />
 						</Routes>
 					</AppShell>

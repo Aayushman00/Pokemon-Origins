@@ -57,6 +57,9 @@ const CUES = {
 	exp: [[988, 0, 0.04, "square"], [1175, 0.05, 0.04, "square"]],
 	levelUp: [[523, 0, 0.08, "square"], [659, 0.08, 0.08, "square"], [784, 0.16, 0.08, "square"], [1047, 0.24, 0.2, "square"]],
 	victory: [[784, 0, 0.1, "square"], [784, 0.12, 0.1, "square"], [784, 0.24, 0.1, "square"], [1047, 0.36, 0.3, "square"]],
+	bump: [[110, 0, 0.05, "square"]],
+	ledge: [[300, 0, 0.06, "triangle"], [200, 0.06, 0.08, "triangle"]],
+	door: [[392, 0, 0.06, "square"], [523, 0.06, 0.08, "square"]],
 	defeat: [[392, 0, 0.18, "triangle"], [370, 0.2, 0.18, "triangle"], [349, 0.4, 0.3, "triangle"]],
 };
 
