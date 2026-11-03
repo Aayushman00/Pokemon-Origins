@@ -197,3 +197,31 @@ Each phase ends with: tests green (real output pasted), summary, then I stop. Ph
 ## 11. What I need from you to start Phase 1
 
 Answers to Q1-Q4 and Q9 are enough to begin; Q5-Q8 can wait until Phases 3, 8, and 9. If you answer nothing, my default is: keep the assets, stay at party 3 until Phase 4, keep the 10-level layout, replace the playground in Phase 9, and flag everything off.
+
+## 12. Decisions recorded (Phase 0 approved 2026-11-03)
+
+| Q | Decision |
+|---|----------|
+| 1 | Keep existing FRLG-derived assets; list as unlicensed in `assets/LICENSES.md`; `TODO_ART_AUDIO.md` gets a "replace before public hosting" item. All **new** assets original/CC0. |
+| 2 | Party cap 3 → 6 in Phase 4 behind a flag; `balance-sim.js` re-baseline; reward forced-replacement flow updated. |
+| 3 | Exactly 8 gyms + E4/Champion + legendary gauntlet. No invented gyms. |
+| 4 | Playground free-drag room is replaced by the tile-grid world in Phase 9 (one movement model). |
+| 5 | Deferred to Phase 8. Working assumption: static host, 50 MB total for maps/music/sprite sheets. |
+| 6 | Deferred to Phase 9. Assume 50 per room, ~200 overall, single-instance Socket.IO until measured. |
+| 7 | Badge is granted on the gym win, independent of claiming the reward offer. |
+| 8 | Keep Kanto names during development, but **every name lives in one data file** (`backend/data/world/names.json`, created when the first name is needed in Phase 3) so a rename is data-only. |
+| 9 | With `OVERWORLD` on, new accounts receive the starter from the Professor in the lab, replacing `StarterPick`; existing accounts unaffected. |
+
+## 13. Phase 8c (new): Gemini-generated ambient NPC dialogue
+
+Placement: after Phase 8 (music / pixel UI). Backend-only; flagged (`FLAG_AI_DIALOGUE`, plus a separate kill switch); off by default.
+
+- **Hybrid.** Story beats, gym speeches and the tutorial stay hand-authored in map scripts. Gemini covers only ambient NPC chatter, trainer taunts, rival banter, nurse lines and signs.
+- **Pre-generate and cache.** A generation job fills `npc_dialogue_cache` keyed by `(npc_id, context_key)` where `context_key` buckets badge count, time-of-day band and lead-Pokemon type. `GET /api/dialogue/:npcId` reads the cache only. **No model call on the request path.**
+- **Output contract.** Structured JSON `{lines: string[]}`; max 3 lines x 36 chars; Zod-validated; banned-word filter; on failure retry up to N times, then fall back to the NPC's static line. A provider outage can never block the game: the endpoint always returns a line.
+- **Persona sheets.** Per-NPC data file: name, class, town, tone, never-say list (lives with the names file so a rename stays data-only).
+- **Injection defense.** Player nicknames / chat reach the prompt only as quoted data fields, never as instructions. Output is plain text only: it can never trigger scripts, items, warps or any game state (the client renders it through `say` and nothing else).
+- **Controls.** Kill switch flag, in-game report button (stores `(cache_id, trainer_id, reason)` and disables that line), per-user rate limit on the endpoint, hard daily budget cap on generation calls (job stops when reached), Flash-tier model, API key in server env only.
+- **Out of scope.** No live free-text conversation, ever.
+- **Schema (sketch, finalized in that phase):** `npc_dialogue_cache(id, npc_id, context_key, lines_json, model, created_at, disabled)`, `npc_dialogue_reports`, `ai_dialogue_budget(day, calls)`.
+- **Tests (that phase):** schema/length validator, banned-word filter, injection fixtures, fallback on provider error, cache-only read path, budget cap.
