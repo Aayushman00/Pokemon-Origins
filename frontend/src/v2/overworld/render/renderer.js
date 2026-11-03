@@ -5,7 +5,9 @@ import { neighbourOrigin } from "../logic/world.js";
 import { coverage } from "../logic/transition.js";
 
 const ROW = { down: 0, up: 1, left: 2, right: 3 };
-const SIDE_OF = { north: "north", south: "south", east: "east", west: "west" };
+
+// Ground shadow under an actor in mid-air (ledge hop). Hand-drawn, 16x3.
+const HOP_SHADOW = ["....xxxxxxxx....", "..xxxxxxxxxxxx..", "....xxxxxxxx...."];
 
 function tileFrame(ts, localId, ms) {
 	const anim = ts.anim.get(localId);
@@ -31,6 +33,57 @@ export function createRenderer({ canvas, assets }) {
 	g.imageSmoothingEnabled = false;
 	const out = canvas.getContext("2d");
 
+	function drawGid(map, gid, dx, dy, ms, fromRow = 0) {
+		const ts = map.tilesets.find((t) => gid >= t.firstgid);
+		if (!ts) return;
+		const img = assets.tilesets.get(ts.image);
+		if (!img) return;
+		const id = tileFrame(ts, gid - ts.firstgid, ms);
+		const h = TILE - fromRow;
+		g.drawImage(img, (id % ts.columns) * TILE, Math.floor(id / ts.columns) * TILE + fromRow, TILE, h, dx, dy + fromRow, TILE, h);
+	}
+
+	// Fill every on-screen cell that no drawn map covers with the map's border block.
+	function drawBorder(map, drawn, cam, ms) {
+		if (!map.border) return;
+		const inside = (tx, ty) =>
+			drawn.some((d) => {
+				const x = tx - d.ox / TILE;
+				const y = ty - d.oy / TILE;
+				return x >= 0 && y >= 0 && x < d.map.width && y < d.map.height;
+			});
+		const tx0 = Math.floor(cam.x / TILE);
+		const ty0 = Math.floor(cam.y / TILE);
+		const tx1 = Math.floor((cam.x + VIEW_W - 1) / TILE);
+		const ty1 = Math.floor((cam.y + VIEW_H - 1) / TILE);
+		for (let ty = ty0; ty <= ty1; ty++) {
+			for (let tx = tx0; tx <= tx1; tx++) {
+				if (inside(tx, ty)) continue;
+				const gid = map.border[(ty & 1) * 2 + (tx & 1)];
+				drawGid(map, gid, tx * TILE - cam.x, ty * TILE - cam.y, ms);
+			}
+		}
+	}
+
+	// Tall grass: draw the lower rows of a "cover" tile again over an actor standing in it.
+	function drawCover(a, d, cam, ms) {
+		if (a.phase === "hop") return;
+		const map = d.map;
+		const cells = [{ x: a.x, y: a.y }];
+		if (a.to && a.to.mapId === a.mapId) cells.push({ x: a.to.x, y: a.to.y });
+		for (const c of cells) {
+			if (c.x < 0 || c.y < 0 || c.x >= map.width || c.y >= map.height) continue;
+			for (const name of ["ground", "decor", "objects"]) {
+				const gid = map.layers[name][c.y * map.width + c.x];
+				if (!gid) continue;
+				const ts = map.tilesets.find((t) => gid >= t.firstgid);
+				const row = ts?.cover?.get(gid - ts.firstgid);
+				if (row === undefined) continue;
+				drawGid(map, gid, d.ox + c.x * TILE - cam.x, d.oy + c.y * TILE - cam.y, ms, row);
+			}
+		}
+	}
+
 	function drawLayer(map, name, ox, oy, ms) {
 		const data = map.layers[name];
 		const x0 = Math.max(0, Math.floor(-ox / TILE));
@@ -40,13 +93,7 @@ export function createRenderer({ canvas, assets }) {
 		for (let y = y0; y < y1; y++) {
 			for (let x = x0; x < x1; x++) {
 				const gid = data[y * map.width + x];
-				if (!gid) continue;
-				const ts = map.tilesets.find((t) => gid >= t.firstgid);
-				if (!ts) continue;
-				const img = assets.tilesets.get(ts.image);
-				if (!img) continue;
-				const id = tileFrame(ts, gid - ts.firstgid, ms);
-				g.drawImage(img, (id % ts.columns) * TILE, Math.floor(id / ts.columns) * TILE, TILE, TILE, ox + x * TILE, oy + y * TILE, TILE, TILE);
+				if (gid) drawGid(map, gid, ox + x * TILE, oy + y * TILE, ms);
 			}
 		}
 	}
@@ -57,6 +104,12 @@ export function createRenderer({ canvas, assets }) {
 		const { px, py, lift } = actorPixel(a);
 		const dx = Math.round(ox + px - camX);
 		const dy = Math.round(oy + py - camY) - TILE - lift;
+		if (lift > 0) {
+			g.fillStyle = "rgba(24, 32, 40, 0.45)";
+			HOP_SHADOW.forEach((row, y) => {
+				for (let x = 0; x < row.length; x++) if (row[x] === "x") g.fillRect(dx + x, dy + lift + TILE + 13 + y, 1, 1);
+			});
+		}
 		g.drawImage(sheet, actorFrame(a) * TILE, ROW[a.facing] * 32, TILE, 32, dx, dy, TILE, 32);
 	}
 
@@ -88,18 +141,17 @@ export function createRenderer({ canvas, assets }) {
 			if (!map) return;
 			const ms = game.tickCount * TICK_MS;
 			const { px, py } = actorPixel(game.player);
-			const open = {};
 			const drawn = [{ map, ox: 0, oy: 0 }];
 			for (const [side, link] of Object.entries(map.connections)) {
 				const other = game.neighbourMap(link.map);
 				if (!other) continue;
-				open[SIDE_OF[side]] = true;
 				const o = neighbourOrigin(map, side, other);
 				drawn.push({ map: other, ox: o.x, oy: o.y });
 			}
-			const cam = computeCamera({ px, py, mapW: map.width, mapH: map.height, open });
+			const cam = computeCamera({ px, py });
 			g.fillStyle = "#000";
 			g.fillRect(0, 0, VIEW_W, VIEW_H);
+			drawBorder(map, drawn, cam, ms);
 			for (const name of ["ground", "decor", "objects"]) for (const d of drawn) drawLayer(d.map, name, d.ox - cam.x, d.oy - cam.y, ms);
 
 			const originOf = (id) => drawn.find((d) => d.map.id === id);
@@ -107,7 +159,10 @@ export function createRenderer({ canvas, assets }) {
 				.map((a) => ({ a, d: originOf(a.mapId) }))
 				.filter((e) => e.d)
 				.sort((p, q) => actorPixel(p.a).py + p.d.oy - (actorPixel(q.a).py + q.d.oy));
-			for (const { a, d } of actors) drawActor(a, d.ox, d.oy, cam.x, cam.y);
+			for (const { a, d } of actors) {
+				drawActor(a, d.ox, d.oy, cam.x, cam.y);
+				drawCover(a, d, cam, ms);
+			}
 
 			for (const d of drawn) drawLayer(d.map, "above", d.ox - cam.x, d.oy - cam.y, ms);
 			overlay(game, cam.x, cam.y);

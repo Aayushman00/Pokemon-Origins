@@ -652,6 +652,16 @@
        "duration": 500
       }
      ]
+    },
+    {
+     "id": 14,
+     "properties": [
+      {
+       "name": "cover",
+       "type": "int",
+       "value": 9
+      }
+     ]
     }
    ]
   },

@@ -2,7 +2,7 @@
 
 Everything here is drawn from scratch with flat colours (CC0). Output:
   frontend/public/maps/tilesets/overworld.png   16x16 tiles, 8 columns
-  frontend/public/sprites/overworld/{player,npc}.png   16x32 frames, 3 cols x 4 rows
+  frontend/public/sprites/overworld/{player,npc}.png   16x32 frames, 6 cols x 4 rows
   frontend/public/maps/{test_town,test_route,test_house}.json   Tiled JSON
 
 Re-run is idempotent. Usage: python scripts/gen_overworld_placeholders.py
@@ -658,13 +658,47 @@ SIDE_LEGS = [
     ],
 ]
 
+# Running stride for the side view: the first row is dropped by the 1px bob.
+SIDE_RUN_LEGS = [
+    [
+        "....OPPOOppO....",
+        "...OPPO..OppO...",
+        "..OFFFO...OffO..",
+        "..OOOOO...OOOO..",
+    ],
+    [
+        "....OppOOPPO....",
+        "...OppO..OPPO...",
+        "..OffO....OFFFO.",
+        "..OOOO....OOOOO.",
+    ],
+]
+BLANK = "." * 16
+
+def bob(g):
+    """Step frame: everything above the legs sits 1px lower (knees bend)."""
+    return [BLANK] + g[:16] + g[17:]
+
+def run_front(g):
+    """Front/back run frame: head dips 2px, body 1px, legs bend - a forward lean."""
+    return [BLANK, BLANK] + g[:10] + g[11:16] + g[17:]
+
+def run_side(g):
+    """Side run frame: head pushed 1px toward the facing (left), body bobs 1px."""
+    for row in g[:12]:
+        assert row[0] == ".", row
+    return [BLANK] + [row[1:] + "." for row in g[:12]] + g[12:16] + g[17:]
+
 def actor_frames():
-    """{facing: [stand, walkA, walkB]} as 20-row grids. Right mirrors left."""
-    down = [DOWN_HEAD + legs for legs in FRONT_LEGS]
-    up = [UP_HEAD + legs for legs in FRONT_LEGS]
-    left = [SIDE_HEAD + arms + SIDE_HIP + legs for arms, legs in zip(SIDE_ARMS, SIDE_LEGS)]
+    """{facing: [stand, walkA, walkB, runStand, runA, runB]} as 20-row grids. Right mirrors left."""
+    def front(head):
+        stand, wa, wb = (head + legs for legs in FRONT_LEGS)
+        return [stand, bob(wa), bob(wb), run_front(stand), run_front(wa), run_front(wb)]
+    side = [SIDE_HEAD + arms + SIDE_HIP + legs for arms, legs in zip(SIDE_ARMS, SIDE_LEGS)]
+    run = [SIDE_HEAD + arms + SIDE_HIP + legs for arms, legs in zip(SIDE_ARMS[1:], SIDE_RUN_LEGS)]
+    left = [side[0], bob(side[1]), bob(side[2]), run_side(side[0]), run_side(run[0]), run_side(run[1])]
     right = [[row[::-1] for row in g] for g in left]
-    return {"down": down, "up": up, "left": left, "right": right}
+    return {"down": front(DOWN_HEAD), "up": front(UP_HEAD), "left": left, "right": right}
 
 PLAYER = pal(O="#282848", C="#68a0f0", c="#3068c8", k="#204090", B="#f8d040",
              H="#784828", h="#503020", S="#f8d0a8", s="#d8a078", E="#282848",
@@ -676,8 +710,8 @@ NPC = pal(O="#382828", C="#d08848", c="#a06030", k="#704020", B="#a06030",
           P="#b08858", p="#886040", F="#604838", f="#483428")
 
 def make_sheet(name, palette):
-    # 3 cols (stand, walkA, walkB) x 4 rows (down, up, left, right), 16x32 each
-    img = Image.new("RGBA", (48, 128), (0, 0, 0, 0))
+    # 6 cols (stand, walkA, walkB, runStand, runA, runB) x 4 rows (down, up, left, right), 16x32 each
+    img = Image.new("RGBA", (96, 128), (0, 0, 0, 0))
     frames = actor_frames()
     for r, facing in enumerate(("down", "up", "left", "right")):
         for c, grid in enumerate(frames[facing]):
@@ -743,7 +777,8 @@ class MapBuilder:
             layers.append({"id": 6 + n, "name": name, "type": "objectgroup", "draworder": "topdown",
                            "x": 0, "y": 0, "opacity": 1, "visible": True, "objects": self.groups[name]})
         anim = lambda a, b: [{"tileid": a, "animation": [{"tileid": a, "duration": 500}, {"tileid": b, "duration": 500}]}]
-        tiles = anim(WA, WB) + anim(FA, FB)
+        # tall grass: rows 9-15 are drawn again over an actor standing in it
+        tiles = anim(WA, WB) + anim(FA, FB) + [{"id": TALL, "properties": [prop("cover", 9)]}]
         return {"compressionlevel": -1, "type": "map", "version": "1.10", "tiledversion": "1.10.2",
                 "orientation": "orthogonal", "renderorder": "right-down", "infinite": False,
                 "width": self.w, "height": self.h, "tilewidth": T, "tileheight": T,
@@ -761,7 +796,7 @@ def say(*texts):
 
 def town():
     m = MapBuilder(30, 20, GRASS)
-    m.props = [("connect_north", "test_route"), ("connect_north_offset", 5)]
+    m.props = [("connect_north", "test_route"), ("connect_north_offset", 5), ("border", str(TREE))]
     # border trees (gap at x=14,15 on the top row for the route connection)
     for x in range(30):
         if x not in (14, 15):
@@ -821,7 +856,7 @@ def town():
 
 def route():
     m = MapBuilder(20, 30, GRASS)
-    m.props = [("connect_south", "test_town"), ("connect_south_offset", -5)]
+    m.props = [("connect_south", "test_town"), ("connect_south_offset", -5), ("border", str(TREE))]
     for y in range(30):
         for x in (0, 1, 18, 19):
             m.put("objects", x, y, TREE, SOLID)

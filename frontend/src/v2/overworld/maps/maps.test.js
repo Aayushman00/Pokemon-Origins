@@ -51,6 +51,20 @@ describe("sample maps (smoke + lint)", () => {
 	it("NPCs and sign scripts stand on tiles that are not walls, and npc tiles are blocked", () => {
 		for (const m of Object.values(maps)) for (const n of m.npcs) assert.notEqual(collisionAt(m, n.x, n.y), COL.FREE, `${m.id}/${n.name} is walkable (players could overlap it)`);
 	});
+	it("outdoor maps have a border block and interiors are black outside", () => {
+		assert.deepEqual(maps.test_town.border, [3, 3, 3, 3]); // local tree tile 2, firstgid 1
+		assert.deepEqual(maps.test_route.border, [3, 3, 3, 3]);
+		assert.equal(maps.test_house.border, null);
+		const good = JSON.parse(readFileSync(join(MAPS_DIR, "test_house.json"), "utf8"));
+		const withBorder = (v) => parseTiledMap({ ...good, properties: [{ name: "border", type: "string", value: v }] }, "x").border;
+		assert.deepEqual(withBorder("0,1,2,3"), [1, 2, 3, 4]);
+		assert.throws(() => withBorder("1,2"), /border/);
+	});
+	it("tall grass is marked to cover the lower part of actors standing in it", () => {
+		const ts = maps.test_town.tilesets.find((t) => t.image.endsWith("overworld.png"));
+		assert.equal(ts.cover.get(14), 9);
+		assert.equal(ts.cover.get(0), undefined);
+	});
 	it("rejects broken maps with a clear message", () => {
 		const good = JSON.parse(readFileSync(join(MAPS_DIR, "test_house.json"), "utf8"));
 		assert.throws(() => parseTiledMap({ ...good, infinite: true }, "x"), MapError);

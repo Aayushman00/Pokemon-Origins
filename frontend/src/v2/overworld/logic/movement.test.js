@@ -221,6 +221,8 @@ describe("walk animation (object_event_anims.h)", () => {
 		const poses = r.trace.map(actorPose);
 		assert.deepEqual(poses.slice(0, 8).map((p) => p.replace(/[AB]$/, "")), ["runStand", "runStand", "runStand", "runStand", "runStand", "run", "run", "run"]);
 		assert.notEqual(poses[5], poses[13]);
+		// run poses have their own sheet columns (3 runStand, 4 runA, 5 runB)
+		assert.deepEqual([...new Set(r.trace.map(actorFrame))].sort(), [3, 4, 5]);
 	});
 
 	it("stands when idle", () => {

@@ -166,9 +166,8 @@ export function actorPose(a) {
 	}
 }
 
-// Column in the current 3-column placeholder sheets (stand, walkA, walkB).
-// Run poses fall back to walk columns until the sprite step adds run frames.
-const POSE_COLUMN = { stand: 0, walkA: 1, walkB: 2, runStand: 0, runA: 1, runB: 2 };
+// Sheet columns (16x32 frames): stand, walkA, walkB, runStand, runA, runB.
+const POSE_COLUMN = { stand: 0, walkA: 1, walkB: 2, runStand: 3, runA: 4, runB: 5 };
 
 /** Sprite column for the current pose. */
 export function actorFrame(a) {
