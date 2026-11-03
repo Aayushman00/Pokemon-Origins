@@ -10,147 +10,678 @@ Re-run is idempotent. Usage: python scripts/gen_overworld_placeholders.py
 import json
 from pathlib import Path
 
-from PIL import Image, ImageDraw
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 MAPS = ROOT / "frontend" / "public" / "maps"
 SPRITES = ROOT / "frontend" / "public" / "sprites" / "overworld"
 T = 16
 
+# ---- art helpers ---------------------------------------------------------
+# Every tile / frame is a hand-authored character grid. Each character is
+# looked up in a palette; "." means "leave whatever is underneath" (the base
+# grid for overlay tiles, transparent for stand-alone ones). Light comes from
+# the top-left; objects carry a 1px outline in a dark shade of their own hue.
+
+def rgb(h):
+    return (int(h[1:3], 16), int(h[3:5], 16), int(h[5:7], 16), 255)
+
+def pal(**kw):
+    return {k: rgb(v) for k, v in kw.items()}
+
+# GBA-style material ramps: highlight / base / shade / outline
+P_GRASS = pal(l="#b0e070", g="#78c850", d="#58a840", D="#387838")
+P_TALL = pal(L="#a8e068", M="#68b848", K="#408838", D="#285828")
+P_PATH = pal(T="#f8e8b0", t="#e0c888", u="#c0a068", U="#907048")
+P_WATER = pal(X="#f8fcff", W="#b8e0f8", w="#78b8f0", v="#5090e0")
+P_LEAF = pal(a="#88d058", b="#40a048", c="#287838", o="#184828")
+P_TRUNK = pal(n="#c08048", m="#885030", N="#583018")
+P_FLOWER = pal(r="#f04840", R="#a82830", y="#f8e048", Y="#c89828", e="#ffffff", E="#c8c8d8")
+P_WALL = pal(L="#fff8e8", h="#f0e0c0", H="#d0b890", q="#987858")
+P_STONE = pal(S="#c8c8d0", s="#9898a8", k="#606078")
+P_WOOD = pal(n="#d09058", m="#a06838", N="#704828", Q="#482c1c")
+P_ROOF = pal(R="#f08868", r="#d05040", p="#a03030", P="#681c28", F="#f8f0e0", f="#c8b8a0")
+P_GLASS = pal(G="#e0f4ff", B="#88c0f0", b="#5890d8")
+P_KNOB = pal(y="#f8d848", Y="#b88828")
+P_FLOOR = pal(F="#f8e0b0", f="#e0c088", e="#c09860", E="#987040")
+P_IWALL = pal(A="#f8f0f8", a="#e0d8f0", c="#c0b0d8", n="#d09058", m="#a06838", N="#704828", Q="#482c1c")
+P_RUG = pal(M="#f07060", m="#d04040", K="#982830", Z="#f8d060", z="#c89838")
+P_ROCK = pal(S="#e0e0e8", s="#a8a8b8", k="#787890", K="#484860")
+P_MAIL = pal(r="#e85048", R="#b03030", P="#701c24", W="#f8f8f8")
+
+def merge(*ps):
+    out = {}
+    for p in ps:
+        out.update(p)
+    return out
+
+def check(grid, w=16, h=16):
+    assert len(grid) == h, (len(grid), grid)
+    for row in grid:
+        assert len(row) == w, (len(row), row)
+    return grid
+
+def paint(img, ox, oy, grid, palette, w=16, h=16):
+    check(grid, w, h)
+    for y, row in enumerate(grid):
+        for x, ch in enumerate(row):
+            if ch == ".":
+                continue
+            img.putpixel((ox + x, oy + y), palette[ch])
+
+def shifted(grid, dx):
+    """Rotate every row right by dx (used for the 2nd water frame)."""
+    return [row[-dx:] + row[:-dx] for row in grid]
+
 # ---- tileset -------------------------------------------------------------
 # local ids: 0 grass 1 path 2 tree 3 treetop 4 waterA 5 waterB 6 flowerA
 # 7 flowerB 8 wall 9 roof 10 door 11 floor 12 ledge 13 sign 14 tallgrass
-# 15 intwall 16 mat
-GRASS, PATH, TREE, TOP, WA, WB, FA, FB, WALL, ROOF, DOOR, FLOOR, LEDGE, SIGN, TALL, IWALL, MAT = range(17)
+# 15 intwall 16 mat | new: 17 fence 18 bush 19 roof-left 20 roof-right
+# 21 mailbox 22 rock 23 window
+(GRASS, PATH, TREE, TOP, WA, WB, FA, FB, WALL, ROOF, DOOR, FLOOR, LEDGE, SIGN, TALL, IWALL, MAT,
+ FENCE, BUSH, ROOF_L, ROOF_R, MAILBOX, ROCK, WINDOW) = range(24)
 
-def tile(draw, ox, oy, fn):
-    fn(lambda x, y, c: draw.point((ox + x, oy + y), fill=c))
+GRASS_G = [
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "gglgggggggggggll",
+    "gdgdggggggggggdg",
+    "ggdgggggglgggggg",
+    "gggggggggdgdgggg",
+    "gggggggggggdgggg",
+    "gggggggggggggggg",
+    "gggglggggggggggg",
+    "gggdgdgggggggggg",
+    "ggggdggggggglggg",
+    "ggggggggggggdgdg",
+    "gglgggggggggggdg",
+    "gdgdgggggggggggg",
+    "ggdggggggggggggg",
+    "gggggggggggggggg",
+]
+
+TALL_G = [
+    "gggDgggggggDgggg",
+    "gDgLDgDggDgLDgDg",
+    "DLDLMDLDDLDLMDLD",
+    "LMDMKDMKLMDMKDMK",
+    "MKDKKDKKMKDKKDKK",
+    "KKKKKKKKKKKKKKKK",
+    "DKKKDKKDDKKKDKKD",
+    "gDDLDDDDgDDLDDDD",
+    "DgDLMDgLDgDLMDgL",
+    "MDLMKDLDMDLMKDLD",
+    "KDMKKDMMKDMKKDMM",
+    "KDKKKDKKKDKKKDKK",
+    "KKKKKKKKKKKKKKKK",
+    "KKKDDKKKKKKDDKKK",
+    "DDDggDDDDDDggDDD",
+    "gggggggggggggggg",
+]
+
+PATH_G = [
+    "tttttttttttttttt",
+    "tttttttttttTuttt",
+    "ttTutttttttuUttt",
+    "ttuUtttttttttttt",
+    "tttttttttttttttt",
+    "tttttttuttttttut",
+    "tttttttttttttttt",
+    "tutttttttttttttt",
+    "tttttttttTuttttt",
+    "tttttttttuUUtttt",
+    "tttttttttttttttt",
+    "ttttTutttttttttt",
+    "ttttuUttttttuttt",
+    "tttttttttttttttt",
+    "tttttttttttttTut",
+    "ttuttttttttttuUt",
+]
+
+WATER_G = [
+    "wwwwwwwwwwwwwwww",
+    "wwWWWwwwwwwwwwww",
+    "wWwwwvwwwwwwwwww",
+    "wwwwwwwwwwwwwXww",
+    "wwwwwwwwwwWWWwww",
+    "wwwwwwwwwWwwwvww",
+    "wwwwwwwwwwwwwwww",
+    "wwwwwwwwwwwwwwww",
+    "wwwwwWWWwwwwwwww",
+    "wwwwWwwwvwwwwwww",
+    "wwwwwwwwwwwwwwww",
+    "wXwwwwwwwwwwwwww",
+    "wwwwwwwwwwwwWWWw",
+    "wwwwwwwwwwwWwwwv",
+    "wwwwwwwwwwwwwwww",
+    "wwwwwwwwwwwwwwww",
+]
+
+TREE_G = [
+    "gggoccccccccoggg",
+    "ggocbaaabbbbcogg",
+    "gobaaaaabbbbbcog",
+    "gobaaaabbbbbccog",
+    "obaaabbbcbbbbcco",
+    "obbbbbbcabbbccco",
+    "ocbbbbccbbbbccco",
+    "obcabbbbbaabccco",
+    "obbbbbbbbbbbccco",
+    "goccbbbbbbbcccog",
+    "ggoocccccccccogg",
+    "ggggoooNNoooogdg",
+    "ggggggNnmNdddggg",
+    "ggggggNnmNddgggg",
+    "gggggNnnmmNdgggg",
+    "ggggddNNNNddgggg",
+]
+
+TOP_G = [
+    "................",
+    "................",
+    "......oooo......",
+    "....ooaabboo....",
+    "...oaaaabbbbo...",
+    "..oaaaabbbbbco..",
+    "..obaabbbbbbco..",
+    ".obbbbbbcbbbbco.",
+    ".obbbbbccbbbcco.",
+    ".ocbbbcabbbbcco.",
+    ".obaabbbbaabcco.",
+    ".obbbbbbbbbbcco.",
+    "..ocbbbbbbbccco.",
+    "..obbbbbbbbbcco.",
+    "..obbbbbbbbbbco.",
+    "..obbbbbbbbbbbo.",
+]
+
+FLOWER_A = [
+    "................",
+    "................",
+    "...r............",
+    "..ryr...........",
+    "...R............",
+    "..........e.....",
+    ".........eye....",
+    "..........E.....",
+    "................",
+    "................",
+    "....e...........",
+    "...eye.......r..",
+    "....E.......ryr.",
+    ".............R..",
+    "................",
+    "................",
+]
+
+FLOWER_B = [
+    "................",
+    "................",
+    "..r.r...........",
+    "...y............",
+    "..R.R...........",
+    ".........e.e....",
+    "..........y.....",
+    ".........E.E....",
+    "................",
+    "................",
+    "...e.e..........",
+    "....y...........",
+    "...E.E......r.r.",
+    ".............y..",
+    "............R.R.",
+    "................",
+]
+
+WALL_G = [
+    "qqqqqqqqqqqqqqqq",
+    "HHHHHHHHHHHHHHHH",
+    "hhhhhhhhhhhhhhhh",
+    "hhhhhhhhhhhhhhhh",
+    "HHHHHHHHHHHHHHHH",
+    "LLLLLLLLLLLLLLLL",
+    "hhhhhhhhhhhhhhhh",
+    "hhhhhhhhhhhhhhhh",
+    "HHHHHHHHHHHHHHHH",
+    "LLLLLLLLLLLLLLLL",
+    "hhhhhhhhhhhhhhhh",
+    "hhhhhhhhhhhhhhhh",
+    "qqqqqqqqqqqqqqqq",
+    "SSSSkSSSSSSSkSSS",
+    "ssssksssssssksss",
+    "kkkkkkkkkkkkkkkk",
+]
+
+DOOR_G = [
+    "................",
+    "..QQQQQQQQQQQQ..",
+    "..QnnnnnnnnnnQ..",
+    "..QnmmmmmmmmNQ..",
+    "..QnmNNNNNNnNQ..",
+    "..QnmNmmmmmnNQ..",
+    "..QnmNmmmmmnNQ..",
+    "..QnmnnnnnnnNQ..",
+    "..QnmmmmmmmmNQ..",
+    "..QnmmmmmmyYNQ..",
+    "..QnmNNNNNNnNQ..",
+    "..QnmNmmmmmnNQ..",
+    "..QnmNmmmmmnNQ..",
+    "..QnmnnnnnnnNQ..",
+    "..QNNNNNNNNNNQ..",
+    "kkQQQQQQQQQQQQkk",
+]
+
+WINDOW_G = [
+    "................",
+    "................",
+    "................",
+    "...qqqqqqqqqq...",
+    "...qLLLLLLLLq...",
+    "...qLGBLHGBHq...",
+    "...qLBBLHBBHq...",
+    "...qLLLLLLLHq...",
+    "...qLGBLHGBHq...",
+    "...qLBbLHBbHq...",
+    "...qHHHHHHHHq...",
+    "...qqqqqqqqqq...",
+    "................",
+    "................",
+    "................",
+    "................",
+]
+
+ROOF_G = [
+    "RRRRRRRpRRRRRRRp",
+    "rrrrrrrprrrrrrrp",
+    "rrrrrrrprrrrrrrp",
+    "PPPPPPPPPPPPPPPP",
+    "RRRpRRRRRRRpRRRR",
+    "rrrprrrrrrrprrrr",
+    "rrrprrrrrrrprrrr",
+    "PPPPPPPPPPPPPPPP",
+    "RRRRRRRpRRRRRRRp",
+    "rrrrrrrprrrrrrrp",
+    "rrrrrrrprrrrrrrp",
+    "PPPPPPPPPPPPPPPP",
+    "RRRpRRRRRRRpRRRR",
+    "rrrprrrrrrrprrrr",
+    "rrrprrrrrrrprrrr",
+    "PPPPPPPPPPPPPPPP",
+]
+
+ROOF_L_G = [
+    "....PPPPPPPPPPPP",
+    "...PFRRRRRRpRRRR",
+    "..PFfrrrrrrprrrr",
+    ".PFfPPPPPPPPPPPP",
+    "PFfRRRRRRRRpRRRR",
+    "PFfrrrrrrrrprrrr",
+    "PFfrrrrrrrrprrrr",
+    "PFfPPPPPPPPPPPPP",
+    "PFfRRRRpRRRRRRRp",
+    "PFfrrrrprrrrrrrp",
+    "PFfrrrrprrrrrrrp",
+    "PFfPPPPPPPPPPPPP",
+    "PFfRRRRRRRRpRRRR",
+    "PFfrrrrrrrrprrrr",
+    "PFfprrrrrrrprrrr",
+    "PPPPPPPPPPPPPPPP",
+]
+
+LEDGE_G = [
+    "gggggggggggggggg",
+    "gglggggggggggggg",
+    "gdgdgggggggglggg",
+    "ggdgggggggggdgdg",
+    "gggggggggggggdgg",
+    "gggggggggggggggg",
+    "llllllllllllllll",
+    "gggggggggggggggg",
+    "gggggggggggggggg",
+    "dddddddddddddddd",
+    "DDDDDDDDDDDDDDDD",
+    "uuutuuuuuuutuuuu",
+    "UUUUuUUUUUUUuUUU",
+    "DDDDDDDDDDDDDDDD",
+    "dddddddddddddddd",
+    "gggggggggggggggg",
+]
+
+SIGN_G = [
+    "................",
+    "................",
+    "..QQQQQQQQQQQQ..",
+    "..QnnnnnnnnnnQ..",
+    "..QnmmmmmmmmNQ..",
+    "..QnmNNNNNmmNQ..",
+    "..QnmmmmmmmmNQ..",
+    "..QnmNNNNmmmNQ..",
+    "..QnmmmmmmmmNQ..",
+    "..QNNNNNNNNNNQ..",
+    "..QQQQQQQQQQQQ..",
+    "......QnNQdd....",
+    "......QnNQdd....",
+    "......QnNQd.....",
+    "......QmNQd.....",
+    ".....dQQQQd.....",
+]
+
+FLOOR_G = [
+    "FFFFFFFFFFFFFFFF",
+    "fffffEffffffffff",
+    "fffffEffffffffff",
+    "EEEEEEEEEEEEEEEE",
+    "FFFFFFFFFFFFFFFF",
+    "ffffffffffffEfff",
+    "ffeeffffffffEfff",
+    "EEEEEEEEEEEEEEEE",
+    "FFFFFFFFFFFFFFFF",
+    "ffEfffffffffffff",
+    "ffEffffffffeefff",
+    "EEEEEEEEEEEEEEEE",
+    "FFFFFFFFFFFFFFFF",
+    "fffffffffEffffff",
+    "fffffffffEffffff",
+    "EEEEEEEEEEEEEEEE",
+]
+
+IWALL_G = [
+    "AAAaAAAaAAAaAAAa",
+    "AAAaAAAaAAAaAAAa",
+    "AcAaAcAaAcAaAcAa",
+    "AAAaAAAaAAAaAAAa",
+    "AAAaAAAaAAAaAAAa",
+    "AAAaAAAaAAAaAAAa",
+    "AAAaAcAaAAAaAcAa",
+    "AAAaAAAaAAAaAAAa",
+    "aaaaaaaaaaaaaaaa",
+    "QQQQQQQQQQQQQQQQ",
+    "nnnnnnnnnnnnnnnn",
+    "mmmmmmmNmmmmmmmN",
+    "mmmmmmmNmmmmmmmN",
+    "mmmmmmmNmmmmmmmN",
+    "NNNNNNNNNNNNNNNN",
+    "QQQQQQQQQQQQQQQQ",
+]
+
+MAT_G = [
+    "................",
+    "................",
+    "................",
+    ".KKKKKKKKKKKKKK.",
+    ".KZZZZZZZZZZZzK.",
+    ".KZMMMMMMMMMmzK.",
+    ".KZMmmmmmmmmmzK.",
+    ".KZMmZZmmZZmmzK.",
+    ".KZMmZZmmZZmmzK.",
+    ".KZMmmmmmmmmmzK.",
+    ".KZmmmmmmmmmmzK.",
+    ".KzzzzzzzzzzzzK.",
+    ".KKKKKKKKKKKKKK.",
+    "..Z.Z.Z.Z.Z.Z...",
+    "................",
+    "................",
+]
+
+FENCE_G = [
+    "................",
+    "................",
+    "......QQQQ......",
+    ".....QnnnNQ.....",
+    ".....QnmmNQ.....",
+    "QQQQQQnmmNQQQQQQ",
+    "nnnnnQnmmNQnnnnn",
+    "mmmmmQnmmNQmmmmm",
+    "QQQQQQnmmNQQQQQQ",
+    "dddddQnmmNQddddd",
+    "QQQQQQnmmNQQQQQQ",
+    "nnnnnQnmmNQnnnnn",
+    "mmmmmQnmmNQmmmmm",
+    "QQQQQQnmmNQQQQQQ",
+    "dddddQnmmNQddddd",
+    "....ddQQQQdd....",
+]
+
+BUSH_G = [
+    "................",
+    "................",
+    ".....oooooo.....",
+    "...ooaaabbboo...",
+    "..oaaaabbbbbbo..",
+    ".oaaaabbbbbbbco.",
+    ".oabbbbbbcbbbco.",
+    "obbbbbbccbbbbcco",
+    "obbaabbbbbaabcco",
+    "obbbbbbbbbbbccco",
+    "ocbbbccbbbbcccco",
+    ".occbbbbbbcccco.",
+    ".occcccccccccco.",
+    "..oooooooooooo..",
+    "..dddddddddddd..",
+    "................",
+]
+
+ROCK_G = [
+    "................",
+    "................",
+    "................",
+    "................",
+    "......KKKK......",
+    "....KKSSSsKK....",
+    "...KSSSSsssskK..",
+    "..KSSSSsssssskK.",
+    "..KSSsssssskkkK.",
+    ".KSssssssskkkkK.",
+    ".KsssssKsskkkkK.",
+    ".KssssKsskkkkkK.",
+    "..KkkkkkkkkkkK..",
+    "...KKKKKKKKKKdd.",
+    "....ddddddddd...",
+    "................",
+]
+
+MAILBOX_G = [
+    "................",
+    "................",
+    "....PPPPPPP.....",
+    "...PrrrrrrRP.P..",
+    "..PrrrrrrrrRPWP.",
+    "..PrrrrrrrrRPWP.",
+    "..PrWWWWWWrRPPP.",
+    "..PrrrrrrrrRP...",
+    "..PRRRRRRRRRP...",
+    "..PPPPPPPPPPP...",
+    "......QnNQdd....",
+    "......QnNQdd....",
+    "......QnNQd.....",
+    "......QnNQd.....",
+    "......QmNQd.....",
+    ".....dQQQQd.....",
+]
+
+def build_tiles():
+    """Return [(base_grid, overlay_grid, palette, transparent_base)] in tile-id order."""
+    on_grass = lambda g, p: (GRASS_G, g, merge(P_GRASS, p))
+    on_wall = lambda g, p: (WALL_G, g, merge(P_WALL, P_STONE, p))
+    roof_r = [row[::-1].translate(str.maketrans("Ff", "fF")) for row in ROOF_L_G]
+    return [
+        (GRASS_G, None, P_GRASS),
+        (PATH_G, None, P_PATH),
+        (TREE_G, None, merge(P_GRASS, P_LEAF, P_TRUNK)),
+        (None, TOP_G, P_LEAF),
+        (WATER_G, None, P_WATER),
+        (shifted(WATER_G, 3), None, P_WATER),
+        on_grass(FLOWER_A, P_FLOWER),
+        on_grass(FLOWER_B, P_FLOWER),
+        (WALL_G, None, merge(P_WALL, P_STONE)),
+        (ROOF_G, None, P_ROOF),
+        on_wall(DOOR_G, merge(P_WOOD, P_KNOB)),
+        (FLOOR_G, None, P_FLOOR),
+        (LEDGE_G, None, merge(P_GRASS, P_PATH)),
+        on_grass(SIGN_G, P_WOOD),
+        (None, TALL_G, merge(P_GRASS, P_TALL)),
+        (IWALL_G, None, P_IWALL),
+        (FLOOR_G, MAT_G, merge(P_FLOOR, P_RUG)),
+        on_grass(FENCE_G, P_WOOD),
+        on_grass(BUSH_G, P_LEAF),
+        (None, ROOF_L_G, P_ROOF),
+        (None, roof_r, P_ROOF),
+        on_grass(MAILBOX_G, merge(P_MAIL, P_WOOD)),
+        on_grass(ROCK_G, P_ROCK),
+        on_wall(WINDOW_G, P_GLASS),
+    ]
 
 def make_tileset():
     cols, rows = 8, 3
     img = Image.new("RGBA", (cols * T, rows * T), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    g1, g2 = (96, 168, 72, 255), (80, 148, 60, 255)
-    def grass(p):
-        for y in range(T):
-            for x in range(T):
-                p(x, y, g1 if (x * 7 + y * 13) % 11 else g2)
-    def path(p):
-        for y in range(T):
-            for x in range(T):
-                p(x, y, (214, 186, 130, 255) if (x + y * 3) % 9 else (196, 166, 112, 255))
-    def tree(p):
-        grass(p)
-        for y in range(2, 15):
-            for x in range(2, 14):
-                if (x - 8) ** 2 / 36 + (y - 8) ** 2 / 42 < 1:
-                    p(x, y, (36, 100, 52, 255) if (x + y) % 4 else (28, 84, 44, 255))
-        for y in range(11, 16):
-            for x in range(7, 9):
-                p(x, y, (110, 74, 44, 255))
-    def top(p):
-        for y in range(0, 12):
-            for x in range(1, 15):
-                if (x - 8) ** 2 / 49 + (y - 6) ** 2 / 40 < 1:
-                    p(x, y, (36, 100, 52, 255) if (x + y) % 4 else (28, 84, 44, 255))
-    def water(shift):
-        def f(p):
-            for y in range(T):
-                for x in range(T):
-                    wave = ((x + shift * 4) // 4 + y // 4) % 2
-                    p(x, y, (64, 128, 216, 255) if wave else (88, 152, 232, 255))
-        return f
-    def flower(shift):
-        def f(p):
-            grass(p)
-            for fx, fy in ((3, 4), (10, 3), (6, 11), (12, 12)):
-                p(fx + shift, fy, (240, 220, 80, 255))
-                p(fx + shift, fy + 1, (236, 120, 160, 255))
-        return f
-    def wall(p):
-        for y in range(T):
-            for x in range(T):
-                p(x, y, (226, 214, 190, 255) if (y % 8) else (190, 176, 150, 255))
-    def roof(p):
-        for y in range(T):
-            for x in range(T):
-                p(x, y, (190, 70, 60, 255) if (x + y) % 6 else (160, 52, 46, 255))
-    def door(p):
-        wall(p)
-        for y in range(3, T):
-            for x in range(4, 12):
-                p(x, y, (110, 74, 44, 255))
-        p(10, 10, (240, 200, 80, 255))
-    def floor(p):
-        for y in range(T):
-            for x in range(T):
-                p(x, y, (232, 210, 170, 255) if (x // 8 + y // 8) % 2 else (220, 196, 156, 255))
-    def ledge(p):
-        grass(p)
-        for x in range(T):
-            p(x, 11, (60, 110, 48, 255))
-            p(x, 12, (120, 100, 72, 255))
-            p(x, 13, (96, 80, 58, 255))
-    def sign(p):
-        grass(p)
-        for y in range(3, 10):
-            for x in range(3, 13):
-                p(x, y, (170, 124, 76, 255))
-        for y in range(10, 15):
-            p(7, y, (110, 74, 44, 255))
-            p(8, y, (110, 74, 44, 255))
-    def tall(p):
-        grass(p)
-        for x in range(1, T, 3):
-            for y in range(4, 15):
-                p(x, y, (40, 120, 56, 255))
-                if y < 7:
-                    p(x + 1, y, (40, 120, 56, 255))
-    def iwall(p):
-        for y in range(T):
-            for x in range(T):
-                p(x, y, (150, 140, 170, 255) if y < 12 else (110, 100, 130, 255))
-    def mat(p):
-        floor(p)
-        for y in range(4, 12):
-            for x in range(2, 14):
-                p(x, y, (200, 80, 80, 255))
-    fns = [grass, path, tree, top, water(0), water(1), flower(0), flower(1), wall, roof, door, floor, ledge, sign, tall, iwall, mat]
-    for i, fn in enumerate(fns):
-        tile(d, (i % cols) * T, (i // cols) * T, fn)
+    for i, (base, over, palette) in enumerate(build_tiles()):
+        ox, oy = (i % cols) * T, (i // cols) * T
+        if base:
+            paint(img, ox, oy, base, palette)
+        if over:
+            paint(img, ox, oy, over, palette)
     (MAPS / "tilesets").mkdir(parents=True, exist_ok=True)
     img.save(MAPS / "tilesets" / "overworld.png")
 
 # ---- sprites -------------------------------------------------------------
-def make_sheet(name, hair, shirt, pants):
-    # 3 cols (idle, walkA, walkB) x 4 rows (down, up, left, right), 16x32 each
+# 20-row figures placed at the bottom of each 16x32 frame (feet on row 31).
+# Keys: O outline, C/c/k cap (hi/base/dark), B cap emblem, H/h hair, S/s skin,
+# E eye, J/j/q jacket (hi/base/dark), W shirt, P/p pants, F/f shoes.
+CAP_BACK = [
+    "....OOOOOOOO....",
+    "...OCCCCccckO...",
+    "..OCCCCCcccckO..",
+    "..OCCCcccccckO..",
+]
+DOWN_HEAD = [
+    "....OOOOOOOO....",
+    "...OCCCCccckO...",
+    "..OCCCCBBccckO..",
+    "..OCCCcBBccckO..",
+    ".OkkkkkkkkkkkkO.",
+    "..OHHssssssHHO..",
+    "..OHSSSSSSSShO..",
+    "..OSSESSSSESsO..",
+    "..OSSESSSSESsO..",
+    "...OSSSSSSssO...",
+    "...OJJWWWWjjO...",
+    "..OJJJJWWjjjqO..",
+    "..OJOJJWWjjOqO..",
+    "..OJOJJWWjjOqO..",
+    "..OSOJJJjjjOsO..",
+    "...OOPPPPppOO...",
+]
+UP_HEAD = CAP_BACK + [
+    "..OkkkkkkkkkkO..",
+    "..OHHHHHhhhhhO..",
+    "..OHHHHhhhhhhO..",
+    "..OHHHhhhhhhhO..",
+    "..OSHhhhhhhhSO..",
+    "...OHhhhhhhhO...",
+    "...OJJJJjjjjO...",
+    "..OJJJJJjjjjqO..",
+    "..OJOJJJjjjOqO..",
+    "..OJOJJJjjjOqO..",
+    "..OSOJJJjjjOsO..",
+    "...OOPPPPppOO...",
+]
+FRONT_LEGS = [
+    [  # stand
+        "....OPPOOppO....",
+        "....OPPOOppO....",
+        "...OFFFOOfffO...",
+        "...OOOOOOOOOO...",
+    ],
+    [  # walk A: right foot lifted
+        "....OPPOOppO....",
+        "....OPPOOfffO...",
+        "...OFFFOOOOOO...",
+        "...OOOOO........",
+    ],
+    [  # walk B: left foot lifted
+        "....OPPOOppO....",
+        "...OFFFOOppO....",
+        "...OOOOOOfffO...",
+        "........OOOOO...",
+    ],
+]
+SIDE_HEAD = [
+    ".....OOOOOO.....",
+    "....OCCCCccO....",
+    "...OCCCCCcccO...",
+    "...OCCCCcccckO..",
+    ".OkkkkcccccckO..",
+    "..OOsSHHHHhhhO..",
+    "...OSSSHHHhhhO..",
+    "...OESSSHHhhhO..",
+    "..OSESSSSHhhhO..",
+    "...OSSSSsShhO...",
+    "....OJJJjjjO....",
+    "...OJJJJjjjqO...",
+]
+SIDE_ARMS = [
+    [  # stand: arm hanging
+        "...OJOJJjOjqO...",
+        "...OJOJJjOjqO...",
+        "...OjOSSsOqqO...",
+    ],
+    [  # walk A: arm swung back
+        "...OJJOJJjOqO...",
+        "...OJJOJJjOqO...",
+        "...OjjOSSsOqO...",
+    ],
+    [  # walk B: arm swung forward
+        "...OOJJjOjjqO...",
+        "...OOJJjOjjqO...",
+        "..OSSsOjjjqqO...",
+    ],
+]
+SIDE_HIP = ["....OOPPPpOO...."]
+SIDE_LEGS = [
+    [
+        ".....OPPppO.....",
+        ".....OPPppO.....",
+        "....OFFFffO.....",
+        "....OOOOOOO.....",
+    ],
+    [
+        "....OPPOOppO....",
+        "...OPPO..OppO...",
+        "..OFFFO..OffO...",
+        "..OOOOO..OOOO...",
+    ],
+    [
+        "....OppOOPPO....",
+        "...OppO..OPPO...",
+        "..OffO...OFFFO..",
+        "..OOOO...OOOOO..",
+    ],
+]
+
+def actor_frames():
+    """{facing: [stand, walkA, walkB]} as 20-row grids. Right mirrors left."""
+    down = [DOWN_HEAD + legs for legs in FRONT_LEGS]
+    up = [UP_HEAD + legs for legs in FRONT_LEGS]
+    left = [SIDE_HEAD + arms + SIDE_HIP + legs for arms, legs in zip(SIDE_ARMS, SIDE_LEGS)]
+    right = [[row[::-1] for row in g] for g in left]
+    return {"down": down, "up": up, "left": left, "right": right}
+
+PLAYER = pal(O="#282848", C="#68a0f0", c="#3068c8", k="#204090", B="#f8d040",
+             H="#784828", h="#503020", S="#f8d0a8", s="#d8a078", E="#282848",
+             J="#f89040", j="#e06028", q="#a84020", W="#f8f8f8",
+             P="#505878", p="#383c60", F="#d83838", f="#a02830")
+NPC = pal(O="#382828", C="#d08848", c="#a06030", k="#704020", B="#a06030",
+          H="#a06030", h="#704020", S="#f8d0a8", s="#d8a078", E="#382828",
+          J="#78c878", j="#48a060", q="#287048", W="#f8e8c8",
+          P="#b08858", p="#886040", F="#604838", f="#483428")
+
+def make_sheet(name, palette):
+    # 3 cols (stand, walkA, walkB) x 4 rows (down, up, left, right), 16x32 each
     img = Image.new("RGBA", (48, 128), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    skin = (240, 196, 160, 255)
+    frames = actor_frames()
     for r, facing in enumerate(("down", "up", "left", "right")):
-        for c in range(3):
-            ox, oy = c * 16, r * 32
-            d.rectangle([ox + 4, oy + 4, ox + 11, oy + 11], fill=skin)  # head
-            d.rectangle([ox + 4, oy + 3, ox + 11, oy + 6], fill=hair)
-            if facing == "up":
-                d.rectangle([ox + 4, oy + 3, ox + 11, oy + 10], fill=hair)
-            if facing == "down":
-                d.point((ox + 6, oy + 9), fill=(40, 40, 60, 255))
-                d.point((ox + 9, oy + 9), fill=(40, 40, 60, 255))
-            if facing == "left":
-                d.point((ox + 5, oy + 9), fill=(40, 40, 60, 255))
-            if facing == "right":
-                d.point((ox + 10, oy + 9), fill=(40, 40, 60, 255))
-            d.rectangle([ox + 4, oy + 12, ox + 11, oy + 21], fill=shirt)  # torso
-            arm = 1 if c else 0
-            d.rectangle([ox + 2, oy + 13 + arm, ox + 3, oy + 19], fill=skin)
-            d.rectangle([ox + 12, oy + 13 + (1 if c == 2 else 0), ox + 13, oy + 19], fill=skin)
-            lleg = 4 + (1 if c == 1 else 0)
-            rleg = 4 + (1 if c == 2 else 0)
-            d.rectangle([ox + 4, oy + 22, ox + 7, oy + 22 + lleg], fill=pants)
-            d.rectangle([ox + 8, oy + 22, ox + 11, oy + 22 + rleg], fill=pants)
-            d.rectangle([ox + 4, oy + 27 + (lleg - 4), ox + 7, oy + 28 + (lleg - 4)], fill=(60, 50, 50, 255))
-            d.rectangle([ox + 8, oy + 27 + (rleg - 4), ox + 11, oy + 28 + (rleg - 4)], fill=(60, 50, 50, 255))
+        for c, grid in enumerate(frames[facing]):
+            paint(img, c * 16, r * 32 + 12, grid, palette, 16, 20)
     SPRITES.mkdir(parents=True, exist_ok=True)
     img.save(SPRITES / f"{name}.png")
 
@@ -327,8 +858,8 @@ def house():
 
 def main():
     make_tileset()
-    make_sheet("player", (90, 60, 40, 255), (60, 100, 200, 255), (70, 70, 110, 255))
-    make_sheet("npc", (150, 150, 150, 255), (70, 160, 100, 255), (110, 90, 70, 255))
+    make_sheet("player", PLAYER)
+    make_sheet("npc", NPC)
     for name, data in (("test_town", town()), ("test_route", route()), ("test_house", house())):
         (MAPS / f"{name}.json").write_text(json.dumps(data, indent=1) + "\n")
     print("ok")
