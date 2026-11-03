@@ -1,27 +1,54 @@
-"""Assemble a character's 80x128 sheet: 5 columns x 4 rows of 16x32.
+"""Assemble a character's 128x128 sheet: 8 columns x 4 rows of 16x32.
 
-Columns: 0 stand, 1 step A, 2 step B, 3 blink, 4 alert ("spotted you").
-Rows:    0 down, 1 up, 2 left, 3 right (right = mirror of left).
-The renderer picks column = actorFrame(a) and row = facing.
+Columns follow movement.js POSE_COLUMN, plus two expression frames:
+  0 stand  1 walkA  2 walkB  3 runStand  4 runA  5 runB  6 blink  7 alert
+Rows: 0 down, 1 up, 2 left, 3 right (right = mirror of left).
+
+Motion matches the engine's existing sheets: walk frames bob 1px (head and
+torso drop, feet stay planted); run frames lean, so the head dips 2px and
+the shoulders 1px, and in side view the head also leads by 1px.
 """
 from PIL import Image, ImageOps
 
 from .bodies import BODIES
-from .compose import H, W, render
+from .compose import H, W, blink, outline, resolve, shade, stack
 
-COLUMNS = ["stand", "stepA", "stepB", "blink", "alert"]
+COLUMNS = ["stand", "walkA", "walkB", "runStand", "runA", "runB", "blink", "alert"]
 ROWS = ["down", "up", "left", "right"]
 SHEET_W, SHEET_H = W * len(COLUMNS), H * len(ROWS)
 
+# which body template, and which motion transform, each column uses
+_BODY = {"stand": "stand", "walkA": "stepA", "walkB": "stepB", "runStand": "stand",
+         "runA": "stepA", "runB": "stepB", "blink": "stand", "alert": "alert"}
+CHIN_ROW, TORSO_ROW = 21, 24  # rows that can be dropped without losing a feature
+
+
+def _drop(canvas, rows):
+    """Remove `rows` and pad the top: everything above them sinks."""
+    kept = [r for i, r in enumerate(canvas) if i not in rows]
+    return [["."] * W for _ in rows] + kept
+
+
+def _lead(canvas, below):
+    """Shift rows above `below` one pixel toward the facing (left)."""
+    return [r[1:] + ["."] if i < below else r for i, r in enumerate(canvas)]
+
 
 def frame(char, direction, column):
-    body_frame = "stand" if column == "blink" else column
-    body, overlay = BODIES[char["body"]][direction][body_frame]
+    body, overlay = BODIES[char["body"]][direction][_BODY[column]]
     head = char["heads"][direction]
     if column == "alert":
         head = char.get("alert_heads", {}).get(direction, head)
-    # body under head; raised arms go over the head
-    return render([body, head, overlay], char["mats"], closed_eyes=(column == "blink"))
+    canvas = stack(body, head, overlay)  # raised arms go over the head
+    if column == "blink":
+        canvas = blink(canvas)
+    if column in ("walkA", "walkB"):
+        canvas = _drop(canvas, {TORSO_ROW})
+    elif column.startswith("run"):
+        if direction == "left":
+            canvas = _lead(canvas, CHIN_ROW + 1)
+        canvas = _drop(canvas, {CHIN_ROW, TORSO_ROW})
+    return resolve(shade(outline(canvas)), char["mats"])
 
 
 def build_sheet(char):

@@ -48,9 +48,9 @@ def walk_gif(path, roster=ROSTER):
     """Animated GIF: each character walks in place in all four directions.
 
     Cycle mirrors the engine: stand, step A, stand, step B, with a blink
-    and an alert pose at the end so every column is exercised.
+    and an alert pose at the end (run cycle in the middle) so every column is exercised.
     """
-    seq = [0, 1, 0, 2, 0, 1, 0, 2, 3, 0, 4, 4]
+    seq = [0, 1, 0, 2, 0, 1, 0, 2, 3, 4, 3, 5, 3, 4, 3, 5, 6, 0, 7, 7]
     frames = []
     pad = 8
     w = pad + len(ROWS) * (CELL_W + pad)
