@@ -47,11 +47,12 @@ def _move(**overrides) -> Move:
     return Move(**base)
 
 
-def _battle(attacker=None, defender=None, move=None) -> BattleRequest:
+def _battle(attacker=None, defender=None, move=None, **overrides) -> BattleRequest:
     return BattleRequest(
         attacker=attacker or _pokemon(),
         defender=defender or _pokemon(pokemon_id=2, nickname="Foe"),
         move=move or _move(),
+        **overrides,
     )
 
 
@@ -406,3 +407,64 @@ def test_calculate_damage_hit_non_negative():
     assert result["result"] == "hit"
     assert result["damage"] >= 0
     assert "details" in result
+
+
+# --- Move Lab RNG-forcing overrides ------------------------------------------
+
+
+def test_force_hit_true_skips_accuracy_roll():
+    # No hit roll consumed (forced) -> only the crit roll remains.
+    result = _resolve(
+        _battle(move=_move(accuracy=0.5), force_hit=True), rolls=[0.9]
+    )
+    assert result["result"] == "hit"
+
+
+def test_force_hit_false_forces_a_miss():
+    # No rolls consumed at all -> forced miss short-circuits before any roll.
+    result = _resolve(
+        _battle(move=_move(accuracy=1.0), force_hit=False), rolls=[]
+    )
+    assert result["result"] == "miss"
+
+
+def test_force_crit_true_always_crits():
+    # Rolls: hit only (crit roll skipped, forced).
+    result = _resolve(
+        _battle(move=_move(power=40, accuracy=1.0), force_crit=True), rolls=[0.0]
+    )
+    assert result["critical_hit"] is True
+
+
+def test_force_crit_false_never_crits():
+    result = _resolve(
+        _battle(move=_move(power=40, accuracy=1.0), force_crit=False), rolls=[0.0]
+    )
+    assert result["critical_hit"] is False
+
+
+def test_force_secondary_true_always_applies_burn():
+    ember = _move(move_id=52, name="Ember", power=40, move_type="Fire")
+    # Rolls: hit, crit(no). Status roll is skipped (forced).
+    result = _resolve(
+        _battle(move=ember, force_secondary=True), rolls=[0.0, 0.9]
+    )
+    assert result["status_effect_applied"] == "brn"
+
+
+def test_force_secondary_false_never_applies_burn():
+    ember = _move(move_id=52, name="Ember", power=40, move_type="Fire")
+    result = _resolve(
+        _battle(move=ember, force_secondary=False), rolls=[0.0, 0.9]
+    )
+    assert result["status_effect_applied"] is None
+
+
+def test_force_crit_is_a_no_op_on_a_status_move():
+    """A pure status move has no damage roll — force_crit must not raise."""
+    wave = _move(move_id=86, name="Thunder-wave", power=0, accuracy=0.9,
+                 move_type="Electric")
+    result = _resolve(
+        _battle(move=wave, force_crit=True), rolls=[0.0, 0.0]
+    )
+    assert result["result"] == "status"

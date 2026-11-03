@@ -6,6 +6,7 @@ import { isSoundOn, setSoundOn } from "../../battle/sfx";
 import DialogueBox from "../../ui/DialogueBox";
 import Button from "../../ui/Button";
 import Panel from "../../ui/Panel";
+import useDelayedHint from "../../ui/useDelayedHint";
 import BattleStage from "./BattleStage";
 import MobilePad from "./MobilePad";
 import { BagMenu, CommandMenu, MoveMenu, PartyMenu, RestartMenu, ResultPanel } from "./BattleMenus";
@@ -28,6 +29,7 @@ const BattleView = ({ levelNumber, battleNumber, levelName, onBattleWon, onConti
 	const [soundOn, setSound] = useState(isSoundOn);
 	const battle = useBattle({ levelNumber, battleNumber, trainerId: user?.trainer_id, onBattleWon, textSpeed: speed });
 	const { phase, player, session } = battle;
+	const slow = useDelayedHint(phase === "loading" || phase === "restarting");
 
 	const toggleSpeed = () => {
 		const next = speed === "fast" ? "normal" : "fast";
@@ -119,6 +121,7 @@ const BattleView = ({ levelNumber, battleNumber, levelName, onBattleWon, onConti
 						<BattleStage battle={battle} />
 					</div>
 					<div className="hud">{hud}</div>
+					{slow && <p className="muted">The server&apos;s waking up — this can take up to 30 seconds.</p>}
 					<MobilePad />
 					<p className="battle__keys muted">
 						Arrows move the cursor. Enter or Z confirms, Esc or X goes back. Click the text box to speed it up.

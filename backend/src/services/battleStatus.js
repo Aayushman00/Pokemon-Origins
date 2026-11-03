@@ -26,7 +26,7 @@ const CHIP_FRACTION = 1 / 8;
 // Volatile conditions (confusion/attract/disable/flinch): unlike major
 // statuses, these are tracked independently and a mon can have one of these
 // AND a major status at the same time.
-const CONFUSION_SELF_HIT_CHANCE = 1 / 3;
+const CONFUSION_SELF_HIT_CHANCE = 0.5;
 const ATTRACT_SKIP_CHANCE = 0.5;
 // ponytail: real Gen 3 Disable lasts 2-7 turns; simplified to 2-5 here.
 const DISABLE_TURNS_MIN = 2;

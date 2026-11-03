@@ -26,6 +26,16 @@ export const STATUS_HURT_TEXT = {
 	psn: (n) => `${n} was hurt by poison!`,
 };
 
+export const VOLATILE_APPLIED_TEXT = {
+	confusion: (n) => `${n} became confused!`,
+	attract: (n) => `${n} fell in love!`,
+};
+
+export const VOLATILE_END_TEXT = {
+	confusion: (n) => `${n} snapped out of its confusion!`,
+	disable: (n) => `${n}'s move is no longer disabled!`,
+};
+
 const STAT_LABELS = {
 	atk: "ATTACK",
 	def: "DEFENSE",

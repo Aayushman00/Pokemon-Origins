@@ -33,7 +33,19 @@ const HubScreen = () => {
 
 	return (
 		<div className="hub">
-			<JourneyRoad user={user} progress={hub.progress} profile={hub.profile} lead={hub.party?.[0]} />
+			{hub.progressLoading ? (
+				<section className="journey" aria-labelledby="journey-title">
+					<div className="journey__sign frame panel panel--sign frame--lift">
+						<p className="journey__hello">Welcome back,</p>
+						<h1 id="journey-title" className="journey__name">
+							{user.name}
+						</h1>
+						<p className="journey__next loading-dots">Loading your journey</p>
+					</div>
+				</section>
+			) : (
+				<JourneyRoad user={user} progress={hub.progress} profile={hub.profile} lead={hub.party?.[0]} />
+			)}
 
 			<div className="page hub__body">
 				<HubEvents

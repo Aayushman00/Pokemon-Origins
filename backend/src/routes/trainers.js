@@ -9,6 +9,7 @@ const {
 } = require("../middleware/validate");
 const { requireAuth } = require("../middleware/auth");
 const profileService = require("../services/profileService");
+const resetService = require("../services/resetService");
 
 const fail = (res, err, fallback) => {
 	if (err.status) return res.status(err.status).json({ success: false, error: err.message });
@@ -24,6 +25,18 @@ router.put("/me/card", requireAuth, validateBody(trainerCardSchema), async (req,
 		return res.json({ success: true, profile });
 	} catch (err) {
 		return fail(res, err, "Failed to save your card");
+	}
+});
+
+// POST /api/trainers/me/reset — wipe party/PC, inventory, badges, pending
+// reward offers, and reset progress + coins to a fresh save. Battle history
+// and the trainer's card are left untouched (see resetService).
+router.post("/me/reset", requireAuth, async (req, res) => {
+	try {
+		await resetService.resetTrainer(req.user.trainer_id);
+		return res.json({ success: true });
+	} catch (err) {
+		return fail(res, err, "Failed to reset your save");
 	}
 });
 

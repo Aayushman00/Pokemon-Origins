@@ -77,4 +77,26 @@ describe("planEvent: other events", () => {
 		const { steps } = planEvent({ type: "status_damage", target: "enemy", status: "brn", nickname: "Rattata", targetHpAfter: 0, targetFainted: true }, view, ctx);
 		assert.deepEqual(says(steps), ["Rattata was hurt by its burn!", "Rattata fainted!"]);
 	});
+
+	it("volatile_applied (confusion/attract) says its line without touching HP", () => {
+		const { steps, view: next } = planEvent({ type: "volatile_applied", target: "enemy", nickname: "Rattata", volatile: "confusion" }, view, ctx);
+		assert.deepEqual(says(steps), ["Rattata became confused!"]);
+		assert.equal(next.enemy.current_hp, 15);
+	});
+
+	it("disable_applied names the disabled move from the view's movelist", () => {
+		const named = { ...view, player: { ...view.player, moves: [{ move_id: 10, name: "Scratch", current_pp: 35 }] } };
+		const { steps } = planEvent({ type: "disable_applied", target: "player", nickname: "Charmander", moveId: 10 }, named, ctx);
+		assert.deepEqual(says(steps), ["Charmander's Scratch was disabled!"]);
+	});
+
+	it("disable_applied falls back to 'move' when the move isn't found", () => {
+		const { steps } = planEvent({ type: "disable_applied", target: "player", nickname: "Charmander", moveId: 999 }, view, ctx);
+		assert.deepEqual(says(steps), ["Charmander's move was disabled!"]);
+	});
+
+	it("confusion_self_hit chips the attacker's own HP and can faint", () => {
+		const { steps } = planEvent({ type: "confusion_self_hit", actor: "player", nickname: "Charmander", targetHpAfter: 5, targetFainted: false }, view, ctx);
+		assert.deepEqual(says(steps), ["Charmander hurt itself in its confusion!"]);
+	});
 });

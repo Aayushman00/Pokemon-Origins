@@ -5,6 +5,7 @@ import Panel from "../../ui/Panel";
 import Button from "../../ui/Button";
 import { TypeList } from "../../ui/Badges";
 import PartyRow from "../../ui/PartyRow";
+import useDelayedHint from "../../ui/useDelayedHint";
 
 const MAX_PARTY = 3;
 const TITLES = {
@@ -26,6 +27,7 @@ const RewardScreen = ({ onDone }) => {
 	const [claimed, setClaimed] = useState(null);
 	const [busy, setBusy] = useState(false);
 	const [error, setError] = useState("");
+	const slow = useDelayedHint(!reward);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -73,6 +75,7 @@ const RewardScreen = ({ onDone }) => {
 		return (
 			<div className="page-center">
 				<p className="loading-dots">Checking for rewards</p>
+				{slow && <p className="muted">The server&apos;s waking up — this can take up to 30 seconds.</p>}
 			</div>
 		);
 

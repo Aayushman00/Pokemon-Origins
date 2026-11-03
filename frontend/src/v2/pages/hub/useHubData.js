@@ -10,6 +10,7 @@ import { fetchProfile } from "../../data/profiles";
 export default function useHubData(user) {
 	const [party, setParty] = useState(null);
 	const [progress, setProgress] = useState(null);
+	const [progressLoading, setProgressLoading] = useState(true);
 	const [coins, setCoins] = useState(null);
 	const [profile, setProfile] = useState(null);
 	const [pendingEvos, setPendingEvos] = useState([]);
@@ -86,6 +87,7 @@ export default function useHubData(user) {
 		if (prog.status === "fulfilled" && prog.value.data?.success) setProgress(prog.value.data.progress);
 		if (mart.status === "fulfilled" && typeof mart.value.data?.coins === "number") setCoins(mart.value.data.coins);
 		if (prof.status === "fulfilled" && prof.value.status === "ok") setProfile(prof.value.profile);
+		setProgressLoading(false);
 	}, [user?.trainer_id]);
 
 	useEffect(() => {
@@ -97,5 +99,5 @@ export default function useHubData(user) {
 		loadRest();
 	}, [user?.starterChosen, loadParty, loadPc, loadEvos, loadLearns, loadRest]);
 
-	return { party, pc, progress, coins, profile, pendingEvos, pendingLearns, loadParty, loadEvos, loadLearns, arrange };
+	return { party, pc, progress, progressLoading, coins, profile, pendingEvos, pendingLearns, loadParty, loadEvos, loadLearns, arrange };
 }

@@ -106,7 +106,7 @@ const BagScreen = () => {
 					<p className="loading-dots muted">Opening the bag</p>
 				) : items.length === 0 ? (
 					<div className="empty">
-						<p className="read">Your bag is empty. Win battles for coins; the Mart opens once you beat the first Gym Leader.</p>
+						<p className="read">Your bag is empty. Win battles for coins, then spend them at the Mart.</p>
 						<Button to="/game/mart" variant="primary">
 							Check the Mart
 						</Button>

@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { api, getErrorMessage } from "../../../api";
 import Panel from "../../ui/Panel";
 import Button from "../../ui/Button";
+import useDelayedHint from "../../ui/useDelayedHint";
 import BattleView from "./BattleView";
 import RewardScreen from "./RewardScreen";
 import "./battle.css";
@@ -36,6 +37,7 @@ const JourneyScreen = () => {
 	const [view, setView] = useState("loading"); // loading | locked | reward | battle | complete | error
 	const [error, setError] = useState("");
 	const [attempt, setAttempt] = useState(0);
+	const slow = useDelayedHint(view === "loading");
 
 	const load = useCallback(async () => {
 		setView("loading");
@@ -146,6 +148,7 @@ const JourneyScreen = () => {
 	return (
 		<div className="page-center">
 			<p className="loading-dots">Heading to {levelName || `stage ${levelNumber}`}</p>
+			{slow && <p className="muted">The server&apos;s waking up — this can take up to 30 seconds.</p>}
 		</div>
 	);
 };
