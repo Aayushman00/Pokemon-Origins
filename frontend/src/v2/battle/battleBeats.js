@@ -22,7 +22,7 @@
  */
 import { TYPE_COLORS } from "../../utils/typeColors.js";
 import { getImpactTier, getMoveAnimCategory, hitResultLines } from "./battleAnimation.js";
-import { STATUS_APPLIED_TEXT, CANT_MOVE_TEXT, STATUS_END_TEXT, STATUS_HURT_TEXT, statChangeText, rewardLine } from "./battleText.js";
+import { STATUS_APPLIED_TEXT, CANT_MOVE_TEXT, STATUS_END_TEXT, STATUS_HURT_TEXT, VOLATILE_APPLIED_TEXT, VOLATILE_END_TEXT, statChangeText, rewardLine } from "./battleText.js";
 
 export const DRAIN_MS = 600;
 
@@ -154,6 +154,32 @@ export function planEvent(event, view, { trainerName = "The trainer", nextId = (
 		case "recoil":
 			patch(event.target, { current_hp: event.hpAfter });
 			return done(chipSteps(event.target, `${event.nickname} is damaged by recoil!`, event.hpAfter, event.nickname, event.targetFainted));
+
+		case "confusion_self_hit":
+			patch(event.actor, { current_hp: event.targetHpAfter });
+			return done(chipSteps(event.actor, `${event.nickname} hurt itself in its confusion!`, event.targetHpAfter, event.nickname, event.targetFainted));
+
+		case "volatile_applied":
+			return done([
+				{ sfx: "status" },
+				{ say: withFallback(VOLATILE_APPLIED_TEXT, event.volatile, (n) => `${n} was affected!`)(event.nickname) },
+				{ wait: 300 },
+			]);
+
+		case "volatile_end":
+			return done([
+				{ say: withFallback(VOLATILE_END_TEXT, event.volatile, (n) => `${n} returned to normal!`)(event.nickname) },
+				{ wait: 250 },
+			]);
+
+		case "disable_applied": {
+			const disabledMove = (view[event.target]?.moves || []).find((m) => m.move_id === event.moveId);
+			return done([
+				{ sfx: "status" },
+				{ say: `${event.nickname}'s ${disabledMove?.name || "move"} was disabled!` },
+				{ wait: 300 },
+			]);
+		}
 
 		case "stat_change":
 			return done([{ sfx: event.delta > 0 ? "statUp" : "statDown" }, { say: statChangeText(event) }, { wait: 250 }]);

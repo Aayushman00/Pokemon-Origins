@@ -142,7 +142,7 @@ describe("battleStatus volatile conditions", () => {
 		});
 	});
 
-	it("confusion decrements each turn and self-hits 1/3 of the time", () => {
+	it("confusion decrements each turn and self-hits 1/2 of the time", () => {
 		const confused = { confusionTurns: 2 };
 		assert.deepEqual(volatileGate(confused, () => 0), {
 			act: false,

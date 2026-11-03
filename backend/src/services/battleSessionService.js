@@ -901,12 +901,14 @@ function createBattleSessionService(deps = {}) {
 			}
 		}
 
-		// Recoil (Take-down family, Struggle): fraction of damage dealt.
+		// Recoil (Take-down family): fraction of damage dealt. Struggle is a
+		// special case in Gen 3 — its recoil is a flat 1/4 of the user's own
+		// max HP, independent of the damage it dealt.
 		if (result.recoil_fraction && damage > 0) {
-			const recoil = Math.max(
-				1,
-				Math.round(damage * Number(result.recoil_fraction))
-			);
+			const recoil =
+				move.move_id === STRUGGLE_MOVE_ID
+					? Math.max(1, Math.round(attacker.max_hp * Number(result.recoil_fraction)))
+					: Math.max(1, Math.round(damage * Number(result.recoil_fraction)));
 			attacker.current_hp = Math.max(0, attacker.current_hp - recoil);
 			session.log.push(`${attacker.nickname} is damaged by recoil!`);
 			events.push({
