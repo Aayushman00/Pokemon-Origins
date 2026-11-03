@@ -11,7 +11,7 @@ the shoulders 1px, and in side view the head also leads by 1px.
 from PIL import Image, ImageOps
 
 from .bodies import BODIES
-from .compose import H, W, blink, outline, resolve, shade, stack
+from .compose import H, W, blink, despeckle, outline, resolve, shade, stack
 
 COLUMNS = ["stand", "walkA", "walkB", "runStand", "runA", "runB", "blink", "alert"]
 ROWS = ["down", "up", "left", "right"]
@@ -34,12 +34,17 @@ def _lead(canvas, below):
     return [r[1:] + ["."] if i < below else r for i, r in enumerate(canvas)]
 
 
-def frame(char, direction, column):
-    body, overlay = BODIES[char["body"]][direction][_BODY[column]]
+def frame_keys(char, direction, column):
+    """Shaded key grid ((material, tone) / "outline" / "white") for one frame."""
+    body, arms_up = BODIES[char["body"]][direction][_BODY[column]]
     head = char["heads"][direction]
     if column == "alert":
         head = char.get("alert_heads", {}).get(direction, head)
-    canvas = stack(body, head, overlay)  # raised arms go over the head
+    head = head if isinstance(head, list) else [head]
+    under = char.get("under", {}).get(direction, [])
+    over = char.get("over", {}).get(direction, [])
+    # body, things behind the head, head, things in front, raised arms last
+    canvas = stack(body, *under, *head, *over, arms_up)
     if column == "blink":
         canvas = blink(canvas)
     if column in ("walkA", "walkB"):
@@ -48,7 +53,11 @@ def frame(char, direction, column):
         if direction == "left":
             canvas = _lead(canvas, CHIN_ROW + 1)
         canvas = _drop(canvas, {CHIN_ROW, TORSO_ROW})
-    return resolve(shade(outline(canvas)), char["mats"])
+    return despeckle(shade(outline(canvas)))
+
+
+def frame(char, direction, column):
+    return resolve(frame_keys(char, direction, column), char["mats"])
 
 
 def build_sheet(char):

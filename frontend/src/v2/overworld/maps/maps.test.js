@@ -12,9 +12,20 @@ const ids = readdirSync(MAPS_DIR).filter((f) => f.endsWith(".json")).map((f) => 
 const maps = Object.fromEntries(ids.map((id) => [id, parseTiledMap(JSON.parse(readFileSync(join(MAPS_DIR, `${id}.json`), "utf8")), id)]));
 
 describe("sample maps (smoke + lint)", () => {
-	it("finds the three sample maps and parses them", () => {
-		assert.deepEqual(ids.sort(), ["test_house", "test_route", "test_town"]);
+	it("finds the sample maps and the Origin Town showcase and parses them", () => {
+		assert.deepEqual(ids.sort(), ["origin_town", "test_house", "test_route", "test_town"]);
 		assert.equal(maps.test_town.width, 30);
+		assert.equal(maps.origin_town.width, 32);
+	});
+	it("Origin Town animates water shores, flower beds and tall grass", () => {
+		const ts = maps.origin_town.tilesets.find((t) => t.image.endsWith("overworld.png"));
+		assert.ok(ts.anim.size >= 12, `only ${ts.anim.size} animated tiles`);
+		for (const a of ts.anim.values()) assert.equal(a.frames.length, 2);
+		assert.ok([...ts.cover.values()].every((row) => row === 9));
+	});
+	it("test maps animate water and flowers (Tiled tiles[] use the 'id' key)", () => {
+		const ts = maps.test_town.tilesets.find((t) => t.image.endsWith("overworld.png"));
+		assert.deepEqual([...ts.anim.keys()].sort(), [4, 6]);
 	});
 	it("every tileset image exists and every gid is inside its tileset", () => {
 		for (const m of Object.values(maps)) {

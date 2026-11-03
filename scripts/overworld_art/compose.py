@@ -6,18 +6,21 @@ Grid alphabet (one char = one pixel):
   k  outline colour          e  eye (outline colour)      w  pure white
   lowercase material letter  auto-shaded from its ramp
   UPPERCASE material letter  forced to that ramp's shadow tone
-  digit 1-9                  forced ramp tone: "highlight" of material in
-                             the character's `forced` map (rarely needed)
+  j / q                      forced highlight of hair / hat (gloss marks)
 
 Materials (mapped to palette ramps per character):
   s skin  h hair  c hat  x hat/hair accent  t top  u inner shirt/collar
   a sleeve  f forearm  b bottom (hips/skirt)  l lower leg  n shoes
   p pack/prop  g glasses/extra  m mouth
 
-Pipeline: stack layers -> auto outline (4-neighbour) -> shade -> palette.
-Light comes from the top-left: a pixel whose right or lower neighbour is a
-different material takes the shadow tone; a pixel on its material's top
-edge, in the left half of that run, takes the highlight.
+Pipeline: stack layers -> auto outline (4-neighbour) -> shade -> despeckle
+-> palette.
+Light comes from the top-left:
+  * a pixel whose right or lower neighbour is another material -> shadow
+  * the right quarter of any run 6+ px wide -> shadow (gives volume)
+  * the top edge of a run, left half -> highlight
+  * hair and hats also get a gloss band one row below their top edge,
+    across the left/centre of the run (the "richer hair shading")
 """
 from PIL import Image
 
@@ -87,9 +90,15 @@ def blink(canvas):
     return out
 
 
+GLOSS = {"j": "h", "q": "c"}
+GLOSSY = {"h", "c"}
+
+
 def _mat(ch):
     if ch in "ke.w_":
         return None
+    if ch in GLOSS:
+        return GLOSS[ch]
     low = ch.lower()
     return low if low in MATERIALS else None
 
@@ -114,6 +123,9 @@ def shade(canvas):
             if ch == "w":
                 res[y][x] = "white"
                 continue
+            if ch in GLOSS:
+                res[y][x] = (GLOSS[ch], "hi")
+                continue
             m = ch.lower()
             if ch.isupper():
                 res[y][x] = (m, "shadow")
@@ -121,19 +133,45 @@ def shade(canvas):
             if m_at(x + 1, y) != m or m_at(x, y + 1) != m:
                 res[y][x] = (m, "shadow")
                 continue
-            if m_at(x, y - 1) != m:
-                # left half of this horizontal run gets the highlight
-                x0 = x
-                while m_at(x0 - 1, y) == m:
-                    x0 -= 1
-                x1 = x
-                while m_at(x1 + 1, y) == m:
-                    x1 += 1
-                if x - x0 <= (x1 - x0) // 2:
-                    res[y][x] = (m, "hi")
-                    continue
+            x0 = x
+            while m_at(x0 - 1, y) == m:
+                x0 -= 1
+            x1 = x
+            while m_at(x1 + 1, y) == m:
+                x1 += 1
+            width = x1 - x0 + 1
+            rel = (x - x0) / max(1, width - 1)
+            if width >= 6 and rel > 0.75:
+                res[y][x] = (m, "shadow")
+                continue
+            if m_at(x, y - 1) != m and rel <= 0.5:
+                res[y][x] = (m, "hi")
+                continue
+            if (m in GLOSSY and width >= 6 and m_at(x, y - 1) == m and m_at(x, y - 2) != m
+                    and 0.15 <= rel <= 0.6):
+                res[y][x] = (m, "hi")
+                continue
             res[y][x] = (m, "base")
     return res
+
+
+def despeckle(res):
+    """No orphan pixels: a tone pixel with no same-tone 8-neighbour takes the
+    most common tone of its same-material neighbours (cleaner clusters)."""
+    out = [r[:] for r in res]
+    for y in range(H):
+        for x in range(W):
+            key = res[y][x]
+            if not isinstance(key, tuple):
+                continue
+            near = [res[y + dy][x + dx] for dy in (-1, 0, 1) for dx in (-1, 0, 1)
+                    if (dx or dy) and 0 <= x + dx < W and 0 <= y + dy < H]
+            if key in near:
+                continue
+            same = [k for k in near if isinstance(k, tuple) and k[0] == key[0]]
+            if same:
+                out[y][x] = max(set(same), key=same.count)
+    return out
 
 
 def resolve(shaded, mats):
@@ -179,4 +217,4 @@ def render(layers, mats, *, closed_eyes=False):
     canvas = stack(*layers)
     if closed_eyes:
         canvas = blink(canvas)
-    return resolve(shade(outline(canvas)), mats)
+    return resolve(despeckle(shade(outline(canvas))), mats)

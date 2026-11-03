@@ -628,7 +628,7 @@
    "spacing": 0,
    "tiles": [
     {
-     "tileid": 4,
+     "id": 4,
      "animation": [
       {
        "tileid": 4,
@@ -641,7 +641,7 @@
      ]
     },
     {
-     "tileid": 6,
+     "id": 6,
      "animation": [
       {
        "tileid": 6,

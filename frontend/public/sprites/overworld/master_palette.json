@@ -1,0 +1,574 @@
+{
+  "outline": "#3a2426",
+  "white": "#fffcf0",
+  "ramps": {
+    "skin_light": [
+      "#ffe6c8",
+      "#f6be92",
+      "#c98572"
+    ],
+    "skin_tan": [
+      "#f8cf9c",
+      "#d99a68",
+      "#a0604e"
+    ],
+    "skin_deep": [
+      "#cf9264",
+      "#975a3c",
+      "#5f3438"
+    ],
+    "hair_black": [
+      "#5f5c7c",
+      "#3a3550"
+    ],
+    "hair_dark": [
+      "#7c5244",
+      "#4c2e36"
+    ],
+    "hair_brown": [
+      "#d6955a",
+      "#9a5a32",
+      "#5e3434"
+    ],
+    "hair_blond": [
+      "#fff2a2",
+      "#eabc54",
+      "#a87442"
+    ],
+    "hair_red": [
+      "#ffa060",
+      "#da563c",
+      "#8e2e44"
+    ],
+    "hair_gray": [
+      "#f2f0ea",
+      "#bab6c4",
+      "#7a7690"
+    ],
+    "hair_purple": [
+      "#c49cf0",
+      "#8460b8",
+      "#4c347c"
+    ],
+    "hair_pink": [
+      "#ffc8d6",
+      "#f08cac",
+      "#ae4e80"
+    ],
+    "hair_teal": [
+      "#9cf0e0",
+      "#3eb4ac",
+      "#22667c"
+    ],
+    "red": [
+      "#ff8c6a",
+      "#e2443c",
+      "#9a2442"
+    ],
+    "orange": [
+      "#ffbc66",
+      "#f07c2e",
+      "#a6422e"
+    ],
+    "yellow": [
+      "#fff28c",
+      "#f2b832",
+      "#b06e2a"
+    ],
+    "olive": [
+      "#d4d47a",
+      "#929442",
+      "#535a36"
+    ],
+    "green": [
+      "#b6e472",
+      "#58a84a",
+      "#2a6650"
+    ],
+    "teal": [
+      "#8cecd8",
+      "#34aea6",
+      "#1c6478"
+    ],
+    "sky": [
+      "#c2ecff",
+      "#6eb0ea",
+      "#3c62b0"
+    ],
+    "navy": [
+      "#7aa2ea",
+      "#4560b0",
+      "#2a2e6c"
+    ],
+    "purple": [
+      "#d0a4f4",
+      "#8c62c8",
+      "#4e3890"
+    ],
+    "pink": [
+      "#ffc6da",
+      "#f08aac",
+      "#ac4c82"
+    ],
+    "white": [
+      "#fffcf0",
+      "#d8dcea",
+      "#9aa0be"
+    ],
+    "gray": [
+      "#e6e6ee",
+      "#a8aac0",
+      "#6c6e8c"
+    ],
+    "charcoal": [
+      "#7a7694",
+      "#4e4a66",
+      "#2e2a44"
+    ],
+    "khaki": [
+      "#f4dea8",
+      "#caa86c",
+      "#866c52"
+    ],
+    "brown": [
+      "#cc925a",
+      "#8c5634",
+      "#553044"
+    ],
+    "straw": [
+      "#fff0a6",
+      "#e8c868",
+      "#a88848"
+    ],
+    "denim": [
+      "#9cc0f0",
+      "#5a80c8",
+      "#34407e"
+    ],
+    "mouth": [
+      "#8a3442"
+    ],
+    "blush": [
+      "#f69a9a"
+    ]
+  },
+  "characters": {
+    "player": {
+      "s": "skin_light",
+      "h": "hair_dark",
+      "c": "red",
+      "x": "red",
+      "t": "red",
+      "u": "charcoal:2",
+      "a": "charcoal:2",
+      "f": "skin_light",
+      "b": "navy",
+      "l": "navy",
+      "n": "red",
+      "m": "skin_light"
+    },
+    "player_f": {
+      "s": "skin_light",
+      "h": "hair_brown",
+      "c": "white",
+      "x": "red:2",
+      "t": "sky",
+      "u": "white",
+      "a": "sky",
+      "f": "skin_light",
+      "b": "red:2",
+      "l": "skin_light",
+      "n": "red:2",
+      "m": "skin_light"
+    },
+    "youngster": {
+      "s": "skin_tan",
+      "h": "brown",
+      "c": "green",
+      "x": "green",
+      "t": "white",
+      "u": "white",
+      "a": "white",
+      "f": "skin_tan",
+      "b": "khaki:2",
+      "l": "skin_tan",
+      "n": "brown:2",
+      "m": "brown"
+    },
+    "rival": {
+      "f": "charcoal",
+      "m": "skin_light",
+      "l": "denim",
+      "u": "orange:2",
+      "a": "charcoal",
+      "s": "skin_light",
+      "h": "hair_red",
+      "t": "charcoal",
+      "b": "denim",
+      "n": "charcoal"
+    },
+    "bug_catcher": {
+      "f": "skin_light",
+      "m": "skin_light",
+      "l": "skin_light",
+      "u": "green",
+      "a": "green",
+      "s": "skin_light",
+      "h": "hair_dark",
+      "c": "straw",
+      "x": "green",
+      "t": "green",
+      "b": "khaki:2",
+      "n": "khaki:2"
+    },
+    "camper": {
+      "f": "skin_tan",
+      "m": "skin_tan",
+      "l": "skin_tan",
+      "u": "olive",
+      "a": "olive",
+      "s": "skin_tan",
+      "h": "hair_dark",
+      "c": "red:2",
+      "x": "red:2",
+      "t": "olive",
+      "b": "khaki:2",
+      "n": "red:2"
+    },
+    "hiker": {
+      "f": "red",
+      "m": "skin_tan",
+      "l": "khaki",
+      "u": "red",
+      "a": "red",
+      "s": "skin_tan",
+      "h": "hair_dark",
+      "c": "red",
+      "x": "red",
+      "t": "red",
+      "b": "khaki",
+      "n": "brown",
+      "p": "brown"
+    },
+    "sailor": {
+      "f": "skin_tan",
+      "m": "skin_tan",
+      "l": "navy",
+      "u": "navy",
+      "a": "white",
+      "s": "skin_tan",
+      "h": "hair_black",
+      "c": "white",
+      "x": "navy",
+      "t": "white",
+      "b": "navy",
+      "n": "navy"
+    },
+    "fisherman": {
+      "f": "skin_tan",
+      "m": "skin_tan",
+      "l": "denim",
+      "u": "white",
+      "a": "white",
+      "s": "skin_tan",
+      "h": "hair_dark",
+      "c": "olive",
+      "x": "olive",
+      "t": "olive",
+      "b": "denim",
+      "n": "denim"
+    },
+    "scientist": {
+      "f": "white",
+      "m": "skin_light",
+      "l": "gray",
+      "u": "sky",
+      "a": "white",
+      "s": "skin_light",
+      "h": "hair_black",
+      "g": "hair_black",
+      "t": "white",
+      "b": "gray",
+      "n": "hair_black"
+    },
+    "grunt_m": {
+      "f": "charcoal",
+      "m": "skin_light",
+      "l": "charcoal",
+      "u": "charcoal",
+      "a": "charcoal",
+      "s": "skin_light",
+      "h": "hair_dark",
+      "c": "charcoal",
+      "x": "charcoal",
+      "g": "red",
+      "t": "charcoal",
+      "b": "charcoal",
+      "n": "white:2"
+    },
+    "black_belt": {
+      "f": "skin_tan",
+      "m": "skin_tan",
+      "l": "white",
+      "u": "skin_tan",
+      "a": "white",
+      "s": "skin_tan",
+      "h": "hair_black",
+      "c": "red",
+      "t": "white",
+      "b": "white",
+      "n": "skin_tan",
+      "p": "charcoal"
+    },
+    "gentleman": {
+      "f": "charcoal",
+      "m": "skin_light",
+      "l": "charcoal",
+      "u": "white",
+      "a": "charcoal",
+      "s": "skin_light",
+      "h": "hair_gray",
+      "c": "charcoal",
+      "x": "white",
+      "t": "charcoal",
+      "b": "charcoal",
+      "n": "charcoal"
+    },
+    "old_man": {
+      "f": "brown",
+      "m": "skin_light",
+      "l": "gray",
+      "u": "khaki:2",
+      "a": "brown",
+      "s": "skin_light",
+      "h": "hair_gray",
+      "t": "brown",
+      "b": "gray",
+      "n": "brown",
+      "p": "brown"
+    },
+    "biker": {
+      "f": "skin_light",
+      "m": "skin_light",
+      "l": "denim",
+      "u": "red:2",
+      "a": "skin_light",
+      "s": "skin_light",
+      "h": "hair_black",
+      "g": "charcoal",
+      "t": "charcoal",
+      "b": "denim",
+      "n": "charcoal"
+    },
+    "cooltrainer_m": {
+      "f": "teal",
+      "m": "skin_light",
+      "l": "navy",
+      "u": "white:2",
+      "a": "teal",
+      "s": "skin_light",
+      "h": "hair_blond",
+      "t": "teal",
+      "b": "navy",
+      "n": "navy"
+    },
+    "gym_guide": {
+      "f": "skin_light",
+      "m": "skin_light",
+      "l": "navy",
+      "u": "yellow",
+      "a": "yellow",
+      "s": "skin_light",
+      "h": "hair_dark",
+      "c": "navy",
+      "x": "yellow",
+      "t": "yellow",
+      "b": "navy",
+      "n": "navy"
+    },
+    "leader_m": {
+      "f": "skin_deep",
+      "m": "skin_deep",
+      "l": "brown",
+      "u": "green",
+      "a": "skin_deep",
+      "s": "skin_deep",
+      "h": "hair_black",
+      "t": "orange",
+      "b": "brown",
+      "n": "brown",
+      "c": "green",
+      "x": "green"
+    },
+    "professor": {
+      "f": "khaki",
+      "m": "skin_light",
+      "l": "brown",
+      "u": "red:2",
+      "a": "khaki",
+      "s": "skin_light",
+      "h": "hair_gray",
+      "t": "khaki",
+      "b": "brown",
+      "n": "brown"
+    },
+    "lass": {
+      "f": "skin_light",
+      "m": "skin_light",
+      "l": "skin_light",
+      "u": "red:2",
+      "a": "white",
+      "s": "skin_light",
+      "h": "hair_brown",
+      "x": "red:2",
+      "t": "white",
+      "b": "navy",
+      "n": "navy"
+    },
+    "picnicker": {
+      "f": "skin_tan",
+      "m": "skin_tan",
+      "l": "skin_tan",
+      "u": "green",
+      "a": "green",
+      "s": "skin_tan",
+      "h": "hair_brown",
+      "t": "green",
+      "b": "orange",
+      "n": "brown:2"
+    },
+    "beauty": {
+      "f": "skin_light",
+      "m": "skin_light",
+      "l": "skin_light",
+      "u": "pink",
+      "a": "pink",
+      "s": "skin_light",
+      "h": "hair_red",
+      "x": "yellow",
+      "t": "pink",
+      "b": "pink",
+      "n": "red:2"
+    },
+    "nurse": {
+      "f": "skin_light",
+      "m": "skin_light",
+      "l": "white",
+      "u": "white",
+      "a": "pink",
+      "s": "skin_light",
+      "h": "hair_pink",
+      "c": "white",
+      "x": "red:2",
+      "t": "pink",
+      "b": "pink",
+      "n": "white",
+      "p": "white"
+    },
+    "old_woman": {
+      "f": "skin_light",
+      "m": "skin_light",
+      "l": "brown",
+      "u": "brown",
+      "a": "brown",
+      "s": "skin_light",
+      "h": "hair_gray",
+      "t": "brown",
+      "b": "brown",
+      "n": "brown",
+      "p": "purple"
+    },
+    "cooltrainer_f": {
+      "f": "teal",
+      "m": "skin_light",
+      "l": "navy",
+      "u": "white:2",
+      "a": "teal",
+      "s": "skin_light",
+      "h": "hair_black",
+      "t": "teal",
+      "b": "navy",
+      "n": "navy"
+    },
+    "grunt_f": {
+      "f": "charcoal",
+      "m": "skin_light",
+      "l": "charcoal",
+      "u": "charcoal",
+      "a": "charcoal",
+      "s": "skin_light",
+      "h": "hair_purple",
+      "c": "charcoal",
+      "x": "red",
+      "g": "red",
+      "t": "charcoal",
+      "b": "charcoal",
+      "n": "white:2"
+    },
+    "battle_girl": {
+      "f": "skin_tan",
+      "m": "skin_tan",
+      "l": "skin_tan",
+      "u": "yellow",
+      "a": "skin_tan",
+      "s": "skin_tan",
+      "h": "hair_black",
+      "c": "red",
+      "x": "red",
+      "t": "yellow",
+      "b": "charcoal",
+      "n": "red"
+    },
+    "twin": {
+      "f": "skin_light",
+      "m": "skin_light",
+      "l": "skin_light",
+      "u": "white",
+      "a": "sky",
+      "s": "skin_light",
+      "h": "hair_brown",
+      "x": "red:2",
+      "t": "sky",
+      "b": "sky",
+      "n": "red:2"
+    },
+    "mom": {
+      "f": "skin_light",
+      "m": "skin_light",
+      "l": "skin_light",
+      "u": "purple",
+      "a": "purple",
+      "s": "skin_light",
+      "h": "hair_dark",
+      "t": "purple",
+      "b": "purple",
+      "n": "purple",
+      "p": "white"
+    },
+    "leader_f": {
+      "f": "skin_light",
+      "m": "skin_light",
+      "l": "skin_light",
+      "u": "teal",
+      "a": "teal",
+      "s": "skin_light",
+      "h": "hair_teal",
+      "x": "pink",
+      "t": "white",
+      "b": "teal",
+      "n": "teal"
+    },
+    "npc": {
+      "f": "skin_light",
+      "m": "skin_light",
+      "l": "denim",
+      "u": "white:2",
+      "a": "green",
+      "s": "skin_light",
+      "h": "hair_brown",
+      "t": "green",
+      "b": "denim",
+      "n": "hair_brown:2"
+    }
+  }
+}

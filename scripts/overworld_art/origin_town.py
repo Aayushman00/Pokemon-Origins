@@ -1,0 +1,202 @@
+"""Origin Town: the showcase map (frontend/public/maps/origin_town.json).
+
+Gym with a herringbone plaza, pines and log fences up top; the player's
+house, a care centre and a mart; a ledge, tall grass, a pond with animated
+shores and a cast of NPCs. Plain grass is broken up automatically: no
+3x3 window may be bare grass (see `plain_windows`), stricter
+than the "nothing larger than ~4x4" brief so the field always reads busy.
+"""
+import json
+
+from scripts import gen_overworld_placeholders as base
+
+from .tiles import FIRST_NEW, new_tiles, tile_ids
+
+W, H = 32, 28
+COL_FIRST = 1000  # collision tileset firstgid: above every overworld tile id
+ID = tile_ids()
+TREE, PATH, LEDGE, MAILBOX, ROCK, WA, WB, FA, FB, TALL_OLD = (
+    base.TREE, base.PATH, base.LEDGE, base.MAILBOX, base.ROCK, base.WA, base.WB, base.FA, base.FB, base.TALL)
+GRASS_IDS = {base.GRASS} | {ID[f"grass{i}"] for i in range(4)}
+SOLID, L_DOWN = base.SOLID, base.L_DOWN
+
+
+def say(*texts):
+    return json.dumps([{"op": "say", "text": t} for t in texts])
+
+
+class Town(base.MapBuilder):
+    def building(self, name, x0, y0, cols, rows, roof_rows=2):
+        for r in range(rows):
+            for c in range(cols):
+                layer = "above" if r < roof_rows - 1 else "objects"
+                self.put(layer, x0 + c, y0 + r, ID[f"{name}_{c}_{r}"], SOLID)
+
+    def skirt(self, x0, y0, x1, y1):
+        self.fill("ground", x0, y0, x1, y1, ID["mown"])
+
+    def npc(self, name, x, y, sprite, facing, *lines):
+        self.obj("npcs", name, x, y, point=True, sprite=sprite, facing=facing, script=say(*lines))
+        self.block(x, y)
+
+    def sign(self, name, x, y, text):
+        self.obj("signs", name, x, y, text=text)
+        self.block(x, y)
+
+
+def hashed(x, y):
+    return (x * 73856093 ^ y * 19349663) & 0xFFFF
+
+
+def plain_windows(m, size=3):
+    """Top-left corners of size x size windows that are nothing but bare grass."""
+    bad = []
+    for y0 in range(H - size + 1):
+        for x0 in range(W - size + 1):
+            if all(m.ground[m.i(x, y)] - 1 in GRASS_IDS and not m.decor[m.i(x, y)] and not m.objects[m.i(x, y)]
+                   and not m.above[m.i(x, y)]
+                   for y in range(y0, y0 + size) for x in range(x0, x0 + size)):
+                bad.append((x0, y0))
+    return bad
+
+
+def build():
+    m = Town(W, H, base.GRASS)
+    m.props = [("border", str(TREE))]
+
+    # ground: four grass variants scattered so the field never tiles visibly
+    for y in range(H):
+        for x in range(W):
+            m.put("ground", x, y, ID[f"grass{hashed(x, y) % 4}"])
+
+    # forest border, two trees deep on top/bottom
+    for x in range(W):
+        for y in (0, 1, H - 1):
+            m.put("objects", x, y, TREE, SOLID)
+    for y in range(H):
+        for x in (0, 1, W - 2, W - 1):
+            m.put("objects", x, y, TREE, SOLID)
+
+    # ---- paths
+    m.fill("ground", 15, 13, 16, H - 2, PATH)
+    m.fill("ground", 2, 17, W - 3, 18, PATH)
+    m.fill("ground", 4, 8, 5, 16, PATH)
+    m.fill("ground", 25, 8, 26, 16, PATH)
+    m.fill("ground", 25, 23, 26, 24, PATH)
+
+    # ---- gym, plaza, pines, fences, beds
+    m.skirt(12, 2, 19, 7)
+    m.building("gym", 13, 3, 6, 5)
+    m.block(15, 7, 0)
+    m.block(16, 7, 0)
+    for x in (15, 16):  # door: read it like a sign
+        m.put("objects", x, 7, ID[f"gym_{x - 13}_4"], SOLID)
+    m.sign("gym_door", 15, 7, "ORIGIN GYM - Leader: Marina. The doors are locked for renovation. Train hard and come back soon!")
+    m.sign("gym_door2", 16, 7, "ORIGIN GYM - Leader: Marina. The doors are locked for renovation. Train hard and come back soon!")
+    for y in range(8, 13):
+        for x in range(11, 21):
+            edges = ("n" if y == 8 else "s" if y == 12 else "") + ("w" if x == 11 else "e" if x == 20 else "")
+            m.put("ground", x, y, ID["pave_" + edges] if edges else ID["pave"])
+    for (px, py) in ((10, 3), (21, 3), (10, 6), (21, 6)):
+        m.put("above", px, py, ID["pine_top"])
+        m.put("objects", px, py + 1, ID["pine_base"], SOLID)
+    for x in list(range(10, 15)) + list(range(17, 22)):
+        m.put("objects", x, 13, ID["logfence"], SOLID)
+    for x, y in ((8, 9), (9, 9), (8, 10), (9, 10), (22, 9), (23, 9), (22, 10), (23, 10)):
+        m.put("ground", x, y, ID["bedA"])
+    m.sign("gym_sign", 14, 12, "ORIGIN TOWN GYM - Leader: Marina, the tidal tactician.")
+    m.put("objects", 14, 12, ID["gym_sign"], SOLID)
+
+    # ---- player's house (left) and care centre (right)
+    m.skirt(2, 3, 7, 8)
+    m.building("house", 3, 3, 4, 4)
+    m.sign("home_door", 4, 6, "It's your house. Mom left the door open for you.")
+    m.put("objects", 7, 7, MAILBOX, SOLID)
+    for x in (2, 3):
+        m.put("objects", x, 9, ID["picket"], SOLID)
+    for x in (6, 7):
+        m.put("objects", x, 9, ID["picket"], SOLID)
+    m.skirt(24, 3, 29, 8)
+    m.building("center", 24, 3, 4, 4)
+    m.sign("center_door", 25, 6, "CARE CENTRE - Rest your team for free. Pokemon Origins trainers welcome!")
+    m.put("objects", 28, 7, ID["bush"], SOLID)
+
+    # ---- mart (bottom right) beside the pond
+    m.skirt(24, 19, 29, 23)
+    m.building("mart", 25, 19, 4, 4)
+    m.sign("mart_door", 26, 22, "MART - Potions, Poke Balls and everything a new trainer needs.")
+    m.fill("ground", 25, 23, 26, 25, PATH)
+
+    # ---- pond with animated shores
+    px0, py0, px1, py1 = 18, 20, 23, 25
+    for y in range(py0, py1 + 1):
+        for x in range(px0, px1 + 1):
+            sides = ("n" if y == py0 else "s" if y == py1 else "") + ("w" if x == px0 else "e" if x == px1 else "")
+            m.put("ground", x, y, ID[f"shore_{sides}A"] if sides else WA, SOLID)
+
+    # ---- ledge, tall grass
+    for x in range(2, 14):
+        if x not in (4, 5):
+            m.put("decor", x, 15, LEDGE, L_DOWN)
+    m.fill("ground", 3, 20, 9, 24, ID["tallA"])
+    m.obj("encounters", "grass_origin", 3, 20, 7, 5, table="test_grass")
+
+    # ---- props
+    for x, y in ((12, 15), (21, 15), (28, 12), (2, 12), (10, 25)):
+        m.put("objects", x, y, ID["bush"], SOLID)
+    for x, y in ((8, 13), (28, 16), (13, 26)):
+        m.put("objects", x, y, ROCK, SOLID)
+    for x, y in ((11, 21), (12, 22), (11, 24), (21, 14), (22, 15)):
+        m.put("ground", x, y, ID["bedA"])
+    m.sign("town_sign", 14, 16, "ORIGIN TOWN - Where every Pokemon Origins journey begins.")
+    m.put("objects", 14, 16, base.SIGN, SOLID)
+
+    # ---- cast
+    m.npc("guide", 12, 9, "gym_guide", "right", "Yo, champ in the making! The gym's closed, but Marina still trains out here.")
+    m.npc("marina", 19, 10, "leader_f", "left", "I'm Marina. Water bends, but it never breaks. Come find me when you have a badge or two.")
+    m.npc("mom", 6, 8, "mom", "down", "Off on an adventure? Don't forget to come home for dinner!")
+    m.npc("nurse", 27, 9, "nurse", "down", "The care centre is open. Your team's health comes first!")
+    m.npc("lass", 9, 12, "lass", "left", "Those flower beds sway when the wind comes off the pond. Pretty, right?")
+    m.npc("youngster", 12, 19, "youngster", "up", "My Rattata is in the top percentage of Rattata! ...Probably.")
+    m.npc("bugcatcher", 10, 22, "bug_catcher", "left", "Shh! There's something rustling in the tall grass.")
+    m.npc("fisher", 17, 22, "fisherman", "right", "Nothing's biting today. The pond's too pretty to leave, though.")
+    m.npc("sailor", 24, 25, "sailor", "up", "Ahoy! This pond's a little small for my ship.")
+    m.npc("oldman", 21, 16, "old_man", "down", "When I was young there was no town here. Just grass, as far as you could see.")
+    m.npc("hiker", 28, 14, "hiker", "left", "I climbed every hill around here. The view from Route 1 is the best!")
+    m.npc("picnicker", 7, 26, "picnicker", "up", "I packed sandwiches for everyone! Well... for me.")
+    m.npc("scientist", 22, 12, "scientist", "down", "The gym's roof is designed to reflect sunlight. Fascinating!")
+    m.npc("rival", 17, 15, "rival", "left", "Took you long enough. I'll beat Marina before you do!")
+    m.npc("twin", 2, 21, "twin", "right", "We're twins! My sister is... somewhere. Hiding.")
+
+    # ---- break up any remaining bare grass with tufts and tiny flowers
+    decals = [ID["tufts"], ID["flowers0"], ID["flowers1"], ID["tufts"]]
+    while True:
+        bad = plain_windows(m)
+        if not bad:
+            break
+        x0, y0 = bad[0]
+        x, y = x0 + hashed(x0, y0) % 3, y0 + hashed(y0, x0) % 3
+        m.put("decor", x, y, decals[hashed(x, y) % len(decals)])
+
+    data = m.build()
+    return finish(data, m)
+
+
+def finish(data, m):
+    """Point the map at the extended tileset and move collision gids to 1000+."""
+    total = FIRST_NEW + len(new_tiles())
+    rows = (total + 7) // 8
+    ts = data["tilesets"][0]
+    ts.update(imageheight=rows * 16, tilecount=total)
+    anim = lambda a, b, ms: {"id": a, "animation": [{"tileid": a, "duration": ms}, {"tileid": b, "duration": ms}]}
+    tiles = [anim(WA, WB, 500), anim(FA, FB, 500), {"id": TALL_OLD, "properties": [base.prop("cover", 9)]},
+             anim(ID["bedA"], ID["bedB"], 700),
+             {**anim(ID["tallA"], ID["tallB"], 900), "properties": [base.prop("cover", 9)]}]
+    for sides in ("n", "s", "w", "e", "nw", "ne", "sw", "se"):
+        tiles.append(anim(ID[f"shore_{sides}A"], ID[f"shore_{sides}B"], 500))
+    ts["tiles"] = tiles
+    data["tilesets"][1]["firstgid"] = COL_FIRST
+    for layer in data["layers"]:
+        if layer["name"] == "collision":
+            layer["data"] = [v - base.COL_FIRST + COL_FIRST if v else 0 for v in layer["data"]]
+    return data

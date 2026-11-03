@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { BUMP_TICKS, HOP_TICKS, RUN_TICKS, TURN_TICKS, WALK_TICKS } from "../constants.js";
 import { asciiMap, worldOf } from "./fixtures.js";
-import { actorFrame, actorPixel, actorPose, createActor, tickActor } from "./movement.js";
+import { BLINK_PERIOD, BLINK_TICKS, POSE_COLUMN, actorFrame, actorPixel, actorPose, createActor, tickActor } from "./movement.js";
 import { createWorld } from "./world.js";
 
 // Timing rules mirror pret/pokefirered: src/field_player_avatar.c (input states,
@@ -228,6 +228,32 @@ describe("walk animation (object_event_anims.h)", () => {
 	it("stands when idle", () => {
 		assert.equal(actorPose(at(1, 1)), "stand");
 		assert.equal(actorFrame(at(1, 1)), 0);
+	});
+
+	it("sheet columns: six motion frames, then blink (6) and alert (7)", () => {
+		assert.deepEqual(Object.values(POSE_COLUMN), [0, 1, 2, 3, 4, 5, 6, 7]);
+	});
+
+	it("a standing actor blinks briefly once per period, on its own schedule", () => {
+		const a = { ...at(1, 1), id: "town:lass" };
+		const frames = Array.from({ length: BLINK_PERIOD }, (_, t) => actorFrame(a, t));
+		assert.equal(frames.filter((f) => f === POSE_COLUMN.blink).length, BLINK_TICKS);
+		assert.ok(frames.every((f) => f === 0 || f === POSE_COLUMN.blink));
+		const b = { ...a, id: "town:hiker" };
+		const blinkAt = (x) => Array.from({ length: BLINK_PERIOD }, (_, t) => actorFrame(x, t)).indexOf(POSE_COLUMN.blink);
+		assert.notEqual(blinkAt(a), blinkAt(b), "two NPCs should not blink in sync");
+	});
+
+	it("never blinks mid-step, and ignores blinking when no tick is given", () => {
+		const r = run(at(1, 1, "right"), { dir: "right" }, 3);
+		for (let t = 0; t < BLINK_PERIOD; t++) assert.notEqual(actorFrame(r.a, t), POSE_COLUMN.blink);
+		for (let t = 0; t < 5; t++) assert.equal(actorFrame(at(1, 1)), 0);
+	});
+
+	it("an idle trainer with pose 'alert' shows the spotted-you frame", () => {
+		const a = { ...at(1, 1), pose: "alert" };
+		assert.equal(actorPose(a), "alert");
+		assert.equal(actorFrame(a, 0), POSE_COLUMN.alert);
 	});
 });
 

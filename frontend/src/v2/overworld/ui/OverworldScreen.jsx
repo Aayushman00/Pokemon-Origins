@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
 import DialogueBox from "../../ui/DialogueBox";
 import { play } from "../../battle/sfx";
 import { attachInput, drainEdges, snapshot } from "../engine/input";
@@ -8,14 +8,15 @@ import { createMapStore } from "../maps/mapStore";
 import { createOverworld } from "../game/overworld";
 import { createMemoryFlags } from "../game/flags";
 import { createRenderer } from "../render/renderer";
-import { loadAssets } from "../render/assets";
+import { loadAssets, playerSpriteFor } from "../render/assets";
+import { UserContext } from "../../data/user";
 import { VIEW_H, VIEW_W } from "../constants";
 import { actorPose } from "../logic/movement";
 import OverworldPad from "./OverworldPad";
 import { TEXT_SPEEDS, cycleTextSpeed, getTextSpeed } from "./textSpeed";
 import "./overworld.css";
 
-const START = { mapId: "test_town", x: 14, y: 12, facing: "up" };
+const START = { mapId: "origin_town", x: 15, y: 18, facing: "up" };
 
 const fetchJson = async (url) => {
 	const r = await fetch(url);
@@ -27,6 +28,8 @@ const reduced = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)").
 
 /** Phase 1 test world: tile movement, dialogue, warps, streaming. No server state yet. */
 const OverworldScreen = () => {
+	const { user } = useContext(UserContext) || {};
+	const playerSprite = playerSpriteFor(user?.gender);
 	const wrapRef = useRef(null);
 	const canvasRef = useRef(null);
 	const sessionRef = useRef(null);
@@ -62,7 +65,7 @@ const OverworldScreen = () => {
 			try {
 				const store = createMapStore({ fetchJson });
 				await store.loadAround(START.mapId);
-				const assets = await loadAssets([...["test_town", "test_route", "test_house"].map((id) => store.get(id)).filter(Boolean)]);
+				const assets = await loadAssets([...["origin_town", "test_town", "test_route", "test_house"].map((id) => store.get(id)).filter(Boolean)]);
 				if (disposed) return;
 				const game = createOverworld({
 					store,
@@ -74,7 +77,7 @@ const OverworldScreen = () => {
 						else if (e.type === "dialogue") setDialogue({ pages: e.pages, i: 0 });
 					},
 				});
-				const renderer = createRenderer({ canvas: canvasRef.current, assets });
+				const renderer = createRenderer({ canvas: canvasRef.current, assets, playerSprite });
 				inputApi = attachInput();
 				setInput(inputApi);
 				loop = createLoop({
@@ -130,7 +133,7 @@ const OverworldScreen = () => {
 			sessionRef.current = null;
 			delete window.__overworld;
 		};
-	}, [resize, debug]);
+	}, [resize, debug, playerSprite]);
 
 	useEffect(() => {
 		const wrap = wrapRef.current;

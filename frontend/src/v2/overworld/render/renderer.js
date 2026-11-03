@@ -25,7 +25,7 @@ function tileFrame(ts, localId, ms) {
  * integer camera positions, then blits it to the visible canvas with an
  * integer scale and smoothing off. Reads game state; owns no logic.
  */
-export function createRenderer({ canvas, assets }) {
+export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 	const off = document.createElement("canvas");
 	off.width = VIEW_W;
 	off.height = VIEW_H;
@@ -98,7 +98,7 @@ export function createRenderer({ canvas, assets }) {
 		}
 	}
 
-	function drawActor(a, ox, oy, camX, camY) {
+	function drawActor(a, ox, oy, camX, camY, tick) {
 		const sheet = assets.sprites[a.sprite || "player"];
 		if (!sheet) return;
 		const { px, py, lift } = actorPixel(a);
@@ -110,7 +110,7 @@ export function createRenderer({ canvas, assets }) {
 				for (let x = 0; x < row.length; x++) if (row[x] === "x") g.fillRect(dx + x, dy + lift + TILE + 13 + y, 1, 1);
 			});
 		}
-		g.drawImage(sheet, actorFrame(a) * TILE, ROW[a.facing] * 32, TILE, 32, dx, dy, TILE, 32);
+		g.drawImage(sheet, actorFrame(a, tick) * TILE, ROW[a.facing] * 32, TILE, 32, dx, dy, TILE, 32);
 	}
 
 	function overlay(game, camX, camY) {
@@ -155,12 +155,12 @@ export function createRenderer({ canvas, assets }) {
 			for (const name of ["ground", "decor", "objects"]) for (const d of drawn) drawLayer(d.map, name, d.ox - cam.x, d.oy - cam.y, ms);
 
 			const originOf = (id) => drawn.find((d) => d.map.id === id);
-			const actors = [{ ...game.player, sprite: "player", mapId: map.id }, ...game.npcs()]
+			const actors = [{ ...game.player, sprite: playerSprite, mapId: map.id }, ...game.npcs()]
 				.map((a) => ({ a, d: originOf(a.mapId) }))
 				.filter((e) => e.d)
 				.sort((p, q) => actorPixel(p.a).py + p.d.oy - (actorPixel(q.a).py + q.d.oy));
 			for (const { a, d } of actors) {
-				drawActor(a, d.ox, d.oy, cam.x, cam.y);
+				drawActor(a, d.ox, d.oy, cam.x, cam.y, game.tickCount);
 				drawCover(a, d, cam, ms);
 			}
 

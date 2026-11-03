@@ -1,11 +1,13 @@
-"""Generate the Phase 1 original placeholder art + sample Tiled maps.
+"""Base overworld tiles (ids 0-23) + the sample Tiled test maps.
 
-Everything here is drawn from scratch with flat colours (CC0). Output:
-  frontend/public/maps/tilesets/overworld.png   16x16 tiles, 8 columns
-  frontend/public/sprites/overworld/{player,npc}.png   16x32 frames, 6 cols x 4 rows
+Everything here is drawn from scratch (CC0). Output:
   frontend/public/maps/{test_town,test_route,test_house}.json   Tiled JSON
 
-Re-run is idempotent. Usage: python scripts/gen_overworld_placeholders.py
+The tile grids below (build_tiles) are painted into
+frontend/public/maps/tilesets/overworld.png by scripts/overworld_art, which
+also appends the newer tiles and draws every actor sprite sheet.
+
+Re-run is idempotent. Usage: python3 scripts/gen_overworld_placeholders.py
 """
 import json
 from pathlib import Path
@@ -14,7 +16,6 @@ from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
 MAPS = ROOT / "frontend" / "public" / "maps"
-SPRITES = ROOT / "frontend" / "public" / "sprites" / "overworld"
 T = 16
 
 # ---- art helpers ---------------------------------------------------------
@@ -531,194 +532,6 @@ def build_tiles():
         on_wall(WINDOW_G, P_GLASS),
     ]
 
-def make_tileset():
-    cols, rows = 8, 3
-    img = Image.new("RGBA", (cols * T, rows * T), (0, 0, 0, 0))
-    for i, (base, over, palette) in enumerate(build_tiles()):
-        ox, oy = (i % cols) * T, (i // cols) * T
-        if base:
-            paint(img, ox, oy, base, palette)
-        if over:
-            paint(img, ox, oy, over, palette)
-    (MAPS / "tilesets").mkdir(parents=True, exist_ok=True)
-    img.save(MAPS / "tilesets" / "overworld.png")
-
-# ---- sprites -------------------------------------------------------------
-# 20-row figures placed at the bottom of each 16x32 frame (feet on row 31).
-# Keys: O outline, C/c/k cap (hi/base/dark), B cap emblem, H/h hair, S/s skin,
-# E eye, J/j/q jacket (hi/base/dark), W shirt, P/p pants, F/f shoes.
-CAP_BACK = [
-    "....OOOOOOOO....",
-    "...OCCCCccckO...",
-    "..OCCCCCcccckO..",
-    "..OCCCcccccckO..",
-]
-DOWN_HEAD = [
-    "....OOOOOOOO....",
-    "...OCCCCccckO...",
-    "..OCCCCBBccckO..",
-    "..OCCCcBBccckO..",
-    ".OkkkkkkkkkkkkO.",
-    "..OHHssssssHHO..",
-    "..OHSSSSSSSShO..",
-    "..OSSESSSSESsO..",
-    "..OSSESSSSESsO..",
-    "...OSSSSSSssO...",
-    "...OJJWWWWjjO...",
-    "..OJJJJWWjjjqO..",
-    "..OJOJJWWjjOqO..",
-    "..OJOJJWWjjOqO..",
-    "..OSOJJJjjjOsO..",
-    "...OOPPPPppOO...",
-]
-UP_HEAD = CAP_BACK + [
-    "..OkkkkkkkkkkO..",
-    "..OHHHHHhhhhhO..",
-    "..OHHHHhhhhhhO..",
-    "..OHHHhhhhhhhO..",
-    "..OSHhhhhhhhSO..",
-    "...OHhhhhhhhO...",
-    "...OJJJJjjjjO...",
-    "..OJJJJJjjjjqO..",
-    "..OJOJJJjjjOqO..",
-    "..OJOJJJjjjOqO..",
-    "..OSOJJJjjjOsO..",
-    "...OOPPPPppOO...",
-]
-FRONT_LEGS = [
-    [  # stand
-        "....OPPOOppO....",
-        "....OPPOOppO....",
-        "...OFFFOOfffO...",
-        "...OOOOOOOOOO...",
-    ],
-    [  # walk A: right foot lifted
-        "....OPPOOppO....",
-        "....OPPOOfffO...",
-        "...OFFFOOOOOO...",
-        "...OOOOO........",
-    ],
-    [  # walk B: left foot lifted
-        "....OPPOOppO....",
-        "...OFFFOOppO....",
-        "...OOOOOOfffO...",
-        "........OOOOO...",
-    ],
-]
-SIDE_HEAD = [
-    ".....OOOOOO.....",
-    "....OCCCCccO....",
-    "...OCCCCCcccO...",
-    "...OCCCCcccckO..",
-    ".OkkkkcccccckO..",
-    "..OOsSHHHHhhhO..",
-    "...OSSSHHHhhhO..",
-    "...OESSSHHhhhO..",
-    "..OSESSSSHhhhO..",
-    "...OSSSSsShhO...",
-    "....OJJJjjjO....",
-    "...OJJJJjjjqO...",
-]
-SIDE_ARMS = [
-    [  # stand: arm hanging
-        "...OJOJJjOjqO...",
-        "...OJOJJjOjqO...",
-        "...OjOSSsOqqO...",
-    ],
-    [  # walk A: arm swung back
-        "...OJJOJJjOqO...",
-        "...OJJOJJjOqO...",
-        "...OjjOSSsOqO...",
-    ],
-    [  # walk B: arm swung forward
-        "...OOJJjOjjqO...",
-        "...OOJJjOjjqO...",
-        "..OSSsOjjjqqO...",
-    ],
-]
-SIDE_HIP = ["....OOPPPpOO...."]
-SIDE_LEGS = [
-    [
-        ".....OPPppO.....",
-        ".....OPPppO.....",
-        "....OFFFffO.....",
-        "....OOOOOOO.....",
-    ],
-    [
-        "....OPPOOppO....",
-        "...OPPO..OppO...",
-        "..OFFFO..OffO...",
-        "..OOOOO..OOOO...",
-    ],
-    [
-        "....OppOOPPO....",
-        "...OppO..OPPO...",
-        "..OffO...OFFFO..",
-        "..OOOO...OOOOO..",
-    ],
-]
-
-# Running stride for the side view: the first row is dropped by the 1px bob.
-SIDE_RUN_LEGS = [
-    [
-        "....OPPOOppO....",
-        "...OPPO..OppO...",
-        "..OFFFO...OffO..",
-        "..OOOOO...OOOO..",
-    ],
-    [
-        "....OppOOPPO....",
-        "...OppO..OPPO...",
-        "..OffO....OFFFO.",
-        "..OOOO....OOOOO.",
-    ],
-]
-BLANK = "." * 16
-
-def bob(g):
-    """Step frame: everything above the legs sits 1px lower (knees bend)."""
-    return [BLANK] + g[:16] + g[17:]
-
-def run_front(g):
-    """Front/back run frame: head dips 2px, body 1px, legs bend - a forward lean."""
-    return [BLANK, BLANK] + g[:10] + g[11:16] + g[17:]
-
-def run_side(g):
-    """Side run frame: head pushed 1px toward the facing (left), body bobs 1px."""
-    for row in g[:12]:
-        assert row[0] == ".", row
-    return [BLANK] + [row[1:] + "." for row in g[:12]] + g[12:16] + g[17:]
-
-def actor_frames():
-    """{facing: [stand, walkA, walkB, runStand, runA, runB]} as 20-row grids. Right mirrors left."""
-    def front(head):
-        stand, wa, wb = (head + legs for legs in FRONT_LEGS)
-        return [stand, bob(wa), bob(wb), run_front(stand), run_front(wa), run_front(wb)]
-    side = [SIDE_HEAD + arms + SIDE_HIP + legs for arms, legs in zip(SIDE_ARMS, SIDE_LEGS)]
-    run = [SIDE_HEAD + arms + SIDE_HIP + legs for arms, legs in zip(SIDE_ARMS[1:], SIDE_RUN_LEGS)]
-    left = [side[0], bob(side[1]), bob(side[2]), run_side(side[0]), run_side(run[0]), run_side(run[1])]
-    right = [[row[::-1] for row in g] for g in left]
-    return {"down": front(DOWN_HEAD), "up": front(UP_HEAD), "left": left, "right": right}
-
-PLAYER = pal(O="#282848", C="#68a0f0", c="#3068c8", k="#204090", B="#f8d040",
-             H="#784828", h="#503020", S="#f8d0a8", s="#d8a078", E="#282848",
-             J="#f89040", j="#e06028", q="#a84020", W="#f8f8f8",
-             P="#505878", p="#383c60", F="#d83838", f="#a02830")
-NPC = pal(O="#382828", C="#d08848", c="#a06030", k="#704020", B="#a06030",
-          H="#a06030", h="#704020", S="#f8d0a8", s="#d8a078", E="#382828",
-          J="#78c878", j="#48a060", q="#287048", W="#f8e8c8",
-          P="#b08858", p="#886040", F="#604838", f="#483428")
-
-def make_sheet(name, palette):
-    # 6 cols (stand, walkA, walkB, runStand, runA, runB) x 4 rows (down, up, left, right), 16x32 each
-    img = Image.new("RGBA", (96, 128), (0, 0, 0, 0))
-    frames = actor_frames()
-    for r, facing in enumerate(("down", "up", "left", "right")):
-        for c, grid in enumerate(frames[facing]):
-            paint(img, c * 16, r * 32 + 12, grid, palette, 16, 20)
-    SPRITES.mkdir(parents=True, exist_ok=True)
-    img.save(SPRITES / f"{name}.png")
-
 # ---- maps ----------------------------------------------------------------
 OW_FIRST, COL_FIRST = 1, 100  # firstgid of the two tilesets
 SOLID, L_DOWN, L_LEFT, L_RIGHT, L_UP = (COL_FIRST + i for i in range(5))
@@ -776,7 +589,7 @@ class MapBuilder:
         for n, name in enumerate(("encounters", "warps", "triggers", "npcs", "signs")):
             layers.append({"id": 6 + n, "name": name, "type": "objectgroup", "draworder": "topdown",
                            "x": 0, "y": 0, "opacity": 1, "visible": True, "objects": self.groups[name]})
-        anim = lambda a, b: [{"tileid": a, "animation": [{"tileid": a, "duration": 500}, {"tileid": b, "duration": 500}]}]
+        anim = lambda a, b: [{"id": a, "animation": [{"tileid": a, "duration": 500}, {"tileid": b, "duration": 500}]}]
         # tall grass: rows 9-15 are drawn again over an actor standing in it
         tiles = anim(WA, WB) + anim(FA, FB) + [{"id": TALL, "properties": [prop("cover", 9)]}]
         return {"compressionlevel": -1, "type": "map", "version": "1.10", "tiledversion": "1.10.2",
@@ -892,9 +705,9 @@ def house():
     return m.build()
 
 def main():
-    make_tileset()
-    make_sheet("player", PLAYER)
-    make_sheet("npc", NPC)
+    # The tileset (ids 0-23 drawn from build_tiles() above, the rest added on)
+    # and every actor sheet now come from scripts/overworld_art:
+    #   python3 -m scripts.overworld_art.build_all
     for name, data in (("test_town", town()), ("test_route", route()), ("test_house", house())):
         (MAPS / f"{name}.json").write_text(json.dumps(data, indent=1) + "\n")
     print("ok")

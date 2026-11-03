@@ -1,32 +1,53 @@
 """Master palette for overworld characters.
 
 Every colour a sprite may use lives here as a named ramp ordered
-highlight -> base -> shadow. Characters pick ramps per material; the
-compositor picks the tone from the pixel's position (top-left light).
-Keeping all ramps in one file keeps the cast looking like one game.
+highlight -> base -> shadow. Ramps are hue-shifted the way GBA artists
+did it, only cleaner: highlights lean warm (toward yellow), shadows lean
+cool (toward blue/purple) instead of just getting darker. Characters pick
+ramps per material; the compositor picks the tone from the pixel's
+position (light from the top-left).
+
+A ramp written "name:2" in a character keeps only base + shadow, which is
+how a busy outfit stays inside the 15-colour (+ transparent) budget.
 """
 
-OUTLINE = "#262030"  # warm near-black, softer than pure black
-WHITE = "#f8f8f0"
+OUTLINE = "#3a2426"  # dark brown, never pure black
+WHITE = "#fffcf0"
 
 RAMPS = {
-    # skin
-    "skin_light": ["#fde3c6", "#f4bd92", "#cf8a62"],
-    "skin_tan": ["#f2c79c", "#d89a6b", "#a5683f"],
-    "skin_deep": ["#c98a5c", "#9a6038", "#6c3e24"],
-    # hair
-    "hair_black": ["#5c5468", "#3c3646"],
-    "hair_dark": ["#6e4a3a", "#4a3028"],
-    "hair_brown": ["#c6844e", "#975a32", "#64381f"],
-    "hair_blond": ["#fbe39a", "#e3b65a", "#a87a34"],
-    # cloth
-    "red": ["#ff7f6b", "#e0423a", "#a02430"],
-    "navy": ["#7090dc", "#4560b0", "#2b3c76"],
-    "charcoal": ["#56536a", "#34323f"],
-    "white": [WHITE, "#d6d8e4", "#9fa3b8"],
-    "sky": ["#b2e0fa", "#6eb0ea", "#3d74bc"],
-    "yellow": ["#ffe57a", "#f2b832", "#b37a16"],
-    "green": ["#9ad874", "#52a448", "#2d6a36"],
-    "khaki": ["#ecd4a2", "#c9a86e", "#8f7040"],
-    "brown": ["#b88456", "#7e5434", "#55361f"],
+    # ---- skin
+    "skin_light": ["#ffe6c8", "#f6be92", "#c98572"],
+    "skin_tan": ["#f8cf9c", "#d99a68", "#a0604e"],
+    "skin_deep": ["#cf9264", "#975a3c", "#5f3438"],
+    # ---- hair
+    "hair_black": ["#5f5c7c", "#3a3550"],
+    "hair_dark": ["#7c5244", "#4c2e36"],
+    "hair_brown": ["#d6955a", "#9a5a32", "#5e3434"],
+    "hair_blond": ["#fff2a2", "#eabc54", "#a87442"],
+    "hair_red": ["#ffa060", "#da563c", "#8e2e44"],
+    "hair_gray": ["#f2f0ea", "#bab6c4", "#7a7690"],
+    "hair_purple": ["#c49cf0", "#8460b8", "#4c347c"],
+    "hair_pink": ["#ffc8d6", "#f08cac", "#ae4e80"],
+    "hair_teal": ["#9cf0e0", "#3eb4ac", "#22667c"],
+    # ---- cloth
+    "red": ["#ff8c6a", "#e2443c", "#9a2442"],
+    "orange": ["#ffbc66", "#f07c2e", "#a6422e"],
+    "yellow": ["#fff28c", "#f2b832", "#b06e2a"],
+    "olive": ["#d4d47a", "#929442", "#535a36"],
+    "green": ["#b6e472", "#58a84a", "#2a6650"],
+    "teal": ["#8cecd8", "#34aea6", "#1c6478"],
+    "sky": ["#c2ecff", "#6eb0ea", "#3c62b0"],
+    "navy": ["#7aa2ea", "#4560b0", "#2a2e6c"],
+    "purple": ["#d0a4f4", "#8c62c8", "#4e3890"],
+    "pink": ["#ffc6da", "#f08aac", "#ac4c82"],
+    "white": [WHITE, "#d8dcea", "#9aa0be"],
+    "gray": ["#e6e6ee", "#a8aac0", "#6c6e8c"],
+    "charcoal": ["#7a7694", "#4e4a66", "#2e2a44"],
+    "khaki": ["#f4dea8", "#caa86c", "#866c52"],
+    "brown": ["#cc925a", "#8c5634", "#553044"],
+    "straw": ["#fff0a6", "#e8c868", "#a88848"],
+    "denim": ["#9cc0f0", "#5a80c8", "#34407e"],
+    # ---- single colours
+    "mouth": ["#8a3442"],
+    "blush": ["#f69a9a"],
 }

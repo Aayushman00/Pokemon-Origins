@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import PixelTrainer from "../../ui/PixelTrainer";
 import TrainerTrigger from "../../ui/TrainerHoverCard";
+import { TILE_ART } from "../../ui/tileArt.generated";
 
 const LERP = 0.25;
 const CAMERA_LERP = 0.15;
@@ -31,14 +32,23 @@ function scenery(width, height) {
 	return { trees, flowers };
 }
 
-const Tree = ({ big }) => (
-	<svg viewBox="0 0 10 12" width={big ? 60 : 44} height={big ? 72 : 53} shapeRendering="crispEdges" aria-hidden="true">
-		<path fill="#2b211c" d="M3 0h4v1h2v2h1v5H9v1H6v3H4V9H1V8H0V3h1V1h2z" />
-		<path fill="#3f7f37" d="M3 1h4v1h2v6H1V2h2z" />
-		<path fill="#62b14f" d="M3 2h3v1h2v2H7v1H3V5H2V3h1z" />
-		<path fill="#8a6236" d="M4 9h2v2H4z" />
-	</svg>
-);
+/** A tile from the overworld tileset (generated pixel rows), drawn as crisp SVG. */
+const TileArt = ({ name, scale }) => {
+	const { rows, pal } = TILE_ART[name];
+	const w = rows[0].length;
+	const h = rows.length;
+	return (
+		<svg viewBox={`0 0 ${w} ${h}`} width={w * scale} height={h * scale} shapeRendering="crispEdges" aria-hidden="true">
+			{rows.flatMap((row, y) =>
+				[...row].map((ch, x) => (ch === "." ? null : <rect key={`${x}-${y}`} x={x} y={y} width="1" height="1" fill={pal[parseInt(ch, 36)]} />))
+			)}
+		</svg>
+	);
+};
+
+// Same pine and ground decals as the overworld tileset, so the Playground
+// and the game read as one world.
+const Tree = ({ big }) => <TileArt name="pine" scale={big ? 4 : 3} />;
 
 /**
  * Overworld viewport. Camera follows you; drag the ground to look around,
@@ -240,7 +250,9 @@ const World = ({ play, bubbles }) => {
 				<div className="world__path world__path--h" style={{ top: world.height / 2 - 24 }} />
 				<div className="world__path world__path--v" style={{ left: world.width / 2 - 24 }} />
 				{decor.flowers.map((f, i) => (
-					<span key={`f${i}`} className={`flower flower--${f.c}`} style={{ left: f.x, top: f.y }} />
+					<span key={`f${i}`} className="flower" style={{ left: f.x, top: f.y }}>
+						<TileArt name={f.c === 2 ? "tufts" : "flowers"} scale={2} />
+					</span>
 				))}
 				{me && (
 					<div

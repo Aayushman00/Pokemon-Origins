@@ -144,7 +144,10 @@ const foot = (f) => (f ? "walkB" : "walkA");
  *  turn  sAnim_GoFast*  foot 4f, stand 4f (8-frame walk in place)
  *  bump  sAnim_Go*      full 32f cycle: foot, stand, other foot, stand
  *  hop   sAnim_Go*      runs through the 32-frame jump like the bump cycle
- * -> 'stand' | 'walkA' | 'walkB' | 'runStand' | 'runA' | 'runB'
+ * -> 'stand' | 'walkA' | 'walkB' | 'runStand' | 'runA' | 'runB' | 'alert'
+ *
+ * An idle actor with `pose: "alert"` (a trainer that just spotted the
+ * player) shows the arms-up frame instead of standing.
  */
 export function actorPose(a) {
 	const t = a.t;
@@ -162,14 +165,32 @@ export function actorPose(a) {
 			return foot(q === 0 ? f : f ^ 1);
 		}
 		default:
-			return "stand";
+			return a.pose === "alert" ? "alert" : "stand";
 	}
 }
 
-// Sheet columns (16x32 frames): stand, walkA, walkB, runStand, runA, runB.
-const POSE_COLUMN = { stand: 0, walkA: 1, walkB: 2, runStand: 3, runA: 4, runB: 5 };
+// Sheet columns (16x32 frames): stand, walkA, walkB, runStand, runA, runB,
+// then the expression frames blink and alert ("spotted you", arms up).
+export const POSE_COLUMN = { stand: 0, walkA: 1, walkB: 2, runStand: 3, runA: 4, runB: 5, blink: 6, alert: 7 };
 
-/** Sprite column for the current pose. */
-export function actorFrame(a) {
-	return POSE_COLUMN[actorPose(a)];
+export const BLINK_PERIOD = 210; // ticks between blinks (~3.5s at 60Hz)
+export const BLINK_TICKS = 6;
+
+/** Small stable hash so every actor blinks on its own schedule. */
+function seedOf(key) {
+	let h = 0;
+	for (const ch of String(key)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+	return h % BLINK_PERIOD;
+}
+
+/**
+ * Sprite column for the current pose. Pass the game tick to let standing
+ * actors blink now and then; without it the result is the plain pose.
+ */
+export function actorFrame(a, tick) {
+	const pose = actorPose(a);
+	if (pose === "stand" && tick !== undefined && (tick + seedOf(a.id ?? "player")) % BLINK_PERIOD < BLINK_TICKS) {
+		return POSE_COLUMN.blink;
+	}
+	return POSE_COLUMN[pose];
 }

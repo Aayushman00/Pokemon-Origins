@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pokemon Origins - Sprite Preview</title>
+<style>
+	:root { --bg: #1f2430; --card: #2a3040; --ink: #eef0f6; --muted: #9aa3b8; --grass: #7cbc68; --boy: #8cbcff; --girl: #ffb27a; }
+	* { box-sizing: border-box; }
+	body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, sans-serif; }
+	header { position: sticky; top: 0; z-index: 1; background: var(--bg); padding: 12px 16px; border-bottom: 1px solid #3a4152; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+	h1 { font-size: 16px; margin: 0 12px 0 0; }
+	label { color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
+	main { padding: 16px; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+	.card { background: var(--card); border-radius: 8px; padding: 10px; }
+	.card h2 { font-size: 14px; margin: 0 0 6px; display: flex; justify-content: space-between; }
+	.tag { font-size: 12px; font-weight: 600; }
+	.male { color: var(--boy); }
+	.female { color: var(--girl); }
+	.dirs { display: flex; gap: 4px; flex-wrap: wrap; }
+	canvas { background: var(--grass); image-rendering: pixelated; border-radius: 4px; width: 64px; height: 128px; }
+	.lbl { font-size: 11px; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+<header>
+	<h1>Pokemon Origins - overworld cast at 4x</h1>
+	<label>Motion
+		<select id="mode">
+			<option value="walk">walk</option>
+			<option value="run">run</option>
+			<option value="stand">stand</option>
+			<option value="blink">blink</option>
+			<option value="alert">alert (spotted you)</option>
+		</select>
+	</label>
+	<label>Show
+		<select id="filter">
+			<option value="all">everyone</option>
+			<option value="male">male</option>
+			<option value="female">female</option>
+		</select>
+	</label>
+	<label><input type="checkbox" id="x1"> also at 1x</label>
+</header>
+<main id="grid"></main>
+<script>
+// Reads the manifest written by scripts/overworld_art/build_sprites.py and
+// animates each sheet exactly like the engine: column = pose, row = facing.
+const BASE = "/sprites/overworld/";
+const CYCLES = {
+	walk: [0, 1, 0, 2],
+	run: [3, 4, 3, 5],
+	stand: [0],
+	blink: [0, 0, 0, 6],
+	alert: [7],
+};
+const cards = [];
+let mode = "walk";
+let tick = 0;
+
+function card(sheet, img, rows) {
+	const el = document.createElement("section");
+	el.className = "card";
+	el.dataset.gender = sheet.gender;
+	el.innerHTML = `<h2>${sheet.label} <span class="tag ${sheet.gender}">${sheet.gender}</span></h2><div class="dirs"></div>`;
+	const dirs = el.querySelector(".dirs");
+	const canvases = rows.map((dir, row) => {
+		const wrap = document.createElement("div");
+		const c = document.createElement("canvas");
+		c.width = 16;
+		c.height = 32;
+		c.title = `${sheet.id} ${dir}`;
+		const one = document.createElement("canvas");
+		one.width = 16;
+		one.height = 32;
+		one.style.cssText = "width:16px;height:32px;display:none;margin:4px auto 0";
+		one.className = "one";
+		wrap.append(c, one);
+		const lbl = document.createElement("div");
+		lbl.className = "lbl";
+		lbl.textContent = dir;
+		wrap.append(lbl);
+		dirs.append(wrap);
+		return { ctxs: [c.getContext("2d"), one.getContext("2d")], row };
+	});
+	return { el, img, canvases };
+}
+
+function draw() {
+	const cycle = CYCLES[mode];
+	const col = cycle[Math.floor(tick / 8) % cycle.length];
+	for (const { img, canvases } of cards) {
+		for (const { ctxs, row } of canvases) {
+			for (const g of ctxs) {
+				g.clearRect(0, 0, 16, 32);
+				g.drawImage(img, col * 16, row * 32, 16, 32, 0, 0, 16, 32);
+			}
+		}
+	}
+}
+
+async function main() {
+	const manifest = await (await fetch(`${BASE}manifest.json`)).json();
+	const grid = document.getElementById("grid");
+	for (const sheet of manifest.sheets) {
+		const img = new Image();
+		img.src = `${BASE}${sheet.id}.png`;
+		await img.decode();
+		const c = card(sheet, img, manifest.rows);
+		cards.push(c);
+		grid.append(c.el);
+	}
+	document.getElementById("mode").onchange = (e) => (mode = e.target.value);
+	document.getElementById("filter").onchange = (e) => {
+		for (const c of cards) c.el.hidden = e.target.value !== "all" && c.el.dataset.gender !== e.target.value;
+	};
+	document.getElementById("x1").onchange = (e) => {
+		for (const n of document.querySelectorAll("canvas.one")) n.style.display = e.target.checked ? "block" : "none";
+	};
+	setInterval(() => {
+		tick++;
+		draw();
+	}, 1000 / 60);
+}
+main();
+</script>
+</body>
+</html>

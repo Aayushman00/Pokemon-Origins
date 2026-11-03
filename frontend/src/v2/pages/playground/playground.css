@@ -183,19 +183,12 @@
 
 .flower {
 	position: absolute;
-	width: 6px;
-	height: 6px;
-	box-shadow: 6px 0 0 currentColor, 3px -4px 0 currentColor, 3px 4px 0 currentColor;
-	background: var(--c-sun);
-	color: #fff;
+	transform: translate(-50%, -50%);
+	pointer-events: none;
 }
 
-.flower--1 {
-	color: #f19ab4;
-}
-
-.flower--2 {
-	color: #c7b8e6;
+.flower svg {
+	display: block;
 }
 
 .tree {
