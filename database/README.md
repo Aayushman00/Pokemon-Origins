@@ -59,6 +59,8 @@ Apply after the dump (trainer schema must exist). Do **not** rewrite `pokedex` t
 | [`migrations/005_pending_move_learns.sql`](migrations/005_pending_move_learns.sql) | `trainer.trainer_pending_move_learns` — "wants to learn" offers created when a level-up teaches a learnset move but the mon already knows 4. Resolved (learn+forget or skip) via `POST /api/moves/learn`; `UNIQUE (trainer_pokemon_id, move_id, learned_at_level)` makes offer creation idempotent. |
 | [`migrations/006_backfill_move_pp.sql`](migrations/006_backfill_move_pp.sql) | Data backfill, no schema change: `trainer_pokemon_moves.current_pp = pokedex.Move.pp` wherever it is `NULL`/`0` (rows written before Phase 14 stored 0 — battles now track and persist PP, so 0 would mean an unusable move). Idempotent; safe to re-run. |
 
+| [`migrations/012_trainer_flags.sql`](migrations/012_trainer_flags.sql) | `trainer.trainer_flags` — server-owned per-trainer world flags (overworld events, one-shot triggers). Additive; rollback = `DROP TABLE trainer_flags`. Read through `GET /api/world/flags` (404 unless `FLAG_OVERWORLD`). 010/011 are reserved for the avatar and world-position tables in later phases. |
+
 ### Existing volume / local MySQL
 
 Compose init SQL only runs on **first** volume create. For an already-initialized database:
