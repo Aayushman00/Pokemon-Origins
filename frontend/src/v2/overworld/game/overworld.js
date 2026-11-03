@@ -135,7 +135,7 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 				walk.i = walk.path.length;
 				continue;
 			}
-			const ctx = { world, isBlocked, canMove: true, canRun: false, halt: () => true };
+			const ctx = { world, isBlocked, canMove: true, canRun: false, noTurn: true, halt: () => true };
 			const dir = walk.i < walk.path.length ? walk.path[walk.i] : null;
 			const r = tickActor(actor, { dir, run: false }, ctx);
 			if (r.events.some((e) => e.type === "stepEnd")) walk.i += 1;

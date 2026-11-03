@@ -10,6 +10,7 @@ import { createMemoryFlags } from "../game/flags";
 import { createRenderer } from "../render/renderer";
 import { loadAssets } from "../render/assets";
 import { VIEW_H, VIEW_W } from "../constants";
+import { actorPose } from "../logic/movement";
 import OverworldPad from "./OverworldPad";
 import { TEXT_SPEEDS, cycleTextSpeed, getTextSpeed } from "./textSpeed";
 import "./overworld.css";
@@ -35,7 +36,9 @@ const OverworldScreen = () => {
 	const [dialogue, setDialogue] = useState(null); // { pages, i }
 	const [speed, setSpeed] = useState(getTextSpeed);
 	const [hud, setHud] = useState(null);
-	const debug = typeof window !== "undefined" && new URLSearchParams(window.location.search).has("debug");
+	// Debug overlay: always in dev builds, or with ?debug elsewhere.
+	const debug = typeof window !== "undefined" && (import.meta.env.DEV || new URLSearchParams(window.location.search).has("debug"));
+	const [frame, setFrame] = useState(null);
 
 	const resize = useCallback(() => {
 		const wrap = wrapRef.current;
@@ -89,7 +92,13 @@ const OverworldScreen = () => {
 						}
 						game.tick(snap, edges);
 					},
-					render: () => renderer.draw(game),
+					render: () => {
+						renderer.draw(game);
+						if (debug) {
+							const p = game.player;
+							setFrame({ tick: game.tickCount, facing: p.facing, phase: p.phase, t: p.t, dur: p.dur, pose: actorPose(p), moving: p.moving, running: p.running });
+						}
+					},
 				});
 				sessionRef.current = { game, loop, redraw: () => renderer.draw(game) };
 				game.enter();
@@ -158,7 +167,7 @@ const OverworldScreen = () => {
 						</div>
 					)}
 					{debug && hud && (
-						<pre className="ow__hud" aria-hidden="true">{`${hud.tps} tps / ${hud.fps} fps  x${size.scale}\n${hud.map} (${hud.x},${hud.y}) ${hud.phase}\ndropped ${hud.dropped}`}</pre>
+						<pre className="ow__hud" aria-hidden="true">{`${hud.tps} tps / ${hud.fps} fps  x${size.scale}  dropped ${hud.dropped}\n${hud.map} (${hud.x},${hud.y})${frame ? `\ntick ${frame.tick}  ${frame.facing}\n${frame.phase} ${frame.t}/${frame.dur} ${frame.pose}${frame.running ? " run" : ""}${frame.moving ? " MOVING" : ""}` : ""}`}</pre>
 					)}
 				</div>
 			</div>
