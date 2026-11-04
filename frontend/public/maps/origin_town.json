@@ -4622,12 +4622,12 @@
       {
        "name": "targetX",
        "type": "int",
-       "value": 5
+       "value": 4
       },
       {
        "name": "targetY",
        "type": "int",
-       "value": 7
+       "value": 8
       },
       {
        "name": "facing",
@@ -4718,7 +4718,7 @@
       {
        "name": "targetX",
        "type": "int",
-       "value": 8
+       "value": 7
       },
       {
        "name": "targetY",
@@ -4766,12 +4766,12 @@
       {
        "name": "targetX",
        "type": "int",
-       "value": 5
+       "value": 6
       },
       {
        "name": "targetY",
        "type": "int",
-       "value": 7
+       "value": 8
       },
       {
        "name": "facing",

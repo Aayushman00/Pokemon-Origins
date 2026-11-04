@@ -2,6 +2,30 @@
 
 Art decisions, newest first. Each stage ships as its own commit.
 
+## Stage 3d v2: interiors repainted after the FireRed room references
+
+Rooms are now painted as whole pictures, then sliced into 16x16 tiles and
+de-duplicated (241 unique tiles across the three rooms; the healing machine's
+changing tiles become 3-frame animations automatically). This is what lets
+furniture span tiles and cast big soft floor shadows, as in FireRed.
+
+- **Room shell:** diagonally cut top corners sloping into narrow side-wall bands, a
+  two-row back wall (cap, trim, face, wainscot stripe, baseboard), black outside, the
+  exit mat set into the bottom edge.
+- **Shadows:** every piece of furniture darkens the floor below it (solid core,
+  dithered rim) using each floor's own shadow palette; no alpha anywhere.
+- **Care Centre:** warm cream tile floor, orange scallop trim, U-shaped salmon counter
+  whose arms run back to the wall, flower pots on the arms, sign-in paper, big white
+  healing machine with a 6-light screen (3 frames) and red cross, desk phone, wall
+  monitor, bookshelf, PC tower, a lit heal dome (shaded top half, bright lower half),
+  yellow seats and glass tables. One centred exit mat (both door cells lead to it).
+- **Mart:** bold two-tone blue grid floor, yellow walls with green trim, poster, glass
+  wall cabinets, chiller cases, palm, stock box, L-shaped glass counter + register desk
+  around the clerk, tall shelving units with a red kick plate, a second glass case.
+- **Home:** parquet basket-weave floor, light-blue walls, kitchen run (sink, glass
+  cupboard, bin, cooker), TV, staircase up with a runner rug, big green dotted rug with
+  a checked table and four chairs, palms in white pots. The bed moved upstairs (later).
+
 ## Stage 3d: interiors (Care Centre, Mart, home) and door warps
 
 Gym interiors are deliberately not built: each gym's interior will be decided per gym.

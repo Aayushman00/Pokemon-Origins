@@ -142,12 +142,13 @@ describe("headless overworld on the sample maps", () => {
 
 describe("Origin Town interiors (headless)", () => {
 	const doors = [
-		{ map: "origin_home", door: [4, 6], arrive: [5, 7] },
+		{ map: "origin_home", door: [4, 6], arrive: [4, 8] },
 		{ map: "origin_center", door: [25, 6], arrive: [7, 8] },
-		{ map: "origin_center", door: [26, 6], arrive: [8, 8] },
-		{ map: "origin_mart", door: [26, 22], arrive: [5, 7] },
+		// both Care Centre door cells lead to its single centred mat; leaving puts you at the left cell
+		{ map: "origin_center", door: [26, 6], arrive: [7, 8], back: [25, 7] },
+		{ map: "origin_mart", door: [26, 22], arrive: [6, 8] },
 	];
-	for (const { map, door, arrive } of doors) {
+	for (const { map, door, arrive, back } of doors) {
 		it(`walks in through the door at ${door} to ${map} and back out`, async () => {
 			const d = await boot({ mapId: "origin_town", x: door[0], y: door[1] + 1, facing: "up" });
 			// hold a direction until the map changes, then let go and let the transition finish
@@ -159,7 +160,7 @@ describe("Origin Town interiors (headless)", () => {
 			assert.deepEqual(d.pos(), [map, ...arrive]);
 			assert.ok(d.events.some((e) => e.type === "sound" && e.cue === "door"), "door sound");
 			walkUntilMap("down", "origin_town");
-			assert.deepEqual(d.pos(), ["origin_town", door[0], door[1] + 1]);
+			assert.deepEqual(d.pos(), ["origin_town", ...(back || [door[0], door[1] + 1])]);
 		});
 	}
 	it("the nurse heals across the counter, the clerk opens the shop", async () => {
@@ -171,7 +172,7 @@ describe("Origin Town interiors (headless)", () => {
 		for (let i = 0; i < 6; i++) c.close();
 		assert.ok(c.events.some((e) => e.type === "effect" && e.effect.type === "heal"), "heal requested");
 
-		const m = await boot({ mapId: "origin_mart", x: 4, y: 4, facing: "left" });
+		const m = await boot({ mapId: "origin_mart", x: 5, y: 3, facing: "left" });
 		m.press();
 		assert.match(m.dialogues()[0].pages.join(" "), /Mart/);
 		for (let i = 0; i < 6; i++) m.close();

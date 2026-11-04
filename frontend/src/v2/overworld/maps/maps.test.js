@@ -48,8 +48,8 @@ describe("sample maps (smoke + lint)", () => {
 		}
 		const sign = maps.origin_center.signs.find((s) => s.name === "counter_nurse");
 		assert.ok(sign && sign.script.some((op) => op.op === "heal"), "nurse heals across the counter");
-		const clerk = maps.origin_mart.signs.find((s) => s.name === "counter_clerk");
-		assert.ok(clerk && clerk.script.some((op) => op.op === "shop"), "clerk opens the shop across the counter");
+		const shopSigns = maps.origin_mart.signs.filter((s) => s.script && s.script.some((op) => op.op === "shop"));
+		assert.ok(shopSigns.length >= 2, "clerk opens the shop across the glass counter and the register");
 		const machine = maps.origin_center.tilesets[0];
 		assert.ok([...machine.anim.values()].some((a) => a.frames.length === 3), "healing machine animates in 3 frames");
 	});
