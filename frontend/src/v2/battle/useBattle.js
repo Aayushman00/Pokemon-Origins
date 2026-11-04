@@ -22,7 +22,7 @@ const IDLE_FX = { lunge: false, hit: null, crit: false, fainted: false, tick: nu
  * decides battle outcomes (the server is authoritative).
  *
  * phase: encounter → intro → command ↔ (moveSelect | partySelect |
- * bagSelect | restartConfirm) → acting → … → finished; restarting.
+ * bagSelect | restartConfirm) → acting → … → [moveLearn] → finished; restarting.
  */
 export default function useBattle({ levelNumber, battleNumber, worldTrainer, trainerId, onBattleWon, textSpeed = "normal" }) {
 	const reduce = useReducedMotion();
@@ -39,11 +39,13 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, tra
 	const [rewards, setRewards] = useState([]);
 	const [progressSave, setProgressSave] = useState("idle");
 	const [bagItems, setBagItems] = useState([]);
+	const [learnOffer, setLearnOffer] = useState(null);
 	const [error, setError] = useState("");
 
 	const timers = useRef([]);
 	const gen = useRef(0);
 	const sessionId = useRef(null);
+	const learning = useRef({ queue: [], done: null }); // offers left, then finish the battle
 	const reduceRef = useRef(reduce);
 	reduceRef.current = reduce;
 	const speedRef = useRef(textSpeed);
@@ -141,6 +143,8 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, tra
 			setLog([]);
 			setOutcome(null);
 			setRewards([]);
+			setLearnOffer(null);
+			learning.current = { queue: [], done: null };
 			setProgressSave("idle");
 			setError("");
 			try {
@@ -245,6 +249,60 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, tra
 		setPhase("finished");
 	};
 
+	const nextLearn = () => {
+		const offer = learning.current.queue.shift();
+		setLearnOffer(offer || null);
+		if (offer) setPhase("moveLearn");
+		else learning.current.done();
+	};
+
+	// A move offered by this win is settled here, on the battlefield. Offers that
+	// can't load stay pending, and the hub still shows them.
+	const settleLearns = async (events, done) => {
+		const offered = events.filter((ev) => ev.type === "move_learn_available");
+		learning.current = { queue: [], done };
+		if (offered.length) {
+			try {
+				const { data } = await api.get("/api/moves/pending");
+				learning.current.queue = (data.pending || []).filter((o) =>
+					offered.some((ev) => ev.moveId === o.move.move_id && ev.position === o.position)
+				);
+			} catch (err) {
+				console.error("Could not load move offers:", err.response || err.message);
+			}
+		}
+		nextLearn();
+	};
+
+	const resolveLearn = async (action, forgetMoveId = null) => {
+		const offer = learnOffer;
+		const myGen = gen.current;
+		setPhase("acting");
+		setLine(null);
+		try {
+			const { data } = await api.post("/api/moves/learn", {
+				pendingId: offer.pendingId,
+				action,
+				...(forgetMoveId != null ? { forgetMoveId } : {}),
+			});
+			if (!data?.success) throw new Error(data?.error || "Failed to update moves");
+			const r = data.result;
+			if (r.action === "skip") say(`${offer.nickname} did not learn ${offer.move.name.toUpperCase()}.`);
+			else {
+				if (r.forgot) say(`1, 2, and... Poof! ${offer.nickname} forgot ${r.forgot.name.toUpperCase()}.`);
+				sfx("levelUp");
+				say(`${offer.nickname} learned ${r.learned.name.toUpperCase()}!`);
+			}
+		} catch (err) {
+			console.error("Could not update moves:", err.response || err.message);
+			say(getErrorMessage(err, "The move didn't save. You can finish this from the hub."));
+		}
+		await drainQueue();
+		if (myGen !== gen.current) return;
+		setLine(null);
+		nextLearn();
+	};
+
 	const act = async (action) => {
 		const myGen = gen.current;
 		const { player: p, enemy: e, session: s } = liveRef.current;
@@ -260,7 +318,9 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, tra
 				await playEvent(event, view, myGen);
 			}
 			if (myGen !== gen.current) return;
-			const lines = (data.events || []).filter((ev) => REWARD_EVENT_TYPES.has(ev.type)).map((ev) => rewardLine(ev));
+			const lines = (data.events || [])
+				.filter((ev) => REWARD_EVENT_TYPES.has(ev.type) && ev.type !== "move_learn_available")
+				.map((ev) => rewardLine(ev));
 			if (lines.length) setRewards(lines);
 			await drainQueue();
 			if (myGen !== gen.current) return;
@@ -273,7 +333,7 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, tra
 				setPhase(data.state.requiresSwitch ? "partySelect" : "command");
 				if (data.state.requiresSwitch) say("Choose your next Pokémon!");
 			} else {
-				finish(data.state, data.progress);
+				await settleLearns(data.events || [], () => finish(data.state, data.progress));
 			}
 		} catch (err) {
 			console.error("Battle action failed:", err.response || err.message);
@@ -349,6 +409,8 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, tra
 		rewards,
 		progressSave,
 		bagItems,
+		learnOffer,
+		resolveLearn,
 		error,
 		chooseMove,
 		switchTo,

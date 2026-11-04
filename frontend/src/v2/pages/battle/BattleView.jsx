@@ -9,7 +9,7 @@ import Panel from "../../ui/Panel";
 import useDelayedHint from "../../ui/useDelayedHint";
 import BattleStage from "./BattleStage";
 import MobilePad from "./MobilePad";
-import { BagMenu, CommandMenu, MoveMenu, PartyMenu, RestartMenu, ResultPanel } from "./BattleMenus";
+import { BagMenu, CommandMenu, LearnMenu, MoveMenu, PartyMenu, RestartMenu, ResultPanel } from "./BattleMenus";
 import "./battle.css";
 
 const SPEED_KEY = "battlesim.textSpeed";
@@ -70,6 +70,7 @@ const BattleView = ({ levelNumber, battleNumber, worldTrainer, levelName, onBatt
 	if (phase === "moveSelect") hud = <MoveMenu battle={battle} />;
 	else if (phase === "partySelect") hud = <PartyMenu battle={battle} />;
 	else if (phase === "bagSelect") hud = <BagMenu battle={battle} />;
+	else if (phase === "moveLearn") hud = <LearnMenu key={battle.learnOffer.pendingId} battle={battle} charMs={TEXT_SPEEDS[speed]} />;
 	else if (phase === "finished") hud = <ResultPanel battle={battle} onContinue={onContinue} onLeave={leave} />;
 	else if (phase === "command" || phase === "restartConfirm") {
 		hud = (

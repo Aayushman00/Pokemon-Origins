@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import MenuList from "../../ui/MenuList";
+import DialogueBox from "../../ui/DialogueBox";
 import Button from "../../ui/Button";
 import Panel from "../../ui/Panel";
 import { TypeBadge } from "../../ui/Badges";
@@ -176,6 +177,73 @@ export const RestartMenu = ({ battle }) => (
 		/>
 	</div>
 );
+
+/** "Wants to learn" after a win: yes or no, then which move to forget. */
+export const LearnMenu = ({ battle, charMs }) => {
+	const [step, setStep] = useState("ask"); // ask | stop | pick
+	const offer = battle.learnOffer;
+	const name = offer.move.name.toUpperCase();
+	const full = offer.currentMoves.length >= 4;
+
+	if (step === "pick") {
+		const items = offer.currentMoves.map((m) => ({
+			id: m.move_id,
+			className: "move-item",
+			ariaLabel: `Forget ${m.name}, ${m.move_type}`,
+			icon: <span className="move-item__swatch" style={{ "--type": typeColor(m.move_type) }} aria-hidden="true" />,
+			label: <span className="caps">{m.name}</span>,
+			onSelect: () => battle.resolveLearn("learn", m.move_id),
+		}));
+		return (
+			<div className="hud__split">
+				<div className="frame panel move-box">
+					<MenuList label="Move to forget" columns={2} globalKeys sound onBack={() => setStep("ask")} items={items} />
+				</div>
+				<div className="frame panel move-info">
+					<p className="move-info__note">Forget which move for {name}?</p>
+					<div className="move-info__row">
+						<span>Type</span>
+						<TypeBadge type={offer.move.move_type} />
+					</div>
+					<div className="move-info__row">
+						<span>Power</span>
+						<strong>{offer.move.power || "Status"}</strong>
+					</div>
+					<Button size="sm" className="move-info__back" onClick={() => setStep("ask")}>
+						Back
+					</Button>
+				</div>
+			</div>
+		);
+	}
+
+	const stopping = step === "stop";
+	const text = stopping
+		? `Stop learning ${name}?`
+		: full
+		? `${offer.nickname} wants to learn ${name}, but already knows 4 moves. Forget one?`
+		: `${offer.nickname} wants to learn ${name}. Teach it?`;
+	const yes = stopping ? () => battle.resolveLearn("skip") : full ? () => setStep("pick") : () => battle.resolveLearn("learn");
+	const no = stopping ? () => setStep("ask") : () => setStep("stop");
+	return (
+		<div className="hud__split hud__split--cmd">
+			<DialogueBox text={text} keys={false} charMs={charMs} className="hud__dialogue" />
+			<div className="frame panel cmd-box">
+				<MenuList
+					key={step}
+					label={text}
+					globalKeys
+					sound
+					onBack={no}
+					items={[
+						{ id: "yes", label: "Yes", onSelect: yes },
+						{ id: "no", label: "No", onSelect: no },
+					]}
+				/>
+			</div>
+		</div>
+	);
+};
 
 /** Post-battle results: rewards, save state, next step. */
 export const ResultPanel = ({ battle, onContinue, onLeave }) => {

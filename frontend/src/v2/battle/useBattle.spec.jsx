@@ -61,6 +61,55 @@ describe("useBattle", () => {
 		expect(onBattleWon).toHaveBeenCalledWith({ current_level: 1, current_battle: 2 });
 	});
 
+	it("settles a move offer on the battlefield before finishing", async () => {
+		const post = vi.spyOn(api, "post");
+		post.mockResolvedValueOnce({ data: { success: true, state: state() } });
+		const { result } = renderHook(() => useBattle({ levelNumber: 1, battleNumber: 1, trainerId: 9 }));
+		await waitFor(() => expect(result.current.phase).toBe("command"));
+
+		const offer = { pendingId: 7, position: 1, nickname: "Charmander", move: { move_id: 52, name: "Ember" }, currentMoves: [] };
+		const other = { ...offer, pendingId: 8, move: { move_id: 99, name: "Rage" } }; // older, left for the hub
+		vi.spyOn(api, "get").mockResolvedValueOnce({ data: { success: true, pending: [other, offer] } });
+		post.mockResolvedValueOnce({
+			data: {
+				success: true,
+				state: state({ status: "won", enemy: foe({ current_hp: 0 }) }),
+				progress: { current_level: 1, current_battle: 2 },
+				events: [{ type: "move_learn_available", position: 1, nickname: "Charmander", moveId: 52, moveName: "Ember" }],
+			},
+		});
+		await act(async () => result.current.chooseMove(result.current.player.moves[0]));
+		await waitFor(() => expect(result.current.phase).toBe("moveLearn"));
+		expect(result.current.learnOffer.pendingId).toBe(7);
+		expect(result.current.outcome).toBe(null);
+
+		post.mockResolvedValueOnce({ data: { success: true, result: { action: "learn", learned: { name: "Ember" }, forgot: { name: "Growl" } } } });
+		await act(async () => result.current.resolveLearn("learn", 45));
+		await waitFor(() => expect(result.current.phase).toBe("finished"));
+		expect(post).toHaveBeenLastCalledWith("/api/moves/learn", { pendingId: 7, action: "learn", forgetMoveId: 45 });
+		expect(result.current.log).toContain("1, 2, and... Poof! Charmander forgot GROWL.");
+		expect(result.current.log).toContain("Charmander learned EMBER!");
+		expect(result.current.rewards).toEqual([]);
+	});
+
+	it("still finishes the battle when move offers can't load", async () => {
+		const post = vi.spyOn(api, "post");
+		post.mockResolvedValueOnce({ data: { success: true, state: state() } });
+		const { result } = renderHook(() => useBattle({ levelNumber: 1, battleNumber: 1, trainerId: 9 }));
+		await waitFor(() => expect(result.current.phase).toBe("command"));
+		vi.spyOn(api, "get").mockRejectedValueOnce(new Error("down"));
+		post.mockResolvedValueOnce({
+			data: {
+				success: true,
+				state: state({ status: "won", enemy: foe({ current_hp: 0 }) }),
+				progress: { current_level: 1, current_battle: 2 },
+				events: [{ type: "move_learn_available", position: 1, nickname: "Charmander", moveId: 52, moveName: "Ember" }],
+			},
+		});
+		await act(async () => result.current.chooseMove(result.current.player.moves[0]));
+		await waitFor(() => expect(result.current.phase).toBe("finished"));
+	});
+
 	it("turns a 400 rule rejection into a message and gives the menu back", async () => {
 		const post = vi.spyOn(api, "post");
 		post.mockResolvedValueOnce({ data: { success: true, state: state() } });
