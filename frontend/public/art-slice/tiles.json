@@ -328,5 +328,22 @@
 "pond_240_1": 350,
 "pond_240_2": 351,
 "lily": 352,
-"reeds": 353
+"reeds": 353,
+"picket_l": 354,
+"log_l": 355,
+"picket_r": 356,
+"log_r": 357,
+"ledge": 358,
+"ledge_l": 359,
+"ledge_r": 360,
+"rock2": 361,
+"barrel": 362,
+"crate": 363,
+"bench_l": 364,
+"bench_r": 365,
+"lamp_top": 366,
+"lamp_base": 367,
+"veg": 368,
+"laundry_l": 369,
+"laundry_r": 370
 }

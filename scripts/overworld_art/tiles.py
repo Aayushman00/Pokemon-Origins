@@ -531,8 +531,8 @@ def new_tiles():
     add("pave", herringbone())
     for edges in ("n", "s", "w", "e", "nw", "ne", "sw", "se"):
         add(f"pave_{edges}", herringbone(edges))
-    add("picket", picket())
-    add("logfence", log_fence())
+    add("picket", v2.picket_v2())             # v2 in place: boards with grass gaps
+    add("logfence", v2.log_v2())
     p = pine()
     add("pine_top", p.img.crop((0, 0, T, T)))
     add("pine_base", p.img.crop((0, T, T, 2 * T)))
@@ -569,6 +569,24 @@ def new_tiles():
             add(f"pond_{mask}_{f}", v2.pond_tile(mask, f))
     add("lily", v2.lily_pads())
     add("reeds", v2.reeds())
+    # ---- stage 3b: fence ends, v2 ledge, props (each casts a soft shadow)
+    for e in ("l", "r"):
+        add(f"picket_{e}", v2.picket_v2(e))
+        add(f"log_{e}", v2.log_v2(e))
+    add("ledge", v2.ledge_v2())
+    add("ledge_l", v2.ledge_v2("l"))
+    add("ledge_r", v2.ledge_v2("r"))
+    add("rock2", v2.rock_v2())
+    add("barrel", v2.barrel())
+    add("crate", v2.crate())
+    add("bench_l", v2.bench("l"))
+    add("bench_r", v2.bench("r"))
+    lamp = v2.lamp().img
+    add("lamp_top", lamp.crop((0, 0, T, T)))
+    add("lamp_base", lamp.crop((0, T, T, 2 * T)))
+    add("veg", v2.veg_bed())
+    add("laundry_l", v2.laundry("l"))
+    add("laundry_r", v2.laundry("r"))
     return out
 
 

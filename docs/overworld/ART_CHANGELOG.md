@@ -2,6 +2,29 @@
 
 Art decisions, newest first. Each stage ships as its own commit.
 
+## Stage 3b/3c: environment pass (tileset + Origin Town)
+
+Five commits, one per area; existing tile ids never change (new tiles append).
+
+- **Forest border:** a 2x2 tree that tiles seamlessly both ways, in two deeper forest
+  shades alternating per block, also used as the off-map `border` block so the world
+  edge is one forest. Pines and bushes stand in front of the band on free edge cells.
+- **Paths:** 47-tile blob autotile: 1 px wobbly grass edge (periodic so tiles join),
+  dirt rim, rounded outer corners, inner-corner bites, sparse worn centre and pebbles.
+- **Pond:** water on the same 47 masks with dry sand, wet sand, lapping foam, shallow
+  and deep bands; wide concave arcs; 3 frames (ripples drift, foam laps, sparkles).
+  Lily pads and reeds; the outline loses its corner cells for an organic shape.
+- **Buildings:** v2 Care Centre (red roof, cross plate, vent), Mart (blue roof, MART
+  plate), Gym (slate shingles, skylight band, fluted pillars, glass doors). Plates are
+  centred over the doors; every building casts a soft lawn shadow.
+- **Fences and ledge:** pickets are white boards with grass gaps and end posts; log
+  fences end at posts; both cast a shadow strip. The ledge has a lit lip, striated
+  dirt face, dark base, shadow and rounded end caps.
+- **Props:** rock with shadow, barrels and crates against building walls, a bench,
+  three lamp posts (heads drawn above actors), a vegetable bed and a laundry line.
+  Every prop is placed only where it leaves its neighbours walkable and never on an
+  NPC, sign or warp cell.
+
 ## Stage 3a: v1 polish, side views and legs (whole cast)
 
 v1 stays the baseline (v3 boy polish reverted). Template-level fixes only, so every

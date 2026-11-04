@@ -60,12 +60,14 @@ def plain_windows(m, size=3):
     return bad
 
 
-def _free(m, x, y):
-    """A grass cell with nothing on it (no path, decor, object, roof, NPC, sign)."""
+def _free(m, x, y, lawn=False):
+    """A grass cell with nothing on it (no path, decor, object, roof, NPC, sign).
+    lawn=True also accepts the mown skirt around buildings."""
     if not (0 <= x < W and 0 <= y < H):
         return False
     i = m.i(x, y)
-    if m.ground[i] - 1 not in GRASS_IDS or m.decor[i] or m.objects[i] or m.above[i] or m.collision[i]:
+    ground_ok = GRASS_IDS | ({ID["mown"]} if lawn else set())
+    if m.ground[i] - 1 not in ground_ok or m.decor[i] or m.objects[i] or m.above[i] or m.collision[i]:
         return False
     for group in ("npcs", "signs", "warps", "triggers"):
         for o in m.groups[group]:
@@ -74,6 +76,58 @@ def _free(m, x, y):
             if ox <= x < ox + ow and oy <= y < oy + oh:
                 return False
     return True
+
+
+def _occupied(m, x, y):
+    """An NPC, sign, warp or trigger stands on this cell."""
+    for group in ("npcs", "signs", "warps", "triggers"):
+        for o in m.groups[group]:
+            ox, oy = o["x"] // 16, o["y"] // 16
+            ow, oh = max(1, o.get("width", 0) // 16), max(1, o.get("height", 0) // 16)
+            if ox <= x < ox + ow and oy <= y < oy + oh:
+                return True
+    return False
+
+
+def _walkable(m, x, y):
+    return 0 <= x < W and 0 <= y < H and not m.collision[m.i(x, y)] and not m.objects[m.i(x, y)]
+
+
+def _prop_ok(m, cells):
+    """Every cell free grass, and the group leaves 3 of 4 sides of each cell walkable."""
+    if not all(_free(m, x, y, lawn=True) for x, y in cells):
+        return False
+    group = set(cells)
+    for x, y in cells:
+        sides = [(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)) if (x + dx, y + dy) not in group]
+        if sum(_walkable(m, *c) for c in sides) < len(sides) - 1:
+            return False
+    return True
+
+
+def place_props(m):
+    """Town dressing; each spot is skipped if it would block anything."""
+    # barrels / crates against building walls (first spots that block nothing)
+    buildings = [(3, 3, 4, 4), (24, 3, 4, 4), (25, 19, 4, 4)]
+    for bx, by, bw, bh in buildings:
+        placed = 0
+        for y in range(by + 2, by + bh):  # wall rows only (not beside the roof)
+            for x in (bx + bw, bx - 1):
+                if placed < 2 and _prop_ok(m, [(x, y)]):
+                    m.put("objects", x, y, ID["barrel" if placed == 0 else "crate"], SOLID)
+                    placed += 1
+    for x, y in ((14, 19), (17, 16), (10, 16)):  # lamps at the crossroads
+        head_clear = not m.above[m.i(x, y - 1)] and not _occupied(m, x, y - 1)
+        if _prop_ok(m, [(x, y)]) and head_clear:
+            m.put("above", x, y - 1, ID["lamp_top"])
+            m.put("objects", x, y, ID["lamp_base"], SOLID)
+    for (x, y), pair in (((22, 14), ("bench_l", "bench_r")), ((8, 4), ("laundry_l", "laundry_r"))):
+        if _prop_ok(m, [(x, y), (x + 1, y)]):
+            m.put("objects", x, y, ID[pair[0]], SOLID)
+            m.put("objects", x + 1, y, ID[pair[1]], SOLID)
+    for x, y in ((2, 10), (3, 10)):  # vegetable bed behind the picket fence (walkable soil)
+        if _free(m, x, y):
+            m.put("ground", x, y, ID["veg"])
 
 
 def stagger_edge(m):
@@ -162,7 +216,8 @@ def build():
         m.put("above", px, py, ID["pine_top"])
         m.put("objects", px, py + 1, ID["pine_base"], SOLID)
     for x in list(range(10, 15)) + list(range(17, 22)):
-        m.put("objects", x, 13, ID["logfence"], SOLID)
+        end = "log_l" if x in (10, 17) else "log_r" if x in (14, 21) else "logfence"
+        m.put("objects", x, 13, ID[end], SOLID)
     for x, y in ((8, 9), (9, 9), (8, 10), (9, 10), (22, 9), (23, 9), (22, 10), (23, 10)):
         m.put("ground", x, y, ID["bedA" if (x + y) % 2 else "bed2A"])
     m.sign("gym_sign", 14, 12, "ORIGIN TOWN GYM - Leader: Marina, the tidal tactician.")
@@ -174,10 +229,8 @@ def build():
     m.sign("home_door", 4, 6, "It's your house. Mom left the door open for you.")
     m.put("objects", 7, 7, MAILBOX, SOLID)
     m.put("ground", 4, 7, ID["doormat"])
-    for x in (2, 3):
-        m.put("objects", x, 9, ID["picket"], SOLID)
-    for x in (6, 7):
-        m.put("objects", x, 9, ID["picket"], SOLID)
+    for x, tile in ((2, "picket"), (3, "picket_r"), (6, "picket_l"), (7, "picket_r")):
+        m.put("objects", x, 9, ID[tile], SOLID)
     m.skirt(24, 3, 29, 8)
     m.building("center", 24, 3, 4, 4)
     m.sign("center_door", 25, 6, "CARE CENTRE - Rest your team for free. Pokemon Origins trainers welcome!")
@@ -205,7 +258,8 @@ def build():
     # ---- ledge, tall grass
     for x in range(2, 14):
         if x not in (4, 5):
-            m.put("decor", x, 15, LEDGE, L_DOWN)
+            tile = "ledge_r" if x in (3, 13) else "ledge_l" if x == 6 else "ledge"
+            m.put("decor", x, 15, ID[tile], L_DOWN)
     m.fill("ground", 3, 20, 9, 24, ID["tallA"])
     m.obj("encounters", "grass_origin", 3, 20, 7, 5, table="test_grass")
 
@@ -213,7 +267,7 @@ def build():
     for x, y in ((12, 15), (21, 15), (28, 12), (2, 12), (10, 25)):
         m.put("objects", x, y, ID["bush"], SOLID)
     for x, y in ((8, 13), (28, 16), (13, 25)):
-        m.put("objects", x, y, ROCK, SOLID)
+        m.put("objects", x, y, ID["rock2"], SOLID)
     for x, y in ((11, 21), (12, 22), (11, 24), (21, 14), (22, 15)):
         m.put("ground", x, y, ID["bedA" if (x + y) % 2 else "bed2A"])
     m.sign("town_sign", 14, 16, "ORIGIN TOWN - Where every Pokemon Origins journey begins.")
@@ -235,6 +289,9 @@ def build():
     m.npc("scientist", 22, 12, "scientist", "down", "The gym's roof is designed to reflect sunlight. Fascinating!")
     m.npc("rival", 17, 15, "rival", "left", "Took you long enough. I'll beat Marina before you do!")
     m.npc("twin", 2, 21, "twin", "right", "We're twins! My sister is... somewhere. Hiding.")
+
+    # ---- props (placed only where they block nothing)
+    place_props(m)
 
     # ---- stagger the forest edge: pine / bush clumps in front of the band
     stagger_edge(m)

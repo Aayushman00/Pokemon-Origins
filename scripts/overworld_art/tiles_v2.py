@@ -643,3 +643,216 @@ def reeds():
             t.rect(x0 + lean, 15 - h, x0 + lean, 15 - h + 2, head)
             t.set(x0 + lean, 15 - h, "#b07448")
     return t
+
+
+# ======================================================== fences & ledges
+SHADE = {"g1": "#58a840", "g2": "#68b848"}  # soft ground shadow tones on the lawn
+WOOD = {"hi": "#e0a868", "base": "#b87c48", "lo": "#86522e", "line": "#4a2a22"}
+
+
+def _ground():
+    return grass(510, tufts=0, specks=5)
+
+
+def picket_v2(end=None):
+    """White picket run; end='l'/'r' adds a capped corner post. Shadow strip below."""
+    t = _ground()
+    t.rect(0, 13, 15, 13, SHADE["g1"])
+    t.rect(0, 14, 15, 14, SHADE["g2"])
+    for y in (6, 10):  # rails behind the boards (grass shows between boards)
+        t.rect(0, y, 15, y, C["white_lo"])
+        t.rect(0, y + 1, 15, y + 1, C["white_sh"])
+    for x0 in range(0, 16, 4):  # 2 px board, 1 px shadow edge, 1 px gap
+        t.rect(x0, 4, x0 + 1, 12, C["white"])
+        t.set(x0, 3, C["white"])                  # pointed top (left-lit)
+        t.rect(x0 + 2, 4, x0 + 2, 12, C["white_sh"])
+        t.set(x0 + 1, 3, C["white_lo"])
+        t.set(x0, 12, C["white_lo"])
+        t.set(x0 + 1, 12, C["white_lo"])
+    if end:
+        x = 0 if end == "l" else 12
+        t.rect(x, 1, x + 3, 13, C["outline"])
+        t.rect(x + 1, 3, x + 2, 12, C["white"])
+        t.rect(x + 2, 3, x + 2, 12, C["white_lo"])
+        t.rect(x, 1, x + 3, 2, C["white_sh"])
+        t.rect(x + 1, 1, x + 2, 1, C["white"])
+    return t
+
+
+def log_v2(end=None):
+    """Two log rails between posts; end='l'/'r' stops the rails at a post."""
+    t = _ground()
+    t.rect(0, 13, 15, 13, SHADE["g1"])
+    t.rect(0, 14, 15, 14, SHADE["g2"])
+    x0, x1 = (4 if end == "l" else 0), (11 if end == "r" else 15)
+    for y in (5, 9):
+        t.rect(x0, y, x1, y + 2, WOOD["line"])
+        t.rect(x0, y, x1, y, WOOD["hi"])
+        t.rect(x0, y + 1, x1, y + 1, WOOD["base"])
+    for px in ([2] if end != "r" else []) + ([12] if end != "l" else []) + ([13] if end == "r" else []):
+        pass
+    posts = {None: [6], "l": [2, 10], "r": [5, 12]}[end]
+    for px in posts:
+        t.rect(px - 1, 2, px + 2, 13, WOOD["line"])
+        t.rect(px, 3, px + 1, 12, WOOD["base"])
+        t.rect(px, 3, px, 12, WOOD["hi"])
+        t.rect(px - 1, 2, px + 2, 2, WOOD["lo"])
+        t.set(px, 2, WOOD["hi"])
+    return t
+
+
+def ledge_v2(end=None):
+    """One-way ledge: lit grass lip, striated dirt face, dark base, soft
+    shadow on the lower grass. end='l'/'r' rounds that end of the face."""
+    t = _ground()
+    face = ["#cfe890", "#9a7a50", "#86683f", "#6c5232", "#3e5a36"]
+    for x in range(16):
+        inset = 0
+        if end == "l":
+            inset = max(0, 3 - x)
+        elif end == "r":
+            inset = max(0, x - 12)
+        top = 9 + inset
+        if top > 13:
+            continue
+        t.set(x, top, face[0])                      # lit lip
+        for y in range(top + 1, 13):
+            col = face[1] if y == top + 1 else face[2] if (x + y) % 5 else face[3]
+            t.set(x, y, col)
+        t.set(x, 13, face[4])                       # dark base
+        t.set(x, 14, SHADE["g1"])
+        if x % 3 != 1:
+            t.set(x, 15, SHADE["g2"])
+    return t
+
+
+# ================================================================= props
+def _shadow(t, cx, cy, rx, ry):
+    for y in range(16):
+        for x in range(16):
+            if ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 < 1:
+                t.set(x, y, SHADE["g1"])
+
+
+def rock_v2():
+    t = _ground()
+    _shadow(t, 9.5, 13, 6.5, 2.2)
+    stone = ["#eef0f6", "#c4c8d8", "#9ea2b8", "#70748e", "#3e3c50"]
+    for y in range(4, 14):
+        for x in range(2, 14):
+            nx, ny = (x + 0.5 - 7.5) / 6, (y + 0.5 - 9.5) / 4.6
+            dist = nx * nx + ny * ny
+            if dist < 1:
+                lit = -(nx * 0.6 + ny * 0.8)
+                col = stone[0] if lit > 0.55 else stone[1] if lit > 0.1 else stone[2] if lit > -0.45 else stone[3]
+                if dist > 0.78:
+                    col = stone[4]
+                t.set(x, y, col)
+    t.set(6, 8, stone[3])
+    t.set(7, 9, stone[3])
+    return t
+
+
+def barrel():
+    t = _ground()
+    _shadow(t, 9, 14, 6, 1.8)
+    for y in range(3, 15):
+        bulge = 1 if 6 <= y <= 11 else 0
+        for x in range(4 - bulge, 12 + bulge):
+            col = WOOD["hi"] if x <= 5 else WOOD["lo"] if x >= 10 else WOOD["base"]
+            if y in (5, 12):
+                col = "#7c7e94"                        # iron hoops
+            t.set(x, y, col)
+        t.set(3 - bulge, y, WOOD["line"])
+        t.set(12 + bulge, y, WOOD["line"])
+    t.rect(4, 2, 11, 2, WOOD["line"])
+    t.rect(4, 3, 11, 3, "#d8a870")
+    t.rect(4, 15, 11, 15, WOOD["line"])
+    return t
+
+
+def crate():
+    t = _ground()
+    _shadow(t, 9, 14, 6.5, 1.8)
+    t.rect(2, 3, 13, 14, WOOD["line"])
+    t.rect(3, 4, 12, 13, WOOD["base"])
+    t.rect(3, 4, 12, 4, WOOD["hi"])
+    t.rect(3, 4, 3, 13, WOOD["hi"])
+    t.rect(12, 5, 12, 13, WOOD["lo"])
+    for i in range(8):  # diagonal brace
+        t.set(4 + i, 12 - i, WOOD["lo"])
+        t.set(5 + i, 12 - i, WOOD["hi"])
+    return t
+
+
+def bench(side):
+    """2-tile park bench; side 'l' / 'r'."""
+    t = _ground()
+    t.rect(0, 13, 15, 13, SHADE["g1"])
+    lo, hi = (1, 15) if side == "l" else (0, 14)
+    t.rect(lo, 3, hi, 6, WOOD["line"])            # back rest
+    t.rect(lo + (1 if side == "l" else 0), 4, hi - (1 if side == "r" else 0), 4, WOOD["hi"])
+    t.rect(lo + (1 if side == "l" else 0), 5, hi - (1 if side == "r" else 0), 5, WOOD["base"])
+    t.rect(lo, 8, hi, 10, WOOD["line"])           # seat
+    t.rect(lo + (1 if side == "l" else 0), 8, hi - (1 if side == "r" else 0), 8, WOOD["hi"])
+    t.rect(lo + (1 if side == "l" else 0), 9, hi - (1 if side == "r" else 0), 9, WOOD["base"])
+    leg = 3 if side == "l" else 12
+    t.rect(leg - 1, 6, leg, 12, "#3e3c50")
+    t.rect(leg - 1, 6, leg - 1, 12, "#70748e")
+    return t
+
+
+def lamp():
+    """16x32 lamp post: lantern head (top tile, drawn above actors), pole + foot."""
+    t = Tile(16, 32)
+    t.paste(_ground(), 0, 16)
+    _sh = Tile(16, 16)
+    t.rect(8, 28, 12, 28, SHADE["g1"])
+    t.rect(6, 6, 9, 29, "#2e2a44")
+    t.rect(7, 7, 7, 28, "#7a7694")
+    t.rect(8, 7, 8, 28, "#4e4a66")
+    t.rect(5, 27, 10, 29, "#2e2a44")
+    t.rect(6, 27, 9, 27, "#7a7694")
+    t.rect(3, 0, 12, 7, "#2e2a44")                # lantern
+    t.rect(4, 1, 11, 6, "#fff2a2")
+    t.rect(4, 1, 11, 1, "#ffffff")
+    t.rect(9, 2, 11, 6, "#eabc54")
+    t.rect(7, 1, 8, 6, "#2e2a44")
+    t.rect(2, 0, 13, 0, "#4e4a66")
+    return t
+
+
+def veg_bed():
+    """Tilled soil rows with leafy crops (a garden bed)."""
+    t = Tile(fill="#8a5a38")
+    for y in range(16):
+        if y % 4 == 3:
+            t.rect(0, y, 15, y, "#6a4228")
+    for y0 in (1, 5, 9, 13):
+        for x0 in (2, 7, 12):
+            t.set(x0, y0, "#9cd468")
+            t.set(x0 - 1, y0 + 1, "#58a840")
+            t.set(x0 + 1, y0 + 1, "#3a7c44")
+            t.set(x0, y0 + 1, "#78c050")
+    t.rect(0, 0, 15, 0, "#a87850")
+    return t
+
+
+def laundry(side):
+    """2-tile laundry line: posts at the outer ends, sagging line, clothes."""
+    t = _ground()
+    t.rect(0, 14, 15, 14, SHADE["g1"])
+    post = 1 if side == "l" else 14
+    t.rect(post - 1, 1, post + 1, 14, WOOD["line"])
+    t.rect(post, 2, post, 13, WOOD["base"])
+    for x in range(16):
+        sag = 0 if (side == "l" and x < 3) or (side == "r" and x > 12) else 1 if (side == "l" and x < 8) or (side == "r" and x > 7) else 2
+        if not (post - 1 <= x <= post + 1):
+            t.set(x, 2 + sag, "#e8ecf4")
+    clothes = [(5, "#e84a3c", "#a82c44", 5), (10, "#fffcf0", "#c8cce0", 4)] if side == "l" else [(3, "#4c78e0", "#3048a0", 6), (8, "#f8d040", "#c08c28", 4)]
+    for x0, c, lo, h in clothes:
+        top = 3 + (2 if 3 < x0 < 13 else 1)
+        t.rect(x0 - 1, top, x0 + 2, top + h, C["outline"])
+        t.rect(x0, top + 1, x0 + 1, top + h - 1, c)
+        t.rect(x0 + 1, top + 1, x0 + 1, top + h - 1, lo)
+    return t
