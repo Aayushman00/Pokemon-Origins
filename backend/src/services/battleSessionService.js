@@ -376,6 +376,8 @@ const OFFER_BATTLE_TYPES = new Set(["gym_boss", "champion", "legendary"]);
 // through to a fresh snapshot picks up whatever the DB says now.
 const ABANDONED_SESSION_MS = 10 * 60 * 1000;
 
+const defeatedFlag = (id) => `trainer:${id}`;
+
 function createBattleSessionService(deps = {}) {
 	const sessions = new Map(); // sessionId -> session
 	const sessionByTrainer = new Map(); // trainerId -> sessionId
@@ -407,6 +409,9 @@ function createBattleSessionService(deps = {}) {
 	const getPlayerParty = deps.getPlayerParty || defaultGetPlayerParty();
 	const getEnemyBattle = deps.getEnemyBattle || defaultGetEnemyBattle();
 	const getEngine = () => deps.engine || defaultEngine();
+	const getFlagService = () => deps.flags || require("./flagService");
+	const findWorldTrainer = deps.findWorldTrainer || require("../campaign/loader").findTrainerBattle;
+	const overworldOn = deps.overworldOn || (() => require("../config/flags").isEnabled("OVERWORLD"));
 
 	const winKey = (trainerId, level, battleNumber) =>
 		`${Number(trainerId)}:${level}:${battleNumber}`;
@@ -422,9 +427,38 @@ function createBattleSessionService(deps = {}) {
 		return session;
 	}
 
-	async function startBattle(trainerId, { level, battleNumber, force }) {
+	/**
+	 * A trainer met in the overworld is still that trainer's campaign battle, so
+	 * the cursor check in startBattle enforces the gauntlet order and every win
+	 * reward stays on one path. This only names the battle and adds the world's
+	 * own rules: beaten trainers stay beaten, and a leader needs the gym solved.
+	 */
+	async function resolveWorldTrainer(trainerId, id, progress) {
+		if (!overworldOn()) throw new CampaignError(404, "Not found");
+		const spot = findWorldTrainer(id);
+		if (!spot) throw new CampaignError(404, "Unknown trainer");
+		const flags = await getFlagService().listFlags(trainerId);
+		if (flags.includes(defeatedFlag(id))) throw new CampaignError(409, "Trainer already defeated");
+		const cursorPast =
+			progress.current_level > spot.level ||
+			(progress.current_level === spot.level && progress.current_battle > spot.battleNumber);
+		if (cursorPast) {
+			// The win counted but its flag was lost: repair it so the trainer stands down.
+			await getFlagService().setFlag(trainerId, defeatedFlag(id));
+			throw new CampaignError(409, "Trainer already defeated");
+		}
+		if (spot.type === "gym_boss" && !flags.includes(`gym:${id}:solved`)) {
+			throw new CampaignError(403, "Solve the gym puzzle first");
+		}
+		return spot;
+	}
+
+	async function startBattle(trainerId, { level, battleNumber, force, worldTrainer }) {
 		const progressService = getProgressService();
 		const progress = await progressService.getProgress(trainerId);
+		if (worldTrainer) {
+			({ level, battleNumber } = await resolveWorldTrainer(trainerId, worldTrainer, progress));
+		}
 		if (
 			progress.current_level !== level ||
 			progress.current_battle !== battleNumber
@@ -512,6 +546,7 @@ function createBattleSessionService(deps = {}) {
 			battleType: enemyBattle.battleType || "trainer",
 			trainerName: enemyBattle.trainerName,
 			trainerSprite: enemyBattle.trainerSprite || null,
+			worldTrainer: worldTrainer || null,
 			party,
 			// `player` always references the active party entry, so beat
 			// resolution mutates the party snapshot in place.
@@ -1657,6 +1692,14 @@ function createBattleSessionService(deps = {}) {
 							"Failed to award progress after win:",
 							err.message
 						);
+					}
+				}
+				if (session.worldTrainer && session.progressAwarded) {
+					try {
+						await getFlagService().setFlag(trainerId, defeatedFlag(session.worldTrainer));
+					} catch (err) {
+						// resolveWorldTrainer repairs this on the next meeting.
+						console.error("Failed to set trainer flag:", err.message);
 					}
 				}
 				// XP exactly once, and only for a first-time completion:

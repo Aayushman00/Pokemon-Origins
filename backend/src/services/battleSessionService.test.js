@@ -9,6 +9,7 @@ const {
 	createProgressService,
 	createMemoryStore,
 } = require("./progressService");
+const { createFlagService, createMemoryFlagStore } = require("./flagService");
 const {
 	createXpService,
 	createMemoryXpStore,
@@ -263,6 +264,10 @@ function makeService({
 	// startBattle calls (e.g. simulating an evolution while a session sat
 	// idle). Defaults to always returning the same fixture array.
 	getPlayerParty = async () => party,
+	// Overworld trainers: a memory flag service and a stub gauntlet position.
+	flags,
+	findWorldTrainer,
+	overworldOn = () => true,
 } = {}) {
 	const progress = createProgressService({
 		store: createMemoryStore(),
@@ -309,6 +314,9 @@ function makeService({
 		...(inventory ? { inventory } : {}),
 		random,
 		...(now ? { now } : {}),
+		...(flags ? { flags } : {}),
+		...(findWorldTrainer ? { findWorldTrainer } : {}),
+		overworldOn,
 		getPlayerParty,
 		getEnemyBattle: async (level, battleNumber) => ({
 			trainerName,
@@ -319,6 +327,76 @@ function makeService({
 	});
 	return { service, progress, engine, xp, xpStore, wallet, history };
 }
+
+describe("world_trainer battles", () => {
+	const gauntlet = {
+		joey: { level: 1, battleNumber: 1, type: "trainer" },
+		annie: { level: 1, battleNumber: 2, type: "trainer" },
+		willow: { level: 1, battleNumber: 5, type: "gym_boss" },
+	};
+	const setup = (opts = {}) => {
+		const flags = createFlagService({ store: createMemoryFlagStore() });
+		return { flags, ...makeService({ flags, findWorldTrainer: (id) => gauntlet[id] || null, trainerId: 7, ...opts }) };
+	};
+	const code = (status) => (err) => err.status === status;
+
+	it("starts the trainer's campaign battle and sets the flag on a win, with XP and coins", async () => {
+		const { service, flags, progress, wallet } = setup({ engine: stubEngine([{ result: "hit", damage: 30 }]) });
+		const { state } = await service.startBattle(7, { worldTrainer: "joey" });
+		assert.deepEqual([state.level, state.battleNumber], [1, 1]);
+		const result = await service.performAction(7, { sessionId: state.sessionId, action: { type: "move", moveId: 33 } });
+		assert.equal(result.state.status, "won");
+		assert.deepEqual(await flags.listFlags(7), ["trainer:joey"]);
+		assert.equal((await progress.getProgress(7)).current_battle, 2);
+		assert.ok(result.events.some((e) => e.type === "coins"));
+		assert.ok((await wallet.getBalance(7)) > STARTING_COINS);
+	});
+	it("does not set the flag on a loss", async () => {
+		const { service, flags } = setup({
+			party: [playerMon({ id: 101, position: 1, current_hp: 1 })],
+			engine: stubEngine([{ result: "hit", damage: 1 }]),
+		});
+		const { state } = await service.startBattle(7, { worldTrainer: "joey" });
+		const result = await service.performAction(7, { sessionId: state.sessionId, action: { type: "move", moveId: 33 } });
+		assert.notEqual(result.state.status, "won");
+		assert.deepEqual(await flags.listFlags(7), []);
+	});
+	it("refuses a trainer out of gauntlet order", async () => {
+		const { service } = setup();
+		await assert.rejects(service.startBattle(7, { worldTrainer: "annie" }), code(403));
+	});
+	it("refuses a beaten trainer", async () => {
+		const { service, flags } = setup();
+		await flags.setFlag(7, "trainer:joey");
+		await assert.rejects(service.startBattle(7, { worldTrainer: "joey" }), code(409));
+	});
+	it("repairs a lost flag when the cursor is already past the trainer", async () => {
+		const { service, flags, progress } = setup();
+		await progress.completeBattle(7, { level: 1, battleNumber: 1 });
+		await assert.rejects(service.startBattle(7, { worldTrainer: "joey" }), code(409));
+		assert.deepEqual(await flags.listFlags(7), ["trainer:joey"]);
+	});
+	it("refuses a leader until the gym is solved", async () => {
+		const { service, flags, progress } = setup();
+		for (let n = 1; n <= 4; n++) await progress.completeBattle(7, { level: 1, battleNumber: n });
+		await assert.rejects(service.startBattle(7, { worldTrainer: "willow" }), code(403));
+		await flags.setFlag(7, "gym:willow:solved");
+		const { state } = await service.startBattle(7, { worldTrainer: "willow" });
+		assert.equal(state.battleNumber, 5);
+	});
+	it("refuses unknown trainers, and everything with OVERWORLD off", async () => {
+		const { service } = setup();
+		await assert.rejects(service.startBattle(7, { worldTrainer: "nobody" }), code(404));
+		const off = setup({ overworldOn: () => false });
+		await assert.rejects(off.service.startBattle(7, { worldTrainer: "joey" }), code(404));
+	});
+	it("finds real trainers in the campaign data", () => {
+		const { findTrainerBattle } = require("../campaign/loader");
+		assert.deepEqual(findTrainerBattle("hiker_jack"), { level: 1, battleNumber: 4, type: "trainer" });
+		assert.deepEqual(findTrainerBattle("willow_thornby"), { level: 1, battleNumber: 5, type: "gym_boss" });
+		assert.equal(findTrainerBattle("nobody"), null);
+	});
+});
 
 describe("executeBeat forwards RNG overrides to the engine (Move Lab)", () => {
 	it("adds force_hit/force_crit/force_secondary to the calculateDamage payload when the move carries them", async () => {

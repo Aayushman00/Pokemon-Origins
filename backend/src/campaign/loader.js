@@ -91,6 +91,8 @@ function loadEncounterCatalog(dataDir = DATA_DIR) {
 	return result.data;
 }
 
+const CAMPAIGN_LEVELS = 10;
+
 function loadLevelFile(levelNumber, dataDir = DATA_DIR) {
 	const filePath = path.join(
 		dataDir,
@@ -213,6 +215,15 @@ function listBattles(levelNumber, dataDir = DATA_DIR) {
 	});
 }
 
+/** Where a campaign trainer sits in the gauntlet: { level, battleNumber, type }, or null. */
+function findTrainerBattle(trainerId, dataDir = DATA_DIR) {
+	for (let level = 1; level <= CAMPAIGN_LEVELS; level++) {
+		const battle = loadLevel(level, dataDir).battles.find((b) => b.trainerId === trainerId);
+		if (battle) return { level, battleNumber: battle.battleNumber, type: battle.type };
+	}
+	return null;
+}
+
 module.exports = {
 	DATA_DIR,
 	CampaignError,
@@ -220,6 +231,7 @@ module.exports = {
 	loadLevel,
 	listBattles,
 	countBattles,
+	findTrainerBattle,
 	getTrainer,
 	getEncounter,
 	resetCache,

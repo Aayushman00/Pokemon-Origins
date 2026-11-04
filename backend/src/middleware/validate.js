@@ -100,11 +100,18 @@ const completeBattleSchema = z.object({
 	battleNumber: z.number().int().positive(),
 });
 
-const battleStartSchema = z.object({
-	level: z.number().int().positive(),
-	battleNumber: z.number().int().positive(),
-	force: z.boolean().optional(),
-});
+const battleStartSchema = z.union([
+	z.object({
+		level: z.number().int().positive(),
+		battleNumber: z.number().int().positive(),
+		force: z.boolean().optional(),
+	}),
+	// A campaign trainer met in the overworld. The server works out which battle it is.
+	z.object({
+		worldTrainer: z.string().regex(/^[a-z0-9_]{1,48}$/),
+		force: z.boolean().optional(),
+	}),
+]);
 
 const rewardClaimSchema = z.object({
 	offerId: z.number().int().positive(),
