@@ -9,6 +9,7 @@ whole buildings that get sliced into 16x16 tiles.
 The sheet stays 8 tiles wide; new ids continue row by row. `TILES` maps
 names to ids so the map builder never hard-codes numbers.
 """
+from functools import lru_cache
 from PIL import Image, ImageDraw
 
 from scripts import gen_overworld_placeholders as base
@@ -516,6 +517,7 @@ def slice_into(img, cols, rows):
     return [img.crop((x * T, y * T, (x + 1) * T, (y + 1) * T)) for y in range(rows) for x in range(cols)]
 
 
+@lru_cache(None)
 def new_tiles():
     """[(name, Image)] in id order, starting at id 24."""
     out = []
@@ -588,6 +590,24 @@ def new_tiles():
     add("laundry_l", v2.laundry("l"))
     add("laundry_r", v2.laundry("r"))
     add("plank", v2.plank())
+    # ---- art overhaul: new nature art replaces old tiles in place, blob sets append
+    from . import nature
+    from .slice_art import meadow
+    swap = {f"grass{i}": meadow(i) for i in range(4)}
+    swap.update(tufts=nature.tufts(0), flowers0=nature.flowers(1, 0), flowers1=nature.flowers(2, 0),
+                bedA=nature.flowers(3, 0), bedB=nature.flowers(3, 1), bed2A=nature.flowers(4, 0),
+                bed2B=nature.flowers(4, 1), tallA=nature.tall_grass(0), tallB=nature.tall_grass(1), bush=nature.bush())
+    for mask in v2.blob_masks():
+        for f in range(3):
+            swap[f"pond_{mask}_{f}"] = nature.pond_tile(mask, f)
+    out[:] = [(name, swap.get(name, tile)) for name, tile in out]
+    for mask in v2.blob_masks():
+        for px, py in ((0, 0), (1, 0), (0, 1), (1, 1)):
+            add(f"trail_{mask}_{px}{py}", nature.trail_tile(mask, (px, py)))
+            add(f"lawn_{mask}_{px}{py}", nature.lawn_tile(mask, (px, py)))
+            add(f"forest_{mask}_{px}{py}", nature.forest_tile(mask, (px, py)))
+    for links in range(16):
+        add(f"fence_{links}", nature.fence_tile(links))
     return out
 
 

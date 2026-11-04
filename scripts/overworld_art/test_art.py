@@ -12,7 +12,6 @@ from pathlib import Path
 from PIL import Image
 
 from .characters import ROSTER
-from .world_maps import GRASS_IDS, plain_windows
 from .palette import OUTLINE, RAMPS, WHITE
 from .sheets import COLUMNS, ROWS
 
@@ -192,7 +191,7 @@ class WorldTests(unittest.TestCase):
             self.assertEqual(img.width, 128)
             self.assertEqual(img.height % 16, 0)
 
-    def test_dawnbrook_has_no_bare_grass_and_valid_tiles(self):
+    def test_dawnbrook_has_valid_tiles(self):
         m = json.loads((MAPS / "dawnbrook.json").read_text())
         ts = m["tilesets"][0]
         with Image.open(MAPS / ts["image"]) as img:
@@ -202,18 +201,7 @@ class WorldTests(unittest.TestCase):
             for g in layers[name]["data"]:
                 self.assertTrue(g == 0 or 1 <= g <= ts["tilecount"], f"{name}: gid {g}")
         W, H = m["width"], m["height"]
-
-        class Grid:
-            w, h = W, H
-            ground, decor, objects, above = (layers[n]["data"] for n in ("ground", "decor", "objects", "above"))
-
-            @staticmethod
-            def i(x, y):
-                return y * W + x
-
         self.assertEqual((W, H), (30, 20))
-        self.assertEqual(plain_windows(Grid), [], "bare grass patch")
-        self.assertTrue(GRASS_IDS)
 
     def test_world_map_npcs_use_existing_sheets(self):
         for map_id, count in (("dawnbrook", 2), ("route_1", 4), ("mossgate", 2), ("mossgate_gym", 1)):

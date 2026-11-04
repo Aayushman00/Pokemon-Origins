@@ -48,7 +48,7 @@ def render(map_id, frame_ms=0):
     def draw(name):
         data = layers[name]["data"]
         for i, gid in enumerate(data):
-            if gid and gid < 1000:
+            if gid and gid < 4000:
                 out.alpha_composite(tile_img(gid), ((i % w) * T, (i // w) * T))
 
     for name in ("ground", "decor", "objects"):

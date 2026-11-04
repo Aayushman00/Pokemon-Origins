@@ -119,16 +119,17 @@ def ground_layer(cells):
     return out
 
 
-def _outline(img):
-    """Turn every opaque pixel touching transparency into LINE."""
+def _outline(img, closed=True, line=LINE):
+    """Turn every opaque pixel touching transparency into LINE. With
+    closed=False the image border counts as open, for tiles that join up."""
     src, out = img.load(), img.copy()
     dst = out.load()
     w, h = img.size
     for y in range(h):
         for x in range(w):
-            if src[x, y][3] and any(not (0 <= x + dx < w and 0 <= y + dy < h) or not src[x + dx, y + dy][3]
+            if src[x, y][3] and any(not src[x + dx, y + dy][3] if 0 <= x + dx < w and 0 <= y + dy < h else closed
                                     for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
-                dst[x, y] = (*rgb(LINE), 255)
+                dst[x, y] = (*rgb(line), 255)
     return out
 
 

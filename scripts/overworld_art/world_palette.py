@@ -7,9 +7,9 @@ LINE = "#26223a"  # object outline, a cool plum, never pure black
 SHADOW = ("#2e4a4a", 0.35)  # contact shadow: colour, opacity
 
 WORLD = {
-    "meadow": ["#c6e2a4", "#b4d694", "#a2c986"],
-    "lawn": ["#a0c880", "#8fbc72", "#7eac64"],
-    "trail": ["#e6d8b4", "#d8c79e", "#c4b088", "#b09a76"],
+    "meadow": ["#c0e29e", "#aed68e", "#9cc97f"],
+    "lawn": ["#93c476", "#82b868", "#72a85c"],
+    "trail": ["#ecd9a8", "#e0c890", "#cbb07c", "#b6966c"],
     "leaf": ["#b4d878", "#7cb85c", "#4e9450", "#35704c", "#265244"],
     "bark": ["#b08858", "#84603f", "#5c4038", "#40303a"],
     "roof_clay": ["#f0a878", "#d97c54", "#b85a46", "#8c4044", "#6c3044"],
@@ -17,5 +17,8 @@ WORLD = {
     "glass": ["#dff0f4", "#a8d4e4", "#6ca4cc", "#4a78a8"],
     "stone": ["#d4d2d4", "#aeacb8", "#88869c", "#64627e"],
     "wood": ["#d09a60", "#a87044", "#7e5038", "#5a3a38"],
+    "water": ["#e4f6f6", "#a4dcea", "#74bce2", "#4e92c8"],
+    "bank": ["#c4a97c", "#957a5c"],
+    "tall": ["#c8ec98", "#86c86c", "#58a860", "#3e8458"],
     "fence": ["#f4ecdc", "#d8ccb8", "#aea298", "#807a84"],
 }

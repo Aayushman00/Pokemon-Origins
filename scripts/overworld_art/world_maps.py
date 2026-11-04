@@ -10,9 +10,10 @@ from pathlib import Path
 
 from scripts import gen_overworld_placeholders as base
 
+from .slice_art import variant_at
 from .tiles import FIRST_NEW, new_tiles, tile_ids
 
-COL_FIRST = 1000  # collision tileset firstgid: above every overworld tile id
+COL_FIRST = 4000  # collision tileset firstgid: above every overworld tile id
 ID = tile_ids()
 ROOT = Path(__file__).resolve().parents[2]
 WORLD_NAMES = json.loads((ROOT / "backend" / "data" / "world" / "names.json").read_text())
@@ -23,7 +24,7 @@ PATH, MAILBOX, ROCK, WA, WB, FA, FB, TALL_OLD = (
     base.PATH, base.MAILBOX, base.ROCK, base.WA, base.WB, base.FA, base.FB, base.TALL)
 GRASS_IDS = {base.GRASS} | {ID[f"grass{i}"] for i in range(4)}
 SOLID = base.SOLID
-BORDER = ",".join(str(ID[f"forestA_{x}_{y}"]) for y in (0, 1) for x in (0, 1))
+BORDER = ",".join(str(ID[f"forest_0_{x}{y}"]) for y in (0, 1) for x in (0, 1))
 
 
 def say(*texts):
@@ -85,8 +86,8 @@ def plain_windows(m, size=3):
 
 
 def autotile_paths(m):
-    """Swap every plain dirt-path cell for the blob tile matching its 8
-    neighbours. Paving and the map edge count as path (no grass rim there)."""
+    """Lay the blob trail tile matching each path cell's 8 neighbours over the
+    ground left under it. Paving and the map edge count as path (no rim there)."""
     from .tiles_v2 import blob_mask
     joins = {PATH, ID["pave"], ID["plank"]} | {ID["pave_" + e] for e in ("n", "s", "w", "e", "nw", "ne", "sw", "se")}
     is_path = [m.ground[i] - 1 == PATH for i in range(m.w * m.h)]
@@ -100,53 +101,84 @@ def autotile_paths(m):
         for x in range(m.w):
             if is_path[m.i(x, y)]:
                 mask = blob_mask(lambda dx, dy: grass_at(x + dx, y + dy))
-                m.put("ground", x, y, ID[f"path_{mask}"])
+                m.put("ground", x, y, m.under[x, y])
+                m.put("decor", x, y, ID[f"trail_{mask}_{x % 2}{y % 2}"])
+
+
+def halo(grid):
+    """Cells of darker lawn: everything touching a building, fence, hedge or tree."""
+    solid = {(x, y) for y, row in enumerate(grid) for x, c in enumerate(row) if c in "BTbfh"}
+    return {(x + dx, y + dy) for x, y in solid for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
 
 
 def paint(m, grid, walk_tile):
     """Lay a text grid onto m. `walk_tile` is what "." means: "grass" or "path"."""
-    from .tiles_v2 import blob_mask
-    water = {(x, y) for y, row in enumerate(grid) for x, c in enumerate(row) if c == "~"}
-    for y, row in enumerate(grid):
-        for x, c in enumerate(row):
-            m.put("ground", x, y, ID[f"grass{hashed(x, y) % 4}"])
-            if c == "," or (c == "." and walk_tile == "path"):
-                m.put("ground", x, y, PATH)
-            elif c in "Tb":
-                v = "A" if ((x // 2) + (y // 2)) % 2 == 0 else "B"
-                m.put("objects", x, y, ID[f"forest{v}_{x % 2}_{y % 2}"], SOLID)
-            elif c == "k":
-                m.put("ground", x, y, ID["plank"])
-            elif c == "g":
-                m.put("ground", x, y, ID["tallA"])
-            elif c == "F":
-                m.put("ground", x, y, ID["bedA" if (x + y) % 2 else "bed2A"])
-            elif c == "f":
-                m.put("objects", x, y, ID["picket"], SOLID)
-            elif c == "h":
-                m.put("objects", x, y, ID["bush"], SOLID)
-            elif c == "u":  # ponytail: no well tile yet, see assets/TODO_ART_AUDIO.md
-                m.put("objects", x, y, ID["barrel"], SOLID)
-            elif c == "n":
-                m.put("objects", x, y, ID["bench_l"], SOLID)
-            elif c == "L":
-                m.put("above", x, y - 1, ID["lamp_top"])
-                m.put("objects", x, y, ID["lamp_base"], SOLID)
-            elif c == "~":
-                mask = blob_mask(lambda dx, dy: (x + dx, y + dy) not in water)
-                m.put("ground", x, y, ID[f"pond_{mask}_0"], SOLID)
+    from .tiles_v2 import E, N, S, Wb, blob_mask
+    cells = {(x, y): c for y, row in enumerate(grid) for x, c in enumerate(row)}
+    water = {k for k, c in cells.items() if c == "~"}
+    forest = {k for k, c in cells.items() if c in "Tb"}
+    lawn = halo(grid)
+    m.under = {}
+
+    def outside(group, x, y):
+        """Blob test: past the map edge counts as more of the same."""
+        return (x, y) in cells and (x, y) not in group
+
+    for (x, y), c in cells.items():
+        if (x, y) in lawn:
+            mask = blob_mask(lambda dx, dy: outside(lawn, x + dx, y + dy))
+            m.under[x, y] = ID[f"lawn_{mask}_{x % 2}{y % 2}"]
+        else:
+            m.under[x, y] = ID[f"grass{variant_at(x, y)}"]
+        m.put("ground", x, y, m.under[x, y])
+        if c == "," or (c == "." and walk_tile == "path"):
+            m.put("ground", x, y, PATH)
+        elif c in "Tb":
+            mask = blob_mask(lambda dx, dy: outside(forest, x + dx, y + dy))
+            m.put("objects", x, y, ID[f"forest_{mask}_{x % 2}{y % 2}"], SOLID)
+        elif c == "k":
+            m.put("ground", x, y, ID["plank"])
+        elif c == "g":
+            m.put("ground", x, y, ID["tallA"])
+        elif c == "F":
+            m.put("decor", x, y, ID["bedA" if (x + y) % 2 else "bed2A"])
+        elif c == "f":
+            links = sum(bit for (dx, dy), bit in (((0, -1), N), ((1, 0), E), ((0, 1), S), ((-1, 0), Wb))
+                        if cells.get((x + dx, y + dy)) == "f")
+            m.put("objects", x, y, ID[f"fence_{links}"], SOLID)
+        elif c == "h":
+            m.put("objects", x, y, ID["bush"], SOLID)
+        elif c == "u":  # ponytail: no well tile yet, see assets/TODO_ART_AUDIO.md
+            m.put("objects", x, y, ID["barrel"], SOLID)
+        elif c == "n":
+            m.put("objects", x, y, ID["bench_l"], SOLID)
+        elif c == "L":
+            m.put("above", x, y - 1, ID["lamp_top"])
+            m.put("objects", x, y, ID["lamp_base"], SOLID)
+        elif c == "~":
+            mask = blob_mask(lambda dx, dy: (x + dx, y + dy) not in water)
+            m.put("ground", x, y, ID[f"pond_{mask}_0"], SOLID)
 
 
 def dress_grass(m):
-    """Break up bare grass with tufts and tiny flowers: no 3x3 window stays plain."""
-    decals = [ID["tufts"], ID["flowers0"], ID["flowers1"], ID["tufts"]]
-    while True:
-        bad = plain_windows(m)
-        if not bad:
-            return
-        x0, y0 = bad[0]
-        x, y = x0 + hashed(x0, y0) % 3, y0 + hashed(y0, x0) % 3
-        m.put("decor", x, y, decals[hashed(x, y) % len(decals)])
+    """Scatter decor in small clusters, one chance per 5x5 block, so grass keeps
+    empty space between them instead of an even speckle."""
+    decals = [ID["tufts"], ID["tufts"], ID["flowers0"], ID["flowers1"]]
+    bare = set(m.under.values())
+
+    def free(x, y):
+        return (0 <= x < m.w and 0 <= y < m.h and m.ground[m.i(x, y)] - 1 in bare
+                and not (m.decor[m.i(x, y)] or m.objects[m.i(x, y)] or m.above[m.i(x, y)]))
+
+    for by in range(0, m.h, 5):
+        for bx in range(0, m.w, 5):
+            h = hashed(bx + 1, by + 3)
+            if h % 3 == 0:
+                continue
+            x, y = bx + h % 4, by + (h >> 3) % 4
+            for dx, dy in ((0, 0), (1, 0), (0, 1))[:2 + h % 2]:
+                if free(x + dx, y + dy):
+                    m.put("decor", x + dx, y + dy, decals[(h >> 5) % 4])
 
 
 DAWNBROOK = [
