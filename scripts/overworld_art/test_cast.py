@@ -56,5 +56,29 @@ class Players(unittest.TestCase):
         self.assertNotEqual(stand("player").tobytes(), stand("player_f").tobytes())
 
 
+class Proportions(unittest.TestCase):
+    def rows(self, char):
+        """Opaque pixel count per row of the stand-down frame."""
+        alpha = build_sheet(char).crop((0, 0, 16, 32)).getchannel("A").load()
+        return [sum(alpha[x, y] > 0 for x in range(16)) for y in range(32)]
+
+    def height(self, char_id):
+        return sum(n > 0 for n in self.rows(BY_ID[char_id]))
+
+    def test_nobody_outgrows_the_bible(self):
+        for c in ROSTER:
+            self.assertLessEqual(sum(n > 0 for n in self.rows(c)), 26, c["id"])
+
+    def test_adults_have_grown_up(self):
+        self.assertGreaterEqual(self.height("rival"), 23)
+
+    def test_children_are_clearly_shorter_than_adults(self):
+        self.assertGreaterEqual(self.height("rival") - self.height("youngster"), 3)
+
+    def test_heads_are_not_wider_than_the_shoulders_need(self):
+        for name in ("player", "player_f", "rival", "mom", "scientist"):
+            self.assertLessEqual(max(self.rows(BY_ID[name])[:18]), 14, name)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -10,5 +10,4 @@
 
 ## Still to draw
 - [ ] Ledge and cliff tiles, needed by the later routes.
-- [ ] Non-player heads are 13 rows; the art bible asks for 11.
 - [ ] Bump / ledge / door sound effects are placeholder synth blips.

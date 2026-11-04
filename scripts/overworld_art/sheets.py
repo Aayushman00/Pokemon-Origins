@@ -21,6 +21,8 @@ SHEET_W, SHEET_H = W * len(COLUMNS), H * len(ROWS)
 _BODY = {"stand": "stand", "walkA": "stepA", "walkB": "stepB", "runStand": "stand",
          "runA": "stepA", "runB": "stepB", "blink": "stand", "alert": "alert"}
 CHIN_ROW, TORSO_ROW = 21, 24  # rows that can be dropped without losing a feature
+FOREHEAD_ROW = 13
+GROWN_ROWS = (25, 28)  # waist and shin, repeated on everyone but children
 
 
 def _drop(canvas, rows):
@@ -37,6 +39,23 @@ def _lead(canvas, below):
 def _widen(canvas, rows):
     """Push each half of `rows` out one pixel: a broader torso."""
     return [r[1:8] + [r[7], r[8]] + r[8:15] if i in rows else r for i, r in enumerate(canvas)]
+
+
+def _slim_head(canvas):
+    """Take a column off each side of the head and a row off the forehead, so
+    heads stop dwarfing bodies. Columns 4-11 stay put: the eyes do not move."""
+    slim = [["."] + r[0:3] + r[4:12] + r[13:16] + ["."] if y <= CHIN_ROW else r for y, r in enumerate(canvas)]
+    return _drop(slim, {FOREHEAD_ROW})
+
+
+def _stretch(canvas, rows):
+    """Repeat `rows`, pushing everything above them up: a longer body, feet fixed."""
+    out = []
+    for y, r in enumerate(canvas):
+        out.append(r)
+        if y in rows:
+            out.append(list(r))
+    return out[len(rows):]
 
 
 def _build(canvas, build, direction):
@@ -64,6 +83,7 @@ def frame_keys(char, direction, column):
     canvas = stack(body, *under, *head, *over, arms_up)
     if column == "blink":
         canvas = blink(canvas)
+    canvas = _slim_head(canvas)
     canvas = _build(canvas, char.get("build"), direction)
     if column in ("walkA", "walkB"):
         canvas = _drop(canvas, {TORSO_ROW})
@@ -71,6 +91,8 @@ def frame_keys(char, direction, column):
         if direction == "left":
             canvas = _lead(canvas, CHIN_ROW + 1)
         canvas = _drop(canvas, {CHIN_ROW, TORSO_ROW})
+    if char.get("build") != "child":
+        canvas = _stretch(canvas, GROWN_ROWS)
     return despeckle(shade(outline(canvas)))
 
 
