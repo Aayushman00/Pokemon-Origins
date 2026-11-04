@@ -116,62 +116,132 @@ def mirror_pts(pts):
     return [(S - x, y) for x, y in pts]
 
 
+def wing_detail(p, mask, shoulder, roles, tips, tip_frac=0.68):
+    """Feather structure on a wing mask (set of pixels): darker tips past
+    tip_frac of the reach, a feather shaft from near the shoulder out to every
+    spike tip of the wing outline, one row of rounded covert scallops (light
+    crown, shadow beneath), and a lit leading edge."""
+    from math import hypot
+    sx, sy = shoulder
+    reach = max(hypot(x + 0.5 - sx, y + 0.5 - sy) for x, y in mask)
+    for x, y in mask:
+        if hypot(x + 0.5 - sx, y + 0.5 - sy) > reach * tip_frac:
+            p.g[y][x] = roles["tip"]
+    for tx, ty in tips:                                       # feather shafts
+        d = hypot(tx - sx, ty - sy)
+        if d < reach * 0.5:
+            continue
+        n = int(d)
+        for i in range(int(n * 0.35), n):
+            x = round(sx + (tx - sx) * i / n)
+            y = round(sy + (ty - sy) * i / n)
+            if (x, y) in mask:
+                p.g[y][x] = roles["sep"]
+    for x, y in mask:                                         # covert scallops
+        d = hypot(x + 0.5 - sx, y + 0.5 - sy)
+        if 3.4 <= d < 4.4 and (x + y) % 3 == 0:
+            p.g[y][x] = roles["covert"]
+        elif 4.4 <= d < 5.4 and (x + y) % 3 == 1:
+            p.g[y][x] = roles["sep"]
+    for x, y in mask:
+        if (x, y - 1) not in mask and p.g[y][x] != roles["tip"]:
+            p.g[y][x] = roles["edge"]
+
+
+def poly_mask(pts):
+    p = Paint()
+    p.poly(pts, "m")
+    return {(x, y) for y in range(S) for x in range(S) if p.g[y][x] == "m"}
+
+
+def toes(p, x, y, role, claw):
+    p.line([(x, y - 3), (x, y)], role)
+    for dx in (-1, 0, 1):
+        p.px(x + dx, y, role)
+    p.px(x - 2, y + 1, claw)
+    p.px(x, y + 1, claw)
+    p.px(x + 2, y + 1, claw)
+
+
 # =================================================================== Articuno
 ARTICUNO = {
     "ol": "#1c2c60", "deep": "#2c5ca8", "dark": "#4c8ad0", "base": "#7cc4f0", "light": "#b8e4ff",
-    "belly": "#eef8ff", "belly_lo": "#c4dcf0", "eye": "#e04838", "beak": "#8e92ac", "leg": "#6c6e8c",
+    "frost": "#ffffff", "belly": "#e2f4ff", "belly_lo": "#a8d0ee", "eye": "#e04838", "beak": "#9aa0be",
+    "beak_lo": "#5c5e7c", "leg": "#6c6e8c",
 }
 ARTICUNO_SHINY = {
     "ol": "#1c4a58", "deep": "#3c8aa8", "dark": "#68b8d0", "base": "#a4e4f0", "light": "#dcfaff",
-    "belly": "#fffef4", "belly_lo": "#d8eef0", "eye": "#f07c2e", "beak": "#a8aac0", "leg": "#7a7694",
+    "frost": "#fffff4", "belly": "#f4fffc", "belly_lo": "#c4e6ec", "eye": "#f07c2e", "beak": "#b4b6c8",
+    "beak_lo": "#6c6e84", "leg": "#7a7694",
 }
 
 
 def articuno(f):
     p = Paint()
     up = f == 0
-    wing = [(13, 14), (4, 4), (1, 6), (2, 10), (5, 14), (11, 19)] if up else [(13, 15), (3, 15), (1, 19), (4, 23), (11, 21)]
+    # long streamer tail: three segments, lit top edge, feather notches
+    tail = [(18, 21), (23, 25), (27, 27), (31, 28)]
+    p.line(tail, "base", 3)
+    p.line([(19, 21), (24, 24), (28, 26), (31, 27)], "light")
+    for x, y in ((22, 25), (25, 26), (28, 28)):
+        p.px(x, y, "deep")
+    # wings
+    wing = [(13, 14), (5, 3), (1, 5), (1, 10), (4, 14), (11, 19)] if up else [(13, 15), (3, 14), (0, 18), (3, 23), (11, 21)]
+    masks = []
     for pts in (wing, mirror_pts(wing)):
         p.poly(pts, "base")
-    p.line([(18, 22), (23, 26), (29, 29)], "base", 2)                 # long streamer tail
-    p.line([(19, 23), (24, 27), (30, 30)], "dark")
-    p.ell(16, 19, 6, 7, "base")                                        # body
-    p.ell(16, 11, 4, 4, "base")                                        # head
+        masks.append(poly_mask(pts))
+    p.ell(16, 19, 6, 7, "base")
+    p.ell(16, 11, 4.2, 4.2, "base")
     p.shade({"base": ("light", "dark")})
-    # wing feather tips + stripes
-    for side in (1, -1):
-        for k in range(3):
-            if up:
-                p.line([(16 + side * (6 + k * 2), 16 - k), (16 + side * (12 - k), 5 + k * 2)], "deep")
-            else:
-                p.line([(16 + side * (5 + k), 17), (16 + side * (12 + k), 18 + k * 2)], "deep")
-    p.ell(15.5, 21, 3.2, 4.5, "belly")
-    p.line([(13, 23), (18, 23)], "belly_lo")
-    for pts, role in (([(15, 8), (12, 1)], "deep"), ([(16, 7), (16, 0)], "dark"), ([(17, 8), (21, 2)], "deep")):
+    from math import pi
+    for side, mask in zip((-1, 1), masks):
+        mask = {(x, y) for x, y in mask if p.g[y][x] in ("base", "light", "dark")}
+        shoulder = (16 + side * 3, 15)
+        pts = wing if side < 0 else mirror_pts(wing)
+        wing_detail(p, mask, shoulder, {"tip": "deep", "sep": "dark", "covert": "light", "edge": "light"}, pts)
+    # chest: pale belly with V feather scales
+    p.ell(15.6, 20.5, 3.4, 4.8, "belly")
+    for cx, cy in ((14, 18), (17, 20), (14, 22)):                         # three V scales
+        p.px(cx - 1, cy, "belly_lo")
+        p.px(cx, cy + 1, "belly_lo")
+        p.px(cx + 1, cy, "belly_lo")
+    p.line([(14, 25), (17, 25)], "belly_lo")
+    # crest: three curved plumes with lit tips
+    for pts, role in (([(15, 8), (14, 5), (12, 2), (11, 0)], "dark"), ([(16, 7), (16, 3), (17, 0)], "deep"),
+                      ([(17, 8), (19, 5), (21, 2), (22, 1)], "dark")):
         p.line(pts, role)
-    p.px(12, 1, "light")
-    p.px(21, 2, "light")
+        p.px(*pts[-1], "light")
+    p.px(16, 1, "frost")
+    # face: fierce brow, red eyes, two-tone beak
     for x in (14, 18):
         p.px(x, 11, "eye")
         p.px(x, 10, "deep")
+        p.px(x + (1 if x < 16 else -1), 10, "deep")
+    p.px(13, 12, "light")
+    p.px(16, 12, "beak")
     p.px(16, 13, "beak")
-    p.px(16, 14, "beak")
-    for x in (14, 18):
-        p.line([(x, 26), (x, 28)], "leg")
-        p.px(x - 1, 28, "leg")
-        p.px(x + 1, 28, "leg")
+    p.px(17, 13, "beak_lo")
+    p.px(16, 14, "beak_lo")
+    # frost glints on the wings
+    for x, y in ((6, 6), (25, 6)) if up else ((5, 17), (26, 17)):
+        p.px(x, y, "frost")
+    toes(p, 14, 28, "leg", "ol")
+    toes(p, 18, 28, "leg", "ol")
     p.outline()
     return p
 
 
 # ===================================================================== Zapdos
 ZAPDOS = {
-    "ol": "#3a2410", "yellow": "#f8d040", "ylight": "#fff28c", "ydark": "#c08c28", "black": "#2e2a44",
-    "beak": "#f07c2e", "beak_lo": "#a84c24", "eye": "#ffffff", "leg": "#e88848",
+    "ol": "#3a2410", "yellow": "#f8d040", "ylight": "#fff28c", "ydark": "#c08c28", "ydeep": "#8a5a20",
+    "black": "#2e2a44", "beak": "#f07c2e", "beak_hi": "#f8b070", "beak_lo": "#a84c24", "eye": "#ffffff",
+    "leg": "#e88848",
 }
 ZAPDOS_SHINY = {
-    "ol": "#4a2410", "yellow": "#f8a838", "ylight": "#ffd888", "ydark": "#c07028", "black": "#4a2a44",
-    "beak": "#d85040", "beak_lo": "#8a2c30", "eye": "#fff6d0", "leg": "#d86a48",
+    "ol": "#4a2410", "yellow": "#f8a838", "ylight": "#ffd888", "ydark": "#c07028", "ydeep": "#8a4818",
+    "black": "#4a2a44", "beak": "#d85040", "beak_hi": "#f08870", "beak_lo": "#8a2c30", "eye": "#fff6d0",
+    "leg": "#d86a48",
 }
 
 
@@ -180,91 +250,121 @@ def zapdos(f):
     up = f == 0
     wing = ([(13, 14), (9, 8), (8, 11), (4, 2), (4, 8), (1, 4), (2, 11), (0, 12), (4, 15), (11, 19)] if up
             else [(13, 15), (7, 12), (6, 15), (1, 14), (3, 18), (0, 21), (5, 21), (3, 25), (11, 21)])
+    masks = []
     for pts in (wing, mirror_pts(wing)):
         p.poly(pts, "yellow")
+        masks.append(poly_mask(pts))
     p.ell(16, 19, 5, 6, "yellow")
-    p.ell(16, 11, 3.5, 3.5, "yellow")
-    p.poly([(13, 10), (11, 2), (14, 6), (16, 0), (18, 6), (21, 2), (19, 10)], "yellow")   # spiky crest
+    p.ell(16, 11, 3.6, 3.6, "yellow")
+    crest = [(13, 10), (11, 2), (14, 6), (16, 0), (18, 6), (21, 2), (19, 10)]
+    p.poly(crest, "yellow")
     p.shade({"yellow": ("ylight", "ydark")})
-    for side in (1, -1):                                               # black lightning stripes
-        if up:
-            p.line([(16 + side * 7, 15), (16 + side * 10, 11), (16 + side * 11, 7)], "black")
-        else:
-            p.line([(16 + side * 7, 17), (16 + side * 11, 19), (16 + side * 13, 22)], "black")
-    p.line([(14, 23), (16, 21), (18, 23)], "ydark")
-    p.poly([(14.5, 12), (17.5, 12), (16, 18)], "beak")                 # long beak
+    for side, mask in zip((-1, 1), masks):
+        mask = {(x, y) for x, y in mask if p.g[y][x] in ("yellow", "ylight", "ydark")}
+        shoulder = (16 + side * 3, 15)
+        pts = wing if side < 0 else mirror_pts(wing)
+        wing_detail(p, mask, shoulder, {"tip": "ydeep", "sep": "ydark", "covert": "ylight", "edge": "ylight"},
+                    pts, tip_frac=0.8)
+        # black spike tips: wing pixels that are the far end of a spike
+        for x, y in mask:
+            n = sum((x + dx, y + dy) in mask for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+            if n <= 1:
+                p.g[y][x] = "black"
+    for x, y in ((11, 2), (16, 0), (21, 2)):                              # crest spike tips
+        p.px(x, y, "black")
+    p.line([(15, 3), (16, 7)], "ylight")
+    # chest: zig-zag feathering
+    p.line([(13, 20), (14, 22), (15, 20), (16, 22), (17, 20), (18, 22), (19, 20)], "ydark")
+    p.line([(14, 24), (16, 23), (18, 24)], "ydark")
+    # beak: long, lit top, dark lower edge, nostril
+    p.poly([(14.5, 12), (17.5, 12), (16, 18)], "beak")
+    p.line([(15, 12), (16, 15)], "beak_hi")
     p.line([(17, 13), (16, 17)], "beak_lo")
-    for x in (14, 18):
-        p.px(x, 10, "eye")
-        p.px(x, 11, "black")
-    for x in (14, 18):
-        p.line([(x, 25), (x, 28)], "leg")
-        p.px(x - 1, 28, "leg")
-        p.px(x + 1, 28, "leg")
+    p.px(16, 13, "beak_lo")
+    # eyes: white with a pupil, under a heavy brow
+    for x, side in ((14, -1), (18, 1)):
+        p.px(x, 11, "eye")
+        p.px(x - side, 11, "black")
+        p.px(x, 10, "ydeep")
+        p.px(x - side, 10, "ydeep")
+    toes(p, 14, 28, "leg", "ol")
+    toes(p, 18, 28, "leg", "ol")
     p.outline()
     return p
 
 
 # ==================================================================== Moltres
 MOLTRES = {
-    "ol": "#5a2010", "body": "#f8c040", "blight": "#fff09a", "bdark": "#d08828", "flame_r": "#f05028",
-    "flame_o": "#f89838", "flame_y": "#fff28c", "beak": "#d8d4e4", "eye": "#2e2a44", "leg": "#a87850",
+    "ol": "#5a2010", "body": "#f8c040", "blight": "#fff09a", "bdark": "#d08828", "flame_r": "#e83828",
+    "flame_o": "#f88830", "flame_y": "#ffd848", "flame_w": "#fffce0", "beak": "#d8d4e4", "beak_lo": "#8e8aa8",
+    "eye": "#2e2a44", "leg": "#a87850",
 }
 MOLTRES_SHINY = {
-    "ol": "#5a1838", "body": "#f8a8b8", "blight": "#ffd8e0", "bdark": "#d07088", "flame_r": "#e83878",
-    "flame_o": "#f878a8", "flame_y": "#ffd0e8", "beak": "#e8e4f0", "eye": "#3a2a44", "leg": "#b07888",
+    "ol": "#5a1838", "body": "#f8a8b8", "blight": "#ffd8e0", "bdark": "#d07088", "flame_r": "#d82868",
+    "flame_o": "#f070a0", "flame_y": "#ffb0d0", "flame_w": "#fff0f8", "beak": "#e8e4f0", "beak_lo": "#9a96b0",
+    "eye": "#3a2a44", "leg": "#b07888",
 }
+
+
+def flame_fill(p, pts, f, cx, cy):
+    """Layered flame inside a polygon: red tongues at the rim, then orange,
+    yellow, and a white-hot core nearest (cx, cy). Rim flickers with frame f."""
+    from math import hypot
+    mask = poly_mask(pts)
+    reach = max(hypot(x - cx, y - cy) for x, y in mask)
+    for x, y in mask:
+        d = hypot(x + 0.5 - cx, y + 0.5 - cy) / reach
+        jitter = ((x * 7 + y * 13 + f * 5) % 7) / 40
+        k = d + jitter
+        role = "flame_w" if k < 0.3 else "flame_y" if k < 0.55 else "flame_o" if k < 0.8 else "flame_r"
+        p.px(x, y, role)
+    # ragged tongues: drop some rim pixels, flicker per frame
+    for x, y in mask:
+        edge = any((x + dx, y + dy) not in mask for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+        if edge and (x * 3 + y + f * 2) % 5 == 0:
+            p.g[y][x] = None
+    return mask
 
 
 def moltres(f):
     p = Paint()
     up = f == 0
-    wing = ([(13, 14), (8, 9), (6, 3), (4, 7), (1, 2), (1, 9), (0, 13), (5, 15), (11, 19)] if up
-            else [(13, 15), (6, 13), (2, 12), (3, 16), (0, 19), (3, 21), (1, 25), (7, 22), (11, 21)])
+    wing = ([(13, 14), (8, 9), (6, 2), (4, 7), (1, 1), (1, 9), (0, 13), (5, 15), (11, 19)] if up
+            else [(13, 15), (6, 13), (2, 11), (3, 16), (0, 19), (3, 21), (1, 26), (7, 22), (11, 21)])
     for pts in (wing, mirror_pts(wing)):
-        p.poly(pts, "flame_o")
-    for pts in ((wing, 0.55), (mirror_pts(wing), 0.55)):                # inner yellow core of the flames
-        core = [(16 + (x - 16) * pts[1], 17 + (y - 17) * pts[1]) for x, y in pts[0]]
-        p.poly(core, "flame_y")
-    # flame tail
-    p.poly([(16, 22), (21, 24), (27, 23), (24, 26), (30, 28), (23, 29), (17, 26)], "flame_o")
-    p.poly([(17, 23), (22, 25), (25, 26), (21, 27)], "flame_y")
+        sx = 13 if pts is wing else 19
+        flame_fill(p, pts, f, sx, 16)
+    flame_fill(p, [(16, 22), (21, 24), (27, 22), (25, 26), (31, 28), (23, 30), (17, 26)], f, 17, 24)   # tail
     p.ell(16, 19, 5, 6, "body")
-    p.ell(16, 11, 3.5, 3.5, "body")
+    p.ell(16, 11, 3.6, 3.6, "body")
     p.shade({"body": ("blight", "bdark")})
-    # flame tips flicker: outer edge in red, shifted per frame
-    for y in range(S):
-        for x in range(S):
-            if p.g[y][x] == "flame_o":
-                n = [p.g[y + dy][x + dx] if 0 <= x + dx < S and 0 <= y + dy < S else None
-                     for dx, dy in ((0, -1), (-1, 0), (1, 0), (0, 1))]
-                if None in n and (x + y + f) % 3 != 0:
-                    p.g[y][x] = "flame_r"
-    # flame crest
-    crest = ([(14, 9), (12, 3), (15, 6), (16, 0), (17, 6), (20, 2), (18, 9)] if up
-             else [(14, 9), (13, 2), (15, 5), (17, 1), (18, 6), (21, 3), (18, 9)])
-    p.poly(crest, "flame_o")
-    p.poly([(15, 8), (16, 4), (17, 8)], "flame_y")
-    p.px(16, 0 if up else 1, "flame_r")
+    for y in (17, 19, 21):                                                  # scalloped body feathers
+        for x in range(13, 20, 2):
+            p.px(x + (y // 2) % 2, y, "bdark")
+    p.ell(15, 20, 1.5, 2, "blight")
+    crest = ([(14, 9), (12, 2), (15, 5), (16, 0), (17, 5), (20, 2), (18, 9)] if up
+             else [(14, 9), (13, 1), (15, 4), (17, 0), (18, 5), (21, 3), (18, 9)])
+    flame_fill(p, crest, f, 16, 8)
     p.poly([(15, 12), (17.5, 12), (16, 16)], "beak")
+    p.line([(17, 13), (16, 15)], "beak_lo")
     for x in (14, 18):
         p.px(x, 11, "eye")
-    for x in (14, 18):
-        p.line([(x, 25), (x, 28)], "leg")
-        p.px(x - 1, 28, "leg")
-        p.px(x + 1, 28, "leg")
+        p.px(x, 10, "bdark")
+    p.px(13, 10, "flame_w")
+    toes(p, 14, 28, "leg", "ol")
+    toes(p, 18, 28, "leg", "ol")
     p.outline()
     return p
 
 
 # ==================================================================== Mewtwo
 MEWTWO = {
-    "ol": "#3a2a4a", "grey": "#d8d4e4", "glight": "#f6f4fc", "gdark": "#a8a2c0", "purple": "#9a68c8",
-    "plight": "#c4a0e8", "pdark": "#6a4098", "eye": "#5a2a88",
+    "ol": "#3a2a4a", "grey": "#d8d4e4", "glight": "#f6f4fc", "gdark": "#a8a2c0", "gdeep": "#7e7896",
+    "purple": "#9a68c8", "plight": "#c4a0e8", "pdark": "#6a4098", "eye": "#5a2a88",
 }
 MEWTWO_SHINY = {
-    "ol": "#2a3a2a", "grey": "#dce4d4", "glight": "#f6fcf2", "gdark": "#a8bca0", "purple": "#68b858",
-    "plight": "#a0e090", "pdark": "#3c8040", "eye": "#2a6a30",
+    "ol": "#2a3a2a", "grey": "#dce4d4", "glight": "#f6fcf2", "gdark": "#a8bca0", "gdeep": "#7a9076",
+    "purple": "#68b858", "plight": "#a0e090", "pdark": "#3c8040", "eye": "#2a6a30",
 }
 
 
@@ -272,56 +372,108 @@ def mewtwo(f):
     p = Paint()
     tail = [(19, 23), (25, 25), (28, 21), (29, 15)] if f == 0 else [(19, 23), (25, 26), (29, 23), (30, 17)]
     p.line(tail, "purple", 3)
-    p.ell(tail[-1][0], tail[-1][1], 2, 2, "purple")
-    p.ell(12, 24, 3, 4.5, "grey")                                      # thighs
+    p.ell(tail[-1][0], tail[-1][1], 2.2, 2.2, "purple")
+    p.ell(12, 24, 3, 4.5, "grey")
     p.ell(19, 24, 3, 4.5, "grey")
-    p.ell(11.5, 29, 2.5, 1.5, "grey")                                  # feet
+    p.ell(11.5, 29, 2.5, 1.5, "grey")
     p.ell(19.5, 29, 2.5, 1.5, "grey")
-    p.ell(15.5, 15, 5, 4, "grey")                                      # chest
-    p.ell(15.5, 20, 3.5, 3.5, "purple")                                # abdomen
-    p.line([(10, 13), (7, 18), (7, 21)], "grey", 2)                    # arms, clear of the belly
+    p.ell(15.5, 15, 5, 4, "grey")
+    p.ell(15.5, 20, 3.5, 3.5, "purple")
+    p.line([(10, 13), (7, 18), (7, 21)], "grey", 2)
     p.line([(21, 13), (24, 18), (24, 21)], "grey", 2)
     p.ell(7, 22, 1.8, 1.6, "grey")
     p.ell(24, 22, 1.8, 1.6, "grey")
-    p.line([(15, 10), (15, 12)], "grey", 2)                            # neck
-    p.ell(15.5, 7, 4, 4, "grey")                                       # head
-    p.poly([(11, 6), (11, 1), (13, 4)], "grey")                         # horn-ears
+    p.line([(15, 10), (15, 12)], "grey", 2)
+    p.ell(15.5, 7, 4, 4, "grey")
+    p.poly([(11, 6), (11, 1), (13, 4)], "grey")
     p.poly([(20, 6), (20, 1), (18, 4)], "grey")
     p.shade({"grey": ("glight", "gdark"), "purple": ("plight", "pdark")})
-    p.line([(19, 9), (21, 11), (19, 13)], "gdark")                      # the neck tube
-    for x in (14, 17):
+    # tail: lit stripe along its top, a ring near the base
+    lit = [(20, 22), (25, 24), (27, 21), (28, 16)] if f == 0 else [(20, 22), (25, 25), (28, 22), (29, 18)]
+    p.line(lit, "plight")
+    p.line([(21, 22), (21, 25)], "pdark")
+    # inner ears, brow ridge, eyes, neck tube with a highlight
+    p.px(11, 3, "gdark")
+    p.px(20, 3, "gdark")
+    p.line([(13, 6), (14, 6)], "gdeep")
+    p.line([(17, 6), (18, 6)], "gdeep")
+    for x in (13, 17):                                                      # narrow 2 px eyes
         p.px(x, 7, "eye")
+        p.px(x + 1, 7, "eye")
+    p.px(14, 8, "gdark")
+    p.px(17, 8, "gdark")
     p.px(15, 9, "gdark")
+    p.line([(19, 9), (21, 11), (19, 13)], "gdeep")
+    p.px(20, 10, "glight")
+    # chest / shoulder definition, belly segments, knees
+    p.line([(12, 13), (14, 15)], "gdark")
+    p.line([(19, 13), (17, 15)], "gdark")
+    p.line([(14, 18), (17, 18)], "pdark")
+    p.line([(14, 21), (17, 21)], "pdark")
+    p.px(12, 25, "glight")
+    p.px(19, 25, "glight")
+    p.px(11, 26, "gdark")
+    p.px(18, 26, "gdark")
+    # three-fingered hands, toes
+    for hx in (6, 23):
+        for k in range(3):
+            p.px(hx + k, 23, "gdeep" if k != 1 else "gdark")
+    for fx in (10, 12, 18, 20):
+        p.px(fx, 30, "gdeep")
     p.outline()
     return p
 
 
 # ======================================================================= Mew
-MEW = {"ol": "#8a3a5a", "pink": "#f8b4cc", "plight": "#ffdcea", "pdark": "#e080a8", "eye": "#3c62b0", "eyehi": "#ffffff"}
-MEW_SHINY = {"ol": "#3a4a8a", "pink": "#a8c8f8", "plight": "#dceaff", "pdark": "#7898e0", "eye": "#3c8a50", "eyehi": "#fffff4"}
+MEW = {"ol": "#8a3a5a", "pink": "#f8b4cc", "plight": "#ffdcea", "pdark": "#e080a8", "pdeep": "#c05888",
+       "eye": "#3c62b0", "eye_dk": "#1c2c60", "eye_lt": "#6c9ce8", "eyehi": "#ffffff"}
+MEW_SHINY = {"ol": "#3a4a8a", "pink": "#a8c8f8", "plight": "#dceaff", "pdark": "#7898e0", "pdeep": "#5070c0",
+             "eye": "#3c8a50", "eye_dk": "#1c4c28", "eye_lt": "#70c070", "eyehi": "#fffff4"}
 
 
 def mew(f):
     p = Paint()
     tail = [(19, 21), (24, 23), (28, 19), (28, 12), (26, 8)] if f == 0 else [(19, 21), (25, 22), (29, 17), (29, 11), (27, 7)]
     p.line(tail, "pink")
-    p.ell(tail[-1][0], tail[-1][1] - 1, 2, 2.5, "pink")                # oval tail tip
-    p.ell(16, 20, 4, 4, "pink")                                        # body
-    p.ell(12, 25, 2, 1.6, "pink")                                      # feet
+    tip = tail[-1]
+    p.ell(tip[0], tip[1] - 1, 2.2, 2.7, "pink")
+    p.ell(16, 20, 4, 4, "pink")
+    p.ell(12, 25, 2, 1.6, "pink")
     p.ell(20, 25, 2, 1.6, "pink")
-    p.ell(11, 18, 1.6, 1.4, "pink")                                    # little arms
+    p.ell(11, 18, 1.6, 1.4, "pink")
     p.ell(21, 18, 1.6, 1.4, "pink")
-    p.ell(16, 12, 6, 5, "pink")                                        # big head
-    p.poly([(11, 9), (10, 4), (14, 8)], "pink")                         # ears
+    p.ell(16, 12, 6, 5, "pink")
+    p.poly([(11, 9), (10, 4), (14, 8)], "pink")
     p.poly([(21, 9), (22, 4), (18, 8)], "pink")
     p.shade({"pink": ("plight", "pdark")})
-    for x0 in (13, 18):                                                # big eyes with a catch-light
-        p.line([(x0, 11), (x0, 13)], "eye")
-        p.line([(x0 + 1, 11), (x0 + 1, 13)], "eye")
+    # inner ears, head fluff tuft, lighter belly
+    p.px(11, 6, "pdeep")
+    p.px(11, 7, "pdark")
+    p.px(21, 6, "pdeep")
+    p.px(21, 7, "pdark")
+    p.px(16, 7, "plight")
+    p.px(15, 6, "plight")
+    p.ell(16, 21, 2.2, 2.2, "plight")
+    # big eyes: dark top, iris, lighter bottom, catch-light
+    for x0 in (13, 18):
+        p.px(x0, 10, "eye_dk")
+        p.px(x0 + 1, 10, "eye_dk")
+        p.px(x0, 11, "eye")
+        p.px(x0 + 1, 11, "eye")
+        p.px(x0, 12, "eye_lt")
+        p.px(x0 + 1, 12, "eye_lt")
         p.px(x0, 11, "eyehi")
-    p.px(16, 15, "pdark")
+    p.px(16, 14, "pdeep")                                                   # tiny smile
+    p.px(15, 13, "pdark")
+    p.px(17, 13, "pdark")
+    # paws with toe lines, tail highlight, tail-tip shading
+    for x in (11, 13, 19, 21):
+        p.px(x, 26, "pdark")
+    p.line([(20, 20), (24, 22)], "plight")
+    p.px(tip[0] + 1, tip[1], "pdark")
+    p.px(tip[0] - 1, tip[1] - 2, "plight")
     p.outline()
-    p.shift(-3 if f == 0 else -5)                                      # it floats, bobbing 2 px
+    p.shift(-3 if f == 0 else -5)
     return p
 
 

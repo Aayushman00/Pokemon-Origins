@@ -2,6 +2,25 @@
 
 Art decisions, newest first. Each stage ships as its own commit.
 
+## Stage 3e v2: legendary detailing pass
+
+- **Wings** (`wing_detail`): darker feather tips, a feather shaft from near the shoulder
+  to every spike of the wing outline, one row of rounded covert scallops with a shadow
+  beneath, lit leading edge.
+- **Articuno:** three curved crest plumes with lit tips and a frost glint, fierce brow
+  over red eyes, two-tone beak, three V scales on the pale chest, a segmented streamer
+  tail with a lit top edge, frost glints on the wings, clawed toes.
+- **Zapdos:** black spike tips on wings and crest, zig-zag chest feathering, white eyes
+  with pupils under a heavy brow, long beak with a lit top, dark lower edge and nostril.
+- **Moltres:** flames layered red rim / orange / yellow / white-hot core with ragged
+  tongues that flicker per frame (wings, crest and tail), scalloped body feathers.
+- **Mewtwo:** inner ears, brow ridge over narrow eyes, highlighted neck tube, chest and
+  shoulder lines, belly segments, kneecaps, three-fingered hands, toes, a lit stripe
+  along the tail and a ring at its base.
+- **Mew:** eyes with a dark top, iris, lighter bottom and catch-light, a tiny smile,
+  inner ears, a head tuft, a lighter belly, toe lines, tail highlight and tip shading.
+- Still at most 12 colours each, no translucency; shinies remain a pure palette swap.
+
 ## Stage 3e: legendary Pokemon overworld sprites
 
 - **Sprites** (`scripts/overworld_art/legendaries.py`): Articuno #144, Zapdos #145,
