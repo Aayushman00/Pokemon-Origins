@@ -101,9 +101,12 @@ function keyPoints(map, maps) {
 	return points;
 }
 
+/** Where a walk can start. A gym's puzzle and chamber share no floor: solving fades you across, so both count. */
+const roots = (map, from, points) => (map.properties.puzzleChamber ? points : [from]);
+
 /** First key point `from` cannot get to, with `blocked` closed. Ledges make this one-way, so ask from each end. */
 const cutOff = (map, points, from, blocked) => {
-	const seen = flood(map, [from], blocked);
+	const seen = flood(map, roots(map, from, points), blocked);
 	return points.find(([x, y]) => !seen.has(`${x},${y}`) && !blocked?.has(`${x},${y}`));
 };
 
@@ -114,7 +117,7 @@ function checkReachable(map, err, maps) {
 		const lost = cutOff(map, points, from);
 		if (lost) err(`(${lost}) cannot be reached from (${from})`);
 	}
-	const open = flood(map, [points[0]]);
+	const open = flood(map, roots(map, points[0], points));
 	// Walking is reversible, so the only way into a trap is a hop: check where hops land.
 	const landings = [...open].flatMap((cell) => {
 		const [x, y] = cell.split(",").map(Number);

@@ -18,6 +18,7 @@ them carries their script as a sign. Gyms are decided per gym later.
 """
 import json
 from math import hypot
+from pathlib import Path
 
 from PIL import Image
 
@@ -920,6 +921,23 @@ ROOMS = {"mossgate_center": (paint_center, 3), "origin_mart": (paint_mart, 1), "
          "mossgate_house_a": (paint_cottage, 1), "mossgate_house_b": (paint_cottage, 1)}
 
 
+# The towns past Mossgate: one room per door in town_layouts.json, named <town>_center, _mart, _tutor, _house_a...
+LAYOUTS = json.loads((Path(__file__).parent / "town_layouts.json").read_text(encoding="utf8"))
+TOWN_ROOMS = {}  # map id -> (town, kind)
+for _t in LAYOUTS:
+    if _t["id"] in ("dawnbrook", "mossgate", "zenith"):
+        continue
+    _houses = 0
+    for _d in _t["doors"]:
+        if _d["label"] == "G":
+            continue
+        _kind = {"C": "center", "M": "mart", "V": "tutor"}.get(_d["label"], "house")
+        _id = f"{_t['id']}_{_kind}" if _kind != "house" else f"{_t['id']}_house_{'abc'[_houses]}"
+        _houses += _kind == "house"
+        TOWN_ROOMS[_id] = (_t["id"], _kind, _d["x"], _d["y"])
+        ROOMS[_id] = {"center": (paint_center, 3), "mart": (paint_mart, 1)}.get(_kind, (paint_cottage, 1))
+
+
 def _tile_bytes(img):
     return img.tobytes()
 
@@ -1000,6 +1018,9 @@ DOORS = {"dawnbrook_home": ([7], 6), "dawnbrook_lab": ([22], 6), "dawnbrook_hous
 # exit mat column inside each room; you arrive one row above it, facing up
 MAT = {"dawnbrook_home": 4, "dawnbrook_house": 4, "dawnbrook_lab": 7, "mossgate_center": 7,
        "mossgate_house_a": 4, "mossgate_house_b": 4, "origin_mart": 6}
+for _id, (_town, _kind, _x, _y) in TOWN_ROOMS.items():
+    DOORS[_id] = ([_x], _y)
+    MAT[_id] = {"center": 7, "mart": 6}.get(_kind, 4)
 ARRIVE = {k: [(MAT[k], 8)] * len(DOORS[k][0]) for k in DOORS}  # every room is 10 tall
 
 
@@ -1035,7 +1056,7 @@ def make_map(map_id, extras):
     return data
 
 
-def center():
+def center(map_id="mossgate_center"):
     def extras(m):
         nurse = [say("Welcome to the Pokemon Origins Care Centre! Shall I look after your team?"),
                  {"op": "heal"},
@@ -1047,10 +1068,10 @@ def center():
         m.npc("visitor", 1, 4, "gentleman", "right", say("The nurse here never forgets a Pokemon's name."))
         m.npc("trainer", 13, 4, "cooltrainer_f", "left",
               say("Healing is free for every Pokemon Origins trainer. Use it before you take on the Gym!"))
-    return make_map("mossgate_center", extras)
+    return make_map(map_id, extras)
 
 
-def mart():
+def mart(map_id="origin_mart"):
     def extras(m):
         shop = [say("Welcome to the Mart! Potions, Poke Balls and everything a new trainer needs."),
                 {"op": "shop", "shop": "origin_mart"}]
@@ -1061,7 +1082,7 @@ def mart():
         m.sign("chiller", 10, 2, text="Cold drinks in the chiller. (They go on sale with the shop update.)")
         m.npc("shopper", 6, 2, "youngster", "up", say("Which drink gives a Pokemon the most energy? ...I'll take them all."))
         m.npc("browser", 11, 6, "twin", "up", say("These shelves go up to the ceiling! I can't reach the top."))
-    return make_map("origin_mart", extras)
+    return make_map(map_id, extras)
 
 
 def home():
@@ -1095,7 +1116,34 @@ def lab():
     return make_map("dawnbrook_lab", extras)
 
 
+HOUSES = {  # who lives there, their sprite, what they say, what's on the television
+    "hearthfield_house_a": ("baker", "picnicker", "Up before dawn, every day, for the smell of the first batch. Worth it.", "A cooking show. The bread has more charm than the host."),
+    "hearthfield_house_b": ("miller", "old_man", "That mill turned on its own the night the grey coats came through. I don't like it.", "The harvest report: more wheat."),
+    "ironbrook_house_a": ("smith", "hiker", "Tavish trained under nobody. Just walked up the hill one day and started.", "A quiet film. Nobody has spoken for ten minutes."),
+    "saltmere_house_a": ("skipper", "sailor", "The tide comes in twice a day. Coral says three times, if you're brave.", "The shipping forecast, read very slowly."),
+    "saltmere_house_b": ("grandmother", "old_woman", "My husband fished past the bar and saw lights under the water. Stayed ashore after that.", "A soap opera set on a lighthouse."),
+    "dynamo_house_a": ("engineer", "scientist", "We have ninety-one percent. Nobody will tell me where the other nine goes.", "Static. Then, briefly, a man reading numbers."),
+    "gale_house_a": ("weaver", "old_woman", "Everything in this house is tied down. Everything. Don't touch the spoons.", "The wind report: yes."),
+    "starfall_house_a": ("watcher", "gentleman", "I've logged every clear night for fifty years. The Hollow people asked to buy the logs.", "A documentary about the moon."),
+    "emberhold_house_a": ("founder", "biker", "My grandfather's anvil is in that forge. He says it hums. He's been gone twenty years.", "A sports match. Everyone is on fire."),
+}
+TUTOR_LINE = ("Pokemon forget, you know. Same as people. I help them remember. "
+              "(The Move Learner opens with the party screen.)")
+
+
+def town_map(map_id, town, kind):
+    if kind == "center":
+        return center(map_id)
+    if kind == "mart":
+        return mart(map_id)
+    if kind == "tutor":
+        return house(map_id, "tutor", "old_man", TUTOR_LINE, "A programme about remembering things.")
+    who, sprite, line, tv = HOUSES[map_id]
+    return house(map_id, who, sprite, line, tv)
+
+
 MAPS = {
+    **{k: (lambda k=k, v=v: town_map(k, v[0], v[1])) for k, v in TOWN_ROOMS.items()},
     "mossgate_center": center, "origin_mart": mart, "dawnbrook_home": home, "dawnbrook_lab": lab,
     "dawnbrook_house": lambda: house("dawnbrook_house", "neighbour", "old_man",
                                      "You're the kid from next door! The Professor's lab is just across the road.",

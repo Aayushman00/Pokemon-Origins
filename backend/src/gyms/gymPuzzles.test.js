@@ -54,3 +54,20 @@ describe("gym puzzles", () => {
 		assert.equal(gyms.getGymPuzzle("nobody"), null);
 	});
 });
+
+describe("carried moves report their route", () => {
+	const engine = require("./puzzles");
+	const belts = engine.belts(["#####", "#P>.#", "#####"]);
+	const gale = engine.gale(["######", "#P.._#", "######"]);
+
+	it("a belt lists each tile it carries the player", () => {
+		const next = belts.step(belts.init(), engine.DIRS.right);
+		assert.deepEqual(next.p, [3, 1]);
+		assert.deepEqual(next.trail, ["right", "right"]);
+	});
+	it("a glide into a drop still lists the way down", () => {
+		const next = gale.step(gale.init(), engine.DIRS.right);
+		assert.equal(next.dead, true);
+		assert.deepEqual(next.trail, ["right", "right", "right"]);
+	});
+});

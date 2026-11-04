@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 4,
+ "nextobjectid": 6,
  "layers": [
   {
    "id": 1,
@@ -718,7 +718,69 @@
    "y": 0,
    "opacity": 1,
    "visible": true,
-   "objects": []
+   "objects": [
+    {
+     "id": 3,
+     "name": "rule",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 0,
+     "y": 0,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "when",
+       "type": "string",
+       "value": "enter"
+      },
+      {
+       "name": "once",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"say\", \"text\": \"Seed pods. Push the seed pods onto the soil patches. When every patch is planted, the vine gate opens.\"}]"
+      }
+     ]
+    },
+    {
+     "id": 4,
+     "name": "badge",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 0,
+     "y": 0,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "when",
+       "type": "string",
+       "value": "flag"
+      },
+      {
+       "name": "flag",
+       "type": "string",
+       "value": "trainer:willow_thornby"
+      },
+      {
+       "name": "once",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"say\", \"text\": \"Take the Bloom Badge. May it root deep and open slowly.\"}, {\"op\": \"say\", \"text\": \"You received the Bloom Badge!\"}]"
+      }
+     ]
+    }
+   ]
   },
   {
    "id": 9,
@@ -731,7 +793,7 @@
    "visible": true,
    "objects": [
     {
-     "id": 3,
+     "id": 5,
      "name": "willow_thornby",
      "type": "",
      "rotation": 0,
@@ -754,7 +816,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:willow_thornby\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"That was a good battle. Safe travels!\"}]}, {\"op\": \"say\", \"text\": \"Welcome to the Grove. Take your time, nothing here grows in a hurry.\"}, {\"op\": \"battle\", \"trainer\": \"willow_thornby\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:willow_thornby\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The vines remember you now. Come sit by the roots whenever the road feels long.\"}]}, {\"op\": \"say\", \"text\": \"You cleared the seeds without forcing one. That is most of what I teach.\"}, {\"op\": \"battle\", \"trainer\": \"willow_thornby\"}]"
       }
      ],
      "point": true
@@ -798,11 +860,11 @@
    "name": "overworld",
    "image": "tilesets/overworld.png",
    "imagewidth": 128,
-   "imageheight": 2400,
+   "imageheight": 5008,
    "tilewidth": 16,
    "tileheight": 16,
    "columns": 8,
-   "tilecount": 1199,
+   "tilecount": 2504,
    "margin": 0,
    "spacing": 0,
    "tiles": [
@@ -885,6 +947,292 @@
        "name": "cover",
        "type": "int",
        "value": 9
+      }
+     ]
+    },
+    {
+     "id": 1209,
+     "animation": [
+      {
+       "tileid": 1209,
+       "duration": 180
+      },
+      {
+       "tileid": 1210,
+       "duration": 180
+      }
+     ]
+    },
+    {
+     "id": 1213,
+     "animation": [
+      {
+       "tileid": 1213,
+       "duration": 180
+      },
+      {
+       "tileid": 1214,
+       "duration": 180
+      }
+     ]
+    },
+    {
+     "id": 1211,
+     "animation": [
+      {
+       "tileid": 1211,
+       "duration": 180
+      },
+      {
+       "tileid": 1212,
+       "duration": 180
+      }
+     ]
+    },
+    {
+     "id": 1215,
+     "animation": [
+      {
+       "tileid": 1215,
+       "duration": 180
+      },
+      {
+       "tileid": 1216,
+       "duration": 180
+      }
+     ]
+    },
+    {
+     "id": 1256,
+     "animation": [
+      {
+       "tileid": 1256,
+       "duration": 500
+      },
+      {
+       "tileid": 1257,
+       "duration": 500
+      }
+     ]
+    },
+    {
+     "id": 1326,
+     "animation": [
+      {
+       "tileid": 1326,
+       "duration": 420
+      },
+      {
+       "tileid": 1327,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1460,
+     "animation": [
+      {
+       "tileid": 1460,
+       "duration": 420
+      },
+      {
+       "tileid": 1461,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1462,
+     "animation": [
+      {
+       "tileid": 1462,
+       "duration": 420
+      },
+      {
+       "tileid": 1463,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1464,
+     "animation": [
+      {
+       "tileid": 1464,
+       "duration": 420
+      },
+      {
+       "tileid": 1465,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1466,
+     "animation": [
+      {
+       "tileid": 1466,
+       "duration": 420
+      },
+      {
+       "tileid": 1467,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1468,
+     "animation": [
+      {
+       "tileid": 1468,
+       "duration": 420
+      },
+      {
+       "tileid": 1469,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1470,
+     "animation": [
+      {
+       "tileid": 1470,
+       "duration": 420
+      },
+      {
+       "tileid": 1471,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1472,
+     "animation": [
+      {
+       "tileid": 1472,
+       "duration": 420
+      },
+      {
+       "tileid": 1473,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1474,
+     "animation": [
+      {
+       "tileid": 1474,
+       "duration": 420
+      },
+      {
+       "tileid": 1475,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1476,
+     "animation": [
+      {
+       "tileid": 1476,
+       "duration": 420
+      },
+      {
+       "tileid": 1477,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1478,
+     "animation": [
+      {
+       "tileid": 1478,
+       "duration": 420
+      },
+      {
+       "tileid": 1479,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1480,
+     "animation": [
+      {
+       "tileid": 1480,
+       "duration": 420
+      },
+      {
+       "tileid": 1481,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1482,
+     "animation": [
+      {
+       "tileid": 1482,
+       "duration": 420
+      },
+      {
+       "tileid": 1483,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1484,
+     "animation": [
+      {
+       "tileid": 1484,
+       "duration": 420
+      },
+      {
+       "tileid": 1485,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1486,
+     "animation": [
+      {
+       "tileid": 1486,
+       "duration": 420
+      },
+      {
+       "tileid": 1487,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1488,
+     "animation": [
+      {
+       "tileid": 1488,
+       "duration": 420
+      },
+      {
+       "tileid": 1489,
+       "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 1490,
+     "animation": [
+      {
+       "tileid": 1490,
+       "duration": 420
+      },
+      {
+       "tileid": 1491,
+       "duration": 420
       }
      ]
     },
@@ -1992,6 +2340,11 @@
   },
   {
    "name": "puzzle_pod",
+   "type": "int",
+   "value": 362
+  },
+  {
+   "name": "puzzle_socket-full",
    "type": "int",
    "value": 362
   },

@@ -518,6 +518,7 @@ def slice_into(img, cols, rows):
 
 
 @lru_cache(None)
+@lru_cache(maxsize=1)
 def new_tiles():
     """[(name, Image)] in id order, starting at id 24."""
     out = []
@@ -637,12 +638,17 @@ def new_tiles():
     for name in ("lamp", "well"):
         add(f"prop_{name}_top", PROPS[name].crop((0, 0, T, T)))
         add(f"prop_{name}_base", PROPS[name].crop((0, T, T, 2 * T)))
+    from .gym_art import gym_tiles
+    from .town_art import town_tiles
+    for name, t in gym_tiles() + town_tiles():
+        add(name, t)
     return out
 
 
 FIRST_NEW = 24
 
 
+@lru_cache(maxsize=1)
 def tile_ids():
     return {name: FIRST_NEW + i for i, (name, _) in enumerate(new_tiles())}
 

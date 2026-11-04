@@ -44,9 +44,11 @@ def main():
     img, total = tileset_image()
     img.save(MAPS / "tilesets" / "overworld.png")
     print(f"wrote overworld.png with {total} tiles")
-    for map_id, fn in world_maps.MAPS.items():
+    from . import gym_rooms, towns
+    world = {**world_maps.MAPS, **gym_rooms.MAPS, **towns.MAPS}
+    for map_id, fn in world.items():
         (MAPS / f"{map_id}.json").write_text(json.dumps(fn(), indent=1) + "\n")
-    print(f"wrote {len(world_maps.MAPS)} world maps")
+    print(f"wrote {len(world)} world maps")
 
     # interiors: their own tileset + one map per enterable building
     from . import interiors

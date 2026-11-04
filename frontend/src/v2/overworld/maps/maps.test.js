@@ -13,7 +13,10 @@ const maps = Object.fromEntries(ids.map((id) => [id, parseTiledMap(JSON.parse(re
 
 describe("sample maps (smoke + lint)", () => {
 	it("finds every map and parses it", () => {
-		assert.deepEqual(ids.sort(), ["dawnbrook", "dawnbrook_home", "dawnbrook_house", "dawnbrook_lab", "legend_grove", "mossgate", "mossgate_center", "mossgate_gym", "mossgate_house_a", "mossgate_house_b", "origin_mart", "route_1", "test_house", "test_route", "test_town"]);
+		const towns = ["dawnbrook", "mossgate", "hearthfield", "ironbrook", "saltmere", "dynamo", "gale", "starfall", "emberhold", "zenith"];
+		const routes = [1, 2, 3, 4, 5, 6, 7, 8, 9].map((n) => `route_${n}`);
+		const gyms = towns.slice(1, 9).map((t) => `${t}_gym`);
+		for (const id of [...towns, ...routes, ...gyms, "legend_grove", "test_town"]) assert.ok(ids.includes(id), id);
 		assert.equal(maps.test_town.width, 30);
 		assert.deepEqual([maps.dawnbrook.width, maps.dawnbrook.height], [30, 20]);
 		assert.deepEqual([maps.route_1.width, maps.route_1.height], [40, 20]);

@@ -1,0 +1,856 @@
+[
+ {
+  "id": "dawnbrook",
+  "name": "Dawnbrook",
+  "meta": {
+   "stage": "Start",
+   "type": "Starting town",
+   "entry": "none (new game)",
+   "exit": "East to Route 1",
+   "note": "No battles. Pick your starter here. Route sign by the east exit."
+  },
+  "grid": [
+   "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+   "TTTTTTTTTTTT..........TTTTTTTT",
+   "TT.ffffffff.......BBBBBBBBB.TT",
+   "T..fBBBBBBf..hhh..BBBBBBBBB..T",
+   "T..fBBBBBBf.......BBBBBBBBB..T",
+   "T..fBBBDBBf....u..BBBBDBBBB..T",
+   "T..fFFF,FFf.........L.,.L....T",
+   "T..ffff,fff...........,......T",
+   "T......,s.............,.....sT",
+   "T..L,,,,,,,,,,,,,,,,,,,,,,,,,,",
+   "T...,,,,,,,,,,,,,,,,,,,,,,,,,,",
+   "T....L.....,....L.........L..T",
+   "T...BBBBBB.,.ff.fff.....~~...T",
+   "T...BBBBBB.,.fFFFFf...~~~~~..T",
+   "T...BBBDBB.,.fFFFFf..~~~~~~n.T",
+   "T......,,,,,.fFFFFf...~~~~~..T",
+   "T.F.F.F......ffffff....~~~...T",
+   "T............................T",
+   "TT............TT............TT",
+   "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "bgrid": [
+   "                              ",
+   "                              ",
+   "                  LLLLLLLLL   ",
+   "    HHHHHH        LLLLLLLLL   ",
+   "    HHHHHH        LLLLLLLLL   ",
+   "    HHHHHH        LLLLLLLLL   ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "    hhhhhh                    ",
+   "    hhhhhh                    ",
+   "    hhhhhh                    ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              "
+  ],
+  "doors": [
+   {
+    "x": 7,
+    "y": 5,
+    "label": "H",
+    "name": "Player home"
+   },
+   {
+    "x": 22,
+    "y": 5,
+    "label": "L",
+    "name": "Professor lab"
+   },
+   {
+    "x": 7,
+    "y": 14,
+    "label": "h",
+    "name": "Neighbor house"
+   }
+  ],
+  "gates": []
+ },
+ {
+  "id": "mossgate",
+  "name": "Mossgate Grove",
+  "meta": {
+   "stage": 1,
+   "type": "Grass",
+   "entry": "West from Route 1",
+   "exit": "East to Route 2",
+   "note": "North-west gate to Hidden Grove is guarded: 8 badges. Rope bridge over the pond, boardwalk to the east house."
+  },
+  "grid": [
+   "TTT,,TTTTTTTTTTTTTTTTTTTTTTTTT",
+   "TTTXXTTTTTTTTTTTTTTTTTTTTTTTTT",
+   "TT.,,.TTTTTTBBBBBBTTTTTTTTTTTT",
+   "TTL,,.TTT..BBBBBBBB.T.BBBBBTTT",
+   "TT.,,.TT...BBBBBBBB.T.BBBBBTTT",
+   "TTh,,hT..L.BBBBBBBB.L.BBBBBTTT",
+   "TTh,,h......BBBDBB....BBDBBTTT",
+   "TTh,,h.........,........,..TTT",
+   "TT.,,.L........,........,...TT",
+   ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+   ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+   "TT.hhhhhh.,....L....k....L.TTT",
+   "TT.BBBBBB.,.~~~~~~~.k.BBBBB.TT",
+   "TT.BBBBBB.,~~~~~~~~~k.BBBBB.TT",
+   "TT.BBBBBB.,bbbbbbbbbk.BBBBB.TT",
+   "TT.BBBDBB.,~~~~~~~~.k.BBDBB.TT",
+   "TT.g..,,,,,..~~~~...k,,,,..gTT",
+   "TTgg.........gg...........TTTT",
+   "TTTTT...TTTTTTTTT..TTTTTTTTTTT",
+   "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "bgrid": [
+   "                              ",
+   "                              ",
+   "            GGGGGG            ",
+   "           GGGGGGGG   hhhhh   ",
+   "           GGGGGGGG   hhhhh   ",
+   "           GGGGGGGG   hhhhh   ",
+   "            GGGGGG    hhhhh   ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "   CCCCCC             hhhhh   ",
+   "   CCCCCC             hhhhh   ",
+   "   CCCCCC             hhhhh   ",
+   "   CCCCCC             hhhhh   ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              "
+  ],
+  "doors": [
+   {
+    "x": 15,
+    "y": 6,
+    "label": "G",
+    "name": "Gym (hollow trunk)"
+   },
+   {
+    "x": 24,
+    "y": 6,
+    "label": "h",
+    "name": "House"
+   },
+   {
+    "x": 6,
+    "y": 15,
+    "label": "C",
+    "name": "Center"
+   },
+   {
+    "x": 24,
+    "y": 15,
+    "label": "h",
+    "name": "House"
+   }
+  ],
+  "gates": [
+   {
+    "name": "Hidden Grove gate",
+    "fx": 4,
+    "fy": 2,
+    "tx": 3,
+    "ty": 1
+   }
+  ]
+ },
+ {
+  "id": "hearthfield",
+  "name": "Hearthfield",
+  "meta": {
+   "stage": 2,
+   "type": "Normal",
+   "entry": "West from Route 2",
+   "exit": "East to Route 3",
+   "note": "Mart opens after gym 1. The Move Learner is in the north-east corner. Cobbled square with a well in front of the bakery."
+  },
+  "grid": [
+   "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+   "Tffffffff...........BBBBWWW..T",
+   "Tfwwwwwwf..BBBBBBBB.BBBBWWW..T",
+   "TfwwSwwwf..BBBBBBBB.DBBB.W...T",
+   "Tfwwwwwwf..BBBBBBBB..........T",
+   "Tfwwwwwwf..BBBBBBBB..BBBBB...T",
+   "Tffff,fff.FAAAADAAAF.BBBBB.u.T",
+   "T....,....ppppppppppFBBDBBF..T",
+   "T....,....pppppppppp...,.....T",
+   ",,,,,,,,,,pppppppppp,,,,,,,,,,",
+   ",,,,,,,,,,pppppppppp,,,,,,,,,,",
+   "T..L....,.ppnpupnppp..L......T",
+   "T.......,........,......ff.ffT",
+   "T.BBBBBB,..BBBBBB,......fwwwfT",
+   "T.BBBBBB,..BBBBBB,.BBBB.fwSwfT",
+   "T.BBBBBB,..BBBBBB,.BBBB.fwwwfT",
+   "T.BBBDBB,..BBBDBB,.BDBB.fwwwfT",
+   "T....,,,,,,,,,,,,,,,,...fffffT",
+   "TT..........................TT",
+   "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "bgrid": [
+   "                              ",
+   "                    VVVV      ",
+   "           GGGGGGGG VVVV      ",
+   "           GGGGGGGG VVVV      ",
+   "           GGGGGGGG           ",
+   "           GGGGGGGG  hhhhh    ",
+   "           GGGGGGGG  hhhhh    ",
+   "                     hhhhh    ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "  CCCCCC   MMMMMM             ",
+   "  CCCCCC   MMMMMM  hhhh       ",
+   "  CCCCCC   MMMMMM  hhhh       ",
+   "  CCCCCC   MMMMMM  hhhh       ",
+   "                              ",
+   "                              ",
+   "                              "
+  ],
+  "doors": [
+   {
+    "x": 15,
+    "y": 6,
+    "label": "G",
+    "name": "Gym (bakery)"
+   },
+   {
+    "x": 23,
+    "y": 7,
+    "label": "h",
+    "name": "Cottage"
+   },
+   {
+    "x": 5,
+    "y": 16,
+    "label": "C",
+    "name": "Center"
+   },
+   {
+    "x": 14,
+    "y": 16,
+    "label": "M",
+    "name": "Mart"
+   },
+   {
+    "x": 20,
+    "y": 16,
+    "label": "h",
+    "name": "Cottage"
+   },
+   {
+    "x": 20,
+    "y": 3,
+    "label": "V",
+    "name": "Move Learner"
+   }
+  ],
+  "gates": []
+ },
+ {
+  "id": "ironbrook",
+  "name": "Ironbrook",
+  "meta": {
+   "stage": 3,
+   "type": "Fighting",
+   "entry": "West from Route 3",
+   "exit": "East to Route 4",
+   "note": "Terraced hillside. A stream splits the town; one bridge. Stepping stones cross the spring brook."
+  },
+  "grid": [
+   "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+   "TTTTrrTTTr....~~............TT",
+   "TT.BBBBBB...r.~~..BBBBBBBBBBTT",
+   "TT.BBBBBB.....~~..BBBBBBBBBBTT",
+   "TT.BBBBBB.....~~..BBBBBBBBBBTT",
+   "TT.BBBDBB.....~~..BBBBBBBBBBTT",
+   "TT....,...r...~~..BBBBDBBBBBTT",
+   "TRRRRR=RRRRRRR~~......,.....TT",
+   "T.....,.......~~....L.Y.L...TT",
+   ",,,,,,,,,,,,,,bb,,,,,,,,,,,,,,",
+   ",,,,,,,,,,,,,,bb,,,,,,,,,,,,,,",
+   "TRRRRRRRRRRR=R~~ppppppp......T",
+   "T..BBBBBB.~.=.~~pypypyp.BBBBBT",
+   "T..BBBBBB.~.=.~~ppppppp.BBBBBT",
+   "T..BBBBBB.~.=.~~pypypyp.BBBBBT",
+   "T..BBBDBB.~.=.~~ppppppp.BBDBBT",
+   "T.....,,,,e,,.~~......,,,,,..T",
+   "T.........~...~~.............T",
+   "TTT....TTT~TTT~~TTTTTTTTTTTTTT",
+   "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "bgrid": [
+   "                              ",
+   "                              ",
+   "   CCCCCC         GGGGGGGGGG  ",
+   "   CCCCCC         GGGGGGGGGG  ",
+   "   CCCCCC         GGGGGGGGGG  ",
+   "   CCCCCC         GGGGGGGGGG  ",
+   "                  GGGGGGGGGG  ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "   MMMMMM               hhhhh ",
+   "   MMMMMM               hhhhh ",
+   "   MMMMMM               hhhhh ",
+   "   MMMMMM               hhhhh ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              "
+  ],
+  "doors": [
+   {
+    "x": 6,
+    "y": 5,
+    "label": "C",
+    "name": "Center"
+   },
+   {
+    "x": 22,
+    "y": 6,
+    "label": "G",
+    "name": "Gym (dojo)"
+   },
+   {
+    "x": 6,
+    "y": 15,
+    "label": "M",
+    "name": "Mart"
+   },
+   {
+    "x": 26,
+    "y": 15,
+    "label": "h",
+    "name": "House"
+   }
+  ],
+  "gates": []
+ },
+ {
+  "id": "saltmere",
+  "name": "Saltmere Harbor",
+  "meta": {
+   "stage": 4,
+   "type": "Water",
+   "entry": "West from Route 4",
+   "exit": "North to Route 5",
+   "note": "East pier ferry to Frostveil Cavern is guarded: 8 badges. The gym stands on stilts, reached by a pier."
+  },
+  "grid": [
+   "TTTTTTTTTTTTTT,,TTTTTTTTTTTTTT",
+   "TT............,,.........rrrrT",
+   "TT............,,..........WWrT",
+   "TT.BBBBBB.....,,..BBBBB...WWrT",
+   "TT.BBBBBB.....,,..BBBBB..LWWrT",
+   "TT.BBBBBB.....,,..BBBBB...WWrT",
+   "TT.BBBDBB.....,,..BBDBB..rrrrT",
+   "TT....,.......,,,,,,,........T",
+   "TT..L.,.......,,......L......T",
+   ",,,,,,,,,,,,,,,,.............T",
+   ",,,,,,,,,,,,,,,,.............T",
+   "TT.BBBBBB.,,.N.N......BBBBB..T",
+   "TT.BBBBBB.,,......c.c.BBBBB..T",
+   "TT.BBBDBB.,,.......c..BBDBB..T",
+   "Tkkkkkkkkkkkkkkkkkkkkkkkkkk~~~",
+   "~~~~~~~~~~~~~~~~~~~k~~~~~~kXk~",
+   "~~~qq~~~~~~q~~~BBBBDBBBBB~~~q~",
+   "~~~~~~~~~~~~~~~BBBBBBBBBB~~~~~",
+   "~~~~~~~~~~~~~~~BBBBBBBBBB~~~~~",
+   "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+  ],
+  "bgrid": [
+   "                              ",
+   "                              ",
+   "                              ",
+   "   MMMMMM         hhhhh       ",
+   "   MMMMMM         hhhhh       ",
+   "   MMMMMM         hhhhh       ",
+   "   MMMMMM         hhhhh       ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "   CCCCCC             hhhhh   ",
+   "   CCCCCC             hhhhh   ",
+   "   CCCCCC             hhhhh   ",
+   "                              ",
+   "                              ",
+   "               GGGGGGGGGG     ",
+   "               GGGGGGGGGG     ",
+   "               GGGGGGGGGG     ",
+   "                              "
+  ],
+  "doors": [
+   {
+    "x": 6,
+    "y": 6,
+    "label": "M",
+    "name": "Mart"
+   },
+   {
+    "x": 20,
+    "y": 6,
+    "label": "h",
+    "name": "House"
+   },
+   {
+    "x": 6,
+    "y": 13,
+    "label": "C",
+    "name": "Center"
+   },
+   {
+    "x": 24,
+    "y": 13,
+    "label": "h",
+    "name": "House"
+   },
+   {
+    "x": 19,
+    "y": 16,
+    "label": "G",
+    "name": "Gym (on stilts)"
+   }
+  ],
+  "gates": [
+   {
+    "name": "Ferry gate",
+    "fx": 26,
+    "fy": 15,
+    "tx": 27,
+    "ty": 15
+   }
+  ]
+ },
+ {
+  "id": "dynamo",
+  "name": "Dynamo Station",
+  "meta": {
+   "stage": 5,
+   "type": "Electric",
+   "entry": "South from Route 5",
+   "exit": "North to Route 6",
+   "note": "East gate to Stormcrown Pylon is guarded: 8 badges. Steel plate plaza at the crossroads."
+  },
+  "grid": [
+   "TTTTTTTTTTTTTT,,TTTTTTTTTTTTTT",
+   "TT..P-------Pz,,z.BBBBBBBBBBTT",
+   "TT.BBBBBB....z,,z.BBBBBBBBBBTT",
+   "TT.BBBBBB....z,,z.BBBBBBBBBBTT",
+   "TT.BBBBBB....z,,z.BBBBBBBBBBTT",
+   "TT.BBBDBB....z,,z.BBBBBBBBBBTT",
+   "TT....,,,,,,,z,,z.BBBBDBBBBBTT",
+   "TT.L.......pppppppp...,.....TT",
+   "TT.........pppppppp,,,,,,,,,X,",
+   "TT.........pppppppp,,,,,,,,,X,",
+   "TT..L......pppppppp.........TT",
+   "TT...........z,,z.......KK.KKT",
+   "TT.BBBBBB....z,,z..BBBBBKK.KKT",
+   "TT.BBBBBB....z,,z..BBBBB.....T",
+   "TT.BBBBBB....z,,z..BBBBB.KK..T",
+   "TT.BBBDBB....z,,z..BBDBB.KK..T",
+   "TT....,,,,,,,z,,z,,,,,.....P.T",
+   "TT.P--------Pz,,z............T",
+   "TT...........z,,z...........TT",
+   "TTTTTTTTTTTTTT,,TTTTTTTTTTTTTT"
+  ],
+  "bgrid": [
+   "                              ",
+   "                  GGGGGGGGGG  ",
+   "   CCCCCC         GGGGGGGGGG  ",
+   "   CCCCCC         GGGGGGGGGG  ",
+   "   CCCCCC         GGGGGGGGGG  ",
+   "   CCCCCC         GGGGGGGGGG  ",
+   "                  GGGGGGGGGG  ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "   MMMMMM          hhhhh      ",
+   "   MMMMMM          hhhhh      ",
+   "   MMMMMM          hhhhh      ",
+   "   MMMMMM          hhhhh      ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              "
+  ],
+  "doors": [
+   {
+    "x": 6,
+    "y": 5,
+    "label": "C",
+    "name": "Center"
+   },
+   {
+    "x": 22,
+    "y": 6,
+    "label": "G",
+    "name": "Gym (generator hall)"
+   },
+   {
+    "x": 6,
+    "y": 15,
+    "label": "M",
+    "name": "Mart"
+   },
+   {
+    "x": 21,
+    "y": 15,
+    "label": "h",
+    "name": "House"
+   }
+  ],
+  "gates": [
+   {
+    "name": "East gate",
+    "fx": 27,
+    "fy": 9,
+    "tx": 28,
+    "ty": 9
+   }
+  ]
+ },
+ {
+  "id": "gale",
+  "name": "Gale Spire",
+  "meta": {
+   "stage": 6,
+   "type": "Flying",
+   "entry": "South from Route 6",
+   "exit": "West to Route 7",
+   "note": "Cliff edges on the north and east are railed off and not walkable. Open stone plaza around the spire."
+  },
+  "grid": [
+   "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+   "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+   "TRRRRRRRRBBBBBBBBBBRRRRRRRRvvv",
+   "T.BBBBB..BBBBBBBBBB....O..Rvvv",
+   "T.BBBBB..BBBBBBBBBB.......Rvvv",
+   "T.BBBBB..BBBBBBBBBB...j...Rvvv",
+   "T.BBDBB..BBBBBDBBBB.......Rvvv",
+   "T...,.........,...........Rvvv",
+   "T...,...jppppppppppppj....Rvvv",
+   ",,,,,,,,,pppppppppppp.....Rvvv",
+   ",,,,,,,,,pppppppooppp.....Rvvv",
+   "T...L....pppppppooppp..O..Rvvv",
+   "T.BBBBBB.pppppppppppp.....Rvvv",
+   "T.BBBBBB.pppppppppppp.....Rvvv",
+   "T.BBBBBB...,..,,..BBBBBBB.Rvvv",
+   "T.BBBDBB...,..,,..BBBBBBB.Rvvv",
+   "T....,,,,,,,..,,..BBBDBBB.Rvvv",
+   "T..O..........,,,,,,,,....Rvvv",
+   "TT............,,..........Rvvv",
+   "TTTTTTTTTTTTTT,,TTTTTTTTTTvvvv"
+  ],
+  "bgrid": [
+   "                              ",
+   "                              ",
+   "         GGGGGGGGGG           ",
+   "  hhhhh  GGGGGGGGGG           ",
+   "  hhhhh  GGGGGGGGGG           ",
+   "  hhhhh  GGGGGGGGGG           ",
+   "  hhhhh  GGGGGGGGGG           ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "  CCCCCC                      ",
+   "  CCCCCC                      ",
+   "  CCCCCC          MMMMMMM     ",
+   "  CCCCCC          MMMMMMM     ",
+   "                  MMMMMMM     ",
+   "                              ",
+   "                              ",
+   "                              "
+  ],
+  "doors": [
+   {
+    "x": 4,
+    "y": 6,
+    "label": "h",
+    "name": "House"
+   },
+   {
+    "x": 14,
+    "y": 6,
+    "label": "G",
+    "name": "Gym (spire base)"
+   },
+   {
+    "x": 5,
+    "y": 15,
+    "label": "C",
+    "name": "Center"
+   },
+   {
+    "x": 21,
+    "y": 16,
+    "label": "M",
+    "name": "Mart"
+   }
+  ],
+  "gates": []
+ },
+ {
+  "id": "starfall",
+  "name": "Starfall Observatory",
+  "meta": {
+   "stage": 7,
+   "type": "Psychic",
+   "entry": "East from Route 7",
+   "exit": "West to Route 8",
+   "note": "Star-shaped plaza below the observatory dome, ringed by star lanterns."
+  },
+  "grid": [
+   "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+   "TTT*........WWWWWW.......*..TT",
+   "TTTBBBBB...WWWWWWWW.........TT",
+   "T.BBBBBBB..WWWWWWWW..BBBBBB..T",
+   "T.BBBBBBB..WWWWWWWW..BBBBBB..T",
+   "T.BBBBBBB...WWWWWW...BBBBBB..T",
+   "T..BBDBB..*...pp...*.BBBDBB..T",
+   "T....,.......pppp.......,....T",
+   "T....,....pppppppppp....,....T",
+   ",,,,,,,,,,,pppppppp,,,,,,,,,,,",
+   ",,,,,,,,,,,pppppppp,,,,,,,,,,,",
+   "T.........pppppppppp.........T",
+   "T............pppp............T",
+   "T..BBBBBB.*...pp...*.BBBBBB..T",
+   "T..BBBBBB.....,,.....BBBBBB..T",
+   "T..BBBBBB.....,,.....BBBBBB..T",
+   "T..BBBDBB.....,,.....BBBDBB..T",
+   "T.....,,,,,,,,,,,,,,,,,,,....T",
+   "TT.*......................*.TT",
+   "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT"
+  ],
+  "bgrid": [
+   "                              ",
+   "                              ",
+   "   GGGGG                      ",
+   "  GGGGGGG            CCCCCC   ",
+   "  GGGGGGG            CCCCCC   ",
+   "  GGGGGGG            CCCCCC   ",
+   "   GGGGG             CCCCCC   ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "   hhhhhh            MMMMMM   ",
+   "   hhhhhh            MMMMMM   ",
+   "   hhhhhh            MMMMMM   ",
+   "   hhhhhh            MMMMMM   ",
+   "                              ",
+   "                              ",
+   "                              "
+  ],
+  "doors": [
+   {
+    "x": 5,
+    "y": 6,
+    "label": "G",
+    "name": "Gym (small dome)"
+   },
+   {
+    "x": 24,
+    "y": 6,
+    "label": "C",
+    "name": "Center"
+   },
+   {
+    "x": 6,
+    "y": 16,
+    "label": "h",
+    "name": "House"
+   },
+   {
+    "x": 24,
+    "y": 16,
+    "label": "M",
+    "name": "Mart"
+   }
+  ],
+  "gates": []
+ },
+ {
+  "id": "emberhold",
+  "name": "Emberhold",
+  "meta": {
+   "stage": 8,
+   "type": "Fire",
+   "entry": "East from Route 8",
+   "exit": "West to Zenith Summit road",
+   "note": "North stairs to Crater Throne are guarded: 8 badges. One drawbridge over the lava channel."
+  },
+  "grid": [
+   "######################,,######",
+   "#.........ll##########XX######",
+   "#.BBBBBB..ll.B#B#B#B#i==i....#",
+   "#.BBBBBB..ll.BBBBBBBB.==.....#",
+   "#.BBBBBB..ll.BBBBBBBB.==.....#",
+   "#.BBBDBB..ll.BBBBBBBB.==.....#",
+   "#....,....ll.BBBBBBBB.==.....#",
+   "#....,....ll.BBBDBBBBi==i....#",
+   "#.i..,..i.ll.i..,..i..,,.....#",
+   ",,,,,,,,,,bb,,,,,,,,,,,,,,,,,,",
+   ",,,,,,,,,,bb,,,,,,,,,,,,,,,,,,",
+   "#.........ll........,........#",
+   "#.WWWWWW..ll.BBBBBB.,BBBBBB..#",
+   "#.WWWWWW..ll.BBBBBB.,BBBBBB..#",
+   "#iWWWWWWi.ll.BBBBBB.,BBBBBB..#",
+   "#.WWWWWW..ll.BBBDBB.,BBBDBB..#",
+   "#.WWWWWW..ll....,,,,,,,,,....#",
+   "#.........ll.................#",
+   "#.........ll................##",
+   "##############################"
+  ],
+  "bgrid": [
+   "                              ",
+   "                              ",
+   "  hhhhhh     G G G G          ",
+   "  hhhhhh     GGGGGGGG         ",
+   "  hhhhhh     GGGGGGGG         ",
+   "  hhhhhh     GGGGGGGG         ",
+   "             GGGGGGGG         ",
+   "             GGGGGGGG         ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "             MMMMMM  CCCCCC   ",
+   "             MMMMMM  CCCCCC   ",
+   "             MMMMMM  CCCCCC   ",
+   "             MMMMMM  CCCCCC   ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              "
+  ],
+  "doors": [
+   {
+    "x": 5,
+    "y": 5,
+    "label": "h",
+    "name": "House"
+   },
+   {
+    "x": 16,
+    "y": 7,
+    "label": "G",
+    "name": "Gym (forge fortress)"
+   },
+   {
+    "x": 16,
+    "y": 15,
+    "label": "M",
+    "name": "Mart"
+   },
+   {
+    "x": 24,
+    "y": 15,
+    "label": "C",
+    "name": "Center"
+   }
+  ],
+  "gates": [
+   {
+    "name": "Crater stairs",
+    "fx": 22,
+    "fy": 2,
+    "tx": 22,
+    "ty": 1
+   }
+  ]
+ },
+ {
+  "id": "zenith",
+  "name": "Zenith Summit",
+  "meta": {
+   "stage": "League",
+   "type": "Pokémon League",
+   "entry": "East from Emberhold road",
+   "exit": "none (end of story)",
+   "note": "One hall for the Elite Four and champion, up a white stairway from the star plaza. The lobby holds the Center, the Mart and the Move Learner, before the first Elite Four fight only. West door to Hollow Lab is guarded: 8 badges."
+  },
+  "grid": [
+   "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv",
+   "vv.....BBBBBBBBBBBBBBBB.....vv",
+   "vv.j...BBBBBBBBBBBBBBBB..j..vv",
+   ",X,,,,,BBBBBBBBBBBBBBBB.....vv",
+   ",X,,,,,BBBBBBBBBBBBBBBB.....vv",
+   "vv...,.BBBBBBBDBBBBBBBB.....vv",
+   "vv...,.j.....====.....j.....vv",
+   "vv...,.......====...........vv",
+   "vv...,......j====j....j..j..vv",
+   "vv...,........pp=======,,,,,,,",
+   "vv...,........pp=======,,,,,,,",
+   "vv...,,,,,,pppppppp.,.j..j..vv",
+   "vv..........pppppp..,.......vv",
+   "vv...........pppp...,..j....vv",
+   "vv..........pp..pp..,.......vv",
+   "vv.........pp....pp.,.......vv",
+   "vv..................,,,,,...vv",
+   "vvT........................Tvv",
+   "vvvTT...................TTvvvv",
+   "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvv"
+  ],
+  "bgrid": [
+   "                              ",
+   "       GGGGGGGGGGGGGGGG       ",
+   "       GGGGGGGGGGGGGGGG       ",
+   "       GGGGGGGGGGGGGGGG       ",
+   "       GGGGGGGGGGGGGGGG       ",
+   "       GGGGGGGGGGGGGGGG       ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              ",
+   "                              "
+  ],
+  "doors": [
+   {
+    "x": 14,
+    "y": 5,
+    "label": "G",
+    "name": "League hall"
+   }
+  ],
+  "gates": [
+   {
+    "name": "Hollow Lab door",
+    "fx": 2,
+    "fy": 4,
+    "tx": 1,
+    "ty": 4
+   }
+  ]
+ }
+]

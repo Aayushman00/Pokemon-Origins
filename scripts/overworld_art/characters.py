@@ -342,6 +342,32 @@ CAST = [
     make("kestrel_vane", "Kestrel Vane", F, {"s": "skin_light", "h": "hair_blond", "x": "red", "g": "yellow",
          "t": "white", "u": "navy", "f": "white", "b": "navy", "l": "navy", "n": "red:2"}, "crest", hat="feather",
          features=["grin"], extras=["longcoat", "trim"]),
+    # ------------------------------------------------- road trainers, routes 2-8
+    make("swimmer", "Swimmer", M, {"s": "skin_tan", "h": "hair_dark", "c": "sky:2", "x": "sky:2", "t": "skin_tan",
+         "f": "skin_tan", "b": "navy", "l": "skin_tan", "n": "skin_tan"}, "spiky", hat="headband", features=["grin"]),
+    make("swimmer_f", "Swimmer", F, {"s": "skin_tan", "h": "hair_red", "x": "white:2", "t": "sky", "u": "white:2", "f": "skin_tan",
+         "b": "sky", "l": "skin_tan", "n": "skin_tan"}, "ponytail", features=["grin"]),
+    make("engineer", "Engineer", M, {"s": "skin_tan", "h": "brown:2", "c": "yellow:2", "x": "yellow:2", "t": "orange",
+         "f": "orange", "b": "denim", "n": "brown:2", "p": "brown:2"}, "short", hat="hardhat", features=["moustache"],
+         extras=["belt"]),
+    make("rocker", "Rocker", M, {"s": "skin_light", "h": "hair_red", "t": "charcoal", "u": "hair_red", "f": "skin_light",
+         "b": "charcoal", "n": "charcoal", "p": "hair_red", "g": "charcoal"}, "mohawk", features=["shades"], extras=["vest"]),
+    make("juggler", "Juggler", M, {"s": "skin_light", "h": "hair_dark", "c": "purple", "x": "yellow:2", "t": "purple",
+         "u": "yellow:2", "f": "yellow:2", "b": "purple", "n": "charcoal"}, "short", hat="tophat", features=["grin"]),
+    make("tamer", "Tamer", M, {"s": "skin_tan", "h": "hair_gray", "c": "brown", "x": "brown", "t": "red", "f": "skin_tan",
+         "b": "brown:2", "n": "charcoal", "p": "brown"}, "short", hat="bucket", features=["beard"], extras=["belt"]),
+    make("bird_keeper", "Bird Keeper", M, {"s": "skin_light", "h": "hair_blond", "x": "brown", "t": "teal", "u": "teal",
+         "f": "teal", "b": "brown", "n": "brown", "p": "brown", "g": "white:2"}, "swept", features=["brows"], extras=["falcon"]),
+    make("psychic", "Psychic", M, {"s": "skin_light", "h": "hair_purple", "t": "purple", "u": "pink:2", "f": "purple",
+         "b": "charcoal", "n": "charcoal", "g": "pink:2"}, "swept", features=["closed"], extras=["longcoat", "trim"]),
+    make("burglar", "Burglar", M, {"s": "skin_light", "h": "hair_black", "g": "charcoal", "c": "charcoal", "x": "charcoal", "t": "white",
+         "u": "charcoal", "f": "white", "b": "charcoal", "n": "charcoal"}, "short", hat="beanie",
+         features=["shades", "moustache"]),
+    make("super_nerd", "Super Nerd", M, {"s": "skin_light", "h": "hair_brown", "g": "hair_brown", "t": "green", "u": "green", "f": "green",
+         "b": "brown", "n": "brown"}, "messy", features=["glasses"]),
+    make("channeler", "Channeler", F, {"s": "skin_light", "h": "hair_gray", "c": "purple", "x": "purple", "t": "white",
+         "u": "purple", "f": "white", "b": "white", "l": "white", "n": "purple:2", "p": "purple"}, "long", hat="circlet",
+         features=["closed"], extras=["shawl", "longskirt"]),
     # ------------------------------------------- generic townsperson ("npc")
     make("npc", "Townsperson", M, {"s": "skin_light", "h": "hair_brown", "t": "green", "u": "white:2",
          "b": "denim", "n": "hair_brown:2"}, "short"),
@@ -352,7 +378,7 @@ ROSTER = [PLAYER_BOY, PLAYER_GIRL, YOUNGSTER] + CAST
 # Body builds on top of the adult templates (sheets._build).
 BUILDS = {
     "child": ("youngster", "bug_catcher", "twin", "lass", "picnicker"),
-    "heavy": ("hiker", "biker", "black_belt", "fisherman", "sailor", "mara_quill", "cinder_valko", "bastian_cairn"),
+    "heavy": ("hiker", "biker", "black_belt", "fisherman", "sailor", "mara_quill", "cinder_valko", "bastian_cairn", "engineer", "tamer", "rocker"),
     "elder": ("old_man", "old_woman"),
 }
 for _build_name, _ids in BUILDS.items():

@@ -178,6 +178,8 @@ describe("Dawnbrook interiors and Route 1 (headless)", () => {
 		};
 		walkUntilMap("up", "mossgate_gym");
 		assert.deepEqual(d.pos(), ["mossgate_gym", 1, 5]);
+		assert.match(d.dialogues()[0].pages[0], /Seed pods/);
+		d.close();
 		walkUntilMap("left", "mossgate");
 		assert.deepEqual(d.pos(), ["mossgate", 15, 7]);
 	});
@@ -274,6 +276,7 @@ describe("gym puzzle room (headless)", () => {
 	const enter = async () => {
 		const d = await boot({ mapId: "mossgate_gym", x: 1, y: 5, facing: "right" });
 		d.game.enter();
+		d.close();
 		return d;
 	};
 	// one tile: hold until the step starts, then let go so it doesn't chain into another
@@ -333,12 +336,118 @@ describe("gym puzzle room (headless)", () => {
 		for (let i = 0; i < 400 && d.pos()[0] !== "mossgate_gym"; i++) d.game.tick({ dir: "up" }, []);
 		d.idle(120);
 		assert.deepEqual(d.game.puzzleTiles(), start);
+		assert.equal(d.dialogues().length, 1, "the rule is said once");
 	});
 	it("a solved gym stays open: no pods, no gate", async () => {
 		const d = await boot({ mapId: "mossgate_gym", x: 1, y: 5, facing: "right" });
 		d.flags.add("gym:willow_thornby:solved");
 		d.game.enter();
 		assert.deepEqual(d.game.puzzleTiles(), []);
+	});
+});
+
+describe("all eight gyms on foot (headless)", () => {
+	const GYM_MAPS = {
+		mara_quill: "hearthfield_gym", tavish_rook: "ironbrook_gym", coral_marlowe: "saltmere_gym", volt_dray: "dynamo_gym",
+		skye_corvin: "gale_gym", sage_ilmara: "starfall_gym", cinder_valko: "emberhold_gym",
+	};
+	const startOf = (leaderId) => {
+		const spec = GYM_PUZZLES[leaderId];
+		const [x, y] = AP[spec.mechanic](spec.rows, spec.config).init().p;
+		return { mapId: GYM_MAPS[leaderId], x, y, facing: "up" };
+	};
+	const enter = async (leaderId) => {
+		const d = await boot(startOf(leaderId));
+		d.game.enter();
+		while (d.game.mode === "dialogue") d.close();
+		return d;
+	};
+	const settled = (d) => d.game.mode === "explore" && d.game.player.phase === "idle";
+	// One move: push until something happens, then wait out any glide, fall or fade.
+	const move = (d, dir) => {
+		const before = JSON.stringify([d.game.player.x, d.game.player.y, d.game.puzzleTiles()]);
+		for (let i = 0; i < 80; i++) {
+			d.game.tick({ dir }, []);
+			if (d.game.player.phase === "walk" || d.game.mode !== "explore") break;
+			if (d.game.player.phase === "bump" && JSON.stringify([d.game.player.x, d.game.player.y, d.game.puzzleTiles()]) !== before) break;
+		}
+		for (let i = 0; i < 600 && !settled(d); i++) {
+			d.game.tick({ dir: null }, []);
+			while (d.game.mode === "dialogue") d.close();
+		}
+	};
+	const solved = (d) => d.events.find((e) => e.type === "effect" && e.effect.type === "solve");
+
+	for (const leaderId of Object.keys(GYM_MAPS)) {
+		it(`${leaderId}: the shortest solution reaches the Leader's chamber`, async () => {
+			const spec = GYM_PUZZLES[leaderId];
+			const solution = AP.solve(AP[spec.mechanic](spec.rows, spec.config), 9000000);
+			const d = await enter(leaderId);
+			for (const dir of solution) move(d, dir);
+			assert.deepEqual(solved(d)?.effect, { type: "solve", leaderId, moves: solution });
+			const [x, y] = d.game.map.properties.puzzleChamber.split(",").map(Number);
+			assert.deepEqual(d.pos(), [GYM_MAPS[leaderId], x, y]);
+		});
+	}
+
+	it("a belt carries the player along it, and no input is taken on the way", async () => {
+		const d = await enter("mara_quill");
+		move(d, "left"); // onto the belt-free cell at (2,1)
+		move(d, "down"); // (2,2) is a belt running right
+		assert.equal(d.game.player.y, 2);
+		assert.ok(d.game.player.x > 2, "carried east");
+	});
+	it("a gale glide stops at a wall, and the whole slide is one move", async () => {
+		const d = await enter("skye_corvin");
+		move(d, "right");
+		assert.deepEqual(d.pos().slice(1), [11, 7]);
+	});
+	it("falling down a gap puts the player back at the start with a fresh count", async () => {
+		const d = await enter("skye_corvin");
+		const home = d.pos();
+		move(d, "right"); // slides to the wall at (11,7)
+		move(d, "down"); // through (11,8) to (11,9)... the gap sits west of it
+		move(d, "left"); // (10,9) is a drop
+		assert.deepEqual(d.pos(), home);
+		const solution = AP.solve(AP.gale(GYM_PUZZLES.skye_corvin.rows));
+		for (const dir of solution) move(d, dir);
+		assert.deepEqual(solved(d).effect.moves, solution, "the fall is not in the moves");
+	});
+	it("lava resets the pulse room", async () => {
+		const d = await enter("cinder_valko");
+		const home = d.pos();
+		move(d, "left"); // (9,6) is lava
+		assert.deepEqual(d.pos(), home);
+	});
+	it("a blocked hero still moves the twin, and that counts as a move", async () => {
+		const d = await enter("sage_ilmara");
+		const twin = () => d.game.puzzleTiles().find((t) => t.gid === d.game.map.properties.puzzle_twin);
+		move(d, "up"); // both step: hero (2,1), twin (9,2)
+		move(d, "up"); // hero is at the wall, twin carries on
+		assert.deepEqual(d.pos().slice(1), [2, 1]);
+		assert.deepEqual([twin().x, twin().y], [9, 1]);
+	});
+	it("the piece under the player stays drawn", async () => {
+		const d = await enter("volt_dray");
+		move(d, "right");
+		move(d, "right"); // onto the first panel at (3,1), which lights it
+		const { x, y } = d.game.player;
+		assert.ok(d.game.puzzleTiles().some((t) => t.x === x && t.y === y));
+	});
+	it("every room with moving pieces draws them", async () => {
+		for (const leaderId of ["tavish_rook", "coral_marlowe", "volt_dray", "sage_ilmara", "cinder_valko"]) {
+			const d = await enter(leaderId);
+			assert.ok(d.game.puzzleTiles().length > 0, `${leaderId} draws nothing`);
+		}
+	});
+	it("a solved gym sends the door straight to the Leader's chamber", async () => {
+		const d = await boot({ mapId: "hearthfield", x: 15, y: 7, facing: "up" });
+		d.flags.add("gym:mara_quill:solved");
+		d.flags.add("trainer:willow_thornby");
+		for (let i = 0; i < 400 && d.pos()[0] !== "hearthfield_gym"; i++) d.game.tick({ dir: "up" }, []);
+		d.idle(120);
+		const [x, y] = d.game.map.properties.puzzleChamber.split(",").map(Number);
+		assert.deepEqual(d.pos(), ["hearthfield_gym", x, y]);
 	});
 });
 

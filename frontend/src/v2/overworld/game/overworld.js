@@ -1,3 +1,4 @@
+import { DIRS } from "../constants.js";
 import { createActor, tickActor } from "../logic/movement.js";
 import { createWorld } from "../logic/world.js";
 import { dueTriggers, facingToward, interactionAt, spotter, triggerScript, warpFor } from "../logic/events.js";
@@ -36,7 +37,7 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 	let flash = 0; // cry flash ticks (see CRY_FLASH_TICKS)
 	let alert = null; // { id, ticks }: the trainer showing "!"
 	let foe = null; // trainer id of the battle the host is running
-	let room = null; // the puzzle in play: { map, leaderId, puz, state, moves, done }
+	let room = null; // the puzzle in play: { map, leaderId, puz, state, moves, done, glide, after }
 	let pendingStep = null;
 
 	function npcsOf(mapId) {
@@ -66,34 +67,65 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		return [...ids].flatMap(npcsOf);
 	};
 	const roomStep = (ref) => room.puz.step(room.state, [ref.x - room.state.p[0], ref.y - room.state.p[1]]);
+	const chamberOf = (map) => map.properties.puzzleChamber?.split(",").map(Number);
 	const isExit = (ref) => room.map.warpIndex.has(`${ref.x},${ref.y}`);
 
 	// While a puzzle is unsolved it decides every step, as replay() will. After that only the pods are in the way.
 	function roomBlocks(ref) {
-		if (!room || ref.mapId !== room.map.id || isExit(ref)) return false;
-		if (room.done) return room.state.pods.some(([x, y]) => x === ref.x && y === ref.y);
+		if (!room || ref.mapId !== room.map.id || isExit(ref) || room.glide) return false;
+		if (room.done) return Boolean(room.state.pods?.some(([x, y]) => x === ref.x && y === ref.y));
 		return !roomStep(ref);
 	}
 
-	function enterRoom(map) {
+	function enterRoom(map, reason) {
+		if (room?.done && room.map.id === map?.id) return; // just won: the fade into the chamber lands here
 		room = null;
 		const leaderId = map?.properties.puzzle;
-		if (!leaderId || flags.has(`gym:${leaderId}:solved`)) return;
+		if (!leaderId) return;
+		if (flags.has(`gym:${leaderId}:solved`)) {
+			const chamber = chamberOf(map);
+			if (chamber && reason === "warp") player = createActor({ mapId: map.id, x: chamber[0], y: chamber[1], facing: "up" });
+			return;
+		}
 		const spec = GYM_PUZZLES[leaderId];
 		const puz = AP[spec.mechanic](spec.rows, spec.config);
-		room = { map, leaderId, puz, state: puz.init(), moves: [], done: false };
+		room = { map, leaderId, puz, state: puz.init(), moves: [], done: false, glide: null, after: null };
 	}
 
 	/** The player just set off for `to`, so the puzzle takes the same step. */
 	function advanceRoom(to, dir) {
 		if (!room || room.done || isExit(to)) return;
-		const next = roomStep(to);
+		roomMove(roomStep(to), dir);
+	}
+
+	function roomMove(next, dir) {
+		room.glide = next.trail?.length > 1 ? next.trail.slice(1) : null;
+		if (next.dead) {
+			room.after = "fall"; // replay() restarts the room here, and so does the fade back to the start
+			return;
+		}
 		if (next.pods !== room.state.pods) emit({ type: "sound", cue: "push" });
 		room.state = next;
 		room.moves.push(dir);
 		if (!room.puz.won(next)) return;
 		room.done = true;
 		emit({ type: "effect", effect: { type: "solve", leaderId: room.leaderId, moves: room.moves } });
+		if (chamberOf(room.map)) room.after = "chamber";
+	}
+
+	/** The step that started a carried move has landed: ride the rest, then fall or go on to the Leader. */
+	function settleRoom() {
+		if (room.glide) {
+			walks.push({ id: "player", path: room.glide, i: 0, fast: true });
+			mode = "script";
+			return;
+		}
+		if (!room.after) return;
+		const fell = room.after === "fall";
+		const [x, y] = fell ? room.puz.init().p : chamberOf(room.map);
+		room.after = null;
+		if (fell) emit({ type: "sound", cue: "ledge" });
+		beginWarp({ targetMap: room.map.id, targetX: x, targetY: y, facing: fell ? player.facing : "up", transition: "fade", kind: "pad" });
 	}
 
 	const isBlocked = (ref) =>
@@ -147,10 +179,16 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		emit({ type: "mapChange", mapId, reason });
 		store.loadAround(mapId).catch(() => {});
 		const map = store.get(mapId);
-		enterRoom(map);
-		if (!map) return;
-		const due = dueTriggers(map, "enter", flags, player);
+		enterRoom(map, reason);
+		if (reason !== "warp") enterTriggers();
+	}
+
+	/** Enter triggers wait for a warp's fade to finish, or their dialogue would strand it. Returns true if one ran. */
+	function enterTriggers() {
+		const map = currentMap();
+		const due = map ? dueTriggers(map, "enter", flags, player) : [];
 		if (due.length) runScript(triggerScript(map, due[0]));
+		return due.length > 0;
 	}
 
 	function beginWarp(w) {
@@ -184,7 +222,7 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 			transition = null;
 			warp = null;
 			mode = "explore";
-			pump();
+			if (!enterTriggers()) pump();
 		}
 	}
 
@@ -196,9 +234,9 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 				walk.i = walk.path.length;
 				continue;
 			}
-			const ctx = { world, isBlocked, canMove: true, canRun: false, noTurn: true, halt: () => true };
+			const ctx = { world, isBlocked, canMove: true, canRun: Boolean(walk.fast), noTurn: true, halt: () => true };
 			const dir = walk.i < walk.path.length ? walk.path[walk.i] : null;
-			const r = tickActor(actor, { dir, run: false }, ctx);
+			const r = tickActor(actor, { dir, run: walk.fast }, ctx);
 			if (r.events.some((e) => e.type === "stepEnd")) walk.i += 1;
 			for (const e of r.events) handleActorEvent(e, isPlayer);
 			if (isPlayer) player = r.actor;
@@ -211,7 +249,9 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		});
 		if (!walks.length && mode === "script") {
 			mode = "explore";
-			pump();
+			if (room?.glide) room.glide = null;
+			if (room?.after) settleRoom();
+			else pump();
 		}
 	}
 
@@ -239,6 +279,16 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		pump();
 	}
 
+	// A bump can still be a move: the mirror twin steps even when the hero cannot.
+	function bumpRoom(dir) {
+		if (!room || room.done) return;
+		const { dx, dy } = DIRS[dir];
+		const next = room.puz.step(room.state, [dx, dy]);
+		if (!next) return;
+		roomMove(next, dir);
+		settleRoom();
+	}
+
 	function tickExplore(input, edges) {
 		const map = currentMap();
 		if (aBlock && !input.aHeld) aBlock = false;
@@ -260,6 +310,7 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 			canMove: true,
 			canRun,
 			halt: (a) => {
+				if (room?.glide || room?.after) return (pendingStep = { room: true }), true;
 				const m = store.get(a.mapId);
 				const w = m && warpFor(m, a.x, a.y, a.facing);
 				if (w) return (pendingStep = { warp: w }), true;
@@ -274,11 +325,15 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		const r = tickActor(player, { dir: input.dir, run: input.run }, ctx);
 		player = r.actor;
 		if (player.to && player.to !== before) advanceRoom(player.to, player.facing);
-		for (const e of r.events) handleActorEvent(e, true);
+		for (const e of r.events) {
+			handleActorEvent(e, true);
+			if (e.type === "bump") bumpRoom(e.dir);
+		}
 		if (pendingStep) {
 			const p = pendingStep;
 			pendingStep = null;
-			if (p.warp) beginWarp(p.warp);
+			if (p.room) settleRoom();
+			else if (p.warp) beginWarp(p.warp);
 			else if (p.seen) spotted(p.seen);
 			else runScript(triggerScript(p.map, p.trigger));
 		}
@@ -339,12 +394,11 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		/** Moving parts of the puzzle in this room, to draw over the map: [{ x, y, gid }]. */
 		puzzleTiles() {
 			if (!room || room.map.id !== player.mapId) return [];
-			const cells = room.puz.cells(room.state);
-			const gids = { pod: room.map.properties.puzzle_pod, "socket-full": room.map.properties.puzzle_pod, gate: room.map.properties.puzzle_gate };
+			const cells = room.puz.cells({ ...room.state, p: [-1, -1] }); // keep what the player is standing on
 			const tiles = [];
 			for (let y = 0; y < cells.h; y++) {
 				for (let x = 0; x < cells.w; x++) {
-					const gid = gids[cells.at(x, y)];
+					const gid = room.map.properties[`puzzle_${cells.at(x, y)}`];
 					if (gid) tiles.push({ x, y, gid });
 				}
 			}

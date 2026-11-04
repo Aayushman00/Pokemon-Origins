@@ -22,6 +22,9 @@ ROOT = Path(__file__).resolve().parents[2]
 WORLD_NAMES = json.loads((ROOT / "backend" / "data" / "world" / "names.json").read_text())
 NAMES, PEOPLE = WORLD_NAMES["places"], WORLD_NAMES["people"]
 GYMS = json.loads((ROOT / "backend" / "data" / "gyms" / "gym_puzzles.json").read_text(encoding="utf8"))
+VOICES = json.loads((ROOT / "backend" / "data" / "trainers" / "voices.json").read_text(encoding="utf8"))
+BADGES = {"willow_thornby": "Bloom", "mara_quill": "Hearth", "tavish_rook": "Breath", "coral_marlowe": "Tide",
+          "volt_dray": "Current", "skye_corvin": "Updraft", "sage_ilmara": "Orbit", "cinder_valko": "Ember"}
 ROUTES = {r["id"]: r for r in json.loads((Path(__file__).parent / "route_layouts.json").read_text())}
 PATH, MAILBOX, ROCK, WA, WB, FA, FB, TALL_OLD = (
     base.PATH, base.MAILBOX, base.ROCK, base.WA, base.WB, base.FA, base.FB, base.TALL)
@@ -65,11 +68,23 @@ def place(m, name, x0, y0):
             m.put("objects", x0 + c, y0 + r, ID[f"{name}_{c}_{r}"], SOLID)
 
 
-def trainer_script(trainer, *lines):
+def trainer_script(trainer):
     """Battle until beaten, then a word in passing. The server sets trainer:<id> on a win."""
+    voice = VOICES[trainer]
     return json.dumps([{"op": "requireFlag", "flag": f"trainer:{trainer}", "not": True,
-                        "else": [{"op": "say", "text": "That was a good battle. Safe travels!"}]},
-                       *[{"op": "say", "text": t} for t in lines], {"op": "battle", "trainer": trainer}])
+                        "else": [{"op": "say", "text": voice["after"]}]},
+                       {"op": "say", "text": voice.get("greet") or voice["intro"]}, {"op": "battle", "trainer": trainer}])
+
+
+def leader_story(m, leader, x, y, facing, *more_rules):
+    """A Gym's people: the rule on first entry, the Leader, and the badge after the win."""
+    gym = GYMS[leader]
+    badge = BADGES[leader]
+    m.obj("triggers", "rule", 0, 0, when="enter", once=True, script=say(f"{gym['name']}. {gym['rule']}", *more_rules))
+    m.obj("triggers", "badge", 0, 0, when="flag", flag=f"trainer:{leader}", once=True,
+          script=say(VOICES[leader]["badge"], f"You received the {badge} Badge!"))
+    m.obj("npcs", leader, x, y, point=True, sprite=leader, facing=facing, script=trainer_script(leader))
+    m.block(x, y)
 
 
 def hashed(x, y):
@@ -356,7 +371,8 @@ MOSSGATE = [
 
 def mossgate():
     m = Town(30, 20, base.GRASS)
-    m.props = [("nameKey", "mossgate"), ("time", "dusk"), ("ambient", "fireflies"), ("border", BORDER), ("connect_west", "route_1"), ("connect_west_offset", 0)]
+    m.props = [("nameKey", "mossgate"), ("time", "dusk"), ("ambient", "fireflies"), ("border", BORDER), ("connect_west", "route_1"),
+               ("connect_west_offset", 0), ("connect_east", "route_2"), ("connect_east_offset", 0)]
     paint(m, MOSSGATE, "grass")
     place(m, "trunk_gym", 12, 2)
     place(m, "home_moss", 22, 2)
@@ -370,7 +386,11 @@ def mossgate():
     door(m, "mossgate_house_b", 24, 15)
     m.sign("town_sign", 7, 8, f"{NAMES['mossgate'].upper()} - Nothing here grows in a hurry.")
     m.sign("gym_sign", 16, 7, f"{NAMES['mossgate'].upper()} GYM - Leader: {PEOPLE['willow_thornby']}.")
-    m.sign("route_sign", 27, 8, f"{NAMES['route_2'].upper()} - East to {NAMES['hearthfield']}. (Opens in a later update.)")
+    m.sign("route_sign", 27, 8, f"{NAMES['route_2'].upper()} - East to {NAMES['hearthfield']}.")
+    line = f"The road to {NAMES['route_2']} is closed to anyone without the Bloom Badge. Try the Gym here first."
+    m.obj("triggers", "gate", 29, 9, 1, 2, when="step", script=json.dumps(
+        [{"op": "requireFlag", "flag": "trainer:willow_thornby",
+          "else": [{"op": "say", "text": line}, {"op": "cutsceneMove", "actor": "player", "path": ["left"]}]}]))
     m.npc("camper", 12, 8, "camper", "down", "The Gym is built inside a hollow trunk. Older than the town, they say.")
     m.npc("picnicker", 18, 17, "picnicker", "up", "Rest at the Center before the Gym. The Leader won't rush you, but the seeds might.")
     lone_tree(m, "B", 18, 7)
@@ -395,7 +415,8 @@ def mossgate_gym():
     rows[5] = "." + rows[5][1:10] + "...#"  # col 0 is the exit, one step west of the start
     rows[6] = rows[6][:9] + "....#"
     m = Town(14, 8, base.GRASS)
-    m.props = [("puzzle", "willow_thornby"), ("puzzle_pod", ID["rock2"] + 1), ("puzzle_gate", ID["bush"] + 1)]
+    m.props = [("puzzle", "willow_thornby"), ("puzzle_pod", ID["rock2"] + 1), ("puzzle_socket-full", ID["rock2"] + 1),
+               ("puzzle_gate", ID["bush"] + 1)]
     paint(m, ["".join("T" if c == "#" else "." for c in r) for r in rows], "path")
     for y, r in enumerate(rows):
         for x, c in enumerate(r):
@@ -404,9 +425,7 @@ def mossgate_gym():
     m.obj("warps", "exit", 0, 5, kind="door", targetMap="mossgate", targetX=15, targetY=7, facing="down",
           transition="iris", enterDir="left")
     m.sign("hint", 0, 4, gym["hint"] + " Stuck? Leave the room and the seeds roll back.")
-    script = trainer_script("willow_thornby", "Welcome to the Grove. Take your time, nothing here grows in a hurry.")
-    m.obj("npcs", "willow_thornby", 12, 5, point=True, sprite="willow_thornby", facing="left", script=script)
-    m.block(12, 5)
+    leader_story(m, "willow_thornby", 12, 5, "left")
     autotile_paths(m)
     return finish(m.build(), m)
 
@@ -426,9 +445,8 @@ def route(route_id):
     for i, g in enumerate(r["grass"]):
         m.obj("encounters", f"grass_{i + 1}", g["x"], g["y"], g["w"], g["h"], table=route_id)
     for t in r["trainers"]:
-        script = trainer_script(t["id"], "Our eyes met! That means we battle!")
         m.obj("npcs", t["id"], t["x"], t["y"], point=True, sprite=t["id"].rsplit("_", 1)[0], facing=t["facing"],
-              trainer=t["id"], order=t["i"], sight=t["sight"], script=script)
+              trainer=t["id"], order=t["i"], sight=t["sight"], script=trainer_script(t["id"]))
         m.block(t["x"], t["y"])
     autotile_paths(m)
     for x, y, name in DRESSING[route_id]:
@@ -463,6 +481,9 @@ def finish(data, m):
     tiles = [anim(WA, WB, 500), anim(FA, FB, 500), {"id": TALL_OLD, "properties": [base.prop("cover", 9)]},
              anim(ID["bedA"], ID["bedB"], 700), anim(ID["bed2A"], ID["bed2B"], 760),
              {**anim(ID["tallA"], ID["tallB"], 900), "properties": [base.prop("cover", 9)]}]
+    from .gym_art import ANIMATED
+    tiles += [anim(ID[f"gym_{theme}_{name}0"], ID[f"gym_{theme}_{name}1"], ms) for theme, name, ms in ANIMATED]
+    tiles += [anim(ID[f"lava_{mask}_0"], ID[f"lava_{mask}_1"], 420) for mask in range(16)]
     for sides in ("n", "s", "w", "e", "nw", "ne", "sw", "se"):
         tiles.append(anim(ID[f"shore_{sides}A"], ID[f"shore_{sides}B"], 500))
     from .tiles_v2 import blob_masks

@@ -212,6 +212,61 @@ export const SHEETS = [
   "gender": "female"
  },
  {
+  "id": "swimmer",
+  "label": "Swimmer",
+  "gender": "male"
+ },
+ {
+  "id": "swimmer_f",
+  "label": "Swimmer",
+  "gender": "female"
+ },
+ {
+  "id": "engineer",
+  "label": "Engineer",
+  "gender": "male"
+ },
+ {
+  "id": "rocker",
+  "label": "Rocker",
+  "gender": "male"
+ },
+ {
+  "id": "juggler",
+  "label": "Juggler",
+  "gender": "male"
+ },
+ {
+  "id": "tamer",
+  "label": "Tamer",
+  "gender": "male"
+ },
+ {
+  "id": "bird_keeper",
+  "label": "Bird Keeper",
+  "gender": "male"
+ },
+ {
+  "id": "psychic",
+  "label": "Psychic",
+  "gender": "male"
+ },
+ {
+  "id": "burglar",
+  "label": "Burglar",
+  "gender": "male"
+ },
+ {
+  "id": "super_nerd",
+  "label": "Super Nerd",
+  "gender": "male"
+ },
+ {
+  "id": "channeler",
+  "label": "Channeler",
+  "gender": "female"
+ },
+ {
   "id": "npc",
   "label": "Townsperson",
   "gender": "male"

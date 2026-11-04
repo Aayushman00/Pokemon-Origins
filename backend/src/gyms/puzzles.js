@@ -3,6 +3,7 @@ var AP = (function () {
   var DIRS = { up: [0, -1], right: [1, 0], down: [0, 1], left: [-1, 0] };
   var DN = ["up", "right", "down", "left"];
 
+  function dirName(d) { return DN.filter(function (n) { return DIRS[n][0] === d[0] && DIRS[n][1] === d[1]; })[0]; }
   function parse(rows) {
     return { w: rows[0].length, h: rows.length, g: rows.map(function (r) { return r.split(""); }) };
   }
@@ -56,6 +57,7 @@ var AP = (function () {
   }
 
   // 2. Bakery belts (Normal): stepping on a belt carries you along it until it ends.
+  // `trail` on a state lists every tile of a carried move, first step included, so the overworld can walk it.
   function belts(rows) {
     var m = parse(rows), start = find(m, "P")[0], goal = find(m, "G")[0];
     var base = clean(m, ["P"]);
@@ -65,14 +67,15 @@ var AP = (function () {
       step: function (s, d) {
         var x = s.p[0] + d[0], y = s.p[1] + d[1];
         if (at(base, x, y) === "#") return null;
-        var seen = {};
+        var seen = {}, trail = [dirName(d)];
         while (BD[at(base, x, y)] && !seen[x + "," + y]) {
           seen[x + "," + y] = 1;
           var b = BD[at(base, x, y)];
           if (at(base, x + b[0], y + b[1]) === "#") break;
           x += b[0]; y += b[1];
+          trail.push(dirName(b));
         }
-        return { p: [x, y] };
+        return { p: [x, y], trail: trail };
       },
       won: function (s) { return eq(s.p, goal); },
       key: function (s) { return s.p.join(); },
@@ -196,15 +199,16 @@ var AP = (function () {
     return {
       init: function () { return { p: start.slice() }; },
       step: function (s, d) {
-        var x = s.p[0], y = s.p[1], moved = false;
+        var x = s.p[0], y = s.p[1], moved = false, trail = [];
         for (var n = 0; n < 60; n++) {
           var nx = x + d[0], ny = y + d[1], c = at(base, nx, ny);
           if (c === "#") break;
-          if (c === "_") return { dead: true };
+          trail.push(dirName(d));
+          if (c === "_") return { dead: true, trail: trail };
           x = nx; y = ny; moved = true;
           if (c === "o" || c === "G") break;
         }
-        return moved ? { p: [x, y] } : null;
+        return moved ? { p: [x, y], trail: trail } : null;
       },
       won: function (s) { return eq(s.p, goal); },
       key: function (s) { return s.p.join(); },
