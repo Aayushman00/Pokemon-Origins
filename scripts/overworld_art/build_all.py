@@ -4,13 +4,13 @@
 
 1. character sheets, master palette, UI art      (build_sprites)
 2. tileset overworld.png: ids 0-23 + new tiles   (tiles)
-3. origin_town.json showcase map                 (origin_town)
+3. town and route maps                           (world_maps)
 4. tileArt.generated.js: pine + flowers for the Playground scenery
 """
 import json
 from pathlib import Path
 
-from . import build_sprites, origin_town
+from . import build_sprites, world_maps
 from .tiles import new_tiles, tileset_image
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,9 +43,9 @@ def main():
     img, total = tileset_image()
     img.save(MAPS / "tilesets" / "overworld.png")
     print(f"wrote overworld.png with {total} tiles")
-    data = origin_town.build()
-    (MAPS / "origin_town.json").write_text(json.dumps(data, indent=1) + "\n")
-    print("wrote origin_town.json")
+    for map_id, fn in world_maps.MAPS.items():
+        (MAPS / f"{map_id}.json").write_text(json.dumps(fn(), indent=1) + "\n")
+    print(f"wrote {len(world_maps.MAPS)} world maps")
 
     # interiors: their own tileset + one map per enterable building
     from . import interiors

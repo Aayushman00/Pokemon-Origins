@@ -1,0 +1,23 @@
+{
+	"places": {
+		"dawnbrook": "Dawnbrook",
+		"mossgate": "Mossgate Grove",
+		"hearthfield": "Hearthfield",
+		"ironbrook": "Ironbrook",
+		"saltmere": "Saltmere Harbor",
+		"dynamo": "Dynamo Station",
+		"gale": "Gale Spire",
+		"starfall": "Starfall Observatory",
+		"emberhold": "Emberhold",
+		"zenith": "Zenith Summit",
+		"route_1": "Route 1",
+		"route_2": "Route 2",
+		"route_3": "Route 3",
+		"route_4": "Route 4",
+		"route_5": "Route 5",
+		"route_6": "Route 6",
+		"route_7": "Route 7",
+		"route_8": "Route 8",
+		"route_9": "Route 9"
+	}
+}

@@ -15,7 +15,8 @@ for (const file of readdirSync(MAPS_DIR).filter((f) => f.endsWith(".json"))) {
 	raw[file.replace(/\.json$/, "")] = JSON.parse(readFileSync(join(MAPS_DIR, file), "utf8"));
 }
 
-const errors = validateMaps(raw, { imageExists: (image) => existsSync(join(MAPS_DIR, image)) });
+const names = JSON.parse(readFileSync(join(ROOT, "backend/data/world/names.json"), "utf8"));
+const errors = validateMaps(raw, { imageExists: (image) => existsSync(join(MAPS_DIR, image)), names });
 if (errors.length) {
 	for (const e of errors) console.error(`  ${e}`);
 	console.error(`validate:maps failed: ${errors.length} problem(s) in ${Object.keys(raw).length} maps`);

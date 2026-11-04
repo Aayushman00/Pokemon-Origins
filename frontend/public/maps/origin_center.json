@@ -868,17 +868,17 @@
       {
        "name": "targetMap",
        "type": "string",
-       "value": "origin_town"
+       "value": "dawnbrook"
       },
       {
        "name": "targetX",
        "type": "int",
-       "value": 25
+       "value": 7
       },
       {
        "name": "targetY",
        "type": "int",
-       "value": 7
+       "value": 6
       },
       {
        "name": "facing",

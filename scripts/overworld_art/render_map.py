@@ -1,7 +1,7 @@
 """Render a map JSON to a PNG offline (no dev server), the way renderer.js
 draws it: ground, decor, objects, y-sorted actors (stand frame), above.
 
-  python3 -m scripts.overworld_art.render_map origin_town out.png --scale 3
+  python3 -m scripts.overworld_art.render_map dawnbrook out.png --scale 3
 
 Use it to review art at 1x / 3x next to the FireRed references.
 """

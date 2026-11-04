@@ -1,7 +1,7 @@
 """Interiors v2: Care Centre, Mart and home, painted as whole rooms.
 
   frontend/public/maps/tilesets/interior.png   unique 16x16 tiles, 8 columns
-  frontend/public/maps/origin_center.json, origin_mart.json, origin_home.json
+  frontend/public/maps/origin_center.json, origin_mart.json, dawnbrook_home.json, dawnbrook_house.json, dawnbrook_lab.json
 
 Each room is painted as ONE picture (so furniture spans tiles and casts big
 soft floor shadows across tile edges, the way FireRed rooms look), then
@@ -859,7 +859,10 @@ def paint_home(frame):
 
 
 # ==================================================== slice + dedupe + maps
-ROOMS = {"origin_center": (paint_center, 3), "origin_mart": (paint_mart, 1), "origin_home": (paint_home, 1)}
+# origin_center and origin_mart are dev-only until Mossgate and Hearthfield exist.
+# ponytail: the lab and neighbour house reuse the Centre and home rooms until they get their own art.
+ROOMS = {"origin_center": (paint_center, 3), "origin_mart": (paint_mart, 1), "dawnbrook_home": (paint_home, 1),
+         "dawnbrook_house": (paint_home, 1), "dawnbrook_lab": (paint_center, 3)}
 
 
 def _tile_bytes(img):
@@ -926,11 +929,12 @@ class MapData(base.MapBuilder):
         self.obj("signs", name, x, y, **({"script": script(*ops)} if ops else {"text": text}))
 
 
-# where each building's door is in Origin Town (door cells, x list, y)
-DOORS = {"origin_home": ([4], 6), "origin_center": ([25, 26], 6), "origin_mart": ([26], 22)}
+# where each building's door is in Dawnbrook (door cells, x list, y)
+DOORS = {"dawnbrook_home": ([7], 5), "dawnbrook_lab": ([22], 5), "dawnbrook_house": ([7], 14),
+         "origin_center": ([7], 5), "origin_mart": ([7], 5)}
 # exit mat column inside each room; you arrive one row above it, facing up
-MAT = {"origin_home": 4, "origin_center": 7, "origin_mart": 6}
-ARRIVE = {k: [(MAT[k], ROOMS_H - 2)] * len(DOORS[k][0]) for k, ROOMS_H in (("origin_home", 10), ("origin_center", 10), ("origin_mart", 10))}
+MAT = {"dawnbrook_home": 4, "dawnbrook_house": 4, "dawnbrook_lab": 7, "origin_center": 7, "origin_mart": 6}
+ARRIVE = {k: [(MAT[k], 8)] * len(DOORS[k][0]) for k in DOORS}  # every room is 10 tall
 
 
 def make_map(map_id, extras):
@@ -943,7 +947,7 @@ def make_map(map_id, extras):
     door_xs, door_y = DOORS[map_id]
     mx = MAT[map_id]
     m.block(mx, room.h - 1, 0)
-    m.obj("warps", "exit", mx, room.h - 1, kind="door", targetMap="origin_town", targetX=door_xs[0], targetY=door_y + 1,
+    m.obj("warps", "exit", mx, room.h - 1, kind="door", targetMap="dawnbrook", targetX=door_xs[0], targetY=door_y + 1,
           facing="down", transition="iris", enterDir="down")
     extras(m)
     data = m.build()
@@ -997,7 +1001,27 @@ def home():
         m.sign("stairs", 10, 2, text="Your room is upstairs. (It opens in a later update.)")
         m.sign("sink", 1, 1, text="The dishes are done. Mom's handiwork.")
         m.sign("cooker", 6, 1, text="Something smells delicious. Dinner later!")
-    return make_map("origin_home", extras)
+        m.npc("mom", 3, 5, "mom", "right", say("Off on an adventure? Don't forget to come home for dinner!"))
+    return make_map("dawnbrook_home", extras)
 
 
-MAPS = {"origin_center": center, "origin_mart": mart, "origin_home": home}
+def house():
+    def extras(m):
+        m.sign("tv", 8, 1, text="A nature show about the Greenwood is on.")
+        m.sign("stairs", 10, 2, text="That's the neighbours' upstairs. Better not.")
+        m.npc("neighbour", 3, 5, "old_man", "right", say("You're the kid from next door! The Professor's lab is just across the road."))
+    return make_map("dawnbrook_house", extras)
+
+
+def lab():
+    def extras(m):
+        talk = [say("Ah, you made it! Every journey starts with a first partner."),
+                say("(Choosing your partner here opens in a later update.)")]
+        m.npc("professor", 7, 2, "professor", "down", *talk)
+        m.sign("counter_professor", 7, 3, ops=talk)
+        m.sign("books", 1, 1, text="Field notes on Pokemon of the Greenwood.")
+        m.npc("aide", 12, 4, "scientist", "left", say("The Professor studies how Pokemon and people first met."))
+    return make_map("dawnbrook_lab", extras)
+
+
+MAPS = {"origin_center": center, "origin_mart": mart, "dawnbrook_home": home, "dawnbrook_house": house, "dawnbrook_lab": lab}

@@ -13,7 +13,8 @@ const load = () =>
 			.map((f) => [f.replace(/\.json$/, ""), JSON.parse(readFileSync(join(MAPS_DIR, f), "utf8"))])
 	);
 const imageExists = (image) => existsSync(join(MAPS_DIR, image));
-const check = (raw, opts = {}) => validateMaps(raw, { imageExists, ...opts });
+const names = JSON.parse(readFileSync(join(MAPS_DIR, "../../../backend/data/world/names.json"), "utf8"));
+const check = (raw, opts = {}) => validateMaps(raw, { imageExists, names, ...opts });
 const layer = (map, name) => map.layers.find((l) => l.name === name);
 const prop = (obj, name) => obj.properties.find((p) => p.name === name);
 const expectError = (raw, pattern) => {
@@ -45,17 +46,17 @@ describe("validateMaps", () => {
 	});
 	it("rejects a gid outside its tileset", () => {
 		const raw = load();
-		layer(raw.origin_home, "ground").data[0] = 999;
-		expectError(raw, /origin_home.*gid 999/);
+		layer(raw.dawnbrook_home, "ground").data[0] = 999;
+		expectError(raw, /dawnbrook_home.*gid 999/);
 	});
 	it("rejects an object outside the map", () => {
 		const raw = load();
-		layer(raw.origin_town, "signs").objects[0].x = 16 * 500;
-		expectError(raw, /origin_town.*signs.*outside/);
+		layer(raw.dawnbrook, "signs").objects[0].x = 16 * 500;
+		expectError(raw, /dawnbrook.*signs.*outside/);
 	});
 	it("rejects a warp to a missing map, off the map, or into a wall", () => {
 		let raw = load();
-		const warp = () => layer(raw.origin_town, "warps").objects[0];
+		const warp = () => layer(raw.dawnbrook, "warps").objects[0];
 		prop(warp(), "targetMap").value = "nowhere";
 		expectError(raw, /warp.*missing map "nowhere"/);
 		raw = load();
@@ -69,7 +70,7 @@ describe("validateMaps", () => {
 	it("rejects a bad warp facing, enterDir or transition", () => {
 		for (const [name, value] of [["facing", "sideways"], ["enterDir", "sideways"], ["transition", "spiral"]]) {
 			const raw = load();
-			prop(layer(raw.origin_town, "warps").objects[0], name).value = value;
+			prop(layer(raw.dawnbrook, "warps").objects[0], name).value = value;
 			expectError(raw, new RegExp(`warp.*${name}`));
 		}
 	});
@@ -94,7 +95,7 @@ describe("validateMaps", () => {
 		expectError(raw, /test_town north.*blocked/);
 	});
 	it("rejects an NPC with a bad schema or a walkable tile", () => {
-		const npc = (raw) => layer(raw.origin_town, "npcs").objects[0];
+		const npc = (raw) => layer(raw.dawnbrook, "npcs").objects[0];
 		let raw = load();
 		prop(npc(raw), "sprite").value = "not_a_sheet";
 		expectError(raw, /npcs.*sprite "not_a_sheet"/);
@@ -103,7 +104,7 @@ describe("validateMaps", () => {
 		expectError(raw, /npcs.*facing/);
 		raw = load();
 		const n = npc(raw);
-		layer(raw.origin_town, "collision").data[(n.y / 16) * raw.origin_town.width + n.x / 16] = 0;
+		layer(raw.dawnbrook, "collision").data[(n.y / 16) * raw.dawnbrook.width + n.x / 16] = 0;
 		expectError(raw, /npcs.*walkable/);
 	});
 	it("a legendary needs a dex number instead of a sheet", () => {
@@ -112,9 +113,41 @@ describe("validateMaps", () => {
 		mon.properties = mon.properties.filter((p) => p.name !== "dex");
 		expectError(raw, /legend_grove.*dex/);
 	});
+	it("rejects a nameKey missing from names.json", () => {
+		const raw = load();
+		prop(raw.dawnbrook, "nameKey").value = "nowhere";
+		expectError(raw, /dawnbrook.*nameKey "nowhere"/);
+	});
+	it("rejects a door or exit that cannot be walked to", () => {
+		const raw = load();
+		const map = raw.dawnbrook;
+		const solid = map.tilesets.find((t) => t.name === "collision").firstgid;
+		for (let y = 0; y < map.height; y++) layer(map, "collision").data[y * map.width + 14] = solid;
+		expectError(raw, /dawnbrook.*cannot be reached/);
+	});
+	it("rejects a trainer who can be walked around", () => {
+		const raw = load();
+		prop(layer(raw.route_1, "npcs").objects[1], "sight").value = 1;
+		expectError(raw, /route_1.*can be walked around/);
+	});
+	it("rejects trainers who can be met out of order", () => {
+		const raw = load();
+		const [a, b] = layer(raw.route_1, "npcs").objects;
+		prop(a, "order").value = 2;
+		prop(b, "order").value = 1;
+		expectError(raw, /route_1.*met before/);
+	});
+	it("rejects a broken trainer schema", () => {
+		let raw = load();
+		prop(layer(raw.route_1, "npcs").objects[1], "order").value = 1;
+		expectError(raw, /route_1.*order/);
+		raw = load();
+		raw.route_1.properties = raw.route_1.properties.filter((p) => p.name !== "entry");
+		expectError(raw, /route_1.*entry/);
+	});
 	it("rejects an encounter zone without a table", () => {
 		const raw = load();
-		layer(raw.origin_town, "encounters").objects[0].properties = [];
+		layer(raw.route_1, "encounters").objects[0].properties = [];
 		expectError(raw, /encounters.*table/);
 	});
 });
@@ -128,7 +161,7 @@ describe("serverIndex", () => {
 		assert.equal(route.connections.south.map, "test_town");
 	});
 	it("keeps what a warp needs to be checked server side", () => {
-		const warp = serverIndex(load()).origin_town.warps[0];
+		const warp = serverIndex(load()).dawnbrook.warps[0];
 		assert.deepEqual(Object.keys(warp).sort(), ["enterDir", "h", "targetMap", "targetX", "targetY", "w", "x", "y"]);
 	});
 	it("the committed index matches the maps (run npm run maps:index if this fails)", () => {

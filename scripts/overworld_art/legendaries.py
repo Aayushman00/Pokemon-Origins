@@ -529,7 +529,7 @@ def grove():
     """A forest clearing (not linked into the world yet) to meet each legendary.
     Open it with /overworld?map=legend_grove. Their real homes are a design call."""
     from scripts import gen_overworld_placeholders as base
-    from . import origin_town as town
+    from . import world_maps as town
     from .tiles_v2 import blob_mask
 
     ID = town.ID

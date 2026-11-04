@@ -65,6 +65,59 @@ function edgeCells(map, side) {
 	return cells;
 }
 
+/** Tiles reachable from `seeds` on foot, never entering `blocked` ("x,y" keys). */
+function flood(map, seeds, blocked = new Set()) {
+	const key = ([x, y]) => `${x},${y}`;
+	const seen = new Set();
+	const queue = seeds.filter((c) => !blocked.has(key(c)));
+	queue.forEach((c) => seen.add(key(c)));
+	while (queue.length) {
+		const [x, y] = queue.pop();
+		for (const { dx, dy } of Object.values(DIRS)) {
+			const next = [x + dx, y + dy];
+			// ponytail: ledges count as two-way here; check hop direction once a map relies on one
+			if (collisionAt(map, ...next) === COL.SOLID || seen.has(key(next)) || blocked.has(key(next))) continue;
+			seen.add(key(next));
+			queue.push(next);
+		}
+	}
+	return seen;
+}
+
+function checkReachable(map, err, maps) {
+	const points = [];
+	for (const other of Object.values(maps)) for (const w of other.warps) if (w.targetMap === map.id) points.push([w.targetX, w.targetY]);
+	for (const w of map.warps) points.push([w.x, w.y]);
+	for (const side of Object.keys(map.connections)) points.push(...edgeCells(map, side));
+	if (!points.length) return;
+	const seen = flood(map, [points[0]]);
+	for (const [x, y] of points) if (!seen.has(`${x},${y}`)) err(`(${x},${y}) cannot be reached from (${points[0]})`);
+}
+
+/** Trainers must stop the player, in order. `entry` names the edge the player arrives on. */
+function checkTrainers(map, err) {
+	const trainers = map.npcs.filter((n) => n.trainer).sort((a, b) => a.order - b.order);
+	if (!trainers.length) return;
+	const entry = map.properties.entry;
+	if (!(entry in SIDE_STEP)) return err(`has trainers and needs an "entry" edge`);
+	if (trainers.some((t, i) => t.order !== i + 1)) return err("trainer order must run 1, 2, 3...");
+	const sights = trainers.map((t) => {
+		const cells = new Set();
+		const { dx, dy } = DIRS[t.facing] || { dx: 0, dy: 0 };
+		for (let i = 1; i <= t.sight && collisionAt(map, t.x + dx * i, t.y + dy * i) !== COL.SOLID; i++) cells.add(`${t.x + dx * i},${t.y + dy * i}`);
+		if (!cells.size) err(`trainer "${t.name}" sees nothing`);
+		return cells;
+	});
+	const start = edgeCells(map, entry);
+	const exits = Object.keys(SIDE_STEP).filter((s) => s !== entry).flatMap((s) => edgeCells(map, s));
+	trainers.forEach((t, k) => {
+		const seen = flood(map, start, sights[k]);
+		if (exits.some(([x, y]) => seen.has(`${x},${y}`))) err(`trainer "${t.name}" can be walked around`);
+		const next = trainers[k + 1];
+		if (next && [...sights[k + 1]].some((c) => seen.has(c))) err(`trainer "${next.name}" can be met before "${t.name}"`);
+	});
+}
+
 function checkConnections(map, err, maps, world) {
 	for (const [side, link] of Object.entries(map.connections)) {
 		const other = maps[link.map];
@@ -91,9 +144,10 @@ function checkConnections(map, err, maps, world) {
 
 /**
  * Every problem in a set of maps, as readable strings ([] = valid).
- * `raw` = { mapId: tiledJson }. `imageExists(path)` checks a tileset image.
+ * `raw` = { mapId: tiledJson }. `imageExists(path)` checks a tileset image,
+ * `names` is backend/data/world/names.json.
  */
-export function validateMaps(raw, { imageExists }) {
+export function validateMaps(raw, { imageExists, names }) {
 	const errors = [];
 	const maps = {};
 	for (const [id, json] of Object.entries(raw)) {
@@ -110,6 +164,10 @@ export function validateMaps(raw, { imageExists }) {
 		checkObjects(map, err);
 		checkWarps(map, err, maps);
 		checkConnections(map, err, maps, world);
+		checkReachable(map, err, maps);
+		checkTrainers(map, err);
+		const { nameKey } = map.properties;
+		if (nameKey !== undefined && !names.places[nameKey]) err(`nameKey "${nameKey}" is not in names.json`);
 	}
 	return errors;
 }

@@ -12,7 +12,7 @@ from pathlib import Path
 from PIL import Image
 
 from .characters import ROSTER
-from .origin_town import GRASS_IDS, plain_windows
+from .world_maps import GRASS_IDS, plain_windows
 from .palette import OUTLINE, RAMPS, WHITE
 from .sheets import COLUMNS, ROWS
 
@@ -187,8 +187,8 @@ class WorldTests(unittest.TestCase):
             self.assertEqual(img.width, 128)
             self.assertEqual(img.height % 16, 0)
 
-    def test_origin_town_has_no_bare_grass_and_valid_tiles(self):
-        m = json.loads((MAPS / "origin_town.json").read_text())
+    def test_dawnbrook_has_no_bare_grass_and_valid_tiles(self):
+        m = json.loads((MAPS / "dawnbrook.json").read_text())
         ts = m["tilesets"][0]
         with Image.open(MAPS / ts["image"]) as img:
             self.assertEqual((ts["imagewidth"], ts["imageheight"]), img.size)
@@ -199,24 +199,25 @@ class WorldTests(unittest.TestCase):
         W, H = m["width"], m["height"]
 
         class Grid:
+            w, h = W, H
             ground, decor, objects, above = (layers[n]["data"] for n in ("ground", "decor", "objects", "above"))
 
             @staticmethod
             def i(x, y):
                 return y * W + x
 
-        import scripts.overworld_art.origin_town as town
-        self.assertEqual((town.W, town.H), (W, H))
+        self.assertEqual((W, H), (30, 20))
         self.assertEqual(plain_windows(Grid), [], "bare grass patch")
         self.assertTrue(GRASS_IDS)
 
-    def test_origin_town_npcs_use_existing_sheets(self):
-        m = json.loads((MAPS / "origin_town.json").read_text())
-        npcs = next(l for l in m["layers"] if l["name"] == "npcs")["objects"]
-        self.assertGreaterEqual(len(npcs), 10)
-        for o in npcs:
-            sprite = next(p["value"] for p in o["properties"] if p["name"] == "sprite")
-            self.assertTrue((SPRITES / f"{sprite}.png").exists(), sprite)
+    def test_world_map_npcs_use_existing_sheets(self):
+        for map_id, count in (("dawnbrook", 2), ("route_1", 4)):
+            m = json.loads((MAPS / f"{map_id}.json").read_text())
+            npcs = next(l for l in m["layers"] if l["name"] == "npcs")["objects"]
+            self.assertEqual(len(npcs), count)
+            for o in npcs:
+                sprite = next(p["value"] for p in o["properties"] if p["name"] == "sprite")
+                self.assertTrue((SPRITES / f"{sprite}.png").exists(), sprite)
 
 
 if __name__ == "__main__":

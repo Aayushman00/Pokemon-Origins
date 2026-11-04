@@ -2,7 +2,7 @@
 
 Original pixel art for Pokemon Origins' overworld: 31 character sheets
 (18 boys, 12 girls, 1 generic townsperson), the extended tileset and the
-Origin Town showcase map. Everything is generated from text grids and small
+town and route maps. Everything is generated from text grids and small
 drawing functions in this folder, so art changes are reviewable diffs.
 
 | file | what it holds |
@@ -18,7 +18,7 @@ drawing functions in this folder, so art changes are reviewable diffs.
 | `characters.py` | the cast: hand-drawn player heads + everyone else assembled from parts |
 | `sheets.py` | 128x128 sheet: 8 columns (stand, walkA, walkB, runStand, runA, runB, blink, alert) x 4 rows (down, up, left, right) |
 | `tiles.py` | tileset: ids 0-23 unchanged, new tiles from 24 (grass, beds, herringbone, fences, pines, shores, buildings) |
-| `origin_town.py` | the showcase map, with an automatic "no bare 3x3 grass" pass |
+| `world_maps.py` | towns and routes painted from text grids (`route_layouts.json` holds the routes), with an automatic "no bare 3x3 grass" pass |
 | `build_all.py` | runs everything below |
 | `preview.py` | 4x contact sheet PNG + walk-cycle GIF |
 | `test_art.py` | sheet size, frame count, palette limit, mirroring, foot anchor, orphans, silhouettes, map checks |
@@ -34,5 +34,5 @@ python3 -m scripts.overworld_art.preview cast.png   # 4x contact sheet + cast.gi
 In the running app, `/sprite-preview.html` animates every sheet at 4x.
 
 ```bash
-python3 -m scripts.overworld_art.render_map origin_town town.png --scale 3
+python3 -m scripts.overworld_art.render_map dawnbrook town.png --scale 3
 ```

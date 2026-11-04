@@ -12,13 +12,14 @@ const ids = readdirSync(MAPS_DIR).filter((f) => f.endsWith(".json")).map((f) => 
 const maps = Object.fromEntries(ids.map((id) => [id, parseTiledMap(JSON.parse(readFileSync(join(MAPS_DIR, `${id}.json`), "utf8")), id)]));
 
 describe("sample maps (smoke + lint)", () => {
-	it("finds the sample maps and the Origin Town showcase and parses them", () => {
-		assert.deepEqual(ids.sort(), ["legend_grove", "origin_center", "origin_home", "origin_mart", "origin_town", "test_house", "test_route", "test_town"]);
+	it("finds every map and parses it", () => {
+		assert.deepEqual(ids.sort(), ["dawnbrook", "dawnbrook_home", "dawnbrook_house", "dawnbrook_lab", "legend_grove", "origin_center", "origin_mart", "route_1", "test_house", "test_route", "test_town"]);
 		assert.equal(maps.test_town.width, 30);
-		assert.equal(maps.origin_town.width, 32);
+		assert.deepEqual([maps.dawnbrook.width, maps.dawnbrook.height], [30, 20]);
+		assert.deepEqual([maps.route_1.width, maps.route_1.height], [40, 20]);
 	});
-	it("Origin Town animates water shores, flower beds and tall grass", () => {
-		const ts = maps.origin_town.tilesets.find((t) => t.image.endsWith("overworld.png"));
+	it("Dawnbrook animates water shores, flower beds and tall grass", () => {
+		const ts = maps.dawnbrook.tilesets.find((t) => t.image.endsWith("overworld.png"));
 		assert.ok(ts.anim.size >= 12, `only ${ts.anim.size} animated tiles`);
 		for (const a of ts.anim.values()) {
 			assert.ok(a.frames.length >= 2, "an animation needs at least 2 frames");
@@ -28,10 +29,10 @@ describe("sample maps (smoke + lint)", () => {
 		assert.ok([...ts.anim.values()].some((a) => a.frames.length === 3), "no 3-frame water animation");
 		assert.ok([...ts.cover.values()].every((row) => row === 9));
 	});
-	it("every Origin door warp lands on a walkable cell and has a warp back", () => {
-		const doors = maps.origin_town.warps;
-		assert.ok(doors.length >= 4, "home, care centre (2 cells) and mart doors");
-		for (const w of [...doors, ...["origin_home", "origin_center", "origin_mart"].flatMap((id) => maps[id].warps)]) {
+	it("every Dawnbrook door warp lands on a walkable cell and has a warp back", () => {
+		const doors = maps.dawnbrook.warps;
+		assert.equal(doors.length, 3, "home, lab and neighbour house");
+		for (const w of [...doors, ...["dawnbrook_home", "dawnbrook_lab", "dawnbrook_house"].flatMap((id) => maps[id].warps)]) {
 			const from = Object.values(maps).find((m) => m.warps.includes(w));
 			const to = maps[w.targetMap];
 			assert.ok(to, `${from.id}: warp to missing map ${w.targetMap}`);
@@ -43,7 +44,7 @@ describe("sample maps (smoke + lint)", () => {
 		}
 	});
 	it("interiors use the interior tileset and talk-through counters", () => {
-		for (const id of ["origin_home", "origin_center", "origin_mart"]) {
+		for (const id of ["dawnbrook_home", "dawnbrook_lab", "dawnbrook_house", "origin_center", "origin_mart"]) {
 			assert.ok(maps[id].tilesets.some((t) => t.image === "tilesets/interior.png"), id);
 		}
 		const sign = maps.origin_center.signs.find((s) => s.name === "counter_nurse");
@@ -85,7 +86,7 @@ describe("sample maps (smoke + lint)", () => {
 			for (const [side, link] of Object.entries(m.connections)) {
 				const back = maps[link.map]?.connections[opposite[side]];
 				assert.ok(back && back.map === m.id, `${m.id} ${side} -> ${link.map} has no way back`);
-				assert.equal(back.offset, -link.offset);
+				assert.equal(back.offset + link.offset, 0);
 			}
 		}
 	});
