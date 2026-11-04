@@ -4,7 +4,7 @@
     "name": "Blue",
     "title": "Champion",
     "specialization": "Varied",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "blue",
     "party": [
       { "pokemonId": 18, "level": 57 },

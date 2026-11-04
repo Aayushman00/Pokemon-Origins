@@ -15,7 +15,7 @@ describe("campaign loader", () => {
 	it("loads Level 1 with ordered battles", () => {
 		const level = loadLevel(1);
 		assert.equal(level.level, 1);
-		assert.equal(level.name, "Pewter City");
+		assert.equal(level.name, "Mossgate Grove");
 		assert.equal(level.battles.length, 5);
 		assert.deepEqual(
 			level.battles.map((b) => b.battleNumber),
@@ -28,7 +28,7 @@ describe("campaign loader", () => {
 				"lass_annie",
 				"bug_catcher_tim",
 				"hiker_jack",
-				"brock",
+				"willow_thornby",
 			]
 		);
 		assert.equal(level.battles[0].type, "trainer");
@@ -43,11 +43,11 @@ describe("campaign loader", () => {
 		const joey = getTrainer("youngster_joey");
 		assert.equal(joey.party[0].pokemonId, 19);
 		assert.equal(joey.party[0].level, 4);
-		const brock = getTrainer("brock");
-		assert.equal(brock.title, "Gym Leader");
-		assert.equal(brock.party.length, 2);
-		assert.equal(brock.party[0].pokemonId, 74);
-		assert.equal(brock.party[1].pokemonId, 95);
+		const leader = getTrainer("willow_thornby");
+		assert.equal(leader.title, "Gym Leader");
+		assert.equal(leader.party.length, 2);
+		assert.equal(leader.party[0].pokemonId, 69);
+		assert.equal(leader.party[1].pokemonId, 102);
 	});
 
 	it("listBattles attaches trainer identity without stats", () => {

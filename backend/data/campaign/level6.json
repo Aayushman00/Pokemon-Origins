@@ -1,6 +1,6 @@
 {
   "level": 6,
-  "name": "Saffron City",
+  "name": "Gale Spire",
   "battles": [
     {
       "battleNumber": 1,
@@ -25,7 +25,7 @@
     {
       "battleNumber": 5,
       "type": "gym_boss",
-      "trainerId": "sabrina"
+      "trainerId": "skye_corvin"
     }
   ]
 }

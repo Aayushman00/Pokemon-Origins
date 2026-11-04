@@ -1,6 +1,6 @@
 {
   "level": 5,
-  "name": "Fuchsia City",
+  "name": "Dynamo Station",
   "battles": [
     {
       "battleNumber": 1,
@@ -25,7 +25,7 @@
     {
       "battleNumber": 5,
       "type": "gym_boss",
-      "trainerId": "koga"
+      "trainerId": "volt_dray"
     }
   ]
 }

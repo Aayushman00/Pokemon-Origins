@@ -54,6 +54,8 @@ class Pokemon(BaseModel):
     stages: Optional[Dict[str, int]] = None
     # Ability name (str) or {"id": .., "name": ..} dict; None means "no ability".
     ability: Optional[Any] = None
+    # Focus Energy active on the attacker (+2 crit stages in Gen 3).
+    focus_energy: Optional[bool] = None
 
 # Model for a battle request (for calculate_damage endpoint)
 class BattleRequest(BaseModel):

@@ -8,6 +8,7 @@ Backend-owned, data-driven campaign config. The battle engine does not read thes
 | `trainers/*.json` | Trainer identity + party `{ pokemonId, level }` only (`regular`, `gym_leaders`, `elite_four`, `champion`) |
 | `rewards/levelN_boss.json` | Boss reward pool: `{ level, source, optionCount, pool: [{ pokemonId, level }] }` |
 | `encounters/legendary.json` | Legendary catalog: `{ id, name, pokemonId, level }` keyed by encounter id |
+| `gyms/gym_puzzles.json` | One puzzle per gym leader, keyed by leader id: `{ gym, leaderId, town, mechanic, name, rule, hint, par, rows, config? }`. `mechanic` names a function in `src/gyms/puzzles.js`; `par` is the solver's shortest solution (checked by `gymPuzzles.test.js`). The server can verify a claimed solve with `replay(spec, moves)`. |
 | `items.json` | Item catalog: `itemId`, `name`, `category` (`healing` / `evolution_stone` / `pp_restore`), `healAmount`, `usableInBattle`, `usableOverworld`, `description`. The DB stores quantities only — item stats always come from this file. |
 | `move_meta.json` | Per-move battle metadata keyed by exact `pokedex.Move` name — currently `priority` (Gen 3 brackets; unlisted moves are 0). Read by the Node session for turn order. |
 | `mart.json` | Mart stock and unlock rule: `{ unlock: { requiredUnlockedLevel, hint }, stock: [{ itemId, price }] }`. Item ids resolve against `items.json`; prices are server truth. Leaf Stone is deliberately not sold. |
@@ -20,7 +21,7 @@ All ten levels are populated and playable under progress locks:
 
 | Levels | Structure | Battle types |
 |--------|-----------|--------------|
-| 1–8 | 4 road trainers + gym leader (Brock, Misty, Lt. Surge, Erika, Koga, Sabrina, Blaine, Giovanni) | `trainer` ×4, `gym_boss` |
+| 1–8 | 4 road trainers + gym leader (Willow Thornby, Mara Quill, Tavish Rook, Coral Marlowe, Volt Dray, Skye Corvin, Sage Ilmara, Cinder Valko) | `trainer` ×4, `gym_boss` |
 | 9 | Indigo Plateau: Lorelei, Bruno, Agatha, Lance, then Blue | `elite_four` ×4, `champion` |
 | 10 | Legendary Gauntlet: Articuno, Zapdos, Moltres, Mew, Mewtwo | `legendary` ×5 |
 

@@ -57,9 +57,9 @@ def _battle(attacker=None, defender=None, move=None, **overrides) -> BattleReque
 
 
 def _resolve(battle, rolls, uniform=1.0):
-    """Run with deterministic random.random rolls and a fixed 0.85-1.0 factor."""
+    """Run with deterministic random.random rolls and a fixed 85-100% factor."""
     with patch("app.combat.random.random", side_effect=rolls), patch(
-        "app.combat.random.uniform", return_value=uniform
+        "app.combat.random.randint", return_value=round(uniform * 100)
     ):
         return calculate_damage_result(battle)
 
@@ -211,9 +211,10 @@ def test_pinch_ability_boosts_matching_type_at_low_hp():
     boosted = _resolve(_battle(attacker=low_hp, move=vine), rolls=[0.0, 0.9])
     # Gen III floors after every step (see test_gen3_floors_after_every_step_
     # like_the_real_games above): base = floor(floor(4*45*50/40)/50)+2 = 6
-    # (no STAB: attacker is Normal-type, move is Grass).
+    # (no STAB: attacker is Normal-type, move is Grass). pret scales the move's
+    # POWER by x1.5 before the formula: power 67 -> floor(4*67*50/40/50)+2 = 8.
     assert base["damage"] == pytest.approx(6.0)
-    assert boosted["damage"] == pytest.approx(9.0)  # floor(6 * 1.5) Overgrow
+    assert boosted["damage"] == pytest.approx(8.0)
 
 
 def test_static_can_paralyze_physical_attacker():
@@ -468,3 +469,109 @@ def test_force_crit_is_a_no_op_on_a_status_move():
         _battle(move=wave, force_crit=True), rolls=[0.0, 0.0]
     )
     assert result["result"] == "status"
+
+
+# --- pret/pokefirered fidelity ------------------------------------------------
+
+
+def test_steel_resists_ghost_and_dark_but_fairy_is_gone():
+    from app.utils import get_type_effectiveness
+
+    assert get_type_effectiveness("ghost", ["steel"]) == 0.5
+    assert get_type_effectiveness("dark", ["steel"]) == 0.5
+    assert get_type_effectiveness("fairy", ["dragon"]) == 1.0  # no Fairy in Gen 3
+    assert get_type_effectiveness("dragon", ["fairy"]) == 1.0
+
+
+def test_identical_defender_types_are_checked_once():
+    from app.utils import get_type_factors
+
+    assert get_type_factors("fire", ["grass", "grass"]) == [20]
+    assert get_type_factors("fire", ["grass", "bug"]) == [20, 20]
+
+
+def test_crit_odds_follow_stage_table():
+    from app.combat import CRIT_CHANCE_DENOMS
+
+    assert CRIT_CHANCE_DENOMS == (16, 8, 4, 3, 2)
+    slash = _move(name="Slash", power=70, move_type="Normal")
+    # Roll 0.10 < 1/8 crits a high-crit move but not a normal one (1/16).
+    assert _resolve(_battle(move=slash), rolls=[0.0, 0.10])["critical_hit"] is True
+    assert _resolve(_battle(), rolls=[0.0, 0.10])["critical_hit"] is False
+
+
+def test_focus_energy_adds_two_crit_stages():
+    focused = _pokemon(focus_energy=True)
+    # stage 2 -> 1/4: 0.2 crits, plain 1/16 would not.
+    assert _resolve(_battle(attacker=focused), rolls=[0.0, 0.2])["critical_hit"] is True
+
+
+def test_battle_armor_blocks_crits():
+    armored = _pokemon(pokemon_id=2, ability={"name": "battle-armor"})
+    result = _resolve(_battle(defender=armored), rolls=[0.0], uniform=1.0)
+    assert result["critical_hit"] is False
+
+
+def test_crit_ignores_attackers_negative_stage():
+    lowered = _pokemon(stages={"atk": -2})
+    crit = _resolve(_battle(attacker=lowered, force_crit=True), rolls=[0.0])["damage"]
+    clean = _resolve(_battle(attacker=_pokemon(), force_crit=True), rolls=[0.0])["damage"]
+    assert crit == clean
+
+
+def test_crit_ignores_defenders_positive_stage():
+    walled = _pokemon(pokemon_id=2, stages={"def": 3})
+    crit = _resolve(_battle(defender=walled, force_crit=True), rolls=[0.0])["damage"]
+    base = _resolve(_battle(defender=_pokemon(pokemon_id=2), force_crit=True), rolls=[0.0])["damage"]
+    assert crit == base
+
+
+def test_burn_halves_after_the_divide_not_on_the_attack_stat():
+    # Level 50, atk 100 vs def 40, power 40: base = 22*40*100//40//50 = 44.
+    # pret halves that (22) then adds 2 = 24; halving attack first would give
+    # 22*40*50//40//50 + 2 = 24 too, so pick numbers where flooring differs.
+    foe = _pokemon(pokemon_id=2, defense=40)
+    atk = _pokemon(level=50, attack=101, status="brn")
+    res = _resolve(_battle(attacker=atk, defender=foe, move=_move(power=40)), rolls=[0.0, 0.9])
+    lf = (2 * 50) // 5 + 2
+    expected = (lf * 40 * 101 // 40 // 50) // 2 + 2
+    expected = expected * 15 // 10  # STAB: both Normal
+    assert res["damage"] == expected
+
+
+def test_random_factor_is_integer_percent_85_to_100():
+    low = _resolve(_battle(), rolls=[0.0, 0.9], uniform=0.85)["damage"]
+    high = _resolve(_battle(), rolls=[0.0, 0.9], uniform=1.0)["damage"]
+    assert low <= high
+
+
+def test_non_immune_damage_never_drops_below_one():
+    foe = _pokemon(pokemon_id=2, defense=999, types=["rock", "steel"])
+    weak = _move(power=1, move_type="Normal")
+    res = _resolve(_battle(defender=foe, move=weak), rolls=[0.0, 0.9], uniform=0.85)
+    assert res["damage"] >= 1
+
+
+@pytest.mark.parametrize(
+    "name,expected,move_type",
+    [("Seismic-toss", 5.0, "Fighting"), ("Dragon-rage", 40.0, "Dragon"), ("Sonic-boom", 20.0, "Normal")],
+)
+def test_fixed_damage_moves(name, expected, move_type):
+    move = _move(name=name, power=0, move_type=move_type)
+    res = _resolve(_battle(move=move), rolls=[0.0])
+    assert res["result"] == "hit" and res["damage"] == expected
+
+
+def test_fixed_damage_respects_type_immunity():
+    ghost = _pokemon(pokemon_id=2, types=["ghost"])
+    move = _move(name="Seismic-toss", power=0, move_type="Normal")
+    res = _resolve(_battle(defender=ghost, move=move), rolls=[])
+    assert res["damage"] == 0 and res["type_multiplier"] == 0.0
+
+
+def test_super_fang_halves_current_hp_min_one():
+    foe = _pokemon(pokemon_id=2, current_hp=21)
+    fang = _move(name="Super-fang", power=0)
+    assert _resolve(_battle(defender=foe, move=fang), rolls=[0.0])["damage"] == 10.0
+    one = _pokemon(pokemon_id=2, current_hp=1)
+    assert _resolve(_battle(defender=one, move=fang), rolls=[0.0])["damage"] == 1.0

@@ -1,12 +1,12 @@
 import React from "react";
 import PixelArt from "./PixelArt";
 
-// 16x16 pixel badges, one per campaign stop (route order): the eight Kanto gym
+// 16x16 pixel badges, one per campaign stop (route order): the eight Aurelia gym
 // badges, then a Pokéball for Indigo Plateau and a crown for the final stage.
 // K is always the outline, so locked silhouettes keep a readable edge.
 export const BADGES = [
 	{
-		name: "Boulder",
+		name: "Leaf",
 		pal: { K: "#2f3a36", L: "#c4dccf", G: "#8fb3a3", D: "#5f7f72", T: "#a9c9bb", W: "#eef7f2" },
 		map: [
 			"....KKKKKKKK....",
@@ -28,7 +28,7 @@ export const BADGES = [
 		],
 	},
 	{
-		name: "Cascade",
+		name: "Hearth",
 		pal: { K: "#1f4a66", B: "#4fb6e3", L: "#9fdcf4", D: "#2f86b8", W: "#ffffff" },
 		map: [
 			".......KK.......",
@@ -50,7 +50,7 @@ export const BADGES = [
 		],
 	},
 	{
-		name: "Thunder",
+		name: "Fist",
 		pal: { K: "#5a3212", Y: "#f7e27a", y: "#d9b83c", L: "#f4b36a", O: "#e0892e", o: "#b8621c", W: "#fff4d6" },
 		map: [
 			".......YY.......",
@@ -72,7 +72,7 @@ export const BADGES = [
 		],
 	},
 	{
-		name: "Rainbow",
+		name: "Tide",
 		pal: {
 			a: "#e8584a",
 			b: "#f0a040",
@@ -106,7 +106,7 @@ export const BADGES = [
 		],
 	},
 	{
-		name: "Soul",
+		name: "Dynamo",
 		pal: { K: "#5a1f3c", P: "#e86aa8", L: "#f4a6cc", D: "#b8487e" },
 		map: [
 			"................",
@@ -128,7 +128,7 @@ export const BADGES = [
 		],
 	},
 	{
-		name: "Marsh",
+		name: "Gale",
 		pal: { K: "#5a3f12", Y: "#f3c64b", L: "#fbe08a", D: "#c9972a" },
 		map: [
 			".....KKKKKK.....",
@@ -150,7 +150,7 @@ export const BADGES = [
 		],
 	},
 	{
-		name: "Volcano",
+		name: "Starfall",
 		pal: { K: "#3a120c", R: "#b83a26", D: "#7e2416", I: "#d8374f" },
 		map: [
 			"..K....KK....K..",
@@ -172,7 +172,7 @@ export const BADGES = [
 		],
 	},
 	{
-		name: "Earth",
+		name: "Ember",
 		pal: { K: "#1f3a1c", L: "#a6d86f", G: "#62b14f", D: "#3f7f37", S: "#3a3f55" },
 		map: [
 			"KKKKKK..........",

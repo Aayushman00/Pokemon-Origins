@@ -1,6 +1,6 @@
 {
   "level": 4,
-  "name": "Celadon City",
+  "name": "Saltmere Harbor",
   "battles": [
     {
       "battleNumber": 1,
@@ -25,7 +25,7 @@
     {
       "battleNumber": 5,
       "type": "gym_boss",
-      "trainerId": "erika"
+      "trainerId": "coral_marlowe"
     }
   ]
 }

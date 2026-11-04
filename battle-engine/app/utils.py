@@ -63,14 +63,28 @@ type_chart = {
     "ground": {"fire": 2, "electric": 2, "grass": 0.5, "poison": 2, "flying": 0, "bug": 0.5, "rock": 2, "steel": 2},
     "flying": {"electric": 0.5, "grass": 2, "fighting": 2, "bug": 2, "rock": 0.5, "steel": 0.5},
     "psychic": {"fighting": 2, "poison": 2, "psychic": 0.5, "dark": 0, "steel": 0.5},
-    "bug": {"fire": 0.5, "grass": 2, "fighting": 0.5, "poison": 0.5, "flying": 0.5, "psychic": 2, "ghost": 0.5, "dark": 2, "steel": 0.5, "fairy": 0.5},
+    "bug": {"fire": 0.5, "grass": 2, "fighting": 0.5, "poison": 0.5, "flying": 0.5, "psychic": 2, "ghost": 0.5, "dark": 2, "steel": 0.5},
     "rock": {"fire": 2, "ice": 2, "fighting": 0.5, "ground": 0.5, "flying": 2, "bug": 2, "steel": 0.5},
-    "ghost": {"normal": 0, "psychic": 2, "ghost": 2, "dark": 0.5},
-    "dragon": {"dragon": 2, "steel": 0.5, "fairy": 0},
-    "dark": {"fighting": 0.5, "psychic": 2, "ghost": 2, "dark": 0.5, "fairy": 0.5},
-    "steel": {"fire": 0.5, "water": 0.5, "electric": 0.5, "ice": 2, "rock": 2, "steel": 0.5, "fairy": 2},
-    "fairy": {"fighting": 2, "dragon": 2, "dark": 2, "fire": 0.5, "poison": 0.5, "steel": 0.5}
+    "ghost": {"normal": 0, "psychic": 2, "ghost": 2, "dark": 0.5, "steel": 0.5},
+    "dragon": {"dragon": 2, "steel": 0.5},
+    "dark": {"fighting": 0.5, "psychic": 2, "ghost": 2, "dark": 0.5, "steel": 0.5},
+    "steel": {"fire": 0.5, "water": 0.5, "electric": 0.5, "ice": 2, "rock": 2, "steel": 0.5},
 }
+
+def get_type_factors(attacking_type: str, defender_types: list) -> list:
+    """Per-defender-type factors in tenths (20/10/5/0), pret ModulateDmgByType.
+
+    FRLG applies each defender type as its own floored step, and a Pokemon whose
+    two types are identical is only checked once.
+    """
+    seen = []
+    for d_type in defender_types:
+        d = d_type.lower()
+        if d not in seen:
+            seen.append(d)
+    row = type_chart.get(attacking_type.lower(), {})
+    return [int(row.get(d, 1.0) * 10) for d in seen]
+
 
 def get_type_effectiveness(attacking_type: str, defender_types: list) -> float:
     multiplier = 1.0

@@ -1,6 +1,6 @@
 {
   "level": 7,
-  "name": "Cinnabar Island",
+  "name": "Starfall Observatory",
   "battles": [
     {
       "battleNumber": 1,
@@ -25,7 +25,7 @@
     {
       "battleNumber": 5,
       "type": "gym_boss",
-      "trainerId": "blaine"
+      "trainerId": "sage_ilmara"
     }
   ]
 }

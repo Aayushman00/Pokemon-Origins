@@ -1,0 +1,199 @@
+{
+  "willow_thornby": {
+    "gym": 1,
+    "leaderId": "willow_thornby",
+    "town": "Mossgate Grove",
+    "type": "Grass",
+    "mechanic": "seeds",
+    "name": "Seed pods",
+    "rule": "Push the seed pods onto the soil patches. When every patch is planted, the vine gate opens.",
+    "hint": "A sign at the door: “Seeds only go forward. Think before you push one into a corner.”",
+    "par": 40,
+    "rows": [
+      "##########",
+      "#........#",
+      "#....#...#",
+      "#$##.$...#",
+      "#._...#..#",
+      "#P....####",
+      "#_.#...gG#",
+      "##########"
+    ]
+  },
+  "mara_quill": {
+    "gym": 2,
+    "leaderId": "mara_quill",
+    "town": "Hearthfield",
+    "type": "Normal",
+    "mechanic": "belts",
+    "name": "Bakery belts",
+    "rule": "Stepping onto a conveyor belt carries you along it until it ends. Reach the cake stand.",
+    "hint": "The baker’s note: “The belts only carry you. They never stop you midway.”",
+    "par": 28,
+    "rows": [
+      "#############",
+      "#..P<G......#",
+      "#.>..<#..<^.#",
+      "#..^.^<...#.#",
+      "##..##.#<>v.#",
+      "#..^.#..#<.^#",
+      "#.^.<^..>^#^#",
+      "#........>..#",
+      "#############"
+    ]
+  },
+  "tavish_rook": {
+    "gym": 3,
+    "leaderId": "tavish_rook",
+    "town": "Ironbrook",
+    "type": "Fighting",
+    "mechanic": "dojo",
+    "name": "Dojo screens",
+    "rule": "Reach the back room through screen D. Each floor plate flips the screens listed on the scroll. Walking over a plate counts, and a screen you close behind you stays closed.",
+    "hint": "The scroll: a flips A. b flips C and D. c flips B. d flips A. e flips B and C. Open screens are pale, closed screens are solid.",
+    "par": 39,
+    "rows": [
+      "#############",
+      "#####.eb#####",
+      "######C######",
+      "#a.a#...#...#",
+      "#e..A.P.B...#",
+      "#e..#c..#..d#",
+      "######D######",
+      "#####.G.#####",
+      "#############"
+    ],
+    "config": {
+      "doors": {
+        "A": true,
+        "B": true,
+        "C": true,
+        "D": true
+      },
+      "plates": {
+        "a": [
+          "A"
+        ],
+        "b": [
+          "C",
+          "D"
+        ],
+        "c": [
+          "B"
+        ],
+        "d": [
+          "A"
+        ],
+        "e": [
+          "B",
+          "C"
+        ]
+      }
+    }
+  },
+  "coral_marlowe": {
+    "gym": 4,
+    "leaderId": "coral_marlowe",
+    "town": "Saltmere Harbor",
+    "type": "Water",
+    "mechanic": "tide",
+    "name": "Tide valves",
+    "rule": "Sandbars can be walked at low tide. Boats can be walked at high tide. Stepping on a valve flips the tide.",
+    "hint": "The harbor master’s tide chart: “Low tide at dawn. Each valve turns the tide once.”",
+    "par": 42,
+    "rows": [
+      "#############",
+      "#b~sP..###.b#",
+      "#bs~b~..b.b##",
+      "#~....sss.b.#",
+      "#v~sbbs#s~..#",
+      "#.s.bs~.~bsv#",
+      "#..bsGvs.vsv#",
+      "#.~.~~..v~bs#",
+      "#############"
+    ]
+  },
+  "volt_dray": {
+    "gym": 5,
+    "leaderId": "volt_dray",
+    "town": "Dynamo Station",
+    "type": "Electric",
+    "mechanic": "panels",
+    "name": "Power the floor",
+    "rule": "Stepping on a panel flips it and the panels touching it. Light all eighteen to open the gate. You have to walk across the panels to get through.",
+    "hint": "A wiring diagram: a panel and its four neighbors share a circuit.",
+    "par": 22,
+    "rows": [
+      "##############",
+      "#P.pppppp.gG##",
+      "#..pppppp.####",
+      "#..pppppp.####",
+      "##############"
+    ]
+  },
+  "skye_corvin": {
+    "gym": 6,
+    "leaderId": "skye_corvin",
+    "town": "Gale Spire",
+    "type": "Flying",
+    "mechanic": "gale",
+    "name": "Gale slide",
+    "rule": "The updrafts carry you until something stops you. Clouds stop you too. Skip over the gaps; falling sends you back to the start.",
+    "hint": "A pennant on the wall: “The wind does not stop until it hits something.”",
+    "par": 22,
+    "rows": [
+      "#############",
+      "#....o..#...#",
+      "##....#.._o.#",
+      "#....#...o..#",
+      "#......._..##",
+      "#...#.#..#..#",
+      "#..#........#",
+      "#...o#.#P...#",
+      "#..G...._.#.#",
+      "#.._..#..#_.#",
+      "#############"
+    ]
+  },
+  "sage_ilmara": {
+    "gym": 7,
+    "leaderId": "sage_ilmara",
+    "town": "Starfall Observatory",
+    "type": "Psychic",
+    "mechanic": "mirror",
+    "name": "Mirror twin",
+    "rule": "Your twin moves with you, but mirrored left to right. Walls block each of you separately. Put both on a star.",
+    "hint": "An engraving: “When you go left, your reflection goes right.”",
+    "par": 20,
+    "rows": [
+      "#############",
+      "#.....#....##",
+      "#.P..##...#H#",
+      "#.....##.T#.#",
+      "#.G.###.#.#.#",
+      "#.....#.....#",
+      "#############"
+    ]
+  },
+  "cinder_valko": {
+    "gym": 8,
+    "leaderId": "cinder_valko",
+    "town": "Emberhold",
+    "type": "Fire",
+    "mechanic": "pulse",
+    "name": "Pulse bridge",
+    "rule": "Even stones are safe on even steps, odd stones on odd steps. Every move is a step. A heat plate costs two steps instead of one.",
+    "hint": "Forge-master’s note: “The stones breathe in and out. Count your steps.”",
+    "par": 38,
+    "rows": [
+      "##############",
+      "#..h.e.ooeo.h#",
+      "#e.llle..o.e.#",
+      "#o...ooollll.#",
+      "#holo.#.ol.#e#",
+      "#.oo##.eoGlho#",
+      "#.e.ho.l#lPo.#",
+      "##############"
+    ]
+  }
+}

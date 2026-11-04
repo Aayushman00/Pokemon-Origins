@@ -4,7 +4,7 @@
     "name": "Lorelei",
     "title": "Elite Four",
     "specialization": "Ice",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "lorelei",
     "party": [
       { "pokemonId": 87, "level": 50 },
@@ -17,7 +17,7 @@
     "name": "Bruno",
     "title": "Elite Four",
     "specialization": "Fighting",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "bruno",
     "party": [
       { "pokemonId": 95, "level": 51 },
@@ -30,7 +30,7 @@
     "name": "Agatha",
     "title": "Elite Four",
     "specialization": "Ghost",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "agatha",
     "party": [
       { "pokemonId": 42, "level": 53 },
@@ -43,7 +43,7 @@
     "name": "Lance",
     "title": "Elite Four",
     "specialization": "Dragon",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "lance",
     "party": [
       { "pokemonId": 130, "level": 55 },

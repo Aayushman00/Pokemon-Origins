@@ -4,7 +4,7 @@
     "name": "Youngster Joey",
     "title": "Youngster",
     "specialization": "Normal",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "youngster_joey",
     "party": [{ "pokemonId": 19, "level": 4 }]
   },
@@ -13,7 +13,7 @@
     "name": "Lass Annie",
     "title": "Lass",
     "specialization": "Flying",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "lass_annie",
     "party": [{ "pokemonId": 16, "level": 5 }]
   },
@@ -22,7 +22,7 @@
     "name": "Bug Catcher Tim",
     "title": "Bug Catcher",
     "specialization": "Bug",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "bug_catcher_tim",
     "party": [{ "pokemonId": 10, "level": 5 }]
   },
@@ -31,7 +31,7 @@
     "name": "Hiker Jack",
     "title": "Hiker",
     "specialization": "Rock",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "hiker_jack",
     "party": [{ "pokemonId": 74, "level": 8 }]
   },
@@ -41,7 +41,7 @@
     "name": "Swimmer Luis",
     "title": "Swimmer",
     "specialization": "Water",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "swimmer_luis",
     "party": [{ "pokemonId": 118, "level": 13 }]
   },
@@ -50,7 +50,7 @@
     "name": "Picnicker Dana",
     "title": "Picnicker",
     "specialization": "Grass",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "picnicker_dana",
     "party": [
       { "pokemonId": 43, "level": 13 },
@@ -62,7 +62,7 @@
     "name": "Fisherman Ned",
     "title": "Fisherman",
     "specialization": "Water",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "fisherman_ned",
     "party": [
       { "pokemonId": 60, "level": 14 },
@@ -74,7 +74,7 @@
     "name": "Camper Rick",
     "title": "Camper",
     "specialization": "Normal",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "camper_rick",
     "party": [
       { "pokemonId": 27, "level": 15 },
@@ -87,7 +87,7 @@
     "name": "Sailor Dwayne",
     "title": "Sailor",
     "specialization": "Fighting",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "sailor_dwayne",
     "party": [
       { "pokemonId": 66, "level": 18 },
@@ -99,7 +99,7 @@
     "name": "Engineer Baily",
     "title": "Engineer",
     "specialization": "Electric",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "engineer_baily",
     "party": [
       { "pokemonId": 81, "level": 19 },
@@ -111,7 +111,7 @@
     "name": "Gentleman Tucker",
     "title": "Gentleman",
     "specialization": "Fire",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "gentleman_tucker",
     "party": [{ "pokemonId": 58, "level": 21 }]
   },
@@ -120,7 +120,7 @@
     "name": "Rocker Luca",
     "title": "Rocker",
     "specialization": "Electric",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "rocker_luca",
     "party": [
       { "pokemonId": 25, "level": 20 },
@@ -133,7 +133,7 @@
     "name": "Lass Kaylee",
     "title": "Lass",
     "specialization": "Normal",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "lass_kaylee",
     "party": [
       { "pokemonId": 35, "level": 24 },
@@ -145,7 +145,7 @@
     "name": "Beauty Grace",
     "title": "Beauty",
     "specialization": "Grass",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "beauty_grace",
     "party": [
       { "pokemonId": 43, "level": 25 },
@@ -157,7 +157,7 @@
     "name": "Rocket Grunt Marco",
     "title": "Team Rocket Grunt",
     "specialization": "Poison",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "rocket_grunt_marco",
     "party": [
       { "pokemonId": 41, "level": 25 },
@@ -169,7 +169,7 @@
     "name": "Juggler Dalton",
     "title": "Juggler",
     "specialization": "Psychic",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "juggler_dalton",
     "party": [
       { "pokemonId": 96, "level": 26 },
@@ -182,7 +182,7 @@
     "name": "Tamer Evan",
     "title": "Tamer",
     "specialization": "Normal",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "tamer_evan",
     "party": [
       { "pokemonId": 28, "level": 29 },
@@ -194,7 +194,7 @@
     "name": "Bird Keeper Roger",
     "title": "Bird Keeper",
     "specialization": "Flying",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "bird_keeper_roger",
     "party": [
       { "pokemonId": 17, "level": 30 },
@@ -206,7 +206,7 @@
     "name": "Biker Jaxon",
     "title": "Biker",
     "specialization": "Poison",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "biker_jaxon",
     "party": [
       { "pokemonId": 88, "level": 30 },
@@ -218,7 +218,7 @@
     "name": "Rocket Grunt Petra",
     "title": "Team Rocket Grunt",
     "specialization": "Poison",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "rocket_grunt_petra",
     "party": [
       { "pokemonId": 24, "level": 31 },
@@ -231,7 +231,7 @@
     "name": "Channeler Hope",
     "title": "Channeler",
     "specialization": "Ghost",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "channeler_hope",
     "party": [
       { "pokemonId": 92, "level": 33 },
@@ -243,7 +243,7 @@
     "name": "Psychic Rodney",
     "title": "Psychic",
     "specialization": "Psychic",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "psychic_rodney",
     "party": [
       { "pokemonId": 79, "level": 34 },
@@ -255,7 +255,7 @@
     "name": "Rocket Grunt Silas",
     "title": "Team Rocket Grunt",
     "specialization": "Fighting",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "rocket_grunt_silas",
     "party": [
       { "pokemonId": 42, "level": 34 },
@@ -267,7 +267,7 @@
     "name": "Blackbelt Kiyo",
     "title": "Blackbelt",
     "specialization": "Fighting",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "blackbelt_kiyo",
     "party": [
       { "pokemonId": 67, "level": 35 },
@@ -280,7 +280,7 @@
     "name": "Burglar Quinn",
     "title": "Burglar",
     "specialization": "Fire",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "burglar_quinn",
     "party": [
       { "pokemonId": 37, "level": 38 },
@@ -292,7 +292,7 @@
     "name": "Super Nerd Miguel",
     "title": "Super Nerd",
     "specialization": "Fire",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "super_nerd_miguel",
     "party": [
       { "pokemonId": 88, "level": 39 },
@@ -304,7 +304,7 @@
     "name": "Swimmer Nora",
     "title": "Swimmer",
     "specialization": "Water",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "swimmer_nora",
     "party": [
       { "pokemonId": 117, "level": 39 },
@@ -316,7 +316,7 @@
     "name": "Scientist Ivan",
     "title": "Scientist",
     "specialization": "Poison",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "scientist_ivan",
     "party": [
       { "pokemonId": 77, "level": 40 },
@@ -329,7 +329,7 @@
     "name": "Cooltrainer Vince",
     "title": "Cooltrainer",
     "specialization": "Ground",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "cooltrainer_vince",
     "party": [
       { "pokemonId": 28, "level": 42 },
@@ -341,7 +341,7 @@
     "name": "Tamer Jude",
     "title": "Tamer",
     "specialization": "Ground",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "tamer_jude",
     "party": [
       { "pokemonId": 111, "level": 43 },
@@ -353,7 +353,7 @@
     "name": "Rocket Grunt Odessa",
     "title": "Team Rocket Grunt",
     "specialization": "Poison",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "rocket_grunt_odessa",
     "party": [
       { "pokemonId": 42, "level": 43 },
@@ -365,7 +365,7 @@
     "name": "Cooltrainer Selena",
     "title": "Cooltrainer",
     "specialization": "Fire",
-    "region": "Kanto",
+    "region": "Aurelia",
     "sprite": "cooltrainer_selena",
     "party": [
       { "pokemonId": 38, "level": 44 },

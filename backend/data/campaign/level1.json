@@ -1,6 +1,6 @@
 {
   "level": 1,
-  "name": "Pewter City",
+  "name": "Mossgate Grove",
   "battles": [
     {
       "battleNumber": 1,
@@ -25,7 +25,7 @@
     {
       "battleNumber": 5,
       "type": "gym_boss",
-      "trainerId": "brock"
+      "trainerId": "willow_thornby"
     }
   ]
 }

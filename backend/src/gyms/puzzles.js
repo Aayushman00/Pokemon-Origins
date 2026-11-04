@@ -1,0 +1,314 @@
+// Aurelia gym puzzles: pure logic, no DOM. Used by the page and by test.js.
+var AP = (function () {
+  var DIRS = { up: [0, -1], right: [1, 0], down: [0, 1], left: [-1, 0] };
+  var DN = ["up", "right", "down", "left"];
+
+  function parse(rows) {
+    return { w: rows[0].length, h: rows.length, g: rows.map(function (r) { return r.split(""); }) };
+  }
+  function find(m, ch) {
+    var o = [];
+    for (var y = 0; y < m.h; y++) for (var x = 0; x < m.w; x++) if (m.g[y][x] === ch) o.push([x, y]);
+    return o;
+  }
+  function at(m, x, y) { return x < 0 || y < 0 || x >= m.w || y >= m.h ? "#" : m.g[y][x]; }
+  function eq(a, b) { return a[0] === b[0] && a[1] === b[1]; }
+  function clean(m, chars) { // copy of grid with listed chars replaced by floor
+    return { w: m.w, h: m.h, g: m.g.map(function (r) { return r.map(function (c) { return chars.indexOf(c) >= 0 ? "." : c; }); }) };
+  }
+
+  // 1. Seed pods (Grass): sokoban-lite. Push pods onto soil; the vine gate opens.
+  function seeds(rows) {
+    var m = parse(rows), start = find(m, "P")[0], pods = find(m, "$"), sockets = find(m, "_"), goal = find(m, "G")[0];
+    var base = clean(m, ["P", "$"]);
+    function podAt(s, x, y) { for (var i = 0; i < s.pods.length; i++) if (s.pods[i][0] === x && s.pods[i][1] === y) return i; return -1; }
+    function open(s) { return sockets.every(function (k) { return podAt(s, k[0], k[1]) >= 0; }); }
+    function solid(s, x, y) { var c = at(base, x, y); return c === "#" || (c === "g" && !open(s)); }
+    return {
+      init: function () { return { p: start.slice(), pods: pods.map(function (q) { return q.slice(); }) }; },
+      step: function (s, d) {
+        var tx = s.p[0] + d[0], ty = s.p[1] + d[1];
+        if (solid(s, tx, ty)) return null;
+        var pods2 = s.pods;
+        var i = podAt(s, tx, ty);
+        if (i >= 0) {
+          var px = tx + d[0], py = ty + d[1];
+          if (solid(s, px, py) || podAt(s, px, py) >= 0) return null;
+          pods2 = s.pods.map(function (q, j) { return j === i ? [px, py] : q; });
+        }
+        return { p: [tx, ty], pods: pods2 };
+      },
+      won: function (s) { return eq(s.p, goal); },
+      key: function (s) { return s.p.join() + "|" + s.pods.map(function (q) { return q.join(); }).sort().join(";"); },
+      cells: function (s) {
+        return { w: base.w, h: base.h, at: function (x, y) {
+          if (eq(s.p, [x, y])) return "player";
+          var c = at(base, x, y), pod = podAt(s, x, y) >= 0;
+          if (c === "#") return "wall";
+          if (c === "g") return open(s) ? "gate-open" : "gate";
+          if (c === "_") return pod ? "socket-full" : "socket";
+          if (pod) return "pod";
+          if (c === "G") return "goal";
+          return "floor";
+        } };
+      }
+    };
+  }
+
+  // 2. Bakery belts (Normal): stepping on a belt carries you along it until it ends.
+  function belts(rows) {
+    var m = parse(rows), start = find(m, "P")[0], goal = find(m, "G")[0];
+    var base = clean(m, ["P"]);
+    var BD = { "^": DIRS.up, ">": DIRS.right, "v": DIRS.down, "<": DIRS.left };
+    return {
+      init: function () { return { p: start.slice() }; },
+      step: function (s, d) {
+        var x = s.p[0] + d[0], y = s.p[1] + d[1];
+        if (at(base, x, y) === "#") return null;
+        var seen = {};
+        while (BD[at(base, x, y)] && !seen[x + "," + y]) {
+          seen[x + "," + y] = 1;
+          var b = BD[at(base, x, y)];
+          if (at(base, x + b[0], y + b[1]) === "#") break;
+          x += b[0]; y += b[1];
+        }
+        return { p: [x, y] };
+      },
+      won: function (s) { return eq(s.p, goal); },
+      key: function (s) { return s.p.join(); },
+      cells: function (s) {
+        return { w: base.w, h: base.h, at: function (x, y) {
+          if (eq(s.p, [x, y])) return "player";
+          var c = at(base, x, y);
+          if (c === "#") return "wall";
+          if (c === "G") return "goal";
+          if (BD[c]) return "belt-" + c;
+          return "floor";
+        } };
+      }
+    };
+  }
+
+  // 3. Dojo screens (Fighting): plates toggle screens (closed screens block you).
+  function dojo(rows, toggles) {
+    var m = parse(rows), start = find(m, "P")[0], goal = find(m, "G")[0];
+    var base = clean(m, ["P"]);
+    var doors = Object.keys(toggles.doors); // e.g. A,B,C
+    function closed(s, ch) { return !!s.d[ch]; }
+    return {
+      init: function () { var d = {}; doors.forEach(function (k) { d[k] = toggles.doors[k]; }); return { p: start.slice(), d: d }; },
+      step: function (s, dir) {
+        var x = s.p[0] + dir[0], y = s.p[1] + dir[1], c = at(base, x, y);
+        if (c === "#" || (doors.indexOf(c) >= 0 && closed(s, c))) return null;
+        var d = s.d;
+        if (toggles.plates[c]) { d = {}; doors.forEach(function (k) { d[k] = s.d[k]; }); toggles.plates[c].forEach(function (k) { d[k] = !d[k]; }); }
+        return { p: [x, y], d: d };
+      },
+      won: function (s) { return eq(s.p, goal); },
+      key: function (s) { return s.p.join() + "|" + doors.map(function (k) { return s.d[k] ? 1 : 0; }).join(""); },
+      cells: function (s) {
+        return { w: base.w, h: base.h, at: function (x, y) {
+          if (eq(s.p, [x, y])) return "player";
+          var c = at(base, x, y);
+          if (c === "#") return "wall";
+          if (c === "G") return "goal";
+          if (doors.indexOf(c) >= 0) return (closed(s, c) ? "door-" : "door-open-") + c;
+          if (toggles.plates[c]) return "plate-" + c;
+          return "floor";
+        } };
+      }
+    };
+  }
+
+  // 4. Tide (Water): sandbars are walkable at low tide, boats at high tide; valves flip the tide.
+  function tide(rows) {
+    var m = parse(rows), start = find(m, "P")[0], goal = find(m, "G")[0];
+    var base = clean(m, ["P"]);
+    return {
+      init: function () { return { p: start.slice(), t: 0 }; },
+      step: function (s, d) {
+        var x = s.p[0] + d[0], y = s.p[1] + d[1], c = at(base, x, y);
+        if (c === "#") return null;
+        if (c === "s" && s.t !== 0) return null;
+        if (c === "b" && s.t !== 1) return null;
+        if (c === "~") return null;
+        return { p: [x, y], t: c === "v" ? 1 - s.t : s.t };
+      },
+      won: function (s) { return eq(s.p, goal); },
+      key: function (s) { return s.p.join() + "|" + s.t; },
+      cells: function (s) {
+        return { w: base.w, h: base.h, tide: s.t, at: function (x, y) {
+          if (eq(s.p, [x, y])) return "player";
+          var c = at(base, x, y);
+          if (c === "#") return "wall";
+          if (c === "~") return "water";
+          if (c === "G") return "goal";
+          if (c === "v") return "valve";
+          if (c === "s") return s.t === 0 ? "sand" : "sand-under";
+          if (c === "b") return s.t === 1 ? "boat" : "boat-low";
+          return "floor";
+        } };
+      }
+    };
+  }
+
+  // 5. Power the floor (Electric): stepping on a panel flips it and its neighbours.
+  // Light exactly the marked panels (p) and leave the others (q) dark to open the gate.
+  function panels(rows) {
+    var m = parse(rows), start = find(m, "P")[0], goal = find(m, "G")[0];
+    var want = find(m, "p"), avoid = find(m, "q"), ps = want.concat(avoid);
+    var base = clean(m, ["P"]);
+    function idx(x, y) { for (var i = 0; i < ps.length; i++) if (ps[i][0] === x && ps[i][1] === y) return i; return -1; }
+    var target = (1 << want.length) - 1;
+    return {
+      init: function () { return { p: start.slice(), lit: 0 }; },
+      step: function (s, d) {
+        var x = s.p[0] + d[0], y = s.p[1] + d[1], c = at(base, x, y);
+        if (c === "#" || (c === "g" && s.lit !== target)) return null;
+        var lit = s.lit, i = idx(x, y);
+        if (i >= 0) {
+          lit ^= 1 << i;
+          [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (o) { var j = idx(x + o[0], y + o[1]); if (j >= 0) lit ^= 1 << j; });
+        }
+        return { p: [x, y], lit: lit };
+      },
+      won: function (s) { return eq(s.p, goal); },
+      key: function (s) { return s.p.join() + "|" + s.lit; },
+      cells: function (s) {
+        return { w: base.w, h: base.h, at: function (x, y) {
+          if (eq(s.p, [x, y])) return "player";
+          var c = at(base, x, y);
+          if (c === "#") return "wall";
+          if (c === "G") return "goal";
+          if (c === "g") return s.lit === target ? "gate-open" : "gate";
+          var i = idx(x, y);
+          if (i >= 0) return "panel-" + ((s.lit >> i) & 1 ? "on" : "off") + (i < want.length ? "-want" : "-avoid");
+          return "floor";
+        } };
+      }
+    };
+  }
+
+  // 6. Gale slide (Flying): you glide until something stops you. Drops send you back to the start.
+  function gale(rows) {
+    var m = parse(rows), start = find(m, "P")[0], goal = find(m, "G")[0];
+    var base = clean(m, ["P"]);
+    return {
+      init: function () { return { p: start.slice() }; },
+      step: function (s, d) {
+        var x = s.p[0], y = s.p[1], moved = false;
+        for (var n = 0; n < 60; n++) {
+          var nx = x + d[0], ny = y + d[1], c = at(base, nx, ny);
+          if (c === "#") break;
+          if (c === "_") return { dead: true };
+          x = nx; y = ny; moved = true;
+          if (c === "o" || c === "G") break;
+        }
+        return moved ? { p: [x, y] } : null;
+      },
+      won: function (s) { return eq(s.p, goal); },
+      key: function (s) { return s.p.join(); },
+      cells: function (s) {
+        return { w: base.w, h: base.h, at: function (x, y) {
+          if (eq(s.p, [x, y])) return "player";
+          var c = at(base, x, y);
+          if (c === "#") return "wall";
+          if (c === "_") return "drop";
+          if (c === "o") return "cloud";
+          if (c === "G") return "goal";
+          return "floor";
+        } };
+      }
+    };
+  }
+
+  // 7. Mirror twin (Psychic): your twin copies every move, mirrored left-right. Both must reach a star.
+  function mirror(rows) {
+    var m = parse(rows), hero = find(m, "P")[0], twin = find(m, "T")[0], gh = find(m, "G")[0], gt = find(m, "H")[0];
+    var base = clean(m, ["P", "T"]);
+    function free(x, y) { var c = at(base, x, y); return c !== "#"; }
+    return {
+      init: function () { return { p: hero.slice(), q: twin.slice() }; },
+      step: function (s, d) {
+        var p = free(s.p[0] + d[0], s.p[1] + d[1]) ? [s.p[0] + d[0], s.p[1] + d[1]] : s.p;
+        var q = free(s.q[0] - d[0], s.q[1] + d[1]) ? [s.q[0] - d[0], s.q[1] + d[1]] : s.q;
+        if (p === s.p && q === s.q) return null;
+        return { p: p, q: q };
+      },
+      won: function (s) { return eq(s.p, gh) && eq(s.q, gt); },
+      key: function (s) { return s.p.join() + "|" + s.q.join(); },
+      cells: function (s) {
+        return { w: base.w, h: base.h, at: function (x, y) {
+          if (eq(s.p, [x, y])) return "player";
+          if (eq(s.q, [x, y])) return "twin";
+          var c = at(base, x, y);
+          if (c === "#") return "wall";
+          if (c === "G") return "star";
+          if (c === "H") return "star-twin";
+          if (c === "|") return "divider";
+          return "floor";
+        } };
+      }
+    };
+  }
+
+  // 8. Pulse lava (Fire): even stones are safe on even steps, odd stones on odd steps. Heat plates cost an extra step.
+  function pulse(rows) {
+    var m = parse(rows), start = find(m, "P")[0], goal = find(m, "G")[0];
+    var base = clean(m, ["P"]);
+    return {
+      init: function () { return { p: start.slice(), t: 0 }; },
+      step: function (s, d) {
+        var x = s.p[0] + d[0], y = s.p[1] + d[1], c = at(base, x, y);
+        if (c === "#") return null;
+        var t = s.t + 1;
+        if (c === "h") t += 1;
+        if (c === "l") return { dead: true };
+        if (c === "e" && t % 2 !== 0) return { dead: true };
+        if (c === "o" && t % 2 !== 1) return { dead: true };
+        return { p: [x, y], t: t };
+      },
+      won: function (s) { return eq(s.p, goal); },
+      key: function (s) { return s.p.join() + "|" + (s.t % 2); },
+      cells: function (s) {
+        return { w: base.w, h: base.h, phase: s.t % 2, at: function (x, y) {
+          if (eq(s.p, [x, y])) return "player";
+          var c = at(base, x, y);
+          if (c === "#") return "wall";
+          if (c === "l") return "lava";
+          if (c === "G") return "goal";
+          if (c === "h") return "heat";
+          if (c === "e") return s.t % 2 === 0 ? "stone-up" : "stone-down";
+          if (c === "o") return s.t % 2 === 1 ? "stone-up" : "stone-down";
+          return "floor";
+        } };
+      }
+    };
+  }
+
+  function solve(puz, limit) {
+    var s0 = puz.init(), seen = {}, q = [[s0, null]], head = 0, parentOf = [];
+    seen[puz.key(s0)] = 0; parentOf[0] = [-1, null];
+    var states = [s0];
+    while (head < q.length && q.length < (limit || 600000)) {
+      var s = states[head], id = head; head++;
+      if (puz.won(s)) {
+        var path = [];
+        while (id > 0) { path.unshift(parentOf[id][1]); id = parentOf[id][0]; }
+        return path;
+      }
+      for (var i = 0; i < 4; i++) {
+        var n = puz.step(s, DIRS[DN[i]]);
+        if (!n || n.dead) continue;
+        var k = puz.key(n);
+        if (seen[k] !== undefined) continue;
+        seen[k] = states.length; parentOf[states.length] = [id, DN[i]];
+        states.push(n); q.push(1);
+      }
+    }
+    return null;
+  }
+
+  return { DIRS: DIRS, DN: DN, seeds: seeds, belts: belts, dojo: dojo, tide: tide, panels: panels, gale: gale, mirror: mirror, pulse: pulse, solve: solve };
+})();
+if (typeof module !== "undefined") module.exports = AP;

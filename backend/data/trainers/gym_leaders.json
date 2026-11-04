@@ -1,104 +1,170 @@
 {
-  "brock": {
-    "id": "brock",
-    "name": "Brock",
-    "title": "Gym Leader",
-    "specialization": "Rock",
-    "region": "Kanto",
-    "sprite": "brock",
-    "party": [
-      { "pokemonId": 74, "level": 12 },
-      { "pokemonId": 95, "level": 14 }
-    ]
-  },
-  "misty": {
-    "id": "misty",
-    "name": "Misty",
-    "title": "Gym Leader",
-    "specialization": "Water",
-    "region": "Kanto",
-    "sprite": "misty",
-    "party": [
-      { "pokemonId": 120, "level": 16 },
-      { "pokemonId": 121, "level": 19 }
-    ]
-  },
-  "lt_surge": {
-    "id": "lt_surge",
-    "name": "Lt. Surge",
-    "title": "Gym Leader",
-    "specialization": "Electric",
-    "region": "Kanto",
-    "sprite": "lt_surge",
-    "party": [
-      { "pokemonId": 100, "level": 19 },
-      { "pokemonId": 25, "level": 17 },
-      { "pokemonId": 26, "level": 22 }
-    ]
-  },
-  "erika": {
-    "id": "erika",
-    "name": "Erika",
+  "willow_thornby": {
+    "id": "willow_thornby",
+    "name": "Willow Thornby",
     "title": "Gym Leader",
     "specialization": "Grass",
-    "region": "Kanto",
-    "sprite": "erika",
+    "region": "Aurelia",
+    "sprite": "willow_thornby",
     "party": [
-      { "pokemonId": 71, "level": 26 },
-      { "pokemonId": 114, "level": 24 },
-      { "pokemonId": 45, "level": 27 }
+      {
+        "pokemonId": 69,
+        "level": 12
+      },
+      {
+        "pokemonId": 102,
+        "level": 14
+      }
     ]
   },
-  "koga": {
-    "id": "koga",
-    "name": "Koga",
+  "mara_quill": {
+    "id": "mara_quill",
+    "name": "Mara Quill",
     "title": "Gym Leader",
-    "specialization": "Poison",
-    "region": "Kanto",
-    "sprite": "koga",
+    "specialization": "Normal",
+    "region": "Aurelia",
+    "sprite": "mara_quill",
     "party": [
-      { "pokemonId": 109, "level": 32 },
-      { "pokemonId": 89, "level": 33 },
-      { "pokemonId": 110, "level": 35 }
+      {
+        "pokemonId": 39,
+        "level": 16
+      },
+      {
+        "pokemonId": 53,
+        "level": 19
+      }
     ]
   },
-  "sabrina": {
-    "id": "sabrina",
-    "name": "Sabrina",
+  "tavish_rook": {
+    "id": "tavish_rook",
+    "name": "Tavish Rook",
+    "title": "Gym Leader",
+    "specialization": "Fighting",
+    "region": "Aurelia",
+    "sprite": "tavish_rook",
+    "party": [
+      {
+        "pokemonId": 66,
+        "level": 19
+      },
+      {
+        "pokemonId": 56,
+        "level": 17
+      },
+      {
+        "pokemonId": 57,
+        "level": 22
+      }
+    ]
+  },
+  "coral_marlowe": {
+    "id": "coral_marlowe",
+    "name": "Coral Marlowe",
+    "title": "Gym Leader",
+    "specialization": "Water",
+    "region": "Aurelia",
+    "sprite": "coral_marlowe",
+    "party": [
+      {
+        "pokemonId": 61,
+        "level": 26
+      },
+      {
+        "pokemonId": 91,
+        "level": 24
+      },
+      {
+        "pokemonId": 121,
+        "level": 27
+      }
+    ]
+  },
+  "volt_dray": {
+    "id": "volt_dray",
+    "name": "Volt Dray",
+    "title": "Gym Leader",
+    "specialization": "Electric",
+    "region": "Aurelia",
+    "sprite": "volt_dray",
+    "party": [
+      {
+        "pokemonId": 82,
+        "level": 32
+      },
+      {
+        "pokemonId": 101,
+        "level": 33
+      },
+      {
+        "pokemonId": 125,
+        "level": 35
+      }
+    ]
+  },
+  "skye_corvin": {
+    "id": "skye_corvin",
+    "name": "Skye Corvin",
+    "title": "Gym Leader",
+    "specialization": "Flying",
+    "region": "Aurelia",
+    "sprite": "skye_corvin",
+    "party": [
+      {
+        "pokemonId": 22,
+        "level": 36
+      },
+      {
+        "pokemonId": 85,
+        "level": 37
+      },
+      {
+        "pokemonId": 18,
+        "level": 39
+      }
+    ]
+  },
+  "sage_ilmara": {
+    "id": "sage_ilmara",
+    "name": "Sage Ilmara",
     "title": "Gym Leader",
     "specialization": "Psychic",
-    "region": "Kanto",
-    "sprite": "sabrina",
+    "region": "Aurelia",
+    "sprite": "sage_ilmara",
     "party": [
-      { "pokemonId": 64, "level": 36 },
-      { "pokemonId": 122, "level": 37 },
-      { "pokemonId": 65, "level": 39 }
+      {
+        "pokemonId": 122,
+        "level": 40
+      },
+      {
+        "pokemonId": 97,
+        "level": 42
+      },
+      {
+        "pokemonId": 65,
+        "level": 45
+      }
     ]
   },
-  "blaine": {
-    "id": "blaine",
-    "name": "Blaine",
+  "cinder_valko": {
+    "id": "cinder_valko",
+    "name": "Cinder Valko",
     "title": "Gym Leader",
     "specialization": "Fire",
-    "region": "Kanto",
-    "sprite": "blaine",
+    "region": "Aurelia",
+    "sprite": "cinder_valko",
     "party": [
-      { "pokemonId": 58, "level": 40 },
-      { "pokemonId": 78, "level": 42 },
-      { "pokemonId": 59, "level": 45 }
-    ]
-  },
-  "giovanni": {
-    "id": "giovanni",
-    "name": "Giovanni",
-    "title": "Gym Leader",
-    "specialization": "Ground",
-    "region": "Kanto",
-    "sprite": "giovanni",
-    "party": [
-      { "pokemonId": 111, "level": 43 },
-      { "pokemonId": 51, "level": 45 },
-      { "pokemonId": 112, "level": 48 }
+      {
+        "pokemonId": 38,
+        "level": 43
+      },
+      {
+        "pokemonId": 78,
+        "level": 45
+      },
+      {
+        "pokemonId": 59,
+        "level": 48
+      }
     ]
   }
 }

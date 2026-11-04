@@ -73,7 +73,7 @@ function CardBody({ state, name, trainerId, online }) {
 				<div>
 					<p className="hovercard__name">{p.name}</p>
 					<p className="hovercard__sub">
-						{c.champion ? "Champion" : `Stage ${c.current_level}: ${c.level_name || "Kanto"}`}
+						{c.champion ? "Champion" : `Stage ${c.current_level}: ${c.level_name || "Aurelia"}`}
 					</p>
 					{p.card?.motto && <p className="hovercard__motto read">&ldquo;{p.card.motto}&rdquo;</p>}
 				</div>

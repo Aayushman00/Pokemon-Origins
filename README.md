@@ -233,4 +233,4 @@ Screens live under `frontend/src/v2/` (the older `frontend/src/pages/` tree and 
 
 ## License
 
-MIT — see the repository license file if present.
+MIT for the project's original code — see [LICENSE](LICENSE). Art, sprites and maps derived from Nintendo / Game Freak material are not covered; see [assets/LICENSES.md](assets/LICENSES.md).

@@ -27,10 +27,12 @@ from .utils import (
     augment_move_data,
     get_move_category,
     get_type_effectiveness,
+    get_type_factors,
 )
 
-CRIT_RATE = 0.0625        # 1/16
-CRIT_MULTIPLIER = 2.0     # Gen 3
+# pret/pokefirered sCriticalHitChance: crit odds are 1/N by crit stage 0..4.
+CRIT_CHANCE_DENOMS = (16, 8, 4, 3, 2)
+CRIT_MULTIPLIER = 2      # Gen 3
 STAB_MULTIPLIER = 1.5
 STAGE_MIN, STAGE_MAX = -6, 6
 OHKO_ACCURACY = 0.30      # flat Gen 3-ish approximation
@@ -176,6 +178,15 @@ def _type_multiplier(battle: BattleRequest, move_dict: dict) -> float:
     return get_type_effectiveness(move_type, defender_types)
 
 
+def _type_factors(battle: BattleRequest, move_dict: dict) -> List[int]:
+    if move_dict.get("typeless"):
+        return []
+    move_type = str(move_dict["move_type"]).lower()
+    if _ability_name(battle.defender) == "levitate" and move_type == "ground":
+        return [0]
+    return get_type_factors(move_type, battle.defender.types or ["normal"])
+
+
 def _stab(battle: BattleRequest, move_dict: dict) -> bool:
     if move_dict.get("typeless"):
         return False
@@ -201,72 +212,85 @@ def _ability_power_multiplier(battle: BattleRequest, move_dict: dict) -> float:
     return 1.0
 
 
-def _offense_defense(battle: BattleRequest, category: str) -> Tuple[float, float]:
-    """Stats after stages; burn halves physical attack."""
+def _offense_defense(battle: BattleRequest, category: str, crit: bool = False) -> Tuple[int, int]:
+    """Stats after stages, as integers (pret APPLY_STAT_MOD floors).
+
+    On a critical hit the attacker's negative offensive stages and the
+    defender's positive defensive stages are ignored (CalculateBaseDamage).
+    """
     attacker_stages = _stages(battle.attacker)
     defender_stages = _stages(battle.defender)
+    atk_key, def_key = ("spa", "spd") if category == "special" else ("atk", "def")
+    atk_stage = attacker_stages[atk_key]
+    def_stage = defender_stages[def_key]
+    if crit:
+        atk_stage = max(0, atk_stage)
+        def_stage = min(0, def_stage)
     if category == "special":
-        attack = battle.attacker.special_atk * stage_multiplier(attacker_stages["spa"])
-        defense = battle.defender.special_def * stage_multiplier(defender_stages["spd"])
+        attack, defense = battle.attacker.special_atk, battle.defender.special_def
     else:
-        attack = battle.attacker.attack * stage_multiplier(attacker_stages["atk"])
-        if normalize_status(battle.attacker.status) == "brn":
-            attack *= 0.5
-        defense = battle.defender.defense * stage_multiplier(defender_stages["def"])
-    return max(1.0, attack), max(1.0, defense)
+        attack, defense = battle.attacker.attack, battle.defender.defense
+    attack = int(int(attack) * stage_multiplier(atk_stage))
+    defense = int(int(defense) * stage_multiplier(def_stage))
+    return max(1, attack), max(1, defense)
+
+
+def _crit_stage(battle: BattleRequest, move_dict: dict) -> int:
+    """Crit stage per pret Cmd_critcalc: high-crit moves +1, Focus Energy +2."""
+    stage = int(move_dict.get("crit_stage") or 0)
+    if getattr(battle.attacker, "focus_energy", False):
+        stage += 2
+    return max(0, min(stage, len(CRIT_CHANCE_DENOMS) - 1))
 
 
 def _single_hit_damage(
     battle: BattleRequest,
     move_dict: dict,
     category: str,
-    type_multiplier: float,
+    type_factors: List[int],
     stab: bool,
     ability_multiplier: float,
 ) -> Dict[str, Any]:
-    """One damage roll (own crit + random factor, per Gen 3 multi-hit rules).
+    """One damage roll, ordered and floored exactly like pret/pokefirered.
 
-    Gen III truncates (floors) after every single step of the calculation,
-    not just once at the end (see https://bulbapedia.bulbagarden.net/wiki/Damage):
-    the level factor, the base-damage division, and each modifier multiply
-    (critical, random, STAB, type, and this engine's own ability bonus) are
-    all floored in sequence. Doing the whole thing in continuous floats and
-    rounding once at the end silently overshoots the real games' numbers
-    whenever an intermediate value is non-integer.
+    CalculateBaseDamage: ((2L/5+2) * power * atk / def) / 50, burn halves the
+    physical result, then +2. Cmd_damagecalc applies the crit multiplier;
+    ApplyRandomDmgMultiplier scales by 85..100 percent (integer); Cmd_typecalc
+    applies STAB (x15/10) and then each defender type (x20/10, x5/10, x0) in
+    turn. Every step floors, and a non-immune hit never drops below 1.
     """
-    attack, defense = _offense_defense(battle, category)
-    attack = int(attack)
-    defense = max(1, int(defense))
-
-    level_factor = (2 * battle.attacker.level) // 5 + 2
-    base_before_scale = (level_factor * move_dict["power"] * attack) // defense
-    base_damage = base_before_scale // 50 + 2
-
-    # Confusion self-hit damage is typeless AND cannot crit in the real games.
-    if move_dict.get("no_crit"):
+    # Crit first: it decides which stat stages are ignored below. A move can
+    # opt out (confusion self-hit) and Battle/Shell Armor blocks crits.
+    if move_dict.get("no_crit") or _ability_name(battle.defender) in ("battle-armor", "shell-armor"):
         crit = False
     elif battle.force_crit is not None:
         crit = battle.force_crit
     else:
-        crit = random.random() < CRIT_RATE
-    crit_multiplier = CRIT_MULTIPLIER if crit else 1.0
-    stab_multiplier = STAB_MULTIPLIER if stab else 1.0
-    random_factor = random.uniform(0.85, 1.0)
+        crit = random.random() < 1 / CRIT_CHANCE_DENOMS[_crit_stage(battle, move_dict)]
 
-    # Gen III modifier order: Critical -> Random -> STAB -> Type -> Other,
-    # flooring after every multiply.
-    damage = base_damage
-    damage = int(damage * crit_multiplier)
-    damage = int(damage * random_factor)
-    damage = int(damage * stab_multiplier)
-    damage = int(damage * type_multiplier)
-    damage = int(damage * ability_multiplier)
+    attack, defense = _offense_defense(battle, category, crit)
+    power = int(move_dict["power"] * ability_multiplier)  # pinch ability scales move power
+    level_factor = (2 * battle.attacker.level) // 5 + 2
+    base_damage = (level_factor * power * attack) // defense // 50
+    if category == "physical" and normalize_status(battle.attacker.status) == "brn":
+        base_damage //= 2
+    base_damage += 2
+
+    damage = base_damage * (CRIT_MULTIPLIER if crit else 1)
+    percent = random.randint(85, 100)
+    damage = max(1, damage * percent // 100)
+    if stab:
+        damage = damage * 15 // 10
+    for factor in type_factors:
+        damage = damage * factor // 10
+        if damage == 0 and factor != 0:
+            damage = 1
 
     return {
         "damage": float(damage),
         "critical_hit": crit,
         "base_damage": float(base_damage),
-        "random_factor": random_factor,
+        "random_factor": percent / 100,
     }
 
 
@@ -476,6 +500,32 @@ def calculate_damage_result(battle: BattleRequest) -> Dict[str, Any]:
             "details": details,
         }
 
+    # --- Fixed-damage moves (Seismic Toss, Dragon Rage, Super Fang, ...) -----
+    # pret: damage ignores stats, STAB, crit and stages but still respects
+    # type immunity and the accuracy roll.
+    if effect_type == "fixed":
+        type_multiplier = _type_multiplier(battle, move_dict)
+        if type_multiplier == 0:
+            return {"result": "hit", "damage": 0, "category": category, "critical_hit": False,
+                    "stab": False, "type_multiplier": 0.0, "status_effect_applied": None, "details": details}
+        if not _hit_check(battle, move_dict, details):
+            return {"result": "miss", "damage": 0, "details": details}
+        fixed_spec = move_dict.get("fixed")
+        level = battle.attacker.level
+        if fixed_spec == "level":
+            damage = level
+        elif fixed_spec == "half_hp":
+            damage = max(1, int(battle.defender.current_hp) // 2)
+        elif fixed_spec == "psywave":
+            # pret EFFECT_PSYWAVE: level * (rand 0..10 * 10 + 50) / 100, min 1.
+            damage = max(1, level * (random.randint(0, 10) * 10 + 50) // 100)
+        else:
+            damage = int(fixed_spec)
+        details["fixed_damage"] = damage
+        return {"result": "hit", "damage": float(damage), "category": category, "critical_hit": False,
+                "stab": False, "type_multiplier": type_multiplier, "status_effect_applied": None,
+                "stat_changes": [], "flinch_applied": False, "details": details}
+
     # --- Damaging moves ------------------------------------------------------
     move_power = move_dict.get("power")
     if not move_power:
@@ -522,7 +572,7 @@ def calculate_damage_result(battle: BattleRequest) -> Dict[str, Any]:
     details["individual_hits"] = []
     for _ in range(num_hits):
         hit = _single_hit_damage(
-            battle, move_dict, category, type_multiplier, stab, ability_multiplier
+            battle, move_dict, category, _type_factors(battle, move_dict), stab, ability_multiplier
         )
         total_damage = round(total_damage + hit["damage"], 2)
         any_crit = any_crit or hit["critical_hit"]

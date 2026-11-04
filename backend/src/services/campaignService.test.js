@@ -109,6 +109,30 @@ const catalog = {
 			},
 		],
 	},
+	69: {
+		pokemon_id: 69,
+		name: "bellsprout",
+		hp: 50,
+		attack: 75,
+		defense: 35,
+		special_attack: 70,
+		special_defense: 30,
+		speed: 40,
+		types: ["Grass", "Poison"],
+		learnset: [{ move_id: 22, move_name: "Vine Whip", power: 45, accuracy: 100, move_type: "Grass", level_learned: 1 }],
+	},
+	102: {
+		pokemon_id: 102,
+		name: "exeggcute",
+		hp: 60,
+		attack: 40,
+		defense: 80,
+		special_attack: 60,
+		special_defense: 45,
+		speed: 40,
+		types: ["Grass", "Psychic"],
+		learnset: [{ move_id: 33, move_name: "Tackle", power: 40, accuracy: 100, move_type: "Normal", level_learned: 1 }],
+	},
 };
 
 async function lookup(pokemonId) {
@@ -131,7 +155,7 @@ describe("campaignService", () => {
 				"lass_annie",
 				"bug_catcher_tim",
 				"hiker_jack",
-				"brock",
+				"willow_thornby",
 			]
 		);
 		const first = level.battles[0];
@@ -150,7 +174,7 @@ describe("campaignService", () => {
 		assert.ok(legacy.trainers[0].pokemon[0].pokemon_id);
 		assert.equal(legacy.trainers[0].battleNumber, 1);
 		assert.equal(legacy.trainers[0].name, "Youngster Joey");
-		assert.equal(legacy.trainers[4].name, "Brock");
+		assert.equal(legacy.trainers[4].name, "Willow Thornby");
 		assert.equal(legacy.trainers[4].battleNumber, 5);
 	});
 });

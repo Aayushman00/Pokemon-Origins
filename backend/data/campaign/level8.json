@@ -1,6 +1,6 @@
 {
   "level": 8,
-  "name": "Viridian City",
+  "name": "Emberhold",
   "battles": [
     {
       "battleNumber": 1,
@@ -25,7 +25,7 @@
     {
       "battleNumber": 5,
       "type": "gym_boss",
-      "trainerId": "giovanni"
+      "trainerId": "cinder_valko"
     }
   ]
 }
