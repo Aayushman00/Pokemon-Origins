@@ -330,7 +330,7 @@
     432,
     429,
     696,
-    1191,
+    1189,
     0,
     0,
     0,
@@ -798,11 +798,11 @@
    "name": "overworld",
    "image": "tilesets/overworld.png",
    "imagewidth": 128,
-   "imageheight": 2416,
+   "imageheight": 2400,
    "tilewidth": 16,
    "tileheight": 16,
    "columns": 8,
-   "tilecount": 1201,
+   "tilecount": 1199,
    "margin": 0,
    "spacing": 0,
    "tiles": [
@@ -1792,7 +1792,7 @@
      ]
     },
     {
-     "id": 1197,
+     "id": 1195,
      "properties": [
       {
        "name": "glow",
@@ -1802,7 +1802,7 @@
      ]
     },
     {
-     "id": 993,
+     "id": 991,
      "properties": [
       {
        "name": "smoke",
@@ -1812,7 +1812,7 @@
      ]
     },
     {
-     "id": 1018,
+     "id": 1016,
      "properties": [
       {
        "name": "smoke",
@@ -1822,12 +1822,22 @@
      ]
     },
     {
-     "id": 1043,
+     "id": 1041,
      "properties": [
       {
        "name": "smoke",
        "type": "bool",
        "value": true
+      }
+     ]
+    },
+    {
+     "id": 1004,
+     "properties": [
+      {
+       "name": "glow",
+       "type": "int",
+       "value": 9
       }
      ]
     },
@@ -1842,7 +1852,7 @@
      ]
     },
     {
-     "id": 1008,
+     "id": 1029,
      "properties": [
       {
        "name": "glow",
@@ -1862,7 +1872,7 @@
      ]
     },
     {
-     "id": 1033,
+     "id": 1054,
      "properties": [
       {
        "name": "glow",
@@ -1882,7 +1892,7 @@
      ]
     },
     {
-     "id": 1058,
+     "id": 1085,
      "properties": [
       {
        "name": "glow",
@@ -1892,7 +1902,7 @@
      ]
     },
     {
-     "id": 1087,
+     "id": 1086,
      "properties": [
       {
        "name": "glow",
@@ -1912,7 +1922,7 @@
      ]
     },
     {
-     "id": 1090,
+     "id": 1089,
      "properties": [
       {
        "name": "glow",
@@ -1922,7 +1932,7 @@
      ]
     },
     {
-     "id": 1091,
+     "id": 1117,
      "properties": [
       {
        "name": "glow",
@@ -1932,7 +1942,7 @@
      ]
     },
     {
-     "id": 1119,
+     "id": 1120,
      "properties": [
       {
        "name": "glow",
@@ -1942,7 +1952,7 @@
      ]
     },
     {
-     "id": 1122,
+     "id": 1147,
      "properties": [
       {
        "name": "glow",
@@ -1952,17 +1962,7 @@
      ]
     },
     {
-     "id": 1149,
-     "properties": [
-      {
-       "name": "glow",
-       "type": "int",
-       "value": 9
-      }
-     ]
-    },
-    {
-     "id": 1152,
+     "id": 1150,
      "properties": [
       {
        "name": "glow",

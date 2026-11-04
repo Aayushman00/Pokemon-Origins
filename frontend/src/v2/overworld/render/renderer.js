@@ -4,7 +4,7 @@ import { computeCamera } from "../logic/camera.js";
 import { neighbourOrigin } from "../logic/world.js";
 import { coverage } from "../logic/transition.js";
 import { createFx, stepFx } from "./fieldfx.js";
-import { clouds, particles, smoke, tintFor } from "./ambient.js";
+import { particles, smoke, tintFor } from "./ambient.js";
 
 const ROW = { down: 0, up: 1, left: 2, right: 3 };
 
@@ -113,9 +113,6 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 				g.fillRect(x * TILE + 10 - cam.x + p.dx, y * TILE - cam.y + p.dy, p.size, p.size);
 			}
 		});
-		if (!map.properties.clouds) return;
-		g.fillStyle = "rgba(46, 74, 74, 0.1)";
-		for (const r of clouds(tick, cam.x, cam.y)) g.fillRect(r.x, r.y, r.w, r.h);
 	}
 
 	function drawAmbient(map, tick, cam) {
@@ -241,11 +238,13 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 		const { px, py, lift } = actorPixel(a);
 		const dx = Math.round(ox + px - camX);
 		const dy = Math.round(oy + py - camY) - TILE - lift;
-		// Everyone stands on a contact shadow; it darkens while a hop lifts them off it.
-		g.fillStyle = lift > 0 ? "rgba(24, 32, 40, 0.45)" : "rgba(46, 74, 74, 0.3)";
-		HOP_SHADOW.forEach((row, y) => {
-			for (let x = 0; x < row.length; x++) if (row[x] === "x") g.fillRect(dx + x, dy + lift + TILE + 13 + y, 1, 1);
-		});
+		// Only a hop gets a ground shadow: it shows how far off the ground they are.
+		if (lift > 0) {
+			g.fillStyle = "rgba(24, 32, 40, 0.45)";
+			HOP_SHADOW.forEach((row, y) => {
+				for (let x = 0; x < row.length; x++) if (row[x] === "x") g.fillRect(dx + x, dy + lift + TILE + 13 + y, 1, 1);
+			});
+		}
 		const sx = actorFrame(a, tick) * TILE;
 		const sy = ROW[a.facing] * 32;
 		g.drawImage(sheet, sx, sy, TILE, 32, dx, dy, TILE, 32);

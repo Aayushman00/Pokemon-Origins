@@ -28,6 +28,16 @@ class OwnRooms(unittest.TestCase):
         for house in ("dawnbrook_house", "mossgate_house_a", "mossgate_house_b"):
             self.assertNotEqual(self.pixels(house), self.pixels("dawnbrook_home"), house)
 
+    def test_floors_carry_no_shadow_patches(self):
+        for map_id, (paint, _) in I.ROOMS.items():
+            room = paint(0)
+            px = room.t.img.load()
+            clean = {I.hexrgb(c) for mode in ("normal", "light") for c in I.FLOORS[room.theme].get(mode, {}).values()}
+            for y, row in enumerate(room.key):
+                for x, k in enumerate(row):
+                    if k is not None:
+                        self.assertIn(px[x, y], clean, (map_id, x, y))
+
     def test_rooms_share_the_world_outline(self):
         self.assertEqual(I.OL, LINE)
 

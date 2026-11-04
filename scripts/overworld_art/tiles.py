@@ -623,8 +623,6 @@ def new_tiles():
     add("crops1", nature.crops(1))
     for part in "lmr":
         add(f"ledge_{part}", nature.ledge(part))
-    add("cast_e", nature.cast("e"))
-    add("cast_s", nature.cast("s"))
     for kind in "ABF":
         for i, tile in enumerate(slice_into(nature.standing_tree(kind), 2, 2)):
             add(f"tree{kind}_{i % 2}_{i // 2}", tile)

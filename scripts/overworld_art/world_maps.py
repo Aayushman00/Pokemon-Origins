@@ -277,22 +277,6 @@ def dress_pond(m, grid):
             m.put("decor", x, y, ID["reeds"])
 
 
-def cast_shadows(m, grid):
-    """Shadows thrown east and south of buildings, south of the forest. They sit in
-    `objects` so they lie over trail and decor, and under anyone walking through."""
-    built = {(x, y) for y, row in enumerate(grid) for x, c in enumerate(row) if c in "BD"}
-    tall = built | {(x, y) for y, row in enumerate(grid) for x, c in enumerate(row) if c in "Tb"}
-    for y in range(m.h):
-        for x in range(m.w):
-            i = m.i(x, y)
-            if (x, y) in tall or m.objects[i] or m.collision[i]:
-                continue
-            if (x - 1, y) in built:
-                m.put("objects", x, y, ID["cast_e"])
-            elif (x, y - 1) in tall:
-                m.put("objects", x, y, ID["cast_s"])
-
-
 DAWNBROOK = [
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
     "TTTTTTTTTTTT.......TTTTTTTTTTT",
@@ -319,7 +303,7 @@ DAWNBROOK = [
 
 def dawnbrook():
     m = Town(30, 20, base.GRASS)
-    m.props = [("nameKey", "dawnbrook"), ("ambient", "butterflies"), ("clouds", True), ("border", BORDER), ("connect_east", "route_1"), ("connect_east_offset", 0)]
+    m.props = [("nameKey", "dawnbrook"), ("ambient", "butterflies"), ("border", BORDER), ("connect_east", "route_1"), ("connect_east_offset", 0)]
     paint(m, DAWNBROOK, "grass")
     place(m, "home_clay", 5, 2)
     place(m, "lab", 19, 2)
@@ -341,7 +325,6 @@ def dawnbrook():
     dress_pond(m, DAWNBROOK)
     dress_grass(m)
     autotile_paths(m)
-    cast_shadows(m, DAWNBROOK)
     return finish(m.build(), m)
 
 
@@ -396,7 +379,6 @@ def mossgate():
     dress_pond(m, MOSSGATE)
     dress_grass(m)
     autotile_paths(m)
-    cast_shadows(m, MOSSGATE)
     return finish(m.build(), m)
 
 
@@ -434,7 +416,7 @@ def route(route_id):
     m = Town(r["w"], r["h"], base.GRASS)
     links = {"route_1": [("connect_west", "dawnbrook"), ("connect_west_offset", 0),
                          ("connect_east", "mossgate"), ("connect_east_offset", 0)]}[route_id]
-    m.props = [("nameKey", route_id), ("ambient", "leaves"), ("clouds", True), ("entry", r["entry"]["side"]), ("border", BORDER), *links]
+    m.props = [("nameKey", route_id), ("ambient", "leaves"), ("entry", r["entry"]["side"]), ("border", BORDER), *links]
     grid = r["grid"]
     for size, lines in TRAILS[route_id].items():
         grid = worn(grid, lines, size)
@@ -453,7 +435,6 @@ def route(route_id):
         ledge_row(m, *row)
     fringe(m, grid)
     dress_grass(m)
-    cast_shadows(m, grid)
     return finish(m.build(), m)
 
 

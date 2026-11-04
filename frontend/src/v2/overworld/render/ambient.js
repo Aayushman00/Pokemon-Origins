@@ -72,20 +72,6 @@ export function smoke(tick, seed = 0) {
 	});
 }
 
-const CLOUD_ROWS = [[20, 0], [8, 4], [0, 8], [0, 12], [10, 16], [26, 20]];
-const SKY = 640; // clouds repeat across this many world pixels
-
-/** Screen rects of the cloud shadows drifting over the world. */
-export function clouds(tick, camX, camY) {
-	const rects = [];
-	for (let i = 0; i < 3; i++) {
-		const x = wrap(seeded(i, 3) * SKY + tick * 0.1 - camX, SKY) - 120;
-		const y = wrap(seeded(i, 4) * SKY + tick * 0.03 - camY, SKY) - 120;
-		for (const [inset, dy] of CLOUD_ROWS) rects.push({ x: Math.round(x + inset), y: Math.round(y + dy), w: 120 - inset * 2, h: 4 });
-	}
-	return rects;
-}
-
 const TINTS = { dusk: "#ffb98e", night: "#5a68b0" };
 
 /** Multiply colour for a map's fixed time of day, or null for plain daylight. */

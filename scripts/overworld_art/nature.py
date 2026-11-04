@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw, ImageFilter
 
 from .slice_art import T, _lawn, _outline, _trail, _wave, meadow, rgb
 from .tiles_v2 import E, N, NE, NW, S, SE, SW, Wb
-from .world_palette import LINE, SHADOW, WORLD
+from .world_palette import LINE, WORLD
 
 SIDES = {(0, -1): N, (1, 0): E, (0, 1): S, (-1, 0): Wb}
 CORNERS = {(1, -1): NE, (1, 1): SE, (-1, 1): SW, (-1, -1): NW}
@@ -179,22 +179,7 @@ def fence_tile(links):
     if links & (N | S):
         for y in range(3, T, 8):
             d.line((6, y, 9, y), fill=f[3])
-    out = _outline(img, closed=False, line=f[3])
-    _cast(out)
-    return out
-
-
-def _cast(img):
-    """A translucent contact shadow on the two pixels below an object."""
-    colour, opacity = SHADOW
-    tone = (*rgb(colour), round(opacity * 255))
-    px = img.load()
-    for x in range(T):
-        for y in range(T - 2, -1, -1):
-            if px[x, y][3] == 255 and not px[x, y + 1][3]:
-                for yy in range(y + 1, min(y + 3, T)):
-                    px[x, yy] = tone
-                break
+    return _outline(img, closed=False, line=f[3])
 
 
 def tall_grass(frame):
@@ -360,21 +345,11 @@ def ledge(part):
             else:
                 tone = earth[2] if (x * 3 + y) % 11 == 0 else earth[0] if x % 5 == 1 else earth[1]
             px[x, y] = rgba(tone)
-    _cast(img)
-    return img
-
-
-def cast(side):
-    """Translucent shadow thrown across the next cell, away from the top-left light."""
-    colour, opacity = SHADOW
-    tone = (*rgb(colour), round(opacity * 200))
-    img, d = _decal()
-    d.rectangle((0, 0, 3, 15) if side == "e" else (0, 0, 15, 2), fill=tone)
     return img
 
 
 def standing_tree(kind):
-    """32x32 lone tree with a ground shadow. F bears fruit."""
+    """32x32 lone tree. F bears fruit."""
     from .slice_art import tree
     img = tree("B" if kind == "B" else "A")
     px = img.load()
@@ -383,12 +358,6 @@ def standing_tree(kind):
             for dx, dy, c in ((0, 0, "#e0584c"), (1, 0, "#e0584c"), (0, 1, "#a83c38"), (1, 1, "#a83c38")):
                 px[x + dx, y + dy] = rgba(c)
             px[x, y] = rgba("#ffb4a0")
-    colour, opacity = SHADOW
-    tone = (*rgb(colour), round(opacity * 255))
-    for y in range(27, 32):
-        for x in range(32):
-            if not px[x, y][3] and ((x - 17) / 11) ** 2 + ((y - 29) / 2.6) ** 2 < 1:
-                px[x, y] = tone
     return img
 
 
@@ -402,6 +371,4 @@ def bush():
             if r < 7.5:
                 lit = -((x - 7.5) * .5 + (y - 7) * .85) / 7.5
                 px[x, y] = rgba(leaf[1 if lit > .45 else 2 if lit > -.1 else 3])
-    out = _outline(img)
-    _cast(out)
-    return out
+    return _outline(img)

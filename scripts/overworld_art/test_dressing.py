@@ -1,8 +1,9 @@
-"""World dressing: ground that wanders, trees, pond life, shadows, ledges, props."""
+"""World dressing: ground that wanders, trees, pond life, ledges, props."""
 import unittest
 
 from . import nature
 from . import world_maps as W
+from .tiles import new_tiles
 
 
 def layer(data, name):
@@ -59,14 +60,13 @@ class Towns(unittest.TestCase):
         for x, y in cells(self.dawn, "objects", "doormat"):
             self.assertFalse(layer(self.dawn, "collision")[y * w + x], (x, y))
 
-    def test_buildings_cast_shadows_east_and_south(self):
-        self.assertIn((10, 4), cells(self.dawn, "objects", "cast_e"))
-        self.assertTrue(cells(self.dawn, "objects", "cast_s"))
+    def test_nothing_lays_a_grey_block_on_the_ground(self):
+        self.assertFalse(cells(self.dawn, "objects", "cast_"))
+        self.assertFalse(cells(self.moss, "objects", "cast_"))
 
-    def test_shadows_are_never_solid(self):
-        w = self.moss["width"]
-        for x, y in cells(self.moss, "objects", "cast_"):
-            self.assertFalse(layer(self.moss, "collision")[y * w + x], (x, y))
+    def test_no_drifting_cloud_shadows(self):
+        for data in (self.dawn, self.moss, W.route("route_1")):
+            self.assertNotIn("clouds", [p["name"] for p in data["properties"]])
 
     def test_chimneys_smoke(self):
         tiles = self.dawn["tilesets"][0]["tiles"]
@@ -118,6 +118,13 @@ class Terrain(unittest.TestCase):
     def test_a_ledge_has_a_real_face(self):
         alpha = nature.ledge("m").getchannel("A").load()
         self.assertGreaterEqual(sum(alpha[8, y] > 0 for y in range(16)), 10)
+
+
+class Shadows(unittest.TestCase):
+    def test_no_outdoor_tile_is_see_through(self):
+        for name, img in new_tiles():
+            soft = {a for a in img.getchannel("A").getdata() if 0 < a < 255}
+            self.assertFalse(soft, name)
 
 
 if __name__ == "__main__":

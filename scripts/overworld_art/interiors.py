@@ -3,8 +3,7 @@
   frontend/public/maps/tilesets/interior.png   unique 16x16 tiles, 8 columns
   frontend/public/maps/mossgate_center.json, origin_mart.json, and the Dawnbrook and Mossgate houses and lab
 
-Each room is painted as ONE picture (so furniture spans tiles and casts big
-soft floor shadows across tile edges, the way FireRed rooms look), then
+Each room is painted as ONE picture (so furniture spans tiles), then
 sliced into 16x16 tiles and de-duplicated across all rooms. Animated parts
 (the healing machine) are painted once per frame; any tile that differs
 between frames becomes a Tiled animation. Collision, NPCs, signs and warps
@@ -13,7 +12,7 @@ are plain data on top, so the engine contract is unchanged.
 Style (after the FireRed refs, original art): rooms with diagonally cut top
 corners and narrow side-wall bands, a two-row back wall (top cap, trim,
 face, wainscot, baseboard), bold patterned floors, 3/4-view furniture, a
-soft shadow under every piece, a red exit mat on the bottom edge.
+red exit mat on the bottom edge.
 Counter staff are talked to ACROSS the counter: the counter cell in front of
 them carries their script as a sign. Gyms are decided per gym later.
 """
@@ -35,29 +34,24 @@ ANIM_MS = 260
 BLACK = "#000000"
 
 # ============================================================== floor themes
-# Every floor pixel remembers its pattern key, so shadows and light can
-# recolour it later: normal / shadow (cool, darker) / light (heal pad).
+# Every floor pixel remembers its pattern key, so light can
+# recolour it later: normal / light (heal pad).
 FLOORS = {
     "center": {
         "normal": {"base": "#f6eebe", "line": "#dcce94", "inset": "#fffad8", "lo": "#eadca4"},
-        "shadow": {"base": "#ddd09c", "line": "#c2b27a", "inset": "#e8dcac", "lo": "#d0c08a"},
         "light": {"base": "#fffbe4", "line": "#ece2b8", "inset": "#ffffff", "lo": "#f6efcc"},
     },
     "mart": {
         "normal": {"base": "#5c88dc", "line": "#4470c4", "inset": "#94bcf6", "lo": "#709ce6"},
-        "shadow": {"base": "#4870c4", "line": "#3458a8", "inset": "#6f98e0", "lo": "#5884d0"},
     },
     "lab": {
         "normal": {"base": "#dde5e6", "line": "#b6c3ca", "inset": "#eaf0f0", "lo": "#ced9dc"},
-        "shadow": {"base": "#c2ccd0", "line": "#9eabb4", "inset": "#ced8da", "lo": "#b4c0c6"},
     },
     "cottage": {
         "normal": {"base": "#b98f5c", "line": "#8a6638", "inset": "#a87f4e", "lo": "#c9a36e", "grid": "#7c7068"},
-        "shadow": {"base": "#a07a4c", "line": "#74542e", "inset": "#906a40", "lo": "#ae8a5c", "grid": "#686058"},
     },
     "home": {
         "normal": {"base": "#d6bc68", "line": "#a88c40", "inset": "#c6a856", "lo": "#e6d080", "grid": "#8c8ca0"},
-        "shadow": {"base": "#bca458", "line": "#8c7434", "inset": "#ac9248", "lo": "#ccb46c", "grid": "#74748a"},
     },
 }
 
@@ -120,25 +114,13 @@ class Room:
         self.rect(x0 + 1, y0 + 1, x1 - 1, y1 - 1, fill)
 
     def recolor(self, inside, mode):
-        """Recolour floor pixels where inside(x, y) is true (shadow / light)."""
+        """Recolour floor pixels where inside(x, y) is true."""
         pal = FLOORS[self.theme][mode]
         for y in range(self.h * T):
             for x in range(self.w * T):
                 k = self.key[y][x]
                 if k is not None and inside(x, y):
                     self.t.set(x, y, pal[k])
-
-    def shadow_rect(self, x0, y0, x1, y1, soft=True):
-        """Soft drop shadow: solid core, dithered 2 px rim."""
-        def inside(x, y):
-            if not (x0 <= x <= x1 and y0 <= y <= y1):
-                return False
-            edge = min(x - x0, x1 - x, y - y0, y1 - y)
-            return edge >= 2 or not soft or (x + y) % 2 == 0
-        self.recolor(inside, "shadow")
-
-    def shadow_ellipse(self, cx, cy, rx, ry):
-        self.recolor(lambda x, y: ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 < 1, "shadow")
 
     def block(self, *cells):
         self.solid.update(cells)
@@ -267,7 +249,6 @@ LEAF = ["#c4ec80", "#9cd468", "#58a840", "#2f6a3c"]
 
 def plant_palm(r, cx, by):
     """Potted palm: rounded white pot with rim and band, fronds with veins."""
-    r.shadow_ellipse(cx - 2, by - 1, 10, 3)
     # pot
     rbox(r, cx - 6, by - 12, cx + 5, by - 1, "#eeeef4", hi="#ffffff", lo="#c4c8d8")
     r.rect(cx - 7, by - 13, cx + 6, by - 11, OL)
@@ -310,7 +291,6 @@ def glass_pane(r, x0, y0, x1, y1, tint="#c4def4", goods=None, shelves=0):
 
 def seat(r, x0, y0):
     """Cushioned stool: rounded top with stitching, front band, little feet."""
-    r.shadow_rect(x0 - 3, y0 + 6, x0 + 12, y0 + 17)
     r.rect(x0 + 2, y0 + 13, x0 + 3, y0 + 15, "#6c6e8c")
     r.rect(x0 + 11, y0 + 13, x0 + 12, y0 + 15, "#6c6e8c")
     rbox(r, x0, y0, x0 + 14, y0 + 13, "#f8d040", hi="#fff6a8", lo="#c08c28")
@@ -323,7 +303,6 @@ def seat(r, x0, y0):
 
 def glass_table(r, x0, y0, w=30, h=24, item=None):
     """Glass coffee table: bevelled glass, metal frame, legs, something on top."""
-    r.shadow_rect(x0 - 3, y0 + 8, x0 + w - 2, y0 + h + 6)
     for lx in (x0 + 2, x0 + w - 4):
         r.rect(lx, y0 + h - 6, lx + 1, y0 + h + 1, "#6c6e8c")
         r.set(lx, y0 + h - 6, "#c8ccdc")
@@ -411,7 +390,6 @@ def paint_center(frame):
     r.rect(7 * T + 14, 22, 8 * T + 1, 24, "#6c6e8c")                     # mount
     # --- PC terminal: tall unit, screen with text, slots, grille, LED
     px0, px1 = 13 * T - 2, 14 * T - 2
-    r.shadow_rect(px0 - 4, 2 * T + 3, px1 - 2, 2 * T + 9)
     rbox(r, px0, 3, px1, 2 * T + 7, "#e6e6ee", hi="#ffffff", lo="#a8aac0")
     rbox(r, px0 + 2, 5, px1 - 2, 16, "#2c3a6c")
     for y in (7, 9, 11, 13):
@@ -427,7 +405,6 @@ def paint_center(frame):
     # --- U-shaped counter
     c_hi, c_top, c_mid, c_edge, c_front, c_lo = "#ffc4b4", "#f4907c", "#e87864", "#d05c4c", "#c44c40", "#9c3434"
     L, R_, TOPY, FRONT = 3 * T, 12 * T - 1, 3 * T, 3 * T + 11
-    r.shadow_rect(L - 2, FRONT + 8, R_ + 2, FRONT + 20)
     for ax in (L, R_ - T + 1):
         rbox(r, ax, 2 * T - 6, ax + T - 1, FRONT, c_top, hi=c_hi, lo=c_mid)
         r.rect(ax + 3, 2 * T - 3, ax + 3, 2 * T + 6, "#ffd8cc")             # sheen streak
@@ -527,7 +504,6 @@ def paint_center(frame):
             return (y >= cy) == lower
         return inside
     r.recolor(pad(True), "light")
-    r.recolor(pad(False), "shadow")
     # --- lounge
     seat(r, 12 * T, 5 * T)
     glass_table(r, 12 * T - 2, 6 * T + 4, item="cup")
@@ -548,7 +524,6 @@ GOODS = ["#e84a3c", "#f8d040", "#58a840", "#4c78e0", "#f07ca8", "#ffffff", "#f07
 def shelf_unit(r, x0, y0, h=3 * T, seed=0):
     """Tall shelving unit: header sign, three shelves of mixed products
     (boxes, bottles, cans), yellow price tags, side panel, kick plate."""
-    r.shadow_rect(x0 - 5, y0 + 6, x0 + 10, y0 + h + 5)
     rbox(r, x0, y0, x0 + T - 1, y0 + h - 1, "#eeeef4", hi="#ffffff", lo="#c4c8d8")
     r.rect(x0 + 1, y0 + 1, x0 + T - 2, y0 + 5, "#e04838" if seed % 2 else "#4870c8")   # header
     r.rect(x0 + 1, y0 + 1, x0 + T - 2, y0 + 1, "#ffa088" if seed % 2 else "#6898e8")
@@ -592,7 +567,6 @@ def potion(r, x, y, col):
 def glass_counter(r, x0, y0, x1, y1):
     """Glass display counter: metal frame, glass top showing products inside,
     glazed front with mullions, yellow plinth."""
-    r.shadow_rect(x0 - 4, y1 - 2, x1 + 2, y1 + 8)
     rbox(r, x0, y0, x1, y1 - 10, "#e6e2f4", hi="#ffffff", lo="#b8b4d0")
     for i, x in enumerate(range(x0 + 4, x1 - 6, 7)):
         potion(r, x, y0 + 4 + (i % 2) * 3, ("#8c62c8", "#40b8b0", "#e84a3c", "#f8d040")[i % 4])
@@ -631,7 +605,6 @@ def paint_mart(frame):
     # chiller cases: header light, glass doors, bottles with caps, handles, grille
     for i in range(2):
         x0 = 10 * T + i * T
-        r.shadow_rect(x0 - 3, 3 * T - 2, x0 + T - 2, 3 * T + 6)
         rbox(r, x0, 2 * T - 11, x0 + T - 1, 3 * T - 1, "#eeeef4", hi="#ffffff", lo="#c4c8d8")
         r.rect(x0 + 2, 2 * T - 9, x0 + T - 3, 2 * T - 7, "#58e868")
         r.rect(x0 + 2, 2 * T - 9, x0 + T - 3, 2 * T - 9, "#c8ffd0")
@@ -647,7 +620,6 @@ def paint_mart(frame):
             r.rect(x, 2 * T + 12, x, 2 * T + 13, "#2c4c98")                 # grille
     plant_palm(r, 2 * T + 8, 3 * T - 2)
     # cardboard box: flaps, tape, label
-    r.shadow_rect(T - 1, 4 * T - 3, 2 * T + 2, 4 * T + 3)
     rbox(r, T + 1, 3 * T, 2 * T + 1, 4 * T - 2, "#e0b468", hi="#f8d890", lo="#b08440")
     r.rect(T + 2, 3 * T + 4, 2 * T, 3 * T + 4, "#b08440")
     r.rect(T + 8, 3 * T + 1, T + 9, 4 * T - 3, "#c8a050")
@@ -655,7 +627,6 @@ def paint_mart(frame):
     r.box(T + 3, 3 * T + 7, T + 7, 3 * T + 11, "#ffffff")
     r.set(T + 4, 3 * T + 9, "#e04838")
     # register desk (vertical): bevelled top, cash register, receipt, drawer, side door
-    r.shadow_rect(4 * T - 4, 6 * T - 4, 5 * T + 2, 6 * T + 6)
     rbox(r, 4 * T, 2 * T - 3, 5 * T - 1, 6 * T - 1, "#c8e0f8", hi="#eef6ff", lo="#94b4e0")
     r.rect(5 * T - 4, 2 * T + 1, 5 * T - 2, 6 * T - 6, "#a8c4ec")
     r.rect(4 * T + 2, 5 * T - 6, 5 * T - 6, 5 * T - 6, "#94b4e0")             # cabinet door seam
@@ -775,7 +746,6 @@ def paint_home(frame, theme="home", rug=("#68b858", "#4c9a44", "#58a840")):
     # a wooden stringer whose saw-tooth edge follows the steps, a handrail
     # with spindles and a newel post at the foot.
     X0, X1, YB, N, RISE, SHIFT = 9 * T + 8, 12 * T - 1, 3 * T - 1, 6, 7, 4
-    r.shadow_rect(9 * T, YB - 2, 12 * T - 1, YB + 6)
     r.rect(X0 + N * SHIFT - 1, 0, X1, YB - N * RISE, "#2e2a44")              # landing opening
     r.rect(X0 + N * SHIFT - 1, YB - N * RISE, X1, YB - N * RISE, "#6c6e8c")
     for i in range(N):
@@ -904,7 +874,6 @@ def paint_lab(frame):
         r.set(x, y, "#f8d040")
     # --- instrument rack: dials, vents, one LED that blinks
     x0, x1 = 11 * T, 14 * T - 2
-    r.shadow_rect(x0 - 4, 2 * T + 3, x1 - 2, 2 * T + 9)
     rbox(r, x0, 3, x1, 2 * T + 7, "#d8e0e2", hi="#ffffff", lo="#9aa8b0")
     rbox(r, x0 + 3, 6, x0 + 20, 17, "#14343c")
     for i, x in enumerate(range(x0 + 5, x0 + 19)):
@@ -920,7 +889,6 @@ def paint_lab(frame):
     r.rect(x1 - 9, 24, x1 - 7, 26, "#58e868" if frame % 2 == 0 else "#2a6a40")
     # --- work bench: pale top, teal drawers, the day's samples
     b0, b1, top = 3 * T - 2, 12 * T + 1, 3 * T - 3
-    r.shadow_rect(b0 - 2, top + 22, b1, top + 26)
     rbox(r, b0, top, b1, top + 13, "#f2f5f4", hi="#ffffff", lo="#b8c8c8")
     rbox(r, b0, top + 13, b1, top + 22, "#4f8088", hi="#7ab0b4", lo="#2f5a64")
     for x in range(b0 + 8, b1 - 8, 24):

@@ -27,7 +27,7 @@ drawing functions in this folder, so art changes are reviewable diffs.
 | `preview.py` | 4x contact sheet PNG + walk-cycle GIF |
 | `test_art.py` | sheet size, frame count, palette limit, mirroring, foot anchor, orphans, silhouettes, map checks |
 | `test_route.py` | worn trails, unchanged route collision, opaque outdoor ground, bridge boards |
-| `test_dressing.py` | lawn edges, trees, pond life, cast shadows, ledges, forest tones |
+| `test_dressing.py` | lawn edges, trees, pond life, ledges, forest tones |
 | `test_rooms.py` | rooms differ from each other, and their people and exits can be reached |
 
 Commands (from the repo root):
