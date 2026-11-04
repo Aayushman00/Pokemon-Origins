@@ -34,7 +34,8 @@ Thumbs.db
 # Vite specific
 .cache/
 .temp/
-public/
+public/*
+!public/maps/
 
 # Misc
 *.tmp
