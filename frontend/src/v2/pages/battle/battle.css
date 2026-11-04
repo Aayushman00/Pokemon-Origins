@@ -271,7 +271,7 @@
 
 .mon--me {
 	left: 7cqw;
-	bottom: -4.5cqw;
+	bottom: -1cqw;
 	width: 38cqw;
 	height: 38cqw;
 }
@@ -289,7 +289,7 @@
 
 @keyframes idle {
 	50% {
-		transform: translateY(-0.6cqw);
+		transform: translateY(-0.4cqw);
 	}
 }
 

@@ -1,7 +1,7 @@
-import React, { useRef, useState } from "react";
+import React from "react";
 import BattlePokemonSprite from "../../../components/PokemonSprite/BattlePokemonSprite";
 import HpPanel from "./HpPanel";
-import { emptyRowsBelow, fxFamily } from "../../battle/battleAnimation";
+import { fxFamily, seatDrop } from "../../battle/battleAnimation";
 import { TYPE_COLORS } from "../../../utils/typeColors";
 import "./fx.css";
 
@@ -29,18 +29,6 @@ function monClass(f) {
 		.join(" ");
 }
 
-/** How far to drop a loaded sprite so its feet meet the bottom of its box, in % of its height. */
-function footDrop(img) {
-	const { naturalWidth: w, naturalHeight: h } = img;
-	const canvas = document.createElement("canvas");
-	canvas.width = w;
-	canvas.height = h;
-	const g = canvas.getContext("2d");
-	if (!g || !h) return 0;
-	g.drawImage(img, 0, 0);
-	return (emptyRowsBelow(g.getImageData(0, 0, w, h).data, w, h) / h) * 100;
-}
-
 /**
  * The battlefield: backdrop, platforms, both creatures, HP boxes and all
  * impact effects. Laid out in container-query units so the whole
@@ -52,13 +40,6 @@ const BattleStage = ({ battle }) => {
 	const showTrainer =
 		session?.trainerSprite && (phase === "encounter" || (phase === "intro" && fx.enemy.hidden));
 	const panelsIn = phase !== "encounter" && phase !== "loading";
-	const [foeDrop, setFoeDrop] = useState(0);
-	const measured = useRef(null); // once per foe: the idle frames would make it jump
-	const seatFoe = (e) => {
-		if (measured.current === enemy.pokemon_id) return;
-		measured.current = enemy.pokemon_id;
-		setFoeDrop(footDrop(e.currentTarget));
-	};
 
 	return (
 		<div
@@ -88,13 +69,13 @@ const BattleStage = ({ battle }) => {
 			)}
 
 			{enemy && (
-				<div className="mon mon--foe" style={{ translate: `0 ${foeDrop}%` }} aria-hidden="true">
-					<BattlePokemonSprite key={`foe-${enemy.pokemon_id}-${enemy.position}`} pokemonId={enemy.pokemon_id} variant="front" alt="" onLoad={seatFoe} className={`sprite ${monClass(fx.enemy)}`} />
+				<div className="mon mon--foe" style={{ translate: `0 ${seatDrop(enemy.pokemon_id, "front")}%` }} aria-hidden="true">
+					<BattlePokemonSprite key={`foe-${enemy.pokemon_id}-${enemy.position}`} pokemonId={enemy.pokemon_id} variant="front" alt="" className={`sprite ${monClass(fx.enemy)}`} />
 					{fx.enemy.sparkle && <span className="sparkle" />}
 				</div>
 			)}
 			{player && (
-				<div className="mon mon--me" aria-hidden="true">
+				<div className="mon mon--me" style={{ translate: `0 ${seatDrop(player.pokemon_id, "back")}%` }} aria-hidden="true">
 					<BattlePokemonSprite key={`me-${player.pokemon_id}-${player.position}`} pokemonId={player.pokemon_id} variant="back" alt="" className={`sprite ${monClass(fx.player)}`} />
 					{fx.player.entering && <span className="ball-burst" />}
 					{fx.player.sparkle && <span className="sparkle" />}

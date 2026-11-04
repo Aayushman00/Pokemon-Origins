@@ -1,18 +1,16 @@
+import { BATTLE_SEATS } from "../../sprites/battleSeats.generated.js";
+
 /**
  * Pure battle-feedback rules shared by the V2 battle controller.
  * (V1's framer-motion variant tables were dropped: V2 animates with CSS
  * classes driven by these tiers.)
  */
 
-// Empty rows under a sprite, from RGBA pixel data. Front sprites carry 0-22
-// rows of padding, so the stage uses this to stand each one on its oval.
-export function emptyRowsBelow(rgba, width, height) {
-  for (let y = height - 1; y >= 0; y--) {
-    for (let x = 0; x < width; x++) {
-      if (rgba[(y * width + x) * 4 + 3] > 0) return height - 1 - y;
-    }
-  }
-  return 0;
+// How far to drop a 64x64 battle sprite so its feet meet the bottom of its box,
+// in % of its height. Each sprite has its own padding (0-22 rows).
+export function seatDrop(pokemonId, variant) {
+  const rows = BATTLE_SEATS[pokemonId]?.[variant === "back" ? 1 : 0] ?? 0;
+  return (rows / 64) * 100;
 }
 
 // Physical-feel types lunge into contact; ranged/special-feel types stay

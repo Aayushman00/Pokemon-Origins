@@ -182,6 +182,11 @@ class LegendaryTests(unittest.TestCase):
 
 
 class WorldTests(unittest.TestCase):
+    def test_battle_seats_match_the_sprites(self):
+        from . import battle_seats
+        self.assertEqual(len(battle_seats.seats()), 151)
+        self.assertEqual(battle_seats.OUT.read_text(), battle_seats.render(), "rerun battle_seats")
+
     def test_tileset_keeps_8_columns_and_old_ids(self):
         with Image.open(MAPS / "tilesets" / "overworld.png") as img:
             self.assertEqual(img.width, 128)

@@ -1,15 +1,16 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { emptyRowsBelow, getMoveAnimCategory, getImpactTier, hitResultLines, fxFamily } from "./battleAnimation.js";
+import { seatDrop, getMoveAnimCategory, getImpactTier, hitResultLines, fxFamily } from "./battleAnimation.js";
 
-describe("emptyRowsBelow", () => {
-  const sprite = (rows) => Uint8ClampedArray.from(rows.flatMap((r) => [...r].flatMap((c) => [0, 0, 0, c === "#" ? 255 : 0])));
-  it("counts fully transparent rows under the lowest pixel", () => {
-    assert.equal(emptyRowsBelow(sprite(["..", ".#", "..", ".."]), 2, 4), 2);
-    assert.equal(emptyRowsBelow(sprite(["..", "#."]), 2, 2), 0);
+describe("seatDrop", () => {
+  it("drops each sprite by its own padding, per side", () => {
+    assert.equal(seatDrop(81, "front"), (22 / 64) * 100); // Magnemite floats high in its frame
+    assert.equal(seatDrop(81, "back"), (20 / 64) * 100);
+    assert.equal(seatDrop(150, "front"), 0);
   });
-  it("treats an empty image as no padding", () => {
-    assert.equal(emptyRowsBelow(sprite(["..", ".."]), 2, 2), 0);
+  it("covers all 151 and leaves anything else where it is", () => {
+    for (let dex = 1; dex <= 151; dex++) assert.ok(seatDrop(dex, "back") >= 0 && seatDrop(dex, "front") < 50, `dex ${dex}`);
+    assert.equal(seatDrop(999, "front"), 0);
   });
 });
 
