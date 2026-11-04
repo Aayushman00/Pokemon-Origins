@@ -103,7 +103,7 @@ def build():
     for x in list(range(10, 15)) + list(range(17, 22)):
         m.put("objects", x, 13, ID["logfence"], SOLID)
     for x, y in ((8, 9), (9, 9), (8, 10), (9, 10), (22, 9), (23, 9), (22, 10), (23, 10)):
-        m.put("ground", x, y, ID["bedA"])
+        m.put("ground", x, y, ID["bedA" if (x + y) % 2 else "bed2A"])
     m.sign("gym_sign", 14, 12, "ORIGIN TOWN GYM - Leader: Marina, the tidal tactician.")
     m.put("objects", 14, 12, ID["gym_sign"], SOLID)
 
@@ -112,6 +112,7 @@ def build():
     m.building("house", 3, 3, 4, 4)
     m.sign("home_door", 4, 6, "It's your house. Mom left the door open for you.")
     m.put("objects", 7, 7, MAILBOX, SOLID)
+    m.put("ground", 4, 7, ID["doormat"])
     for x in (2, 3):
         m.put("objects", x, 9, ID["picket"], SOLID)
     for x in (6, 7):
@@ -147,7 +148,7 @@ def build():
     for x, y in ((8, 13), (28, 16), (13, 26)):
         m.put("objects", x, y, ROCK, SOLID)
     for x, y in ((11, 21), (12, 22), (11, 24), (21, 14), (22, 15)):
-        m.put("ground", x, y, ID["bedA"])
+        m.put("ground", x, y, ID["bedA" if (x + y) % 2 else "bed2A"])
     m.sign("town_sign", 14, 16, "ORIGIN TOWN - Where every Pokemon Origins journey begins.")
     m.put("objects", 14, 16, base.SIGN, SOLID)
 
@@ -190,7 +191,7 @@ def finish(data, m):
     ts.update(imageheight=rows * 16, tilecount=total)
     anim = lambda a, b, ms: {"id": a, "animation": [{"tileid": a, "duration": ms}, {"tileid": b, "duration": ms}]}
     tiles = [anim(WA, WB, 500), anim(FA, FB, 500), {"id": TALL_OLD, "properties": [base.prop("cover", 9)]},
-             anim(ID["bedA"], ID["bedB"], 700),
+             anim(ID["bedA"], ID["bedB"], 700), anim(ID["bed2A"], ID["bed2B"], 760),
              {**anim(ID["tallA"], ID["tallB"], 900), "properties": [base.prop("cover", 9)]}]
     for sides in ("n", "s", "w", "e", "nw", "ne", "sw", "se"):
         tiles.append(anim(ID[f"shore_{sides}A"], ID[f"shore_{sides}B"], 500))

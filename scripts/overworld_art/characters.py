@@ -322,4 +322,10 @@ CAST = [
          "b": "denim", "n": "hair_brown:2"}, "short"),
 ]
 
-ROSTER = [PLAYER_BOY, PLAYER_GIRL, YOUNGSTER] + CAST
+# v2 hand-placed characters (handmade.py) replace their v1 versions by id.
+# Stage 2 slice: player, player_f, lass. The rest follow in stage 3.
+from .handmade import CAST_V2  # noqa: E402
+
+_V1 = [PLAYER_BOY, PLAYER_GIRL, YOUNGSTER] + CAST
+_V2 = {c["id"]: {**c, "v2": True} for c in CAST_V2}
+ROSTER = [_V2.get(c["id"], c) for c in _V1]
