@@ -1,6 +1,11 @@
 # Overworld art refinement: audit (stage 0) and plan (stage 1)
 
-Status: **waiting for OK** before stage 2 (vertical slice).
+Status: stages 0-1 approved. Stage 2 slice reviewed: **tiles approved, v2 avatars
+rejected** (redrawn instead of refined; parked on `art/v2-avatars-parked`).
+Avatars restart as **v3 = pixel-level polish of v1** under an identity lock (same
+height, head ratio, silhouette, outfit colours, accessories), one character at a time,
+player boy first. Decision 2 (new proportions) is withdrawn; decision 1 (8-column sheet,
+right = mirrored left) stands. Art decisions: `docs/overworld/ART_CHANGELOG.md`.
 Goal: refine the existing Origin Town build until it matches, then beats, the
 FireRed refs (town, gym, gym maze, Pokemon Center). Refinement, not rewrite.
 UI copy says "Pokemon Origins".
