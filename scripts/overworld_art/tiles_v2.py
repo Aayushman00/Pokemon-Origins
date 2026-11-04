@@ -14,7 +14,11 @@ from .tiles import C, ROOFS, T, Tile, grass, hexrgb, mown_block, rng
 LEAF = {  # canopy ramp: hi, light, base, mid, low, outline
     "oak": ["#c8f080", "#8cd058", "#5cb048", "#3e8c48", "#2c6844", "#1e4434"],
     "lime": ["#e0f490", "#a8d860", "#78bc48", "#50984a", "#386e46", "#244836"],
+    # border forest: deeper so the playable town reads brighter than its edge
+    "forest": ["#a8dc70", "#6cb450", "#46944a", "#327646", "#225a3e", "#163a30"],
+    "forest2": ["#bce07a", "#80c058", "#58a04c", "#3c8048", "#2a603e", "#183e30"],
 }
+UNDERGROWTH = "#3e8846"
 BARK = {"hi": "#c08454", "base": "#8c5634", "lo": "#5c3438", "line": "#3a2426"}
 GROUND_SHADOW = "#4c9a48"   # opaque: trees stand on grass
 TALL = {"hi": "#c4ec80", "light": "#90d460", "base": "#68b850", "mid": "#4c9c48", "low": "#3a8048", "floor": "#5aa848"}
@@ -294,4 +298,77 @@ def doormat():
     for x in range(4, 12, 2):
         t.set(x, 4, "#c84838")
     t.rect(3, 7, 12, 7, C["shadow"])
+    return t
+
+
+# ============================================================ border forest
+# One 2x2 tree that tiles seamlessly in both directions (FireRed-style
+# forest wall). The same block fills the off-map border (`border` map
+# property, chosen by tile parity), so the edge of the world reads as one
+# forest. Canopy clumps wrap horizontally so neighbouring trees merge.
+BORDER_CLUSTERS = {
+    "A": [(16, 5, 9), (4, 7, 8.5), (28, 7, 8.5), (0, 15, 8), (32, 15, 8),
+          (10, 13, 8.5), (22, 13, 8.5), (16, 19, 8.5)],
+    "B": [(9, 5, 8.5), (23, 5, 8.5), (0, 11, 8.5), (32, 11, 8.5), (16, 11, 9),
+          (7, 18, 8), (25, 18, 8), (16, 20, 7.5)],
+}
+
+
+def border_tree(variant="A", leaf="forest"):
+    hi, light, base, mid, low, line = LEAF[leaf]
+    t = Tile(32, 32, fill=UNDERGROWTH)
+    r0 = rng(41)
+    for _ in range(40):
+        t.set(r0(32), r0(32), GROUND_SHADOW)
+    for y in range(22, 32):
+        for x in range(32):
+            if ((x - 16.5) / 7) ** 2 + ((y - 29) / 2.4) ** 2 < 1:
+                t.set(x, y, low)
+    for y in range(22, 30):
+        for x in range(14, 19):
+            col = BARK["hi"] if x <= 14 else BARK["lo"] if x >= 17 else BARK["base"]
+            if x == 16 and y % 3 == 1:
+                col = BARK["lo"]
+            t.set(x, y, col)
+        t.set(13, y, BARK["line"])
+        t.set(19, y, BARK["line"])
+    t.rect(13, 30, 19, 30, BARK["line"])
+    clusters = BORDER_CLUSTERS[variant]
+    owner = {}
+    for i, (cx, cy, r) in enumerate(clusters):
+        for y in range(32):
+            for x in range(32):
+                for wx in (-32, 0, 32):
+                    if hypot((x + wx + 0.5 - cx) / r, (y + 0.5 - cy) / (r * 0.92)) < 1:
+                        owner[(x, y)] = (i, cx - wx)
+    for (x, y), (i, cx) in owner.items():
+        _, cy, r = clusters[i]
+        nx, ny = (x + 0.5 - cx) / r, (y + 0.5 - cy) / r
+        lit = -(nx * 0.55 + ny * 0.83)
+        below = owner.get((x, y + 1))
+        if below is not None and below[0] != i and below[0] > i:
+            col = low
+        elif lit > 0.55:
+            col = hi
+        elif lit > 0.2:
+            col = light
+        elif lit > -0.25:
+            col = base
+        elif lit > -0.6:
+            col = mid
+        else:
+            col = low
+        t.set(x, y, col)
+    r = rng(23 if variant == "A" else 29)
+    for (x, y) in owner:
+        if r(9) == 0 and ((x - 1) % 32, y) in owner and t.px[x, y][:3] == hexrgb(base)[:3]:
+            t.set(x, y, mid)
+            t.set((x - 1) % 32, y, light if r(2) else mid)
+    for y in range(32):
+        for x in range(32):
+            if (x, y) in owner:
+                continue
+            if any(((x + dx) % 32, y + dy) in owner for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)) if 0 <= y + dy < 32):
+                if not (13 <= x <= 19 and y >= 22):
+                    t.set(x, y, line)
     return t

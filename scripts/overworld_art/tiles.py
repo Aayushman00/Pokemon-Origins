@@ -555,6 +555,10 @@ def new_tiles():
         for i, part in enumerate(slice_into(v2.oak(variant, leaf).img, 2, 2)):
             add(f"oak{variant}_{i % 2}_{i // 2}", part)
     add("doormat", v2.doormat())
+    # ---- stage 3b: border forest (2x2, tiles seamlessly; also the off-map border)
+    for variant, leaf in (("A", "forest"), ("B", "forest2")):
+        for i, part in enumerate(slice_into(v2.border_tree(variant, leaf).img, 2, 2)):
+            add(f"forest{variant}_{i % 2}_{i // 2}", part)
     return out
 
 

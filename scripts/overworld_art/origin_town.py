@@ -60,25 +60,67 @@ def plain_windows(m, size=3):
     return bad
 
 
+def _free(m, x, y):
+    """A grass cell with nothing on it (no path, decor, object, roof, NPC, sign)."""
+    if not (0 <= x < W and 0 <= y < H):
+        return False
+    i = m.i(x, y)
+    if m.ground[i] - 1 not in GRASS_IDS or m.decor[i] or m.objects[i] or m.above[i] or m.collision[i]:
+        return False
+    for group in ("npcs", "signs", "warps", "triggers"):
+        for o in m.groups[group]:
+            ox, oy = o["x"] // 16, o["y"] // 16
+            ow, oh = max(1, o.get("width", 0) // 16), max(1, o.get("height", 0) // 16)
+            if ox <= x < ox + ow and oy <= y < oy + oh:
+                return False
+    return True
+
+
+def stagger_edge(m):
+    """Pines and bushes in front of the forest band so its edge is not a
+    ruler line. Every ~3rd free edge cell, only where the cell inward is
+    free grass and no path is adjacent (path mouths and walkways stay open)."""
+    PATHS = {PATH, ID["pave"]}
+    sides = [([(x, 2) for x in range(2, W - 2)], (0, 1)), ([(x, H - 3) for x in range(2, W - 2)], (0, -1)),
+             ([(2, y) for y in range(3, H - 3)], (1, 0)), ([(W - 3, y) for y in range(3, H - 3)], (-1, 0))]
+    n = 0
+    for cells, (ix, iy) in sides:
+        for x, y in cells:
+            near_path = any(m.ground[m.i(x + dx, y + dy)] - 1 in PATHS
+                            for dx in (-1, 0, 1) for dy in (-1, 0, 1) if 0 <= x + dx < W and 0 <= y + dy < H)
+            if not _free(m, x, y) or not _free(m, x + ix, y + iy) or near_path:
+                continue
+            n += 1
+            if n % 3:
+                continue
+            top_ok = y - 1 >= 0 and not m.above[m.i(x, y - 1)] and (y - 1 < 2 or _free(m, x, y - 1))
+            if hashed(x, y) % 2 and top_ok:
+                m.put("above", x, y - 1, ID["pine_top"])
+                m.put("objects", x, y, ID["pine_base"], SOLID)
+            else:
+                m.put("objects", x, y, ID["bush"], SOLID)
+
+
 def build():
     m = Town(W, H, base.GRASS)
-    m.props = [("border", str(TREE))]
+    # off-map fill: the 2x2 forest block, picked by tile parity like FireRed
+    m.props = [("border", ",".join(str(ID[f"forestA_{x}_{y}"]) for y in (0, 1) for x in (0, 1)))]
 
     # ground: four grass variants scattered so the field never tiles visibly
     for y in range(H):
         for x in range(W):
             m.put("ground", x, y, ID[f"grass{hashed(x, y) % 4}"])
 
-    # forest border, two trees deep on top/bottom
-    for x in range(W):
-        for y in (0, 1, H - 1):
-            m.put("objects", x, y, TREE, SOLID)
+    # forest border: one 2x2 tree deep on every side; leaf shade alternates
+    # per 2x2 block so the wall is not one repeated stamp
     for y in range(H):
-        for x in (0, 1, W - 2, W - 1):
-            m.put("objects", x, y, TREE, SOLID)
+        for x in range(W):
+            if y < 2 or y >= H - 2 or x < 2 or x >= W - 2:
+                v = "A" if ((x // 2) + (y // 2)) % 2 == 0 else "B"
+                m.put("objects", x, y, ID[f"forest{v}_{x % 2}_{y % 2}"], SOLID)
 
     # ---- paths
-    m.fill("ground", 15, 13, 16, H - 2, PATH)
+    m.fill("ground", 15, 13, 16, H - 3, PATH)
     m.fill("ground", 2, 17, W - 3, 18, PATH)
     m.fill("ground", 4, 8, 5, 16, PATH)
     m.fill("ground", 25, 8, 26, 16, PATH)
@@ -145,7 +187,7 @@ def build():
     # ---- props
     for x, y in ((12, 15), (21, 15), (28, 12), (2, 12), (10, 25)):
         m.put("objects", x, y, ID["bush"], SOLID)
-    for x, y in ((8, 13), (28, 16), (13, 26)):
+    for x, y in ((8, 13), (28, 16), (13, 25)):
         m.put("objects", x, y, ROCK, SOLID)
     for x, y in ((11, 21), (12, 22), (11, 24), (21, 14), (22, 15)):
         m.put("ground", x, y, ID["bedA" if (x + y) % 2 else "bed2A"])
@@ -164,10 +206,13 @@ def build():
     m.npc("sailor", 24, 25, "sailor", "up", "Ahoy! This pond's a little small for my ship.")
     m.npc("oldman", 21, 16, "old_man", "down", "When I was young there was no town here. Just grass, as far as you could see.")
     m.npc("hiker", 28, 14, "hiker", "left", "I climbed every hill around here. The view from Route 1 is the best!")
-    m.npc("picnicker", 7, 26, "picnicker", "up", "I packed sandwiches for everyone! Well... for me.")
+    m.npc("picnicker", 7, 25, "picnicker", "up", "I packed sandwiches for everyone! Well... for me.")
     m.npc("scientist", 22, 12, "scientist", "down", "The gym's roof is designed to reflect sunlight. Fascinating!")
     m.npc("rival", 17, 15, "rival", "left", "Took you long enough. I'll beat Marina before you do!")
     m.npc("twin", 2, 21, "twin", "right", "We're twins! My sister is... somewhere. Hiding.")
+
+    # ---- stagger the forest edge: pine / bush clumps in front of the band
+    stagger_edge(m)
 
     # ---- break up any remaining bare grass with tufts and tiny flowers
     decals = [ID["tufts"], ID["flowers0"], ID["flowers1"], ID["tufts"]]
