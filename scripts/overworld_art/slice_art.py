@@ -5,11 +5,11 @@ Rules live in docs/design/ART_BIBLE.md.
 """
 import colorsys
 import random
+import zlib
 from math import hypot, pi, sin
 
 from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
-from .world_maps import hashed
 from .world_palette import LINE, WORLD
 
 T = 16
@@ -75,10 +75,15 @@ def _trail(variant):
 SURFACES = {".": meadow, "l": _lawn, ",": _trail}
 
 
+def variant_at(x, y):
+    """Surface variant for tile (x, y). A real mix: no repeat on a small grid."""
+    return zlib.crc32(f"{x},{y}".encode()) % 4
+
+
 def _wave(x, y, salt):
-    """Low-frequency edge noise. Period 16, so a tile depends only on its
-    neighbours and Phase 1 can cut this into a blob tile set."""
-    return (sin(2 * pi * (x + 2 * y) / 16 + salt) + sin(2 * pi * (2 * x - y) / 16 + 2 * salt)) * 22
+    """Low-frequency edge noise. Period 32, so a tile depends only on its
+    neighbours and its position parity: Phase 1 cuts each blob tile in 2x2 variants."""
+    return (sin(2 * pi * (3 * x + 2 * y) / 32 + salt) + sin(2 * pi * (5 * x - 3 * y) / 32 + 2 * salt)) * 22
 
 
 def _field(cells, material):
@@ -107,7 +112,7 @@ def ground_layer(cells):
     px_out = out.load()
     rims = {",": (*rgb(WORLD["trail"][3]), 255), "l": (*rgb(WORLD["lawn"][0]), 255)}
     for (px, py), m in owner.items():
-        v = hashed(px // T, py // T) % 4
+        v = variant_at(px // T, py // T)
         px_out[px, py] = tiles[m, v][px % T, py % T]
         if m in rims and any(owner.get((px + dx, py + dy), m) != m for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
             px_out[px, py] = rims[m]
@@ -167,14 +172,14 @@ def _window(d, col):
     """One window inside tile column `col`, with a planter under it."""
     x0, x1 = col * T + 2, col * T + 13
     glass, wood = WORLD["glass"], WORLD["wood"]
-    d.rectangle((x0, 54, x1, 66), fill=LINE)
-    d.rectangle((x0 + 1, 55, x1 - 1, 59), fill=glass[1])
-    d.rectangle((x0 + 1, 60, x1 - 1, 65), fill=glass[2])
-    d.line((x0 + 2, 58, x0 + 4, 56), fill=glass[0])
-    d.line((x0 + 6, 55, x0 + 6, 65), fill=wood[1])
-    d.rectangle((x0 - 1, 67, x1 + 1, 69), fill=wood[2])
+    d.rectangle((x0, 50, x1, 62), fill=LINE)
+    d.rectangle((x0 + 1, 51, x1 - 1, 55), fill=glass[1])
+    d.rectangle((x0 + 1, 56, x1 - 1, 61), fill=glass[2])
+    d.line((x0 + 2, 54, x0 + 4, 52), fill=glass[0])
+    d.line((x0 + 6, 51, x0 + 6, 61), fill=wood[1])
+    d.rectangle((x0 - 1, 63, x1 + 1, 65), fill=wood[2])
     for i, x in enumerate(range(x0, x1 + 1, 2)):  # planter blooms
-        d.point((x, 66 + i % 2), fill=("#f4a0a8", "#fff2b0", "#f7d060")[i % 3])
+        d.point((x, 62 + i % 2), fill=("#f4a0a8", "#fff2b0", "#f7d060")[i % 3])
 
 
 def house():
@@ -218,7 +223,7 @@ def house():
     d.rectangle((dx + 3, 55, dx + 4, 77), fill=wood[0])
     d.rectangle((dx + 11, 55, dx + 12, 77), fill=wood[2])
     d.rectangle((dx + 5, 58, dx + 10, 61), fill=WORLD["glass"][1])
-    d.point((dx + 10, 67), fill=WORLD["roof_clay"][0])
+    d.point((dx + 10, 67), fill=wood[0])
     d.rectangle((dx, 78, dx + 15, 79), fill=stone[1])
     _window(d, 2)
     _window(d, 3)
@@ -318,7 +323,7 @@ PLAYER_LEFT = """
 ..ossessssShhdo.
 ..ossesssSShdo..
 ...ossssSSddo...
-....oaaaaaAo....
+....oaaaaaAoo...
 ....oaaaaAAaao..
 ....oKjjjjJaAo..
 ....oKjbjjJoo...

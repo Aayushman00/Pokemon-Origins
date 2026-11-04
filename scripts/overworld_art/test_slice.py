@@ -9,7 +9,7 @@ import unittest
 
 from PIL import Image, ImageOps
 
-from .slice_art import fence, ground_layer, house, luma, mean_saturation, meadow, player_frames, tree
+from .slice_art import fence, ground_layer, house, luma, mean_saturation, meadow, player_frames, tree, variant_at
 from .slice_scene import GRID, before, scene
 from .world_palette import LINE, WORLD
 
@@ -48,6 +48,24 @@ class Ground(unittest.TestCase):
         rows = [sum(hex_at(img, x, y) in trail for x in range(48)) for y in range(48)]
         self.assertGreater(len({r for r in rows if r}), 3)
 
+    def test_variants_do_not_repeat_on_a_grid(self):
+        for period in (2, 4, 8):
+            self.assertFalse(all(variant_at(x, y) == variant_at(x + period, y)
+                                 for x in range(16) for y in range(16)))
+
+    def test_meadow_variants_differ_with_plain_edges(self):
+        self.assertEqual(len({meadow(v).tobytes() for v in range(4)}), 4)
+        for v in range(4):
+            edge = {hex_at(meadow(v), x, y) for x in range(16) for y in (0, 15)}
+            self.assertEqual(edge, {WORLD["meadow"][1]})
+
+    def test_long_edges_wander_without_repeating_each_tile(self):
+        img = ground_layer(["." * 6, "," * 6, "," * 6, "." * 6])
+        trail = set(WORLD["trail"])
+        top = [next(y for y in range(64) if hex_at(img, x, y) in trail) for x in range(96)]
+        self.assertGreaterEqual(len(set(top)), 3)
+        self.assertNotEqual(top[:16], top[16:32])
+
     def test_ground_is_opaque_and_never_black(self):
         img = ground_layer([".l,", "ll,", ",,,"])
         self.assertTrue(all(c[3] == 255 and c[:3] != (0, 0, 0) for _, c in img.getcolors(9999)))
@@ -62,12 +80,19 @@ class Objects(unittest.TestCase):
     def test_house_roof_takes_over_half(self):
         roof, h = set(WORLD["roof_clay"]), house()
         rows = [y for y in range(80) if any(hex_at(h, x, y) in roof for x in range(80))]
-        self.assertGreaterEqual(max(rows) + 1, 42)
+        self.assertGreaterEqual(len(rows), 42)
+        self.assertLess(max(rows), 48)
 
     def test_windows_never_cross_a_tile_edge(self):
         glass, h = set(WORLD["glass"]), house()
-        for edge in (16, 32, 48, 64):
-            self.assertFalse(any(hex_at(h, edge - 1, y) in glass and hex_at(h, edge, y) in glass for y in range(80)))
+        cells = [(x, y) for y in range(80) for x in range(80) if hex_at(h, x, y) in glass]
+        for axis in (0, 1):
+            run = []
+            for v in sorted({c[axis] for c in cells}) + [999]:
+                if run and v - run[-1] > 2:  # a 1px mullion does not split a window
+                    self.assertEqual(run[0] // 16, run[-1] // 16)
+                    run = []
+                run.append(v)
 
     def test_fence_sizes(self):
         self.assertEqual(fence(4).size, (64, 16))
@@ -95,9 +120,15 @@ class Player(unittest.TestCase):
             self.assertLessEqual(len([c for c in f.getcolors(999) if c[1][3]]), 15)
 
     def test_outline_stands_out_from_every_ground(self):
-        line = luma(solid(LINE))[0]
-        for ramp in ("meadow", "lawn", "trail"):
-            self.assertGreaterEqual(min(luma(solid(c))[0] for c in WORLD[ramp]) - line, 0.40)
+        darkest_ground = min(luma(solid(c))[0] for ramp in ("meadow", "lawn", "trail") for c in WORLD[ramp])
+        for f in player_frames().values():
+            px = f.load()
+            for y in range(32):
+                for x in range(16):
+                    if px[x, y][3] and any(not (0 <= x + dx < 16 and 0 <= y + dy < 32) or not px[x + dx, y + dy][3]
+                                           for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                        self.assertEqual(hex_at(f, x, y), LINE, (x, y))
+            self.assertGreaterEqual(darkest_ground - min(luma(f)), 0.40)
 
 
 class Scene(unittest.TestCase):
@@ -108,6 +139,10 @@ class Scene(unittest.TestCase):
 
     def test_before_matches_the_frame(self):
         self.assertEqual(before().size, (240, 160))
+
+    def test_fence_casts_a_shadow(self):
+        bare, full = ground_layer(GRID), scene()
+        self.assertTrue(any(bare.getpixel((x, 7 * 16 + 1)) != full.getpixel((x, 7 * 16 + 1)) for x in range(192, 240)))
 
     def test_no_pure_black(self):
         self.assertFalse(any(c[:3] == (0, 0, 0) for _, c in scene().convert("RGBA").getcolors(99999)))

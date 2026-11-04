@@ -52,6 +52,8 @@ def scene():
     shadows = Image.new("RGBA", img.size)
     _shadow(shadows, hx + 4, hy + 72, hx + 86, hy + 86)
     _shadow(shadows, px + 2, py + 11, px + 14, py + 16)
+    _shadow(shadows, 11 * T, 6 * T + 11, 15 * T + 8, 6 * T + 19)
+    _shadow(shadows, 11 * T + 6, 3 * T + 2, 11 * T + 16, 7 * T)
     for x, y, _ in TREES:
         _shadow(shadows, x * T + 5, y * T + 26, x * T + 30, y * T + 34)
     img.alpha_composite(shadows)

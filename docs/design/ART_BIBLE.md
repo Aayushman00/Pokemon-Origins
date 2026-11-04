@@ -18,9 +18,9 @@ GBA-era top-down pixel art is the genre. `pret/pokefirered/graphics` and screens
 
 ## Outlines and shadows
 
-- Outlines belong to objects only, in `LINE` from `world_palette.py`. Ground has none.
-- Every standing object gets a soft contact shadow, `SHADOW` from `world_palette.py`.
-- Dither only on ground transitions.
+- Outlines belong to objects only, in `LINE` from `world_palette.py`. Ground has none. Trail and lawn may end in a one-pixel edge from their own ramp.
+- Every standing object gets a contact shadow: translucent `SHADOW` from `world_palette.py`, hard pixel edge. Flat decals such as flowers get none.
+- Ground transitions wander and round off. No dither is needed.
 
 ## Ground
 
