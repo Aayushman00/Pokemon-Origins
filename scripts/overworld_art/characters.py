@@ -276,7 +276,7 @@ CAST = [
          "a": "skin_deep", "b": "brown", "n": "brown", "c": "green", "x": "green"}, "bald", hat="bandana",
          features=["closed", "brows"]),
     make("clerk", "Mart Clerk", M, {"s": "skin_light", "h": "hair_brown", "c": "sky", "x": "sky",
-         "t": "sky", "u": "white:2", "b": "navy", "n": "navy", "p": "white"}, "short", hat="cap",
+         "t": "sky", "u": "white:2", "b": "navy", "n": "navy", "p": "white:2"}, "short", hat="cap",
          extras=["apron"]),
     make("professor", "Professor", M, {"s": "skin_light", "h": "hair_gray", "t": "khaki", "u": "red:2",
          "f": "khaki", "b": "brown", "n": "brown"}, "slick", features=["brows"], extras=["coat"]),

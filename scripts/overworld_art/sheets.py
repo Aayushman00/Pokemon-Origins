@@ -41,11 +41,16 @@ def _widen(canvas, rows):
     return [r[1:8] + [r[7], r[8]] + r[8:15] if i in rows else r for i, r in enumerate(canvas)]
 
 
-def _slim_head(canvas):
-    """Take a column off each side of the head and a row off the forehead, so
-    heads stop dwarfing bodies. Columns 4-11 stay put: the eyes do not move."""
-    slim = [["."] + r[0:3] + r[4:12] + r[13:16] + ["."] if y <= CHIN_ROW else r for y, r in enumerate(canvas)]
-    return _drop(slim, {FOREHEAD_ROW})
+def _slim_head(canvas, direction):
+    """Take two columns and a forehead row off the head, so heads stop dwarfing
+    bodies. Front and back trim each side, keeping columns 4-11 where the eyes
+    are. Side views trim the back of the head: the face stays whole."""
+    def trim(r):
+        if direction == "left":
+            return r[0:9] + r[10:12] + r[13:16] + [".", "."]
+        return ["."] + r[0:3] + r[4:12] + r[13:16] + ["."]
+
+    return _drop([trim(r) if y <= CHIN_ROW else r for y, r in enumerate(canvas)], {FOREHEAD_ROW})
 
 
 def _stretch(canvas, rows):
@@ -83,7 +88,7 @@ def frame_keys(char, direction, column):
     canvas = stack(body, *under, *head, *over, arms_up)
     if column == "blink":
         canvas = blink(canvas)
-    canvas = _slim_head(canvas)
+    canvas = _slim_head(canvas, direction)
     canvas = _build(canvas, char.get("build"), direction)
     if column in ("walkA", "walkB"):
         canvas = _drop(canvas, {TORSO_ROW})
@@ -92,7 +97,7 @@ def frame_keys(char, direction, column):
             canvas = _lead(canvas, CHIN_ROW + 1)
         canvas = _drop(canvas, {CHIN_ROW, TORSO_ROW})
     if char.get("build") != "child":
-        canvas = _stretch(canvas, GROWN_ROWS)
+        canvas = _stretch(canvas, GROWN_ROWS[1:] if char.get("build") == "heavy" else GROWN_ROWS)
     return despeckle(shade(outline(canvas)))
 
 

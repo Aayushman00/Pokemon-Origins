@@ -8,7 +8,7 @@ from PIL import Image
 
 from .characters import ROSTER
 from .palette import OUTLINE
-from .sheets import build_sheet
+from .sheets import _slim_head, build_sheet
 from .world_palette import LINE
 
 BY_ID = {c["id"]: c for c in ROSTER}
@@ -64,6 +64,12 @@ class Proportions(unittest.TestCase):
 
     def height(self, char_id):
         return sum(n > 0 for n in self.rows(BY_ID[char_id]))
+
+    def test_slimming_never_touches_the_eyes(self):
+        row = list("0123456789abcdef")
+        canvas = [list(row) for _ in range(32)]
+        self.assertEqual(_slim_head(canvas, "down")[20][4:12], row[4:12])
+        self.assertEqual(_slim_head(canvas, "left")[20][:9], row[:9])
 
     def test_nobody_outgrows_the_bible(self):
         for c in ROSTER:

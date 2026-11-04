@@ -727,33 +727,21 @@ HATS["bucket"] = {
 }
 
 HATS["tophat"] = {
-    "down": sym(4, """
-        ....cccc
-        ....cccc
-        ....cccc
-        ....cccc
+    "down": sym(8, """
         ....cccc
         ....cccc
         ....xxxx
         .ccccccc
         ..CCCCCC
     """),
-    "up": sym(4, """
-        ....cccc
-        ....cccc
-        ....cccc
-        ....cccc
+    "up": sym(8, """
         ....cccc
         ....cccc
         ....xxxx
         .ccccccc
         ..CCCCCC
     """),
-    "left": grid(4, """
-        .....cccccccc...
-        .....cccccccc...
-        .....cccccccc...
-        .....cccccccc...
+    "left": grid(8, """
         .....cccccccc...
         .....cccccccc...
         .....xxxxxxxx...
