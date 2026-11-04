@@ -9,7 +9,7 @@ from math import hypot
 
 from PIL import Image
 
-from .tiles import C, ROOFS, T, Tile, grass, hexrgb, mown_block, rng
+from .tiles import C, ROOFS, T, Tile, grass, hexrgb, mown_block, rng, text
 
 LEAF = {  # canopy ramp: hi, light, base, mid, low, outline
     "oak": ["#c8f080", "#8cd058", "#5cb048", "#3e8c48", "#2c6844", "#1e4434"],
@@ -272,20 +272,105 @@ def wall_v2(t, x0, y0, w, h):
         t.set(x0 + 1, y, C["wall_hi"])
 
 
-def house_v2(roof_ramp="orange"):
-    """4x4 tiles, same footprint and door column as v1 (door in column 1)."""
+def base_shadow(t, x0, x1, y):
+    """Soft 2 px shadow on the lawn under a building's footing (FireRed skirt)."""
+    t.rect(x0 + 1, y, x1, y, "#58a840")
+    t.rect(x0 + 3, y + 1, x1 - 2, y + 1, "#68b848")
+
+
+def vent(t, x, y):
+    """Small roof vent for shops (instead of a house chimney)."""
+    t.rect(x - 1, y - 1, x + 6, y + 4, C["outline"])
+    t.rect(x, y, x + 5, y + 3, C["stone"])
+    t.rect(x, y, x + 5, y, "#c8c8d8")
+    t.rect(x + 4, y + 1, x + 5, y + 3, C["stone_lo"])
+    t.rect(x + 1, y + 2, x + 3, y + 2, C["stone_lo"])
+
+
+def house_v2(roof_ramp="orange", kind="house"):
+    """4x4 tiles, same footprint and door column as v1 (door in column 1).
+    kind: house (chimney), center (cross plate, vent), mart (MART plate, vent)."""
     t = Tile(64, 64)
     t.paste(mown_block(64, 64))
     wall_v2(t, 3, 30, 58, 32)
     roof_v2(t, 1, 3, 62, 29, ROOFS[roof_ramp])
-    chimney(t, 46, 2, 9)
-    window3(t, 6, 38)
-    window3(t, 41, 38)
+    if kind == "house":
+        chimney(t, 46, 2, 9)
+        window3(t, 6, 38)
+        window3(t, 41, 38)
+    else:
+        vent(t, 46, 6)
+        window3(t, 5, 38, w=10)
+        window3(t, 44, 38, w=13)
     door_v2(t, 20, 45)
+    # door spans x 18-31 (frame); plates are centred on it, above the frame
+    if kind == "center":  # white plate with a red cross
+        t.rect(19, 32, 30, 42, C["outline"])
+        t.rect(20, 33, 29, 41, C["white"])
+        t.rect(20, 41, 29, 41, C["white_lo"])
+        t.rect(23, 34, 26, 40, "#e04838")
+        t.rect(21, 36, 28, 38, "#e04838")
+        t.rect(26, 35, 26, 40, "#a02c34")
+    elif kind == "mart":  # blue plate, white lettering with a drop shadow
+        t.rect(16, 32, 33, 42, C["outline"])
+        t.rect(17, 33, 32, 41, "#4870c8")
+        t.rect(17, 41, 32, 41, "#2c4c98")
+        text(t, 17, 34, "MART", C["white"], shadow="#1c2c60")
     # step: stone slab wider than the door, lit top edge
     t.rect(17, 60, 33, 62, C["outline"])
     t.rect(18, 60, 32, 61, C["stone"])
     t.rect(18, 60, 32, 60, "#c8c8d8")
+    base_shadow(t, 3, 60, 62)
+    return t
+
+
+def pillar(t, x, y0, y1):
+    """Fluted white pillar (6 px): capital, grooves, base."""
+    t.rect(x - 1, y0, x + 6, y1, C["outline"])
+    t.rect(x, y0 + 2, x + 5, y1 - 2, C["white"])
+    for gx in (x + 1, x + 3):
+        t.rect(gx, y0 + 3, gx, y1 - 3, C["white_lo"])
+    t.rect(x + 5, y0 + 2, x + 5, y1 - 2, C["white_sh"])
+    t.rect(x - 1, y0, x + 6, y0 + 1, C["white"])          # capital
+    t.rect(x - 1, y0 + 1, x + 6, y0 + 1, C["white_lo"])
+    t.rect(x - 1, y1 - 1, x + 6, y1, C["white_lo"])        # base
+    t.rect(x - 1, y1, x + 6, y1, C["stone_lo"])
+
+
+def gym_v2():
+    """6x5 tiles, same footprint and door as v1: slate shingle roof with a
+    skylight band, fluted pillars, GYM plate, glass double doors, steps."""
+    t = Tile(96, 80)
+    t.paste(mown_block(96, 80))
+    wall_v2(t, 3, 31, 90, 46)
+    roof_v2(t, 1, 3, 94, 29, ROOFS["slate"])
+    for x in range(10, 86, 9):  # skylights: glass with a glint, dark frame
+        t.rect(x - 1, 10, x + 5, 16, ROOFS["slate"][4])
+        t.rect(x, 11, x + 4, 15, C["win_mid"])
+        t.rect(x, 11, x + 4, 11, C["win_top"])
+        t.set(x + 1, 12, C["water_hi"])
+        t.rect(x, 15, x + 4, 15, C["win_lo"])
+    for px in (8, 82):
+        pillar(t, px, 31, 75)
+    window3(t, 18, 40, w=14, h=10)
+    window3(t, 64, 40, w=14, h=10)
+    t.rect(34, 35, 61, 46, C["outline"])
+    t.rect(35, 36, 60, 45, "#e04838")
+    t.rect(35, 36, 60, 36, "#f07058")
+    t.rect(35, 45, 60, 45, "#a02c34")
+    text(t, 42, 39, "GYM", C["white"], shadow=C["outline"])
+    for dx in (36, 48):  # glass double doors
+        t.rect(dx - 1, 54, dx + 11, 75, C["outline"])
+        t.rect(dx, 55, dx + 10, 75, "#7884a8")
+        t.rect(dx + 2, 57, dx + 8, 70, C["win_mid"])
+        t.rect(dx + 2, 57, dx + 8, 58, C["win_top"])
+        t.set(dx + 3, 59, C["water_hi"])
+        t.rect(dx + 8, 57, dx + 8, 70, C["win_lo"])
+        t.set(dx + (9 if dx == 36 else 1), 66, C["knob"])
+    t.rect(30, 76, 65, 78, C["outline"])  # wide step
+    t.rect(31, 76, 64, 77, C["stone"])
+    t.rect(31, 76, 64, 76, "#c8c8d8")
+    base_shadow(t, 3, 92, 78)
     return t
 
 
