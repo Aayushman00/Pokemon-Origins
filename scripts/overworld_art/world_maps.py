@@ -13,6 +13,8 @@ from scripts import gen_overworld_placeholders as base
 from .slice_art import variant_at
 from .tiles import FIRST_NEW, new_tiles, tile_ids
 
+from .slice_art import _wave
+
 COL_FIRST = 4000  # collision tileset firstgid: above every overworld tile id
 ID = tile_ids()
 NAMES_BY_ID = {v: k for k, v in ID.items()}
@@ -49,6 +51,7 @@ def door(m, target, x, y):
     xs, _ = DOORS[target]
     ax, ay = ARRIVE[target][xs.index(x)]
     m.block(x, y, 0)
+    m.put("objects", x, y + 1, ID["doormat"])
     m.obj("warps", f"door_{target}_{x}", x, y, kind="door", targetMap=target, targetX=ax, targetY=ay,
           facing="up", transition="iris", enterDir="up")
 
@@ -106,9 +109,17 @@ def autotile_paths(m):
 
 
 def halo(grid):
-    """Cells of darker lawn: everything touching a building, fence, hedge or tree."""
+    """Cells of darker lawn: everything touching a building, fence, hedge or tree,
+    with an edge that wanders out to three cells so patches never read as boxes."""
     solid = {(x, y) for y, row in enumerate(grid) for x, c in enumerate(row) if c in "BTbfh"}
-    return {(x + dx, y + dy) for x, y in solid for dx in (-1, 0, 1) for dy in (-1, 0, 1)}
+    lawn = set()
+    for x, y in solid:
+        for dx in range(-3, 4):
+            for dy in range(-3, 4):
+                reach, noise = max(abs(dx), abs(dy)), _wave((x + dx) * 5, (y + dy) * 5, 1.7)
+                if reach <= 1 or (reach == 2 and noise > 4) or (reach == 3 and noise > 22):
+                    lawn.add((x + dx, y + dy))
+    return lawn
 
 
 def paint(m, grid, walk_tile):
@@ -175,6 +186,13 @@ TRAILS = {
 }
 
 
+# Hand-placed solids on open ground, and one-way ledges (x0, x1, y), per route.
+DRESSING = {"route_1": [("rock", 9, 5), ("stump", 12, 10), ("rock", 30, 10), ("stump", 29, 9), ("rock", 19, 16),
+                        ("stump", 23, 14), ("rock", 34, 15)]}
+DRESSING = {k: [(x, y, n) for n, x, y in v] for k, v in DRESSING.items()}
+LEDGES = {"route_1": [(8, 12, 6), (29, 32, 11)]}
+
+
 def worn(grid, lines, size=2):
     """`grid` with "." turned to "," under each line, `size` cells wide."""
     rows = [list(r) for r in grid]
@@ -201,7 +219,7 @@ def fringe(m, grid):
 def dress_grass(m):
     """Scatter decor in small clusters, one chance per 5x5 block, so grass keeps
     empty space between them instead of an even speckle."""
-    decals = [ID["tufts"], ID["tufts"], ID["flowers0"], ID["flowers1"]]
+    decals = [ID["tufts"], ID["tufts"], ID["flowers0"], ID["flowers1"], ID["pebbles"], ID["mushrooms"]]
     bare = set(m.under.values())
 
     def free(x, y):
@@ -216,7 +234,53 @@ def dress_grass(m):
             x, y = bx + h % 4, by + (h >> 3) % 4
             for dx, dy in ((0, 0), (1, 0), (0, 1))[:2 + h % 2]:
                 if free(x + dx, y + dy):
-                    m.put("decor", x + dx, y + dy, decals[(h >> 5) % 4])
+                    m.put("decor", x + dx, y + dy, decals[(h >> 5) % 6])
+
+
+def lone_tree(m, kind, x, y):
+    """A 2x2 tree whose trunk row is (x, y), (x + 1, y). Actors pass behind the canopy."""
+    for c in (0, 1):
+        m.put("above", x + c, y - 1, ID[f"tree{kind}_{c}_0"])
+        m.put("objects", x + c, y, ID[f"tree{kind}_{c}_1"], SOLID)
+
+
+def prop(m, name, x, y):
+    m.put("objects", x, y, ID[name if name.startswith("crops") else f"prop_{name}"], None if name.startswith("crops") else SOLID)
+
+
+def ledge_row(m, x0, x1, y):
+    """A one-way drop: walk off it heading south, never back up."""
+    for x in range(x0, x1 + 1):
+        part = "l" if x == x0 else "r" if x == x1 else "m"
+        m.put("objects", x, y, ID[f"ledge_{part}"], base.L_DOWN)
+
+
+def dress_pond(m, grid):
+    """Lily pads out on open water, reeds along the south and west banks."""
+    water = {(x, y) for y, row in enumerate(grid) for x, c in enumerate(row) if c == "~"}
+    for x, y in water:
+        h = hashed(x, y)
+        if all((x + dx, y + dy) in water for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+            if h % 4 == 0:
+                m.put("decor", x, y, ID[f"lily{(h >> 4) % 2}"])
+        elif ((x, y + 1) not in water or (x - 1, y) not in water) and h % 3 != 1:
+            m.put("decor", x, y, ID["reeds"])
+
+
+def cast_shadows(m, grid):
+    """Shadows thrown east and south of buildings, south of the forest. They sit in
+    `objects` so they lie over trail and decor, and under anyone walking through."""
+    built = {(x, y) for y, row in enumerate(grid) for x, c in enumerate(row) if c in "BD"}
+    tall = built | {(x, y) for y, row in enumerate(grid) for x, c in enumerate(row) if c in "Tb"}
+    for y in range(m.h):
+        for x in range(m.w):
+            i = m.i(x, y)
+            if (x, y) in tall or m.objects[i] or m.collision[i]:
+                continue
+            if (x - 1, y) in built:
+                m.put("objects", x, y, ID["cast_e"])
+            elif (x, y - 1) in tall:
+                m.put("objects", x, y, ID["cast_s"])
 
 
 DAWNBROOK = [
@@ -245,7 +309,7 @@ DAWNBROOK = [
 
 def dawnbrook():
     m = Town(30, 20, base.GRASS)
-    m.props = [("nameKey", "dawnbrook"), ("ambient", "butterflies"), ("border", BORDER), ("connect_east", "route_1"), ("connect_east_offset", 0)]
+    m.props = [("nameKey", "dawnbrook"), ("ambient", "butterflies"), ("clouds", True), ("border", BORDER), ("connect_east", "route_1"), ("connect_east_offset", 0)]
     paint(m, DAWNBROOK, "grass")
     place(m, "home_clay", 5, 2)
     place(m, "lab", 19, 2)
@@ -257,8 +321,17 @@ def dawnbrook():
     m.sign("route_sign", 28, 8, f"{NAMES['route_1'].upper()} - East to {NAMES['mossgate']}.")
     m.npc("old_woman", 15, 6, "old_woman", "up", "This old well has never run dry. Nobody remembers who dug it.")
     m.npc("rival", 21, 8, "rival", "left", "Late again? The Professor's been waiting. I got here first, as usual.")
+    lone_tree(m, "F", 17, 3)
+    lone_tree(m, "A", 26, 4)
+    lone_tree(m, "B", 2, 14)
+    for name, x, y in (("mailbox", 6, 7), ("mailbox", 6, 17), ("barrel", 18, 5), ("crate", 18, 6), ("barrel", 26, 6),
+                       ("rock", 20, 17), ("rock", 27, 16), ("stump", 1, 11), ("crops0", 1, 16), ("crops1", 2, 16),
+                       ("crops0", 3, 16), ("crops1", 1, 17), ("crops0", 2, 17), ("crops1", 3, 17)):
+        prop(m, name, x, y)
+    dress_pond(m, DAWNBROOK)
     dress_grass(m)
     autotile_paths(m)
+    cast_shadows(m, DAWNBROOK)
     return finish(m.build(), m)
 
 
@@ -305,8 +378,15 @@ def mossgate():
     m.sign("route_sign", 27, 8, f"{NAMES['route_2'].upper()} - East to {NAMES['hearthfield']}. (Opens in a later update.)")
     m.npc("camper", 12, 8, "camper", "down", "The Gym is built inside a hollow trunk. Older than the town, they say.")
     m.npc("picnicker", 18, 17, "picnicker", "up", "Rest at the Center before the Gym. The Leader won't rush you, but the seeds might.")
+    lone_tree(m, "B", 18, 7)
+    lone_tree(m, "A", 8, 17)
+    for name, x, y in (("mailbox", 25, 7), ("mailbox", 25, 16), ("barrel", 9, 15), ("crate", 9, 14), ("rock", 4, 4),
+                       ("stump", 4, 8), ("rock", 26, 17)):
+        prop(m, name, x, y)
+    dress_pond(m, MOSSGATE)
     dress_grass(m)
     autotile_paths(m)
+    cast_shadows(m, MOSSGATE)
     return finish(m.build(), m)
 
 
@@ -344,7 +424,7 @@ def route(route_id):
     m = Town(r["w"], r["h"], base.GRASS)
     links = {"route_1": [("connect_west", "dawnbrook"), ("connect_west_offset", 0),
                          ("connect_east", "mossgate"), ("connect_east_offset", 0)]}[route_id]
-    m.props = [("nameKey", route_id), ("ambient", "leaves"), ("entry", r["entry"]["side"]), ("border", BORDER), *links]
+    m.props = [("nameKey", route_id), ("ambient", "leaves"), ("clouds", True), ("entry", r["entry"]["side"]), ("border", BORDER), *links]
     grid = r["grid"]
     for size, lines in TRAILS[route_id].items():
         grid = worn(grid, lines, size)
@@ -357,8 +437,13 @@ def route(route_id):
               trainer=t["id"], order=t["i"], sight=t["sight"], script=script)
         m.block(t["x"], t["y"])
     autotile_paths(m)
+    for x, y, name in DRESSING[route_id]:
+        prop(m, name, x, y)
+    for row in LEDGES[route_id]:
+        ledge_row(m, *row)
     fringe(m, grid)
     dress_grass(m)
+    cast_shadows(m, grid)
     return finish(m.build(), m)
 
 
@@ -366,9 +451,10 @@ MAPS = {"dawnbrook": dawnbrook, "route_1": lambda: route("route_1"), "mossgate":
 
 
 def light_tiles():
-    """Tiles that glow on dusk and night maps: lamps and every building's windows."""
+    """Tiles with a runtime light or effect: lamps, windows, chimneys."""
     from .buildings import BUILDINGS, WINDOWS
     lit = [{"id": ID["prop_lamp_top"], "properties": [base.prop("glow", 20)]}]
+    lit += [{"id": ID[f"home_{roof}_3_0"], "properties": [base.prop("smoke", True)]} for roof in ("clay", "slate", "moss")]
     for name in BUILDINGS:
         lit += [{"id": ID[f"{name}_{c}_3"], "properties": [base.prop("glow", 9)]} for c in WINDOWS.get(name, ())]
     return lit

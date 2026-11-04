@@ -610,13 +610,28 @@ def new_tiles():
     for links in range(16):
         add(f"fence_{links}", nature.fence_tile(links))
     add("plank_v", nature.plank(False))
+    add("pebbles", nature.pebbles())
+    add("mushrooms", nature.mushrooms())
+    add("reeds", nature.reeds())
+    add("lily0", nature.lily(False))
+    add("lily1", nature.lily(True))
+    add("doormat", nature.doormat())
+    add("crops0", nature.crops(0))
+    add("crops1", nature.crops(1))
+    for part in "lmr":
+        add(f"ledge_{part}", nature.ledge(part))
+    add("cast_e", nature.cast("e"))
+    add("cast_s", nature.cast("s"))
+    for kind in "ABF":
+        for i, tile in enumerate(slice_into(nature.standing_tree(kind), 2, 2)):
+            add(f"tree{kind}_{i % 2}_{i // 2}", tile)
     from .buildings import BUILDINGS, PROPS
     for name, (make, _) in BUILDINGS.items():
         art = make()
         cols = art.width // T
         for i, part in enumerate(slice_into(art, cols, 5)):
             add(f"{name}_{i % cols}_{i // cols}", part)
-    for name in ("sign", "mailbox", "bench", "barrel", "crate"):
+    for name in ("sign", "mailbox", "bench", "barrel", "crate", "rock", "stump"):
         add(f"prop_{name}", PROPS[name])
     for name in ("lamp", "well"):
         add(f"prop_{name}_top", PROPS[name].crop((0, 0, T, T)))

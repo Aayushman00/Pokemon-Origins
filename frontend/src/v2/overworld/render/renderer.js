@@ -4,7 +4,7 @@ import { computeCamera } from "../logic/camera.js";
 import { neighbourOrigin } from "../logic/world.js";
 import { coverage } from "../logic/transition.js";
 import { createFx, stepFx } from "./fieldfx.js";
-import { particles, tintFor } from "./ambient.js";
+import { clouds, particles, smoke, tintFor } from "./ambient.js";
 
 const ROW = { down: 0, up: 1, left: 2, right: 3 };
 
@@ -92,6 +92,30 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 			}
 		}
 		g.globalCompositeOperation = "source-over";
+	}
+
+	// Chimneys per map, found once: scanning every tile each frame would be wasted work.
+	const chimneys = new WeakMap();
+	function chimneysOf(map) {
+		if (!chimneys.has(map)) {
+			const found = [];
+			for (let y = 0; y < map.height; y++) for (let x = 0; x < map.width; x++) if (tileFlag(map, x, y, "smoke")) found.push([x, y]);
+			chimneys.set(map, found);
+		}
+		return chimneys.get(map);
+	}
+
+	function drawSky(map, cam, tick) {
+		if (calm) return;
+		chimneysOf(map).forEach(([x, y], i) => {
+			for (const p of smoke(tick, i)) {
+				g.fillStyle = `rgba(236, 236, 240, ${p.alpha})`;
+				g.fillRect(x * TILE + 10 - cam.x + p.dx, y * TILE - cam.y + p.dy, p.size, p.size);
+			}
+		});
+		if (!map.properties.clouds) return;
+		g.fillStyle = "rgba(46, 74, 74, 0.1)";
+		for (const r of clouds(tick, cam.x, cam.y)) g.fillRect(r.x, r.y, r.w, r.h);
 	}
 
 	function drawAmbient(map, tick) {
@@ -303,6 +327,7 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 			if (!calm) for (const e of fx.effects) drawEffect(e, 0, 0, cam);
 
 			for (const d of drawn) drawLayer(d.map, "above", d.ox - cam.x, d.oy - cam.y, ms);
+			drawSky(map, cam, game.tickCount);
 			drawTime(map, cam, ms);
 			drawAmbient(map, game.tickCount);
 			overlay(game, cam.x, cam.y);

@@ -253,6 +253,133 @@ def plank(across=True):
     return img if across else img.transpose(Image.TRANSPOSE)
 
 
+def _decal():
+    img = Image.new("RGBA", (T, T))
+    return img, ImageDraw.Draw(img)
+
+
+def pebbles():
+    img, d = _decal()
+    stone = WORLD["stone"]
+    for x, y, w in ((3, 9, 3), (8, 11, 2), (10, 6, 2)):
+        d.rectangle((x, y, x + w, y + 1), fill=stone[1])
+        d.line((x, y, x + w - 1, y), fill=stone[0])
+        d.line((x, y + 2, x + w, y + 2), fill=stone[3])
+    return img
+
+
+def mushrooms():
+    img, d = _decal()
+    cap = WORLD["cap"]
+    for x, y, r in ((4, 8, 3), (10, 10, 2)):
+        d.rectangle((x, y + 1, x + 1, y + 4), fill="#efe6d0")
+        d.line((x + 1, y + 2, x + 1, y + 4), fill="#c8bca4")
+        d.rectangle((x - r, y - 1, x + r + 1, y + 1), fill=cap[1])
+        d.line((x - r + 1, y - 2, x + r, y - 2), fill=cap[0])
+        d.line((x - r, y + 1, x + r + 1, y + 1), fill=cap[2])
+        d.point((x - 1, y), fill="#fff4e0")
+    return img
+
+
+def reeds():
+    img, d = _decal()
+    reed = WORLD["reed"]
+    for x, top in ((3, 3), (6, 6), (9, 2), (12, 7)):
+        d.line((x, top, x, 15), fill=reed[1])
+        d.point((x + 1, top + 5), fill=reed[0])
+    for x, top in ((3, 3), (9, 2)):
+        d.rectangle((x, top, x + 1, top + 3), fill=reed[2])
+    return img
+
+
+def lily(bloom):
+    img, d = _decal()
+    pad = WORLD["lily"]
+    for x, y in ((3, 4), (9, 9)):
+        d.ellipse((x, y, x + 5, y + 3), fill=pad[1])
+        d.line((x + 1, y, x + 4, y), fill=pad[0])
+        d.point((x + 3, y + 2), fill=pad[0])
+    if bloom:
+        d.rectangle((5, 4, 6, 5), fill=pad[2])
+        d.point((5, 3), fill="#ffffff")
+    return img
+
+
+def doormat():
+    img, d = _decal()
+    d.rectangle((3, 0, 12, 4), fill="#c8a870")
+    d.line((3, 4, 12, 4), fill="#9c7a58")
+    for x in range(4, 12, 2):
+        d.line((x, 1, x, 2), fill="#a88a5c")
+    return img
+
+
+def crops(kind):
+    """Opaque tilled soil in rows, planted with leafy heads or sprouts."""
+    soil, leaf = WORLD["soil"], WORLD["leaf"]
+    img = Image.new("RGBA", (T, T), rgba(soil[1]))
+    d = ImageDraw.Draw(img)
+    for y in (3, 11):
+        d.rectangle((0, y + 3, 15, y + 4), fill=soil[2])
+        d.line((0, y + 2, 15, y + 2), fill=soil[0])
+        for x in (3, 11):
+            if kind:
+                d.rectangle((x - 2, y - 1, x + 2, y + 2), fill=leaf[2])
+                d.line((x - 1, y - 1, x + 1, y - 1), fill=leaf[0])
+                d.point((x, y + 1), fill=leaf[3])
+            else:
+                d.line((x, y - 1, x, y + 2), fill=leaf[2])
+                d.point((x - 1, y), fill=leaf[1])
+                d.point((x + 1, y - 1), fill=leaf[1])
+    return img
+
+
+def ledge(part):
+    """South-facing drop, one tile: ground stays clear above a lit lip and an
+    earth face. `part` is l, m or r; the ends round off into the grass."""
+    earth = WORLD["ledge"]
+    img, d = _decal()
+    left, right = (3 if part == "l" else 0), (12 if part == "r" else 15)
+    d.rectangle((left, 8, right, 13), fill=earth[1])
+    d.line((left, 8, right, 8), fill=earth[0])
+    d.line((left, 9, right, 9), fill=earth[0])
+    d.line((left, 14, right, 14), fill=earth[2])
+    for x in range(left + 2, right, 5):
+        d.line((x, 10, x, 12), fill=earth[2])
+    colour, opacity = SHADOW
+    for x in range(left, right + 1):
+        img.putpixel((x, 15), (*rgb(colour), round(opacity * 255)))
+    return img
+
+
+def cast(side):
+    """Translucent shadow thrown across the next cell, away from the top-left light."""
+    colour, opacity = SHADOW
+    tone = (*rgb(colour), round(opacity * 200))
+    img, d = _decal()
+    d.rectangle((0, 0, 3, 15) if side == "e" else (0, 0, 15, 2), fill=tone)
+    return img
+
+
+def standing_tree(kind):
+    """32x32 lone tree with a ground shadow. F bears fruit."""
+    from .slice_art import tree
+    img = tree("B" if kind == "B" else "A")
+    px = img.load()
+    if kind == "F":
+        for x, y in ((9, 8), (19, 6), (24, 12), (13, 14), (6, 15), (20, 18), (11, 20)):
+            for dx, dy, c in ((0, 0, "#e0584c"), (1, 0, "#e0584c"), (0, 1, "#a83c38"), (1, 1, "#a83c38")):
+                px[x + dx, y + dy] = rgba(c)
+            px[x, y] = rgba("#ffb4a0")
+    colour, opacity = SHADOW
+    tone = (*rgb(colour), round(opacity * 255))
+    for y in range(27, 32):
+        for x in range(32):
+            if not px[x, y][3] and ((x - 17) / 11) ** 2 + ((y - 29) / 2.6) ** 2 < 1:
+                px[x, y] = tone
+    return img
+
+
 def bush():
     leaf = WORLD["leaf"]
     img = Image.new("RGBA", (T, T))

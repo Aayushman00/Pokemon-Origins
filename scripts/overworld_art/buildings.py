@@ -132,6 +132,27 @@ def _lamp(d):
     d.rectangle((6, 1, 9, 2), fill=w[3])
 
 
+def _rock(d):
+    s = WORLD["stone"]
+    d.ellipse((2, 5, 13, 13), fill=s[1])
+    d.rectangle((3, 9, 12, 13), fill=s[2])
+    d.ellipse((3, 5, 10, 10), fill=s[1])
+    d.line((5, 6, 9, 6), fill=s[0])
+    d.line((4, 7, 6, 7), fill=s[0])
+    d.line((8, 10, 11, 12), fill=s[3])
+
+
+def _stump(d):
+    bark, wood = WORLD["bark"], WORLD["wood"]
+    d.rectangle((3, 7, 12, 13), fill=bark[1])
+    d.line((3, 13, 12, 13), fill=bark[3])
+    for x in (5, 8, 11):
+        d.line((x, 9, x, 12), fill=bark[2])
+    d.ellipse((3, 4, 12, 9), fill=wood[0])
+    d.ellipse((5, 5, 10, 8), outline=wood[1])
+    d.point((7, 6), fill=wood[2])
+
+
 def _sign(d):
     w = WORLD["wood"]
     d.rectangle((7, 10, 8, 14), fill=w[2])
@@ -192,6 +213,7 @@ def _crate(d):
 
 
 PROPS = {
+    "rock": _prop(_rock), "stump": _prop(_stump),
     "lamp": _prop(_lamp, (T, 2 * T)),
     "well": _prop(_well, (T, 2 * T)),
     "sign": _prop(_sign),

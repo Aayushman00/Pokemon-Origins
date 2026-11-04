@@ -61,17 +61,19 @@ export function parseTiledMap(json, id) {
 		const cover = new Map(); // localId -> first tile row drawn again over actors standing on it (tall grass)
 		const glow = new Map(); // localId -> light radius in px, shown on dusk and night maps
 		const water = new Set(); // localIds that reflect an actor standing just above them
+		const smoke = new Set(); // localIds of chimney tops
 		for (const t of ts.tiles || []) {
 			const tp = propsToObject(t.properties);
 			if (Number.isInteger(tp.cover) && tp.cover >= 0 && tp.cover < TILE) cover.set(t.id, tp.cover);
 			if (tp.glow > 0) glow.set(t.id, tp.glow);
 			if (tp.water) water.add(t.id);
+			if (tp.smoke) smoke.add(t.id);
 			if (t.animation?.length) {
 				const frames = t.animation.map((f) => ({ id: f.tileid, ms: f.duration }));
 				anim.set(t.id, { frames, total: frames.reduce((s, f) => s + f.ms, 0) });
 			}
 		}
-		tilesets.push({ firstgid: ts.firstgid, image: ts.image, columns: ts.columns, tilecount: ts.tilecount, anim, cover, glow, water });
+		tilesets.push({ firstgid: ts.firstgid, image: ts.image, columns: ts.columns, tilecount: ts.tilecount, anim, cover, glow, water, smoke });
 	}
 	tilesets.sort((a, b) => b.firstgid - a.firstgid); // highest first for lookup
 	if (collisionFirst === null) fail(id, 'needs a tileset named "collision"');

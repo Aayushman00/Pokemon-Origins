@@ -56,6 +56,8 @@ class Route1(unittest.TestCase):
     def test_collision_still_follows_the_layout(self):
         col = layer(self.data, "collision")
         people = {(t["x"], t["y"]) for t in self.r["trainers"]}
+        people |= {(x, y) for x, y, _ in W.DRESSING["route_1"]}
+        people |= {(x, y) for x0, x1, y in W.LEDGES["route_1"] for x in range(x0, x1 + 1)}
         for y, row in enumerate(self.r["grid"]):
             for x, c in enumerate(row):
                 if (x, y) not in people:

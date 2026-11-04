@@ -44,9 +44,9 @@
     383,
     380,
     383,
-    620,
-    431,
-    692,
+    380,
+    383,
+    380,
     383,
     380,
     383,
@@ -58,9 +58,9 @@
     377,
     374,
     377,
-    398,
-    26,
-    470,
+    374,
+    377,
+    374,
     377,
     374,
     377,
@@ -72,9 +72,9 @@
     383,
     380,
     383,
-    572,
-    395,
-    788,
+    380,
+    383,
+    380,
     383,
     380,
     383,
@@ -330,7 +330,7 @@
     432,
     429,
     696,
-    1154,
+    1179,
     0,
     0,
     0,
@@ -798,11 +798,11 @@
    "name": "overworld",
    "image": "tilesets/overworld.png",
    "imagewidth": 128,
-   "imageheight": 2336,
+   "imageheight": 2384,
    "tilewidth": 16,
    "tileheight": 16,
    "columns": 8,
-   "tilecount": 1162,
+   "tilecount": 1189,
    "margin": 0,
    "spacing": 0,
    "tiles": [
@@ -2121,7 +2121,7 @@
      ]
     },
     {
-     "id": 1158,
+     "id": 1185,
      "properties": [
       {
        "name": "glow",
@@ -2131,22 +2131,32 @@
      ]
     },
     {
-     "id": 969,
+     "id": 981,
      "properties": [
       {
-       "name": "glow",
-       "type": "int",
-       "value": 9
+       "name": "smoke",
+       "type": "bool",
+       "value": true
       }
      ]
     },
     {
-     "id": 971,
+     "id": 1006,
      "properties": [
       {
-       "name": "glow",
-       "type": "int",
-       "value": 9
+       "name": "smoke",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 1031,
+     "properties": [
+      {
+       "name": "smoke",
+       "type": "bool",
+       "value": true
       }
      ]
     },
@@ -2191,7 +2201,7 @@
      ]
     },
     {
-     "id": 1050,
+     "id": 1044,
      "properties": [
       {
        "name": "glow",
@@ -2201,7 +2211,7 @@
      ]
     },
     {
-     "id": 1051,
+     "id": 1046,
      "properties": [
       {
        "name": "glow",
@@ -2211,7 +2221,7 @@
      ]
     },
     {
-     "id": 1053,
+     "id": 1075,
      "properties": [
       {
        "name": "glow",
@@ -2221,7 +2231,7 @@
      ]
     },
     {
-     "id": 1054,
+     "id": 1076,
      "properties": [
       {
        "name": "glow",
@@ -2231,7 +2241,7 @@
      ]
     },
     {
-     "id": 1082,
+     "id": 1078,
      "properties": [
       {
        "name": "glow",
@@ -2241,7 +2251,7 @@
      ]
     },
     {
-     "id": 1085,
+     "id": 1079,
      "properties": [
       {
        "name": "glow",
@@ -2251,7 +2261,7 @@
      ]
     },
     {
-     "id": 1112,
+     "id": 1107,
      "properties": [
       {
        "name": "glow",
@@ -2261,7 +2271,27 @@
      ]
     },
     {
-     "id": 1115,
+     "id": 1110,
+     "properties": [
+      {
+       "name": "glow",
+       "type": "int",
+       "value": 9
+      }
+     ]
+    },
+    {
+     "id": 1137,
+     "properties": [
+      {
+       "name": "glow",
+       "type": "int",
+       "value": 9
+      }
+     ]
+    },
+    {
+     "id": 1140,
      "properties": [
       {
        "name": "glow",
