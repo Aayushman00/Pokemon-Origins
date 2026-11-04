@@ -3,7 +3,7 @@
 Ground ramps are pale and quiet so objects carry the contrast. Ramps run
 highlight -> shadow, leaning warm at the top and cool at the bottom.
 """
-LINE = "#2e2a3c"  # object outline, a cool plum, never pure black
+LINE = "#26223a"  # object outline, a cool plum, never pure black
 SHADOW = ("#2e4a4a", 0.35)  # contact shadow: colour, opacity
 
 WORLD = {

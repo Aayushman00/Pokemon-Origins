@@ -7,15 +7,19 @@ not beauty: always look at docs/design/art-slice/before_after.png as well.
 """
 import unittest
 
-from PIL import Image
+from PIL import Image, ImageOps
 
-from .slice_art import fence, ground_layer, house, luma, mean_saturation, meadow, tree
-from .world_palette import WORLD
+from .slice_art import fence, ground_layer, house, luma, mean_saturation, meadow, player_frames, tree
+from .world_palette import LINE, WORLD
 
 
 def hex_at(img, x, y):
     r, g, b, a = img.convert("RGBA").getpixel((x, y))
     return f"#{r:02x}{g:02x}{b:02x}" if a else None
+
+
+def solid(hex_colour):
+    return Image.new("RGBA", (1, 1), hex_colour)
 
 
 class Ground(unittest.TestCase):
@@ -67,6 +71,32 @@ class Objects(unittest.TestCase):
     def test_fence_sizes(self):
         self.assertEqual(fence(4).size, (64, 16))
         self.assertEqual(fence(3, vertical=True).size, (16, 48))
+
+
+class Player(unittest.TestCase):
+    def test_size_and_feet(self):
+        for f in player_frames().values():
+            _, y0, _, y1 = f.getbbox()
+            self.assertEqual(f.size, (16, 32))
+            self.assertLessEqual(y1 - y0, 24)
+            self.assertEqual(y1, 32)
+
+    def test_side_view_is_narrow(self):
+        x0, _, x1, _ = player_frames()["left"].getbbox()
+        self.assertLessEqual(x1 - x0, 13)
+
+    def test_right_mirrors_left(self):
+        f = player_frames()
+        self.assertEqual(ImageOps.mirror(f["left"]).tobytes(), f["right"].tobytes())
+
+    def test_colour_budget(self):
+        for f in player_frames().values():
+            self.assertLessEqual(len([c for c in f.getcolors(999) if c[1][3]]), 15)
+
+    def test_outline_stands_out_from_every_ground(self):
+        line = luma(solid(LINE))[0]
+        for ramp in ("meadow", "lawn", "trail"):
+            self.assertGreaterEqual(min(luma(solid(c))[0] for c in WORLD[ramp]) - line, 0.40)
 
 
 if __name__ == "__main__":
