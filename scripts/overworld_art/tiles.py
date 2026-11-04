@@ -587,6 +587,7 @@ def new_tiles():
     add("veg", v2.veg_bed())
     add("laundry_l", v2.laundry("l"))
     add("laundry_r", v2.laundry("r"))
+    add("plank", v2.plank())
     return out
 
 

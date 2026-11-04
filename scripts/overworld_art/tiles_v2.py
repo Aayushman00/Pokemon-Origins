@@ -734,6 +734,20 @@ def barrel():
     return t
 
 
+def plank():
+    """Boardwalk and bridge deck: three boards running left to right."""
+    t = Tile(T, T, fill=WOOD["base"])
+    for y in (0, 5, 10, 15):
+        t.rect(0, y, 15, y, WOOD["line"])
+    for y in (1, 6, 11):
+        t.rect(0, y, 15, y, WOOD["hi"])
+    for y in (4, 9, 14):
+        t.rect(0, y, 15, y, WOOD["lo"])
+    for x, y in ((3, 2), (11, 3), (7, 7), (13, 8), (2, 12), (9, 13)):  # nail heads
+        t.set(x, y, WOOD["lo"])
+    return t
+
+
 def crate():
     t = _ground()
     _shadow(t, 9, 14, 6.5, 1.8)

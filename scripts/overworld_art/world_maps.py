@@ -79,7 +79,7 @@ def autotile_paths(m):
     """Swap every plain dirt-path cell for the blob tile matching its 8
     neighbours. Paving and the map edge count as path (no grass rim there)."""
     from .tiles_v2 import blob_mask
-    joins = {PATH, ID["pave"]} | {ID["pave_" + e] for e in ("n", "s", "w", "e", "nw", "ne", "sw", "se")}
+    joins = {PATH, ID["pave"], ID["plank"]} | {ID["pave_" + e] for e in ("n", "s", "w", "e", "nw", "ne", "sw", "se")}
     is_path = [m.ground[i] - 1 == PATH for i in range(m.w * m.h)]
 
     def grass_at(x, y):
@@ -106,6 +106,8 @@ def paint(m, grid, walk_tile):
             elif c in "Tb":
                 v = "A" if ((x // 2) + (y // 2)) % 2 == 0 else "B"
                 m.put("objects", x, y, ID[f"forest{v}_{x % 2}_{y % 2}"], SOLID)
+            elif c == "k":
+                m.put("ground", x, y, ID["plank"])
             elif c == "g":
                 m.put("ground", x, y, ID["tallA"])
             elif c == "F":
