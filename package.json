@@ -23,7 +23,9 @@
     "sprites:slice": "python scripts/slice-pokemon-sprites.py",
     "validate:sprites": "node scripts/validate-sprites.js",
     "validate:sprites:dev": "node scripts/validate-sprites.js --front-only",
-    "test:sprites": "npm run test:sprites -w frontend"
+    "test:sprites": "npm run test:sprites -w frontend",
+    "validate:maps": "node scripts/validate-maps.mjs",
+    "maps:index": "node scripts/validate-maps.mjs --write"
   },
   "devDependencies": {
     "concurrently": "^9.1.2",
