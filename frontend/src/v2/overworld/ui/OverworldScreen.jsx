@@ -1,5 +1,7 @@
 import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import { api } from "../../../api";
 import DialogueBox from "../../ui/DialogueBox";
+import BattleView from "../../pages/battle/BattleView";
 import { play } from "../../battle/sfx";
 import { attachInput, drainEdges, snapshot } from "../engine/input";
 import { createLoop } from "../engine/loop";
@@ -29,7 +31,9 @@ const fetchJson = async (url) => {
 
 const reduced = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
-/** Phase 1 test world: tile movement, dialogue, warps, streaming. No server state yet. */
+const fetchFlags = async () => (await api.get("/api/world/flags")).data.flags;
+
+/** The overworld: tile movement, dialogue, warps, streaming, and trainer battles over the top of it. */
 const OverworldScreen = () => {
 	const { user } = useContext(UserContext) || {};
 	const playerSprite = playerSpriteFor(user?.gender);
@@ -40,6 +44,7 @@ const OverworldScreen = () => {
 	const [input, setInput] = useState(null);
 	const [size, setSize] = useState({ cssW: VIEW_W, cssH: VIEW_H, left: 0, top: 0 });
 	const [dialogue, setDialogue] = useState(null); // { pages, i }
+	const [battle, setBattle] = useState(null); // trainer id
 	const [speed, setSpeed] = useState(getTextSpeed);
 	const [hud, setHud] = useState(null);
 	// Debug overlay: always in dev builds, or with ?debug elsewhere.
@@ -67,7 +72,7 @@ const OverworldScreen = () => {
 		(async () => {
 			try {
 				const store = createMapStore({ fetchJson });
-				await store.loadAround(START.mapId);
+				const [flagList] = await Promise.all([fetchFlags(), store.loadAround(START.mapId)]);
 				// the start map, every map its doors / edges lead to (interiors use their own
 				// tileset), and the test maps
 				const reachable = [START.mapId, ...store.neighbours(store.get(START.mapId)), "test_town", "test_route", "test_house"];
@@ -75,12 +80,13 @@ const OverworldScreen = () => {
 				if (disposed) return;
 				const game = createOverworld({
 					store,
-					flags: createMemoryFlags(),
+					flags: createMemoryFlags(flagList),
 					start: START,
 					reducedMotion: reduced(),
 					emit: (e) => {
 						if (e.type === "sound") play(e.cue);
 						else if (e.type === "dialogue") setDialogue({ pages: e.pages, i: 0 });
+						else if (e.type === "effect" && e.effect.type === "battle" && e.effect.trainer) setBattle(e.effect.trainer);
 					},
 				});
 				const renderer = createRenderer({ canvas: canvasRef.current, assets, playerSprite });
@@ -153,6 +159,17 @@ const OverworldScreen = () => {
 		};
 	}, [resize]);
 
+	const endBattle = async () => {
+		const { game } = sessionRef.current;
+		try {
+			for (const f of await fetchFlags()) game.flags.add(f);
+		} catch (e) {
+			console.error("Could not refresh flags after a battle:", e);
+		}
+		setBattle(null);
+		game.endBattle();
+	};
+
 	const advance = () => {
 		const d = dialogue;
 		if (!d) return;
@@ -187,6 +204,11 @@ const OverworldScreen = () => {
 				</button>
 			</div>
 			{input && <OverworldPad input={input} />}
+			{battle && (
+				<div className="ow__battle">
+					<BattleView key={battle} worldTrainer={battle} levelName="On the road" onContinue={endBattle} onLeave={endBattle} />
+				</div>
+			)}
 		</div>
 	);
 };

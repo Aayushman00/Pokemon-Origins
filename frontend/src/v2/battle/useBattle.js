@@ -24,7 +24,7 @@ const IDLE_FX = { lunge: false, hit: null, crit: false, fainted: false, tick: nu
  * phase: encounter → intro → command ↔ (moveSelect | partySelect |
  * bagSelect | restartConfirm) → acting → … → finished; restarting.
  */
-export default function useBattle({ levelNumber, battleNumber, trainerId, onBattleWon, textSpeed = "normal" }) {
+export default function useBattle({ levelNumber, battleNumber, worldTrainer, trainerId, onBattleWon, textSpeed = "normal" }) {
 	const reduce = useReducedMotion();
 	const [session, setSession] = useState(null);
 	const [player, setPlayer] = useState(null);
@@ -145,8 +145,7 @@ export default function useBattle({ levelNumber, battleNumber, trainerId, onBatt
 			setError("");
 			try {
 				const { data } = await api.post("/api/battle/start", {
-					level: levelNumber,
-					battleNumber,
+					...(worldTrainer ? { worldTrainer } : { level: levelNumber, battleNumber }),
 					...(force ? { force: true } : {}),
 				});
 				if (!data?.success || !data.state) throw new Error(data?.error || "Failed to start battle");
@@ -166,7 +165,7 @@ export default function useBattle({ levelNumber, battleNumber, trainerId, onBatt
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[levelNumber, battleNumber]
+		[levelNumber, battleNumber, worldTrainer]
 	);
 
 	useEffect(() => {
@@ -320,7 +319,7 @@ export default function useBattle({ levelNumber, battleNumber, trainerId, onBatt
 	const retrySave = async () => {
 		setProgressSave("saving");
 		try {
-			const { data } = await api.post("/api/campaign/progress/complete-battle", { level: levelNumber, battleNumber });
+			const { data } = await api.post("/api/campaign/progress/complete-battle", { level: liveRef.current.session.level, battleNumber: liveRef.current.session.battleNumber });
 			if (!data?.success || !data.progress) throw new Error(data?.error || "Failed to save progress");
 			setProgressSave("saved");
 			onBattleWon?.(data.progress);

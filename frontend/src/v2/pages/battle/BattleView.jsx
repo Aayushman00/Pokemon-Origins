@@ -22,12 +22,13 @@ const readSpeed = () => {
 };
 
 /** Battle screen: stage on top, FRLG-style text + command boxes below. */
-const BattleView = ({ levelNumber, battleNumber, levelName, onBattleWon, onContinue }) => {
+const BattleView = ({ levelNumber, battleNumber, worldTrainer, levelName, onBattleWon, onContinue, onLeave }) => {
 	const navigate = useNavigate();
+	const leave = onLeave || (() => navigate("/game"));
 	const { user } = useUser();
 	const [speed, setSpeed] = useState(readSpeed);
 	const [soundOn, setSound] = useState(isSoundOn);
-	const battle = useBattle({ levelNumber, battleNumber, trainerId: user?.trainer_id, onBattleWon, textSpeed: speed });
+	const battle = useBattle({ levelNumber, battleNumber, worldTrainer, trainerId: user?.trainer_id, onBattleWon, textSpeed: speed });
 	const { phase, player, session } = battle;
 	const slow = useDelayedHint(phase === "loading" || phase === "restarting");
 
@@ -52,7 +53,7 @@ const BattleView = ({ levelNumber, battleNumber, levelName, onBattleWon, onConti
 						<Button variant="primary" onClick={() => battle.restart()}>
 							Try again
 						</Button>
-						<Button onClick={() => navigate("/game")}>Back to hub</Button>
+						<Button onClick={leave}>{onLeave ? "Back" : "Back to hub"}</Button>
 					</div>
 				</Panel>
 			</div>
@@ -69,7 +70,7 @@ const BattleView = ({ levelNumber, battleNumber, levelName, onBattleWon, onConti
 	if (phase === "moveSelect") hud = <MoveMenu battle={battle} />;
 	else if (phase === "partySelect") hud = <PartyMenu battle={battle} />;
 	else if (phase === "bagSelect") hud = <BagMenu battle={battle} />;
-	else if (phase === "finished") hud = <ResultPanel battle={battle} onContinue={onContinue} onLeave={() => navigate("/game")} />;
+	else if (phase === "finished") hud = <ResultPanel battle={battle} onContinue={onContinue} onLeave={leave} />;
 	else if (phase === "command" || phase === "restartConfirm") {
 		hud = (
 			<div className="hud__split hud__split--cmd">

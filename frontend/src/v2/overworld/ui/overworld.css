@@ -33,6 +33,13 @@
 	color: #fff;
 	font-size: 0.7rem;
 }
+.ow__battle {
+	position: fixed;
+	inset: 0;
+	z-index: 20;
+	overflow: auto;
+	background: var(--bg, #101418);
+}
 .ow__dialogue {
 	position: absolute;
 	left: 0;

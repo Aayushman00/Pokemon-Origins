@@ -78,7 +78,7 @@ function App() {
 							<Route path="/game/mart" element={<Protected user={user}><MartScreen /></Protected>} />
 							<Route path="/level/:levelNumber" element={<Protected user={user}><JourneyScreen /></Protected>} />
 							<Route path="/game/movelab" element={<Protected user={user}><MoveLabScreen /></Protected>} />
-							{isEnabled("OVERWORLD") && <Route path="/overworld" element={<OverworldScreen />} />}
+							{isEnabled("OVERWORLD") && <Route path="/overworld" element={<Protected user={user}><OverworldScreen /></Protected>} />}
 							<Route path="*" element={<Navigate to={user ? "/game" : "/"} replace />} />
 						</Routes>
 					</AppShell>
