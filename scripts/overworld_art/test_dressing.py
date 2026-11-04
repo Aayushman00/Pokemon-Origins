@@ -64,9 +64,9 @@ class Towns(unittest.TestCase):
         self.assertFalse(cells(self.dawn, "objects", "cast_"))
         self.assertFalse(cells(self.moss, "objects", "cast_"))
 
-    def test_no_drifting_cloud_shadows(self):
-        for data in (self.dawn, self.moss, W.route("route_1")):
-            self.assertNotIn("clouds", [p["name"] for p in data["properties"]])
+    def test_clouds_drift_over_the_outdoors(self):
+        for data in (self.dawn, W.route("route_1")):
+            self.assertIn("clouds", [p["name"] for p in data["properties"]])
 
     def test_chimneys_smoke(self):
         tiles = self.dawn["tilesets"][0]["tiles"]
@@ -121,10 +121,20 @@ class Terrain(unittest.TestCase):
 
 
 class Shadows(unittest.TestCase):
-    def test_no_outdoor_tile_is_see_through(self):
-        for name, img in new_tiles():
-            soft = {a for a in img.getchannel("A").getdata() if 0 < a < 255}
-            self.assertFalse(soft, name)
+    @classmethod
+    def setUpClass(cls):
+        cls.tiles = dict(new_tiles())
+
+    def soft(self, name):
+        return {a for a in self.tiles[name].getchannel("A").getdata() if 0 < a < 255}
+
+    def test_props_and_trees_stand_on_a_shadow(self):
+        for name in ("prop_mailbox", "prop_barrel", "bush", "treeA_0_1", "treeB_1_1"):
+            self.assertTrue(self.soft(name), name)
+
+    def test_the_ground_itself_stays_clean(self):
+        for name in ("ledge_m", "pebbles", "doormat"):
+            self.assertFalse(self.soft(name), name)
 
 
 if __name__ == "__main__":

@@ -4,7 +4,7 @@ import { computeCamera } from "../logic/camera.js";
 import { neighbourOrigin } from "../logic/world.js";
 import { coverage } from "../logic/transition.js";
 import { createFx, stepFx } from "./fieldfx.js";
-import { particles, smoke, tintFor } from "./ambient.js";
+import { clouds, particles, smoke, tintFor } from "./ambient.js";
 
 const ROW = { down: 0, up: 1, left: 2, right: 3 };
 
@@ -113,6 +113,9 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 				g.fillRect(x * TILE + 10 - cam.x + p.dx, y * TILE - cam.y + p.dy, p.size, p.size);
 			}
 		});
+		if (!map.properties.clouds) return;
+		g.fillStyle = "rgba(46, 74, 74, 0.1)";
+		for (const r of clouds(tick, cam.x, cam.y)) g.fillRect(r.x, r.y, r.w, r.h);
 	}
 
 	function drawAmbient(map, tick, cam) {

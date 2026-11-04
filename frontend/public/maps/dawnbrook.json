@@ -4579,6 +4579,11 @@
    "value": "butterflies"
   },
   {
+   "name": "clouds",
+   "type": "bool",
+   "value": true
+  },
+  {
    "name": "border",
    "type": "string",
    "value": "374,377,380,383"

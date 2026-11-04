@@ -100,6 +100,11 @@ class Proportions(unittest.TestCase):
             if c.get("build") != "heavy" and c["id"] != "old_man":
                 self.assertLessEqual(max(self.spans(c, 2)[25:29]), 9, c["id"])
 
+    def test_a_coat_is_no_wider_than_the_body_from_the_side(self):
+        for name in ("scientist", "professor"):
+            coat, plain = self.spans(BY_ID[name], 2), self.spans(BY_ID["player"], 2)
+            self.assertLessEqual(max(coat[25:29]), max(plain[25:29]), name)
+
     def test_slimming_never_touches_the_eyes(self):
         row = list("0123456789abcdef")
         canvas = [list(row) for _ in range(32)]

@@ -92,6 +92,7 @@ class Room:
         self.t = Tile(w * T, h * T, fill=BLACK)
         self.key = [[None] * (w * T) for _ in range(h * T)]
         self.solid = set()
+        self.over = []  # pixel boxes (x0, y0, x1, y1) drawn over actors, not under them
         for y in range(2 * T, (h - 1) * T):
             for x in range(T, (w - 1) * T):
                 k = floor_key(theme, x, y)
@@ -890,6 +891,7 @@ def paint_lab(frame):
     # --- work bench: pale top, teal drawers, the day's samples
     b0, b1, top = 3 * T - 2, 12 * T + 1, 3 * T - 3
     rbox(r, b0, top, b1, top + 13, "#f2f5f4", hi="#ffffff", lo="#b8c8c8")
+    r.over.append((b0, top, b1, 3 * T - 1))  # the edge above row 3 is in front of anyone behind it
     rbox(r, b0, top + 13, b1, top + 22, "#4f8088", hi="#7ab0b4", lo="#2f5a64")
     for x in range(b0 + 8, b1 - 8, 24):
         r.rect(x, top + 16, x + 7, top + 16, "#d8e0e2")
@@ -951,7 +953,16 @@ def build():
                 ground.append(ids[0])
                 if len(set(ids)) > 1:
                     anims[ids[0]] = ids
-        out[map_id] = (r0, ground, anims)
+        over = {}
+        for x0, y0, x1, y1 in r0.over:
+            for ty in range(y0 // T, y1 // T + 1):
+                for tx in range(x0 // T, x1 // T + 1):
+                    left, up = max(x0, tx * T), max(y0, ty * T)
+                    right, down = min(x1, tx * T + T - 1) + 1, min(y1, ty * T + T - 1) + 1
+                    piece = Image.new("RGBA", (T, T))
+                    piece.paste(r0.t.img.crop((left, up, right, down)), (left - tx * T, up - ty * T))
+                    over[tx, ty] = tile_id(piece)
+        out[map_id] = (r0, ground, anims, over)
     _CACHE["v"] = (tiles, out)
     return _CACHE["v"]
 
@@ -994,9 +1005,11 @@ ARRIVE = {k: [(MAT[k], 8)] * len(DOORS[k][0]) for k in DOORS}  # every room is 1
 
 def make_map(map_id, extras):
     tiles, rooms = build()
-    room, ground, anims = rooms[map_id]
+    room, ground, anims, over = rooms[map_id]
     m = MapData(room.w, room.h, 0)
     m.ground = [g + 1 for g in ground]
+    for (x, y), tile in over.items():
+        m.above[m.i(x, y)] = tile + 1
     for (x, y) in room.solid:
         m.block(x, y)
     door_xs, door_y = DOORS[map_id]

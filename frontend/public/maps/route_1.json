@@ -5570,6 +5570,11 @@
    "value": "leaves"
   },
   {
+   "name": "clouds",
+   "type": "bool",
+   "value": true
+  },
+  {
    "name": "entry",
    "type": "string",
    "value": "west"

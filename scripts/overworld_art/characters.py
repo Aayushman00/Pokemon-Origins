@@ -252,7 +252,7 @@ CAST = [
          "t": "olive", "u": "white", "a": "white", "b": "denim", "n": "denim"}, "short", hat="bucket",
          features=["moustache"]),
     make("scientist", "Scientist", M, {"s": "skin_light", "h": "hair_black", "g": "hair_black", "t": "white",
-         "u": "sky", "f": "white", "b": "gray", "n": "hair_black"}, "messy", features=["glasses"],
+         "u": "sky", "f": "white", "b": "charcoal", "n": "hair_black"}, "messy", features=["glasses"],
          extras=["coat"]),
     make("grunt_m", "Grunt", M, {"s": "skin_light", "h": "hair_dark", "c": "charcoal", "x": "charcoal", "g": "red",
          "t": "charcoal", "f": "charcoal", "b": "charcoal", "n": "white:2"}, "short", hat="beanie",

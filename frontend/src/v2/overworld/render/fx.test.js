@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createFx, stepFx } from "./fieldfx.js";
-import { particles, smoke, tintFor } from "./ambient.js";
+import { clouds, particles, smoke, tintFor } from "./ambient.js";
 import { parseTiledMap } from "../logic/mapModel.js";
 import { VIEW_H, VIEW_W } from "../constants.js";
 
@@ -71,6 +71,12 @@ describe("ambient", () => {
 				assert.equal(panned[i].y, (p.y - 20 + VIEW_H) % VIEW_H, kind);
 			});
 		}
+	});
+
+	it("clouds drift, and stay put in the world as the camera moves", () => {
+		const a = clouds(0, 0, 0);
+		assert.notDeepEqual(a, clouds(300, 0, 0));
+		assert.equal(clouds(0, 16, 0)[0].x, a[0].x - 16);
 	});
 
 	it("tints dusk and night but not day", () => {

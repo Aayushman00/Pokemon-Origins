@@ -305,7 +305,7 @@ DAWNBROOK = [
 
 def dawnbrook():
     m = Town(30, 20, base.GRASS)
-    m.props = [("nameKey", "dawnbrook"), ("ambient", "butterflies"), ("border", BORDER), ("connect_east", "route_1"), ("connect_east_offset", 0)]
+    m.props = [("nameKey", "dawnbrook"), ("ambient", "butterflies"), ("clouds", True), ("border", BORDER), ("connect_east", "route_1"), ("connect_east_offset", 0)]
     paint(m, DAWNBROOK, "grass")
     place(m, "home_clay", 5, 2)
     place(m, "lab", 19, 2)
@@ -418,7 +418,7 @@ def route(route_id):
     m = Town(r["w"], r["h"], base.GRASS)
     links = {"route_1": [("connect_west", "dawnbrook"), ("connect_west_offset", 0),
                          ("connect_east", "mossgate"), ("connect_east_offset", 0)]}[route_id]
-    m.props = [("nameKey", route_id), ("ambient", "leaves"), ("entry", r["entry"]["side"]), ("border", BORDER), *links]
+    m.props = [("nameKey", route_id), ("ambient", "leaves"), ("clouds", True), ("entry", r["entry"]["side"]), ("border", BORDER), *links]
     grid = r["grid"]
     for size, lines in TRAILS[route_id].items():
         grid = worn(grid, lines, size)

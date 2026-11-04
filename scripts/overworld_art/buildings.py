@@ -5,7 +5,7 @@ from math import hypot
 
 from PIL import Image, ImageDraw
 
-from .nature import _canopy, rgba
+from .nature import _canopy, _cast, rgba
 from .slice_art import T, _outline, building
 from .world_palette import LINE, WORLD
 
@@ -115,7 +115,10 @@ WINDOWS = {"home_clay": (1, 3), "home_slate": (1, 3), "home_moss": (1, 3), "lab"
 def _prop(draw, size=(T, T)):
     img = Image.new("RGBA", size)
     draw(ImageDraw.Draw(img))
-    return _outline(img)
+    out = _outline(img)
+    if size[1] == T:
+        _cast(out)
+    return out
 
 
 def _lamp(d):

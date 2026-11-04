@@ -55,6 +55,15 @@ class Lab(unittest.TestCase):
     def test_the_bookcase_can_be_read(self):
         self.assertIn((1, 2), self.open)
 
+    def test_the_bench_hides_the_feet_of_whoever_is_behind_it(self):
+        data = I.MAPS["dawnbrook_lab"]()
+        above = next(l for l in data["layers"] if l["name"] == "above")["data"]
+        gid = above[2 * data["width"] + 7]
+        self.assertTrue(gid)
+        img = I.build()[0][gid - 1].getchannel("A").load()
+        self.assertEqual(img[8, 0], 0, "open above the bench edge")
+        self.assertEqual(img[8, 15], 255, "solid along it")
+
     def test_the_exit_mat_is_open(self):
         self.assertNotIn((I.MAT["dawnbrook_lab"], self.room.h - 1), self.room.solid)
 
