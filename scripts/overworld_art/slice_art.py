@@ -231,13 +231,11 @@ def fence(tiles, vertical=False):
     if vertical:
         img = Image.new("RGBA", (T, tiles * T))
         d = ImageDraw.Draw(img)
-        d.rectangle((6, 0, 9, tiles * T - 1), fill=f[1])
-        d.line((6, 0, 6, tiles * T - 1), fill=f[0])
-        d.line((9, 0, 9, tiles * T - 1), fill=f[2])
-        for y in range(3, tiles * T, 8):
-            d.rectangle((4, y, 11, y + 3), fill=f[1])
-            d.line((4, y, 11, y), fill=f[0])
-            d.line((4, y + 3, 11, y + 3), fill=f[2])
+        for y in range(0, tiles * T, 8):  # post tops seen from above, touching
+            d.rectangle((5, y, 10, y + 7), fill=f[1])
+            d.rectangle((5, y, 10, y + 1), fill=f[0])
+            d.line((10, y + 2, 10, y + 6), fill=f[2])
+            d.line((5, y + 7, 10, y + 7), fill=LINE)
         return _outline(img)
     img = Image.new("RGBA", (tiles * T, T))
     d = ImageDraw.Draw(img)

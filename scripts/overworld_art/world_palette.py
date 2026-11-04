@@ -7,8 +7,8 @@ LINE = "#26223a"  # object outline, a cool plum, never pure black
 SHADOW = ("#2e4a4a", 0.35)  # contact shadow: colour, opacity
 
 WORLD = {
-    "meadow": ["#cfe3b4", "#bfd8a6", "#aecb98"],
-    "lawn": ["#9cc084", "#8ab376", "#78a268"],
+    "meadow": ["#c6e2a4", "#b4d694", "#a2c986"],
+    "lawn": ["#a0c880", "#8fbc72", "#7eac64"],
     "trail": ["#e6d8b4", "#d8c79e", "#c4b088", "#b09a76"],
     "leaf": ["#b4d878", "#7cb85c", "#4e9450", "#35704c", "#265244"],
     "bark": ["#b08858", "#84603f", "#5c4038", "#40303a"],

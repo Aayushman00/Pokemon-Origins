@@ -10,6 +10,7 @@ import unittest
 from PIL import Image, ImageOps
 
 from .slice_art import fence, ground_layer, house, luma, mean_saturation, meadow, player_frames, tree
+from .slice_scene import GRID, before, scene
 from .world_palette import LINE, WORLD
 
 
@@ -97,6 +98,19 @@ class Player(unittest.TestCase):
         line = luma(solid(LINE))[0]
         for ramp in ("meadow", "lawn", "trail"):
             self.assertGreaterEqual(min(luma(solid(c))[0] for c in WORLD[ramp]) - line, 0.40)
+
+
+class Scene(unittest.TestCase):
+    def test_scene_is_one_gba_screen(self):
+        self.assertEqual(scene().size, (240, 160))
+        self.assertEqual(len(GRID), 10)
+        self.assertTrue(all(len(r) == 15 for r in GRID))
+
+    def test_before_matches_the_frame(self):
+        self.assertEqual(before().size, (240, 160))
+
+    def test_no_pure_black(self):
+        self.assertFalse(any(c[:3] == (0, 0, 0) for _, c in scene().convert("RGBA").getcolors(99999)))
 
 
 if __name__ == "__main__":
