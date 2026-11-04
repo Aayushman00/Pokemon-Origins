@@ -143,9 +143,9 @@ describe("headless overworld on the sample maps", () => {
 
 describe("Dawnbrook interiors and Route 1 (headless)", () => {
 	const doors = [
-		{ map: "dawnbrook_home", door: [7, 5], arrive: [4, 8] },
-		{ map: "dawnbrook_lab", door: [22, 5], arrive: [7, 8] },
-		{ map: "dawnbrook_house", door: [7, 14], arrive: [4, 8] },
+		{ map: "dawnbrook_home", door: [7, 6], arrive: [4, 8] },
+		{ map: "dawnbrook_lab", door: [22, 6], arrive: [7, 8] },
+		{ map: "dawnbrook_house", door: [7, 16], arrive: [4, 8] },
 	];
 	for (const { map, door, arrive } of doors) {
 		it(`walks in through the door at ${door} to ${map} and back out`, async () => {
