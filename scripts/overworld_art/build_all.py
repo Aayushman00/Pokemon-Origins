@@ -47,6 +47,14 @@ def main():
     (MAPS / "origin_town.json").write_text(json.dumps(data, indent=1) + "\n")
     print("wrote origin_town.json")
 
+    # interiors: their own tileset + one map per enterable building
+    from . import interiors
+    img, total = interiors.tileset_image()
+    img.save(MAPS / "tilesets" / "interior.png")
+    for map_id, fn in interiors.MAPS.items():
+        (MAPS / f"{map_id}.json").write_text(json.dumps(fn(), indent=1) + "\n")
+    print(f"wrote interior.png ({total} tiles) and {len(interiors.MAPS)} interior maps")
+
     tiles = dict(new_tiles())
     from PIL import Image
     pine = Image.new("RGBA", (16, 32))

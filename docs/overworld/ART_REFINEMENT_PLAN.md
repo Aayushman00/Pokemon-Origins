@@ -190,3 +190,9 @@ side-by-side page) and play the overworld at 1x and 3x.
 
 Each stage ships as its own commit on `claude/funny-hopper-804j0z`, so you can review
 and `git revert` one stage without touching the others.
+
+
+## Status update: interiors
+
+Care Centre, Mart and home interiors are built with working door warps (fixed layouts).
+Gym interiors (leader room, maze) are on hold: the owner decides each gym's interior separately.

@@ -65,7 +65,10 @@ const OverworldScreen = () => {
 			try {
 				const store = createMapStore({ fetchJson });
 				await store.loadAround(START.mapId);
-				const assets = await loadAssets([...["origin_town", "test_town", "test_route", "test_house"].map((id) => store.get(id)).filter(Boolean)]);
+				// the start map, every map its doors / edges lead to (interiors use their own
+				// tileset), and the test maps
+				const reachable = [START.mapId, ...store.neighbours(store.get(START.mapId)), "test_town", "test_route", "test_house"];
+				const assets = await loadAssets([...new Set(reachable)].map((id) => store.get(id)).filter(Boolean));
 				if (disposed) return;
 				const game = createOverworld({
 					store,

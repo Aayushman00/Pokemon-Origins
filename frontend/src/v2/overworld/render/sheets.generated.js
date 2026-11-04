@@ -92,6 +92,11 @@ export const SHEETS = [
   "gender": "male"
  },
  {
+  "id": "clerk",
+  "label": "Mart Clerk",
+  "gender": "male"
+ },
+ {
   "id": "professor",
   "label": "Professor",
   "gender": "male"

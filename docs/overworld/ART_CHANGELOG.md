@@ -2,6 +2,32 @@
 
 Art decisions, newest first. Each stage ships as its own commit.
 
+## Stage 3d: interiors (Care Centre, Mart, home) and door warps
+
+Gym interiors are deliberately not built: each gym's interior will be decided per gym.
+
+- **Interior tileset** `tilesets/interior.png` (81 tiles, its own tileset; maps use
+  firstgid 1 + collision at 1000). Rooms share a frame: dark side walls, a two-row back
+  wall (trim + wainscot), a shadowed first floor row, a bottom edge with a red exit mat.
+- **Care Centre (15x10):** grey FireRed-style grid floor, blue-trim walls with windows
+  and a poster, red counter with flower pots, the nurse behind it, a healing machine on
+  the back wall (3-frame chasing lights), a PC, a soft heal-pad light on the floor
+  (lighter disc with a dithered rim, no alpha), glass tables with yellow seats, plants,
+  two visitors, a 2-wide exit mat.
+- **Mart (11x9):** blue/white checker floor, side counter with a register, a new Mart
+  clerk (v1 pipeline: cap + apron), two rows of stocked shelves, drink fridges, plants,
+  a shopper.
+- **Home (11x9):** wood plank floor, wallpaper with wood wainscot, window, clock, TV,
+  bookshelf, kitchen (cabinets, sinks, stove), table with chairs and a fruit bowl, bed,
+  rug, plant.
+- **Talk across counters:** the counter cell in front of the nurse / clerk carries their
+  script as a sign (heal / shop requests, as FireRed does).
+- **Doors:** the home, Care Centre (2 cells) and Mart door signs became walkable warps
+  (step up to enter, door sound + iris); you arrive above the mat; stepping down onto the
+  mat returns you in front of the door. The Gym door keeps its "closed" sign.
+- **Engine:** OverworldScreen now loads tileset images for every map the start map's
+  doors and edges lead to (interiors need `interior.png`).
+
 ## Stage 3b: distinct building designs (v3)
 
 Review: the four buildings shared one template (pitched shingle roof, cream siding),

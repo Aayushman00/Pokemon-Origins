@@ -400,6 +400,21 @@
       "c": "green",
       "x": "green"
     },
+    "clerk": {
+      "f": "skin_light",
+      "m": "skin_light",
+      "l": "navy",
+      "u": "white:2",
+      "a": "sky",
+      "s": "skin_light",
+      "h": "hair_brown",
+      "c": "sky",
+      "x": "sky",
+      "t": "sky",
+      "b": "navy",
+      "n": "navy",
+      "p": "white"
+    },
     "professor": {
       "f": "khaki",
       "m": "skin_light",

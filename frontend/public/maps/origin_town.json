@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 24,
+ "nextobjectid": 25,
  "layers": [
   {
    "id": 1,
@@ -3856,7 +3856,7 @@
     1000,
     0,
     1000,
-    1000,
+    0,
     1000,
     1000,
     0,
@@ -3877,8 +3877,8 @@
     0,
     0,
     1000,
-    1000,
-    1000,
+    0,
+    0,
     1000,
     0,
     0,
@@ -4390,7 +4390,7 @@
     1000,
     0,
     1000,
-    1000,
+    0,
     1000,
     1000,
     0,
@@ -4569,7 +4569,7 @@
    "visible": true,
    "objects": [
     {
-     "id": 7,
+     "id": 8,
      "name": "grass_origin",
      "type": "",
      "rotation": 0,
@@ -4597,7 +4597,200 @@
    "y": 0,
    "opacity": 1,
    "visible": true,
-   "objects": []
+   "objects": [
+    {
+     "id": 4,
+     "name": "door_origin_home_4",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 64,
+     "y": 96,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "origin_home"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 5
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 7
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "iris"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "up"
+      }
+     ]
+    },
+    {
+     "id": 5,
+     "name": "door_origin_center_25",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 400,
+     "y": 96,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "origin_center"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 7
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 8
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "iris"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "up"
+      }
+     ]
+    },
+    {
+     "id": 6,
+     "name": "door_origin_center_26",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 416,
+     "y": 96,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "origin_center"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 8
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 8
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "iris"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "up"
+      }
+     ]
+    },
+    {
+     "id": 7,
+     "name": "door_origin_mart_26",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 416,
+     "y": 352,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "origin_mart"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 5
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 7
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "iris"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "up"
+      }
+     ]
+    }
+   ]
   },
   {
    "id": 8,
@@ -4621,7 +4814,7 @@
    "visible": true,
    "objects": [
     {
-     "id": 9,
+     "id": 10,
      "name": "guide",
      "type": "",
      "rotation": 0,
@@ -4650,7 +4843,7 @@
      "point": true
     },
     {
-     "id": 10,
+     "id": 11,
      "name": "marina",
      "type": "",
      "rotation": 0,
@@ -4679,7 +4872,7 @@
      "point": true
     },
     {
-     "id": 11,
+     "id": 12,
      "name": "mom",
      "type": "",
      "rotation": 0,
@@ -4708,7 +4901,7 @@
      "point": true
     },
     {
-     "id": 12,
+     "id": 13,
      "name": "nurse",
      "type": "",
      "rotation": 0,
@@ -4737,7 +4930,7 @@
      "point": true
     },
     {
-     "id": 13,
+     "id": 14,
      "name": "lass",
      "type": "",
      "rotation": 0,
@@ -4766,7 +4959,7 @@
      "point": true
     },
     {
-     "id": 14,
+     "id": 15,
      "name": "youngster",
      "type": "",
      "rotation": 0,
@@ -4795,7 +4988,7 @@
      "point": true
     },
     {
-     "id": 15,
+     "id": 16,
      "name": "bugcatcher",
      "type": "",
      "rotation": 0,
@@ -4824,7 +5017,7 @@
      "point": true
     },
     {
-     "id": 16,
+     "id": 17,
      "name": "fisher",
      "type": "",
      "rotation": 0,
@@ -4853,7 +5046,7 @@
      "point": true
     },
     {
-     "id": 17,
+     "id": 18,
      "name": "sailor",
      "type": "",
      "rotation": 0,
@@ -4882,7 +5075,7 @@
      "point": true
     },
     {
-     "id": 18,
+     "id": 19,
      "name": "oldman",
      "type": "",
      "rotation": 0,
@@ -4911,7 +5104,7 @@
      "point": true
     },
     {
-     "id": 19,
+     "id": 20,
      "name": "hiker",
      "type": "",
      "rotation": 0,
@@ -4940,7 +5133,7 @@
      "point": true
     },
     {
-     "id": 20,
+     "id": 21,
      "name": "picnicker",
      "type": "",
      "rotation": 0,
@@ -4969,7 +5162,7 @@
      "point": true
     },
     {
-     "id": 21,
+     "id": 22,
      "name": "scientist",
      "type": "",
      "rotation": 0,
@@ -4998,7 +5191,7 @@
      "point": true
     },
     {
-     "id": 22,
+     "id": 23,
      "name": "rival",
      "type": "",
      "rotation": 0,
@@ -5027,7 +5220,7 @@
      "point": true
     },
     {
-     "id": 23,
+     "id": 24,
      "name": "twin",
      "type": "",
      "rotation": 0,
@@ -5122,61 +5315,7 @@
      ]
     },
     {
-     "id": 4,
-     "name": "home_door",
-     "type": "",
-     "rotation": 0,
-     "visible": true,
-     "x": 64,
-     "y": 96,
-     "width": 16,
-     "height": 16,
-     "properties": [
-      {
-       "name": "text",
-       "type": "string",
-       "value": "It's your house. Mom left the door open for you."
-      }
-     ]
-    },
-    {
-     "id": 5,
-     "name": "center_door",
-     "type": "",
-     "rotation": 0,
-     "visible": true,
-     "x": 400,
-     "y": 96,
-     "width": 16,
-     "height": 16,
-     "properties": [
-      {
-       "name": "text",
-       "type": "string",
-       "value": "CARE CENTRE - Rest your team for free. Pokemon Origins trainers welcome!"
-      }
-     ]
-    },
-    {
-     "id": 6,
-     "name": "mart_door",
-     "type": "",
-     "rotation": 0,
-     "visible": true,
-     "x": 416,
-     "y": 352,
-     "width": 16,
-     "height": 16,
-     "properties": [
-      {
-       "name": "text",
-       "type": "string",
-       "value": "MART - Potions, Poke Balls and everything a new trainer needs."
-      }
-     ]
-    },
-    {
-     "id": 8,
+     "id": 9,
      "name": "town_sign",
      "type": "",
      "rotation": 0,

@@ -44,6 +44,17 @@ class Town(base.MapBuilder):
         self.block(x, y)
 
 
+def door(m, target, x, y):
+    """A walkable door cell: stepping UP onto it enters `target`; you arrive one
+    row above that room's exit mat (interiors.ARRIVE), facing up."""
+    from .interiors import ARRIVE, DOORS
+    xs, _ = DOORS[target]
+    ax, ay = ARRIVE[target][xs.index(x)]
+    m.block(x, y, 0)
+    m.obj("warps", f"door_{target}_{x}", x, y, kind="door", targetMap=target, targetX=ax, targetY=ay,
+          facing="up", transition="iris", enterDir="up")
+
+
 def hashed(x, y):
     return (x * 73856093 ^ y * 19349663) & 0xFFFF
 
@@ -226,20 +237,21 @@ def build():
     # ---- player's house (left) and care centre (right)
     m.skirt(2, 3, 7, 8)
     m.building("house", 3, 3, 4, 4)
-    m.sign("home_door", 4, 6, "It's your house. Mom left the door open for you.")
+    door(m, "origin_home", 4, 6)
     m.put("objects", 7, 7, MAILBOX, SOLID)
     m.put("ground", 4, 7, ID["doormat"])
     for x, tile in ((2, "picket"), (3, "picket_r"), (6, "picket_l"), (7, "picket_r")):
         m.put("objects", x, 9, ID[tile], SOLID)
     m.skirt(24, 3, 29, 8)
     m.building("center", 24, 3, 4, 4)
-    m.sign("center_door", 25, 6, "CARE CENTRE - Rest your team for free. Pokemon Origins trainers welcome!")
+    door(m, "origin_center", 25, 6)
+    door(m, "origin_center", 26, 6)
     m.put("objects", 28, 7, ID["bush"], SOLID)
 
     # ---- mart (bottom right) beside the pond
     m.skirt(24, 19, 29, 23)
     m.building("mart", 25, 19, 4, 4)
-    m.sign("mart_door", 26, 22, "MART - Potions, Poke Balls and everything a new trainer needs.")
+    door(m, "origin_mart", 26, 22)
     m.fill("ground", 25, 23, 26, 25, PATH)
 
     # ---- pond: water autotile (sand bank, foam, ripples), lily pads, reeds

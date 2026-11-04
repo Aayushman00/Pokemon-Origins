@@ -13,7 +13,7 @@ const maps = Object.fromEntries(ids.map((id) => [id, parseTiledMap(JSON.parse(re
 
 describe("sample maps (smoke + lint)", () => {
 	it("finds the sample maps and the Origin Town showcase and parses them", () => {
-		assert.deepEqual(ids.sort(), ["origin_town", "test_house", "test_route", "test_town"]);
+		assert.deepEqual(ids.sort(), ["origin_center", "origin_home", "origin_mart", "origin_town", "test_house", "test_route", "test_town"]);
 		assert.equal(maps.test_town.width, 30);
 		assert.equal(maps.origin_town.width, 32);
 	});
@@ -27,6 +27,31 @@ describe("sample maps (smoke + lint)", () => {
 		// the pond water runs 3 frames (ripple drift, foam lap, sparkle)
 		assert.ok([...ts.anim.values()].some((a) => a.frames.length === 3), "no 3-frame water animation");
 		assert.ok([...ts.cover.values()].every((row) => row === 9));
+	});
+	it("every Origin door warp lands on a walkable cell and has a warp back", () => {
+		const doors = maps.origin_town.warps;
+		assert.ok(doors.length >= 4, "home, care centre (2 cells) and mart doors");
+		for (const w of [...doors, ...["origin_home", "origin_center", "origin_mart"].flatMap((id) => maps[id].warps)]) {
+			const from = Object.values(maps).find((m) => m.warps.includes(w));
+			const to = maps[w.targetMap];
+			assert.ok(to, `${from.id}: warp to missing map ${w.targetMap}`);
+			assert.equal(to.collision[w.targetY * to.width + w.targetX], 0, `${from.id} -> ${to.id} lands on a solid cell`);
+			// the cell you arrive on is next to a warp in the target map that leads back here
+			const back = to.warps.find((b) => b.targetMap === from.id && Math.abs(b.x - w.targetX) + Math.abs(b.y - w.targetY) === 1);
+			assert.ok(back, `${from.id} -> ${to.id}: no way back next to (${w.targetX},${w.targetY})`);
+			assert.equal(from.collision[back.targetY * from.width + back.targetX], 0, `${to.id} -> ${from.id} lands on a solid cell`);
+		}
+	});
+	it("interiors use the interior tileset and talk-through counters", () => {
+		for (const id of ["origin_home", "origin_center", "origin_mart"]) {
+			assert.ok(maps[id].tilesets.some((t) => t.image === "tilesets/interior.png"), id);
+		}
+		const sign = maps.origin_center.signs.find((s) => s.name === "counter_nurse");
+		assert.ok(sign && sign.script.some((op) => op.op === "heal"), "nurse heals across the counter");
+		const clerk = maps.origin_mart.signs.find((s) => s.name === "counter_clerk");
+		assert.ok(clerk && clerk.script.some((op) => op.op === "shop"), "clerk opens the shop across the counter");
+		const machine = maps.origin_center.tilesets[0];
+		assert.ok([...machine.anim.values()].some((a) => a.frames.length === 3), "healing machine animates in 3 frames");
 	});
 	it("test maps animate water and flowers (Tiled tiles[] use the 'id' key)", () => {
 		const ts = maps.test_town.tilesets.find((t) => t.image.endsWith("overworld.png"));
