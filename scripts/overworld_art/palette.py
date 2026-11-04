@@ -29,6 +29,7 @@ RAMPS = {
     "hair_purple": ["#c49cf0", "#8460b8", "#4c347c"],
     "hair_pink": ["#ffc8d6", "#f08cac", "#ae4e80"],
     "hair_teal": ["#9cf0e0", "#3eb4ac", "#22667c"],
+    "hair_moss": ["#d6e68c", "#86ac4c", "#44703e"],
     # ---- cloth
     "red": ["#ff8c6a", "#e2443c", "#9a2442"],
     "orange": ["#ffbc66", "#f07c2e", "#a6422e"],

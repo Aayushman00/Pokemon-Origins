@@ -18,10 +18,10 @@ describe("overworld sprite sheets", () => {
 		for (const name of ["player", "player_f", "npc"]) assert.ok(SHEET_NAMES.includes(name), name);
 		for (const name of SHEET_NAMES) assert.ok(existsSync(join(SPRITES, `${name}.png`)), name);
 	});
-	it("cast is 19 boys (incl. the Mart clerk) and 12 girls (plus the generic townsperson)", () => {
+	it("cast is 24 boys (incl. the Mart clerk) and 18 girls (plus the generic townsperson)", () => {
 		const cast = SHEETS.filter((s) => s.id !== "npc");
-		assert.equal(cast.filter((s) => s.gender === "male").length, 19);
-		assert.equal(cast.filter((s) => s.gender === "female").length, 12);
+		assert.equal(cast.filter((s) => s.gender === "male").length, 24);
+		assert.equal(cast.filter((s) => s.gender === "female").length, 18);
 	});
 });
 

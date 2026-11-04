@@ -35,10 +35,10 @@ class SheetTests(unittest.TestCase):
     def setUp(self):
         self.sheets = {c["id"]: Image.open(SPRITES / f"{c['id']}.png").convert("RGBA") for c in ROSTER}
 
-    def test_roster_is_19_boys_and_12_girls_plus_townsperson(self):
+    def test_roster_is_24_boys_and_18_girls_plus_townsperson(self):
         cast = [c for c in ROSTER if c["id"] != "npc"]
-        self.assertEqual(sum(c["gender"] == "male" for c in cast), 19)
-        self.assertEqual(sum(c["gender"] == "female" for c in cast), 12)
+        self.assertEqual(sum(c["gender"] == "male" for c in cast), 24)
+        self.assertEqual(sum(c["gender"] == "female" for c in cast), 18)
         self.assertEqual(len({c["id"] for c in ROSTER}), len(ROSTER), "duplicate ids")
 
     def test_engine_names_still_exist(self):

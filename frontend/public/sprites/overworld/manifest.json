@@ -102,11 +102,6 @@
    "gender": "male"
   },
   {
-   "id": "leader_m",
-   "label": "Gym Leader Brawn",
-   "gender": "male"
-  },
-  {
    "id": "clerk",
    "label": "Mart Clerk",
    "gender": "male"
@@ -167,8 +162,68 @@
    "gender": "female"
   },
   {
-   "id": "leader_f",
-   "label": "Gym Leader Marina",
+   "id": "willow_thornby",
+   "label": "Willow Thornby",
+   "gender": "female"
+  },
+  {
+   "id": "mara_quill",
+   "label": "Mara Quill",
+   "gender": "female"
+  },
+  {
+   "id": "tavish_rook",
+   "label": "Tavish Rook",
+   "gender": "male"
+  },
+  {
+   "id": "coral_marlowe",
+   "label": "Coral Marlowe",
+   "gender": "female"
+  },
+  {
+   "id": "volt_dray",
+   "label": "Volt Dray",
+   "gender": "male"
+  },
+  {
+   "id": "skye_corvin",
+   "label": "Skye Corvin",
+   "gender": "female"
+  },
+  {
+   "id": "sage_ilmara",
+   "label": "Sage Ilmara",
+   "gender": "female"
+  },
+  {
+   "id": "cinder_valko",
+   "label": "Cinder Valko",
+   "gender": "male"
+  },
+  {
+   "id": "hollis_rime",
+   "label": "Hollis Rime",
+   "gender": "male"
+  },
+  {
+   "id": "bastian_cairn",
+   "label": "Bastian Cairn",
+   "gender": "male"
+  },
+  {
+   "id": "morwen_hallow",
+   "label": "Morwen Hallow",
+   "gender": "female"
+  },
+  {
+   "id": "drake_zephyrin",
+   "label": "Drake Zephyrin",
+   "gender": "male"
+  },
+  {
+   "id": "kestrel_vane",
+   "label": "Kestrel Vane",
    "gender": "female"
   },
   {

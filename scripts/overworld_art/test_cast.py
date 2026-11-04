@@ -126,5 +126,37 @@ class Proportions(unittest.TestCase):
             self.assertLessEqual(max(self.rows(BY_ID[name])[:18]), 14, name)
 
 
+LEADERS = ("willow_thornby", "mara_quill", "tavish_rook", "coral_marlowe", "volt_dray", "skye_corvin",
+           "sage_ilmara", "cinder_valko", "hollis_rime", "bastian_cairn", "morwen_hallow", "drake_zephyrin",
+           "kestrel_vane")
+
+
+class Leaders(unittest.TestCase):
+    def test_every_leader_has_a_sheet_of_their_own(self):
+        for cid in LEADERS:
+            self.assertIn(cid, BY_ID)
+
+    def test_generic_leaders_are_gone(self):
+        self.assertNotIn("leader_m", BY_ID)
+        self.assertNotIn("leader_f", BY_ID)
+
+    def test_no_two_leaders_share_a_silhouette(self):
+        """Fill every frame black: leaders must differ by outline alone, not by recolour."""
+        seen = {}
+        for cid in LEADERS:
+            shape = stand(cid).getchannel("A").tobytes()
+            self.assertNotIn(shape, seen, f"{cid} has the outline of {seen.get(shape)}")
+            seen[shape] = cid
+
+    def test_no_two_leaders_share_a_hairstyle_and_hat(self):
+        looks = [(tuple(map(repr, BY_ID[c]["heads"]["down"]))) for c in LEADERS]
+        self.assertEqual(len(set(looks)), len(looks))
+
+    def test_leaders_stay_inside_the_colour_budget(self):
+        for cid in LEADERS:
+            colours = {px for _, px in stand(cid).getcolors(4096) if px[3]}
+            self.assertLessEqual(len(colours), 15, cid)
+
+
 if __name__ == "__main__":
     unittest.main()

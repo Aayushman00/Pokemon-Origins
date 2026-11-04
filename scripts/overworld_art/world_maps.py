@@ -405,7 +405,7 @@ def mossgate_gym():
           transition="iris", enterDir="left")
     m.sign("hint", 0, 4, gym["hint"] + " Stuck? Leave the room and the seeds roll back.")
     script = trainer_script("willow_thornby", "Welcome to the Grove. Take your time, nothing here grows in a hurry.")
-    m.obj("npcs", "willow_thornby", 12, 5, point=True, sprite="leader_f", facing="left", script=script)
+    m.obj("npcs", "willow_thornby", 12, 5, point=True, sprite="willow_thornby", facing="left", script=script)
     m.block(12, 5)
     autotile_paths(m)
     return finish(m.build(), m)
