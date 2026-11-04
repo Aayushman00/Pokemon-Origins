@@ -109,6 +109,7 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, tra
 			await say(`A wild ${state.enemy.nickname} appeared!`);
 		} else {
 			await say(`${state.trainerName || "A trainer"} wants to battle!`);
+			if (state.trainerIntro) await say(`"${state.trainerIntro}"`);
 			await wait(500);
 			if (myGen !== gen.current) return;
 			patchFx("enemy", { hidden: false, entering: true });

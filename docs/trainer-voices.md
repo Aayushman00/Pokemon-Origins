@@ -1,6 +1,6 @@
 # Trainer voice profiles (design draft)
 
-Status: design only. Nothing here is wired into the game yet.
+Status: the voice notes below stay the design reference. The lines themselves now live in `backend/data/trainers/voices.json`, which the game reads, so change them there.
 
 Each trainer has a hardcoded voice. A future LLM call may write fresh lines from this profile, but every event keeps a fixed fallback line below, so the game works with no LLM.
 

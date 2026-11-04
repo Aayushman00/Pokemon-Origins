@@ -240,6 +240,7 @@ function makeService({
 	trainerName = "Youngster Joey",
 	trainerSprite = "youngster_joey",
 	trainerId = 1,
+	voiceId,
 	battleType = "trainer",
 	rewards,
 	inventory,
@@ -319,6 +320,7 @@ function makeService({
 		overworldOn,
 		getPlayerParty,
 		getEnemyBattle: async (level, battleNumber) => ({
+			trainerId: voiceId,
 			trainerName,
 			trainerSprite,
 			...(enemyParty ? { party: enemyParty } : { pokemon: enemy }),
@@ -327,6 +329,23 @@ function makeService({
 	});
 	return { service, progress, engine, xp, xpStore, wallet, history };
 }
+
+describe("trainer voice in a battle", () => {
+	it("opens with the leader's line and closes on their defeat line", async () => {
+		const { service } = makeService({ voiceId: "willow_thornby", engine: stubEngine([{ result: "hit", damage: 999 }]) });
+		const { state } = await service.startBattle(1, { level: 1, battleNumber: 1 });
+		assert.match(state.trainerIntro, /Welcome to the Grove/);
+		const result = await service.performAction(1, { sessionId: state.sessionId, action: { type: "move", moveId: 1 } });
+		assert.equal(result.state.status, "won");
+		assert.deepEqual(result.events.filter((e) => e.type === "trainer_line").map((e) => e.event), ["lose"]);
+	});
+
+	it("stays silent when the trainer has no voice", async () => {
+		const { service } = makeService();
+		const { state } = await service.startBattle(1, { level: 1, battleNumber: 1 });
+		assert.equal(state.trainerIntro, null);
+	});
+});
 
 describe("world_trainer battles", () => {
 	const gauntlet = {

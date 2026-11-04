@@ -7,6 +7,13 @@ const view = {
 	enemy: { nickname: "Rattata", position: 1, current_hp: 15 },
 };
 const ctx = { trainerName: "Joey", nextId: () => 7 };
+
+describe("trainer lines", () => {
+	it("speaks the line in quotes and holds it for a moment", () => {
+		const { steps } = planEvent({ type: "trainer_line", text: "Steady now." }, { player: {}, enemy: {} }, ctx);
+		assert.deepEqual(steps, [{ say: '"Steady now."' }, { wait: 500 }]);
+	});
+});
 const says = (steps) => steps.filter((s) => s.say !== undefined).map((s) => s.say);
 const kinds = (steps) => steps.map((s) => Object.keys(s)[0]);
 

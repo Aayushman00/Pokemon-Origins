@@ -59,6 +59,9 @@ export function planEvent(event, view, { trainerName = "The trainer", nextId = (
 	const done = (steps) => ({ steps, view: state.view });
 
 	switch (event.type) {
+		case "trainer_line":
+			return done([{ say: `"${event.text}"` }, { wait: 500 }]);
+
 		case "switch":
 			replace("player", event.pokemon);
 			return done([

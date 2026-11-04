@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { addVoice, introLine, usesPlayerName } = require("./trainerVoice");
 const { CampaignError } = require("../campaign/errors");
 const {
 	STAGE_KEYS,
@@ -225,6 +226,7 @@ function toPublicState(session) {
 		battleType: session.battleType,
 		trainerName: session.trainerName,
 		trainerSprite: session.trainerSprite || null,
+		trainerIntro: session.voiceId ? introLine(session.voiceId, session.playerName) : null,
 		player: clonePokemon(session.player),
 		enemy: clonePokemon(session.enemy),
 		party: session.party.map(clonePokemon),
@@ -250,6 +252,11 @@ function defaultGetPlayerParty() {
 	};
 }
 
+async function playerName(trainerId) {
+	const data = await require("./trainerService").getTrainerData(trainerId);
+	return data?.name || null;
+}
+
 function defaultGetEnemyBattle() {
 	return async (level, battleNumber) => {
 		const campaignService = require("./campaignService");
@@ -271,6 +278,7 @@ function defaultGetEnemyBattle() {
 			throw new CampaignError(400, "Battle has no enemy configured");
 		}
 		return {
+			trainerId: battle.trainer.id,
 			trainerName: battle.trainer.name,
 			trainerSprite: battle.trainer.sprite || null,
 			party: battle.trainer.party,
@@ -546,6 +554,8 @@ function createBattleSessionService(deps = {}) {
 			battleType: enemyBattle.battleType || "trainer",
 			trainerName: enemyBattle.trainerName,
 			trainerSprite: enemyBattle.trainerSprite || null,
+			voiceId: enemyBattle.trainerId || null,
+			playerName: usesPlayerName(enemyBattle.trainerId) ? await playerName(trainerId) : null,
 			worldTrainer: worldTrainer || null,
 			party,
 			// `player` always references the active party entry, so beat
@@ -1656,12 +1666,14 @@ function createBattleSessionService(deps = {}) {
 
 		session.busy = true;
 		try {
-			const events =
+			const events = addVoice(
+				session,
 				action.type === "switch"
 					? await resolveSwitch(session, action)
 					: action.type === "item"
 					? await resolveItem(session, action, trainerId)
-					: await resolveMove(session, action);
+					: await resolveMove(session, action)
+			);
 
 			session.updatedAt = new Date(clock()).toISOString();
 

@@ -1,0 +1,303 @@
+{
+  "willow_thornby": {
+    "intro": "Welcome to the Grove. Take your time, nothing here grows in a hurry.",
+    "first_faint": "Even the strongest oak loses a branch. Go on.",
+    "low_hp": "Steady now. Hold on a little longer.",
+    "super_effective": "A cold wind that early in the season. Fair enough.",
+    "ace": "This one has been with me since the first sprout.",
+    "win": "Rest a while. You'll grow stronger. Come back anytime.",
+    "lose": "You've grown well. This badge is yours. Tend it.",
+    "greet": "You cleared the seeds without forcing one. That is most of what I teach.",
+    "badge": "Take the Bloom Badge. May it root deep and open slowly.",
+    "after": "The vines remember you now. Come sit by the roots whenever the road feels long."
+  },
+  "mara_quill": {
+    "intro": "Oh, a new face! Let's see what you're made of, dear.",
+    "first_faint": "Burnt the first batch. That's how it goes.",
+    "low_hp": "Come on, you can take one more hit. I believe in you!",
+    "super_effective": "Oh! That was well seasoned, friend.",
+    "ace": "Time for the special recipe!",
+    "win": "Don't be sad. Have a roll and try again.",
+    "lose": "That was a lovely bake. The badge is yours, friend.",
+    "greet": "You rode the belts all the way here! Sit down, dear, the ovens are warm.",
+    "badge": "Here, the Hearth Badge, still warm. Go on, friend, take a roll for the road too.",
+    "after": "Eat something before you leave, dear. Nobody battles well on an empty stomach."
+  },
+  "tavish_rook": {
+    "intro": "Breathe. Begin.",
+    "first_faint": "One falls. The lesson stands.",
+    "low_hp": "Stand. Breathe. Again.",
+    "super_effective": "Good strike. Clean.",
+    "ace": "Now you meet the student I trust most.",
+    "win": "Not yet. Train. Return.",
+    "lose": "Well fought. The badge is earned. Do not stop.",
+    "greet": "The screens opened. Your feet learned before your head did. Good.",
+    "badge": "The Breath Badge. Wear it. Keep breathing.",
+    "after": "The dojo door stays open. Train. Return."
+  },
+  "coral_marlowe": {
+    "intro": "Ahoy, landlubber! Mind your footing, the tide's rising!",
+    "first_faint": "Ha! Man overboard! Never mind, plenty more fish.",
+    "low_hp": "Hold the line! We're not sinking yet!",
+    "super_effective": "A rogue wave! I felt that one!",
+    "ace": "All hands on deck! Here's the flagship!",
+    "win": "Back to shore with you. Try again at low tide!",
+    "lose": "Fair winds, sailor! The badge is yours. You earned it.",
+    "greet": "Ha! Walked the tide and kept your socks dry! Welcome aboard, landlubber!",
+    "badge": "The Tide Badge, sailor! Pin it where the salt can see it!",
+    "after": "Harbor is yours any time, sailor. Mind the third plank. It bites."
+  },
+  "volt_dray": {
+    "intro": "Right on time! The grid's humming, let's run a test!",
+    "first_faint": "Dropped a phase. No problem, load balancing!",
+    "low_hp": "Warning, low charge! Warning!",
+    "super_effective": "A surge! Careful, you'll blow a fuse!",
+    "ace": "Full output! This one runs hot!",
+    "win": "Power outage on your end! Recharge and retry!",
+    "lose": "Output exceeded! Fantastic. The badge is yours!",
+    "greet": "All panels lit! Eighteen of eighteen! Do you know what the odds are? I do! Let us test you!",
+    "badge": "Current Badge! Rated for any voltage! Do not lick it! Someone always licks it!",
+    "after": "Grid is stable, mostly! Ninety-one percent! Do come back, I have graphs!"
+  },
+  "skye_corvin": {
+    "intro": "The wind brought you here. Let's see if it carries you higher.",
+    "first_faint": "A feather falls. The sky stays.",
+    "low_hp": "Don't let it drop. Look up.",
+    "super_effective": "A sharp gust. You read the sky well.",
+    "ace": "Now fly, my old friend.",
+    "win": "The wind wasn't with you. Look up and try again.",
+    "lose": "You flew higher than I did. The badge is yours.",
+    "greet": "You trusted the wind and it set you here. Not everyone lets it.",
+    "badge": "The Updraft Badge. Light as a feather, and it goes where you do.",
+    "after": "The view is always free up here. Look up."
+  },
+  "sage_ilmara": {
+    "intro": "The stars said you'd come. Let us see if they were right.",
+    "first_faint": "As charted. Continue.",
+    "low_hp": "…Hold. The orbit isn't finished yet.",
+    "super_effective": "…Unexpected. Interesting.",
+    "ace": "Now the center of my sky.",
+    "win": "As the stars foretold. Study the charts and return.",
+    "lose": "Your path was not in my charts. The badge is yours.",
+    "greet": "Two of you arrived. One of you remains. …I did say the stars were watching.",
+    "badge": "The Orbit Badge. …It has been waiting for you longer than you know.",
+    "after": "The dome stays open at night. …Your chart has a bright stretch coming."
+  },
+  "cinder_valko": {
+    "intro": "You climbed the volcano. Now prove you can stand the heat!",
+    "first_faint": "Embers only! The real fire is yet to come!",
+    "low_hp": "Burn bright! Not now, not yet!",
+    "super_effective": "A strike worth forging! Good!",
+    "ace": "Behold, the heart of the flame!",
+    "win": "Ash and nothing more. Return when you can stand the heat.",
+    "lose": "Magnificent. Take the badge. You've earned your place.",
+    "greet": "You crossed on the beat of the forge! Few keep time with fire. Stand and be tested!",
+    "badge": "The Ember Badge! Forged here, and it will never cool! Burn bright!",
+    "after": "Eight badges. The road north climbs to Zenith Summit. Go, and do not dim!"
+  },
+  "hollis_rime": {
+    "intro": "You've come far, traveler. Few arrive without frost on their coat.",
+    "first_faint": "A crack in the ice. It happens.",
+    "low_hp": "Hold. Let the cold keep you steady.",
+    "super_effective": "A thaw. Rare, and well done.",
+    "ace": "Now, the long winter.",
+    "win": "The cold favors the patient. Return in spring.",
+    "lose": "Beautifully done. Walk on, traveler."
+  },
+  "bastian_cairn": {
+    "intro": "Hmph. A mountain doesn't move for a loud challenger. Show me.",
+    "first_faint": "A pebble lost. The wall holds.",
+    "low_hp": "Hold your ground. Stone doesn't crumble that fast.",
+    "super_effective": "Hmph. You found the fault line.",
+    "ace": "Now you face the bedrock.",
+    "win": "Hmph. You're gravel. Come back harder.",
+    "lose": "Hmph. You broke the wall. Go on."
+  },
+  "morwen_hallow": {
+    "intro": "Come in, come in. Do stay a while… everyone does.",
+    "first_faint": "Oh, how sad. They'll rest soon enough.",
+    "low_hp": "Not yet, dear. Not yet.",
+    "super_effective": "Oh! That one stung. Delightful.",
+    "ace": "My dearest guest has arrived.",
+    "win": "Do stay a while longer. I insist.",
+    "lose": "The door is open. You may go. For now."
+  },
+  "drake_zephyrin": {
+    "intro": "Challenger. Few have reached this hall. Fewer will leave it unbowed.",
+    "first_faint": "A fine dragon falls. Another rises.",
+    "low_hp": "Rise! A dragon does not kneel!",
+    "super_effective": "A worthy blow. The old songs spoke truth.",
+    "ace": "Now witness the heir of a legend!",
+    "win": "The legend continues. Yours has not yet begun.",
+    "lose": "Magnificent. The final hall is yours."
+  },
+  "kestrel_vane": {
+    "intro": "There you are, {player_name}. Eight badges and a long road. Let's see what it was worth.",
+    "first_faint": "Not bad, {player_name}. I'd have been worried if you couldn't.",
+    "low_hp": "Come on, hang in there. I'm not done with you.",
+    "super_effective": "Ha! Nice read, {player_name}. I didn't see that.",
+    "ace": "Alright. No more holding back.",
+    "win": "Close, {player_name}, but not close enough. You'll get me next time.",
+    "lose": "…You did it. Champion. I'm proud of you, {player_name}. Truly."
+  },
+  "youngster_joey": {
+    "intro": "My Rattata and I have been training since breakfast! Battle me!",
+    "lose": "Aw, man! We only trained since breakfast!",
+    "after": "Tomorrow I am starting before breakfast."
+  },
+  "lass_annie": {
+    "intro": "You walked right through my favorite spot. Now you owe me a battle.",
+    "lose": "Fine, you can have the spot. Just for today.",
+    "after": "The birds here like you. That is annoying."
+  },
+  "bug_catcher_tim": {
+    "intro": "Wait! Do not step there! Oh, you did. Now we have to battle.",
+    "lose": "My bugs are not sad. I am sad. They are fine.",
+    "after": "There is a rare one in this grass. I am almost sure of it."
+  },
+  "hiker_jack": {
+    "intro": "Ho there! Legs tired yet? Mine neither! Let us have a battle!",
+    "lose": "Ho ho! Knocked me flat as a valley!",
+    "after": "Keep your boots dry and your pack light. That is all I know."
+  },
+  "swimmer_luis": {
+    "intro": "Wrong way to the sea? No such thing. Everything runs there eventually!",
+    "lose": "Glub. Went under on that one.",
+    "after": "Ponds are practice. Saltmere is the real water."
+  },
+  "picnicker_dana": {
+    "intro": "Careful of the blanket! And my sandwich! And my Pokémon!",
+    "lose": "You won, and you did not even step on the sandwich. Thank you.",
+    "after": "Want half? It is mostly crust now."
+  },
+  "fisherman_ned": {
+    "intro": "Shh! You will scare the... oh, too late. Might as well battle.",
+    "lose": "That one got off the hook. So did you.",
+    "after": "Biggest catch I ever had got away. So did you, come to think of it."
+  },
+  "camper_rick": {
+    "intro": "I have slept out here nine nights! My team is half wild by now!",
+    "lose": "Guess I need a tenth night.",
+    "after": "If you hear howling, that is probably me."
+  },
+  "sailor_dwayne": {
+    "intro": "Land legs, are those? Let us see if they hold on a rolling deck!",
+    "lose": "Blown clean off course! Ha ha!",
+    "after": "Captain Marlowe would have laughed at me for that one."
+  },
+  "engineer_baily": {
+    "intro": "Every bridge on this road, I bolted. Every battle, I win. So far.",
+    "lose": "A loose bolt in my plan. I will find it.",
+    "after": "If it creaks, it is fine. If it stops creaking, run."
+  },
+  "gentleman_tucker": {
+    "intro": "Good day. Might I trouble you for a civil thrashing?",
+    "lose": "Splendid. Quite splendid. I shall need a new hat.",
+    "after": "Do give my regards to the road ahead."
+  },
+  "rocker_luca": {
+    "intro": "One, two, three, four! This next battle is called YOU LOSE!",
+    "lose": "Feedback! That was all feedback!",
+    "after": "Dynamo Station has the best amps in Aurelia. Do not tell them I said so."
+  },
+  "lass_kaylee": {
+    "intro": "I have been told I am very good at this. By me.",
+    "lose": "I would like a second opinion on that result.",
+    "after": "You were fine, I suppose. Slightly better than fine."
+  },
+  "beauty_grace": {
+    "intro": "Oh, are you going to look at me or at my Pokémon? Decide quickly.",
+    "lose": "How rude of you to be so good at this.",
+    "after": "Do come by again. Wear something nicer."
+  },
+  "hollow_grunt_marco": {
+    "intro": "Team Hollow is working here! Walk away, or get walked over!",
+    "lose": "You will not stop us. You did not even stop me. Okay, you stopped me.",
+    "after": "Nobody told me kids would be this tough. It is not in the handbook."
+  },
+  "juggler_dalton": {
+    "intro": "Keep your eyes on the Poké Balls. Not that one. That one! Too late!",
+    "lose": "And now I drop everything. Thank you, you have been great.",
+    "after": "Three is easy. Four is a hobby. Five is a mistake."
+  },
+  "tamer_evan": {
+    "intro": "Mine eat from my hand. Yours? We will find out together.",
+    "lose": "Well. They stopped listening halfway. Happens.",
+    "after": "Be patient with them. They are always patient with you."
+  },
+  "bird_keeper_roger": {
+    "intro": "My flock saw you coming a mile back. They told me everything.",
+    "lose": "They have flown off. They will return. Probably.",
+    "after": "Up past Gale Spire, the air is so thin the birds go quiet."
+  },
+  "biker_jaxon": {
+    "intro": "Nice road. Shame about you standing on it.",
+    "lose": "Ugh. There goes the paint job.",
+    "after": "Ride safe, kid. Or do not. Up to you."
+  },
+  "hollow_grunt_petra": {
+    "intro": "You again? No, wait, a different kid. They keep making more of you!",
+    "lose": "I am writing a strongly worded report about you.",
+    "after": "The boss says the Lab is the point. I just carry the boxes."
+  },
+  "channeler_hope": {
+    "intro": "Someone is standing behind you. They say you should battle me.",
+    "lose": "They have gone quiet. They liked you.",
+    "after": "Do not look back on this road after dark. Just do not."
+  },
+  "psychic_rodney": {
+    "intro": "I knew you would say that. Go on, say it. …Well, now you have ruined it.",
+    "lose": "I foresaw this. I hoped I was wrong.",
+    "after": "You are going to take the left path. Or the right one. It is blurry."
+  },
+  "hollow_grunt_silas": {
+    "intro": "The sealed door opens for those who hold their nerve. You will not get that far.",
+    "lose": "Strong. Stronger than the last report said.",
+    "after": "Everyone wants what is behind that door. Nobody asks what it wants."
+  },
+  "blackbelt_kiyo": {
+    "intro": "Hah! Fists first, questions never! Stand ready!",
+    "lose": "A thousand more punches tonight. Hah!",
+    "after": "Master Tavish says I shout too much. HAH!"
+  },
+  "burglar_quinn": {
+    "intro": "Lovely Pokémon you have. Would be a shame if they were in my bag.",
+    "lose": "Fine. I will steal a better plan.",
+    "after": "You did not see me. I was never here. Neither was that wallet."
+  },
+  "super_nerd_miguel": {
+    "intro": "I have calculated your exact chance of winning. I will not share it.",
+    "lose": "I forgot to carry the one.",
+    "after": "Technically you only won by a margin of everything."
+  },
+  "swimmer_nora": {
+    "intro": "This far from shore, nobody hears you lose!",
+    "lose": "Swept out by the current. Nice stroke.",
+    "after": "Warm spots near Emberhold. The sea runs hot this far along."
+  },
+  "scientist_ivan": {
+    "intro": "A live subject! Hold still, this is for the data.",
+    "lose": "Fascinating. Painful, but fascinating.",
+    "after": "I used to work near the Hollow Lab. I sleep better now."
+  },
+  "cooltrainer_vince": {
+    "intro": "Few make it this far. I am here so fewer do.",
+    "lose": "Respect. Go on, finish the climb.",
+    "after": "The League will not be this kind."
+  },
+  "tamer_jude": {
+    "intro": "These are the ones nobody else could handle. Now they are all yours.",
+    "lose": "Hm. They like you more than me now.",
+    "after": "A strong team is a calm team. Yours is calm."
+  },
+  "hollow_grunt_odessa": {
+    "intro": "Last chance. Turn back, or the summit is the last thing you will see.",
+    "lose": "It does not matter. We are already inside.",
+    "after": "Go on, climb. You will find the door before we open it. Maybe."
+  },
+  "cooltrainer_selena": {
+    "intro": "I have held this road for years. Show me why I should step aside.",
+    "lose": "Then I step aside. The summit is yours to try.",
+    "after": "Tell the Champion I said hello. She owes me a rematch."
+  }
+}
