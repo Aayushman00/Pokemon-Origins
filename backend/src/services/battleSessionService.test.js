@@ -332,16 +332,16 @@ function makeService({
 
 describe("trainer voice in a battle", () => {
 	it("opens with the leader's line and closes on their defeat line", async () => {
-		const { service } = makeService({ voiceId: "willow_thornby", engine: stubEngine([{ result: "hit", damage: 999 }]) });
+		const { service } = makeService({ voiceId: "willow_thornby", battleType: "gym_boss", rewards: { createOfferForWin: async () => null }, engine: stubEngine([{ result: "hit", damage: 999 }]) });
 		const { state } = await service.startBattle(1, { level: 1, battleNumber: 1 });
 		assert.match(state.trainerIntro, /Welcome to the Grove/);
-		const result = await service.performAction(1, { sessionId: state.sessionId, action: { type: "move", moveId: 1 } });
+		const result = await service.performAction(1, { sessionId: state.sessionId, action: { type: "move", moveId: state.player.moves[0].move_id } });
 		assert.equal(result.state.status, "won");
 		assert.deepEqual(result.events.filter((e) => e.type === "trainer_line").map((e) => e.event), ["lose"]);
 	});
 
-	it("stays silent when the trainer has no voice", async () => {
-		const { service } = makeService();
+	it("leaves a road trainer's opener to the overworld, so it is not said twice", async () => {
+		const { service } = makeService({ voiceId: "youngster_joey" });
 		const { state } = await service.startBattle(1, { level: 1, battleNumber: 1 });
 		assert.equal(state.trainerIntro, null);
 	});

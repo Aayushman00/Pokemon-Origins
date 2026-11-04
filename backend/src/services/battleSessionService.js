@@ -226,7 +226,7 @@ function toPublicState(session) {
 		battleType: session.battleType,
 		trainerName: session.trainerName,
 		trainerSprite: session.trainerSprite || null,
-		trainerIntro: session.voiceId ? introLine(session.voiceId, session.playerName) : null,
+		trainerIntro: session.voiceId && session.battleType !== "trainer" ? introLine(session.voiceId, session.playerName) : null,
 		player: clonePokemon(session.player),
 		enemy: clonePokemon(session.enemy),
 		party: session.party.map(clonePokemon),
