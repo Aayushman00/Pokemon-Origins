@@ -125,6 +125,37 @@ describe("validateMaps", () => {
 		for (let y = 0; y < map.height; y++) layer(map, "collision").data[y * map.width + 14] = solid;
 		expectError(raw, /dawnbrook.*cannot be reached/);
 	});
+	// Cell helpers for cutting up route_1: col 1 is solid, 2-5 are ledges (see COL).
+	const paintCell = (map, x, y, col) => {
+		const first = map.tilesets.find((t) => t.name === "collision").firstgid;
+		layer(map, "collision").data[y * map.width + x] = col ? first + col - 1 : 0;
+	};
+	it("rejects a ledge that is the only way across, because it never goes back", () => {
+		const raw = load();
+		const map = raw.route_1;
+		for (let y = 0; y < map.height; y++) paintCell(map, 20, y, 1);
+		paintCell(map, 20, 15, 4); // hop east along row 15, no way west again
+		expectError(raw, /route_1.*cannot be reached/);
+	});
+	it("rejects a drop into a pocket the player can never leave", () => {
+		const raw = load();
+		const map = raw.route_1;
+		for (let x = 17; x <= 25; x++) paintCell(map, x, 4, 1);
+		paintCell(map, 20, 4, 5); // hop north into rows 1-3, nothing leads back
+		expectError(raw, /route_1.*\(\d+,\d+\) is a trap/);
+	});
+	it("rejects a trainer whose walk out seals a corridor", () => {
+		const raw = load();
+		const map = raw.route_1;
+		for (let y = 0; y < map.height; y++) if (y !== 7) paintCell(map, 14, y, 1);
+		expectError(raw, /route_1.*lass_annie.*seals the way/);
+	});
+	it("rejects someone nobody can walk up to", () => {
+		const raw = load();
+		const map = raw.dawnbrook;
+		for (const [x, y] of [[14, 6], [16, 6], [15, 5], [15, 7]]) paintCell(map, x, y, 1);
+		expectError(raw, /dawnbrook.*old_woman.*cannot be talked to/);
+	});
 	it("rejects a trainer who can be walked around", () => {
 		const raw = load();
 		prop(layer(raw.route_1, "npcs").objects[1], "sight").value = 1;

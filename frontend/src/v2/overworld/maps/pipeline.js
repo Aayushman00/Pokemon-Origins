@@ -1,6 +1,6 @@
 // Map pipeline checks, shared by `npm run validate:maps` and the tests. Pure: the
 // caller passes parsed JSON in, so nothing here touches the disk.
-import { COL, DIRS } from "../constants.js";
+import { COL, DIRS, LEDGE_DIR } from "../constants.js";
 import { collisionAt, parseTiledMap } from "../logic/mapModel.js";
 import { TRANSITION_TICKS } from "../logic/transition.js";
 import { createWorld } from "../logic/world.js";
@@ -65,6 +65,17 @@ function edgeCells(map, side) {
 	return cells;
 }
 
+/** Cells one move from (x, y), by planStep's rules: a walk, or a hop that lands two on. */
+function moves(map, x, y) {
+	const out = [];
+	for (const [dir, { dx, dy }] of Object.entries(DIRS)) {
+		const col = collisionAt(map, x + dx, y + dy);
+		if (col === COL.FREE) out.push([x + dx, y + dy]);
+		else if (LEDGE_DIR[col] === dir && collisionAt(map, x + dx * 2, y + dy * 2) === COL.FREE) out.push([x + dx * 2, y + dy * 2]);
+	}
+	return out;
+}
+
 /** Tiles reachable from `seeds` on foot, never entering `blocked` ("x,y" keys). */
 function flood(map, seeds, blocked = new Set()) {
 	const key = ([x, y]) => `${x},${y}`;
@@ -72,11 +83,8 @@ function flood(map, seeds, blocked = new Set()) {
 	const queue = seeds.filter((c) => !blocked.has(key(c)));
 	queue.forEach((c) => seen.add(key(c)));
 	while (queue.length) {
-		const [x, y] = queue.pop();
-		for (const { dx, dy } of Object.values(DIRS)) {
-			const next = [x + dx, y + dy];
-			// ponytail: ledges count as two-way here; check hop direction once a map relies on one
-			if (collisionAt(map, ...next) === COL.SOLID || seen.has(key(next)) || blocked.has(key(next))) continue;
+		for (const next of moves(map, ...queue.pop())) {
+			if (seen.has(key(next)) || blocked.has(key(next))) continue;
 			seen.add(key(next));
 			queue.push(next);
 		}
@@ -84,18 +92,48 @@ function flood(map, seeds, blocked = new Set()) {
 	return seen;
 }
 
-function checkReachable(map, err, maps) {
+/** Everywhere the player arrives or leaves: doors, landings and open map edges. */
+function keyPoints(map, maps) {
 	const points = [];
 	for (const other of Object.values(maps)) for (const w of other.warps) if (w.targetMap === map.id) points.push([w.targetX, w.targetY]);
 	for (const w of map.warps) points.push([w.x, w.y]);
 	for (const side of Object.keys(map.connections)) points.push(...edgeCells(map, side));
+	return points;
+}
+
+/** First key point `from` cannot get to, with `blocked` closed. Ledges make this one-way, so ask from each end. */
+const cutOff = (map, points, from, blocked) => {
+	const seen = flood(map, [from], blocked);
+	return points.find(([x, y]) => !seen.has(`${x},${y}`) && !blocked?.has(`${x},${y}`));
+};
+
+function checkReachable(map, err, maps) {
+	const points = keyPoints(map, maps);
 	if (!points.length) return;
-	const seen = flood(map, [points[0]]);
-	for (const [x, y] of points) if (!seen.has(`${x},${y}`)) err(`(${x},${y}) cannot be reached from (${points[0]})`);
+	for (const from of points) {
+		const lost = cutOff(map, points, from);
+		if (lost) err(`(${lost}) cannot be reached from (${from})`);
+	}
+	const open = flood(map, [points[0]]);
+	// Walking is reversible, so the only way into a trap is a hop: check where hops land.
+	const landings = [...open].flatMap((cell) => {
+		const [x, y] = cell.split(",").map(Number);
+		return moves(map, x, y).filter(([a, b]) => Math.abs(a - x) + Math.abs(b - y) === 2);
+	});
+	for (const cell of landings) {
+		const seen = flood(map, [cell]);
+		if (!points.some(([x, y]) => seen.has(`${x},${y}`))) err(`(${cell}) is a trap: hop in and there is no way out`);
+	}
+	const signs = new Set(map.signs.map((s) => `${s.x},${s.y}`));
+	for (const o of [...map.npcs, ...map.signs]) {
+		const near = Object.values(DIRS).map(({ dx, dy }) => `${o.x + dx},${o.y + dy}`);
+		// staff behind a counter are talked to through the sign on it
+		if (!near.some((c) => open.has(c) || (map.npcs.includes(o) && signs.has(c)))) err(`"${o.name}" cannot be talked to`);
+	}
 }
 
 /** Trainers must stop the player, in order. `entry` names the edge the player arrives on. */
-function checkTrainers(map, err) {
+function checkTrainers(map, err, maps) {
 	const trainers = map.npcs.filter((n) => n.trainer).sort((a, b) => a.order - b.order);
 	if (!trainers.length) return;
 	const entry = map.properties.entry;
@@ -115,6 +153,13 @@ function checkTrainers(map, err) {
 		if (exits.some(([x, y]) => seen.has(`${x},${y}`))) err(`trainer "${t.name}" can be walked around`);
 		const next = trainers[k + 1];
 		if (next && [...sights[k + 1]].some((c) => seen.has(c))) err(`trainer "${next.name}" can be met before "${t.name}"`);
+		// Beaten, they stay where they stopped: any sight cell short of the last, one step from the player.
+		const points = keyPoints(map, maps);
+		for (const stop of [...sights[k]].slice(0, -1)) {
+			const blocked = new Set([stop]);
+			const sealed = points.find((from) => `${from}` !== stop && cutOff(map, points, from, blocked));
+			if (sealed) err(`trainer "${t.name}" seals the way at (${stop}), stranding (${sealed})`);
+		}
 	});
 }
 
@@ -165,7 +210,7 @@ export function validateMaps(raw, { imageExists, names }) {
 		checkWarps(map, err, maps);
 		checkConnections(map, err, maps, world);
 		checkReachable(map, err, maps);
-		checkTrainers(map, err);
+		checkTrainers(map, err, maps);
 		const { nameKey } = map.properties;
 		if (nameKey !== undefined && !names.places[nameKey]) err(`nameKey "${nameKey}" is not in names.json`);
 	}

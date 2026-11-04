@@ -255,6 +255,19 @@ describe("route trainers (headless)", () => {
 	});
 });
 
+describe("Route 1 (headless)", () => {
+	const step = (d, dir) => {
+		for (let i = 0; i < 40 && d.game.player.phase !== "walk"; i++) d.game.tick({ dir }, []);
+		for (let i = 0; i < 40 && d.game.player.phase !== "idle"; i++) d.game.tick({ dir: null }, []);
+	};
+	it("leaves a way past the Lass, who stands in the trail", async () => {
+		const d = await boot({ mapId: "route_1", x: 10, y: 7, facing: "up" });
+		d.game.enter();
+		for (const dir of ["up", "right", "right"]) step(d, dir);
+		assert.deepEqual(d.pos(), ["route_1", 12, 6]);
+	});
+});
+
 describe("gym puzzle room (headless)", () => {
 	const spec = GYM_PUZZLES.willow_thornby;
 	const solution = AP.solve(AP.seeds(spec.rows));

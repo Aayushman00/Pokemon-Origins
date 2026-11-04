@@ -200,7 +200,9 @@ TRAILS = {
 DRESSING = {"route_1": [("rock", 9, 5), ("stump", 12, 10), ("rock", 30, 10), ("stump", 29, 9), ("rock", 19, 16),
                         ("stump", 23, 14), ("rock", 34, 15)]}
 DRESSING = {k: [(x, y, n) for n, x, y in v] for k, v in DRESSING.items()}
-LEDGES = {"route_1": [(8, 12, 6), (29, 32, 11)]}
+# x0, x1, y. A ledge is a wall from below: leave a way round it, or it splits the
+# route. Row 6 has to stay open at x 10-13, the only way past lass_annie.
+LEDGES = {"route_1": [(7, 9, 6), (29, 32, 11)]}
 
 
 def worn(grid, lines, size=2):

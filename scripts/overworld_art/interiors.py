@@ -1029,10 +1029,10 @@ def center():
                  say("All done! Your Pokemon are fighting fit. We hope to see you again!")]
         m.npc("nurse", 7, 2, "nurse", "down", *nurse)
         m.sign("counter_nurse", 7, 3, ops=nurse)
-        m.sign("pc", 13, 1, text="It's the storage PC. (Box storage opens in a later update.)")
-        m.sign("books", 1, 1, text="Books about caring for Pokemon. One is called 'Rest Is A Move Too'.")
+        m.sign("pc", 13, 2, text="It's the storage PC. (Box storage opens in a later update.)")
+        m.sign("books", 1, 2, text="Books about caring for Pokemon. One is called 'Rest Is A Move Too'.")
         m.npc("visitor", 1, 4, "gentleman", "right", say("The nurse here never forgets a Pokemon's name."))
-        m.npc("trainer", 12, 4, "cooltrainer_f", "left",
+        m.npc("trainer", 13, 4, "cooltrainer_f", "left",
               say("Healing is free for every Pokemon Origins trainer. Use it before you take on the Gym!"))
     return make_map("mossgate_center", extras)
 
@@ -1078,7 +1078,7 @@ def lab():
         m.sign("books", 1, 1, text="Field notes on Pokemon of the Greenwood.")
         m.sign("field_map", 8, 1, text="A map of the Greenwood, dotted with this season's sightings.")
         m.sign("rack", 12, 1, text="The dials twitch whenever a wild Pokemon passes the lab.")
-        m.npc("aide", 12, 4, "scientist", "left", say("The Professor studies how Pokemon and people first met."))
+        m.npc("aide", 13, 4, "scientist", "left", say("The Professor studies how Pokemon and people first met."))
     return make_map("dawnbrook_lab", extras)
 
 
