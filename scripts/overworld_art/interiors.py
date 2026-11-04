@@ -26,8 +26,10 @@ from scripts import gen_overworld_placeholders as base
 
 from .tiles import T, Tile, hexrgb
 
+from .world_palette import LINE
+
 COLS = 8
-OL = "#3a2426"
+OL = LINE
 COL_FIRST = 1000
 ANIM_MS = 260
 BLACK = "#000000"
@@ -44,6 +46,14 @@ FLOORS = {
     "mart": {
         "normal": {"base": "#5c88dc", "line": "#4470c4", "inset": "#94bcf6", "lo": "#709ce6"},
         "shadow": {"base": "#4870c4", "line": "#3458a8", "inset": "#6f98e0", "lo": "#5884d0"},
+    },
+    "lab": {
+        "normal": {"base": "#dde5e6", "line": "#b6c3ca", "inset": "#eaf0f0", "lo": "#ced9dc"},
+        "shadow": {"base": "#c2ccd0", "line": "#9eabb4", "inset": "#ced8da", "lo": "#b4c0c6"},
+    },
+    "cottage": {
+        "normal": {"base": "#b98f5c", "line": "#8a6638", "inset": "#a87f4e", "lo": "#c9a36e", "grid": "#7c7068"},
+        "shadow": {"base": "#a07a4c", "line": "#74542e", "inset": "#906a40", "lo": "#ae8a5c", "grid": "#686058"},
     },
     "home": {
         "normal": {"base": "#d6bc68", "line": "#a88c40", "inset": "#c6a856", "lo": "#e6d080", "grid": "#8c8ca0"},
@@ -66,6 +76,10 @@ def floor_key(theme, x, y):
         if 3 <= u <= 12 and 3 <= v <= 12:
             return "inset" if ((x // 16) + (y // 16)) % 2 == 0 else "lo"
         return "base"
+    if theme == "lab":               # big quiet tiles, a faint checker
+        if u == 0 or v == 0:
+            return "line"
+        return "inset" if ((x // 16) + (y // 16)) % 2 == 0 else "base"
     # home: parquet basket weave, 8x8 blocks of three planks, grey tile marks
     if (u in (0, 15)) and (v in (0, 15)):
         return "grid"
@@ -136,6 +150,10 @@ WALLS = {
                "face_lo": "#ead8a8", "stripe": "#e8b878", "low": "#f0dca8", "base": "#c08c58"},
     "mart": {"cap": "#ffffff", "cap_lo": "#d8f0d0", "trim": "#68c060", "trim_hi": "#a0e090", "face": "#f2e48c",
              "face_lo": "#e0cc6c", "stripe": "#7ca0e0", "low": "#e8d478", "base": "#8c92ac"},
+    "lab": {"cap": "#ffffff", "cap_lo": "#dcecea", "trim": "#4aa8a0", "trim_hi": "#8ad4c8", "face": "#e8f0ee",
+            "face_lo": "#d4e0de", "stripe": "#5a8a94", "low": "#c8d8d8", "base": "#5a7884"},
+    "cottage": {"cap": "#ffffff", "cap_lo": "#e4ecd8", "trim": "#8cb88c", "trim_hi": "#b8d8b0", "face": "#e6efd4",
+                "face_lo": "#d2dfbc", "stripe": "#6f9a78", "low": "#b4cba0", "base": "#5a7a5c"},
     "home": {"cap": "#ffffff", "cap_lo": "#dce8f6", "trim": "#a8c4ec", "trim_hi": "#d4e4fa", "face": "#d4e6f8",
              "face_lo": "#bcd2ee", "stripe": "#6c90d0", "low": "#a8c4ec", "base": "#4c6cb0"},
 }
@@ -350,12 +368,8 @@ def wall_clock(r, cx, cy):
     r.set(cx - 2, cy - 3, "#ffffff")
 
 
-# =============================================================== CARE CENTRE
-def paint_center(frame):
-    r = Room(15, 10, "center")
-    shell(r)
-    # --- bookshelf: wood grain frame, books of mixed height, a plant on top
-    bx0, bx1 = T + 2, 3 * T - 3
+def bookcase(r, bx0, bx1):
+    """Two shelves of mixed books against the back wall, wood grain frame."""
     rbox(r, bx0, 5, bx1, 2 * T + 3, "#9c6a3c", hi="#c89060", lo="#6a4428")
     for gy in range(8, 2 * T + 2, 5):
         r.set(bx0 + 1, gy, "#86582e")
@@ -373,6 +387,15 @@ def paint_center(frame):
             x += 2
             k += 1
         r.rect(bx0 + 1, sy + 10, bx1 - 1, sy + 10, "#c89060")             # shelf lip
+
+
+# =============================================================== CARE CENTRE
+def paint_center(frame):
+    r = Room(15, 10, "center")
+    shell(r)
+    # --- bookshelf: wood grain frame, books of mixed height, a plant on top
+    bx0, bx1 = T + 2, 3 * T - 3
+    bookcase(r, bx0, bx1)
     r.rect(bx0 + 4, 3, bx0 + 8, 6, "#f8d040")                             # tiny pot on top
     r.set(bx0 + 5, 2, "#58a840")
     r.set(bx0 + 7, 1, "#9cd468")
@@ -664,8 +687,8 @@ def paint_mart(frame):
 
 
 # ====================================================================== HOME
-def paint_home(frame):
-    r = Room(13, 10, "home")
+def paint_home(frame, theme="home", rug=("#68b858", "#4c9a44", "#58a840")):
+    r = Room(13, 10, theme)
     shell(r)
     # --- sink unit: worktop lip, recessed basin, tap, cabinet doors with handles
     s0, s1 = T + 1, 3 * T - 1
@@ -791,15 +814,15 @@ def paint_home(frame):
     r.set(X0 - 8, YB - 17, "#fff0a6")
     # --- big rug: border band with diamonds, flower dots, corner motifs
     rx0, ry0, rx1, ry1 = 3 * T, 3 * T, 11 * T - 1, 8 * T - 1
-    rbox(r, rx0, ry0, rx1, ry1, "#68b858", lo="#4c9a44")
+    rbox(r, rx0, ry0, rx1, ry1, rug[0], lo=rug[1])
     r.rect(rx0 + 3, ry0 + 3, rx1 - 3, ry1 - 3, "#f4f4f8")
-    r.rect(rx0 + 5, ry0 + 5, rx1 - 5, ry1 - 5, "#68b858")
+    r.rect(rx0 + 5, ry0 + 5, rx1 - 5, ry1 - 5, rug[0])
     for x in range(rx0 + 6, rx1 - 4, 6):                                       # diamonds in the band
         for y in (ry0 + 4, ry1 - 4):
-            r.set(x, y, "#58a840")
+            r.set(x, y, rug[2])
     for y in range(ry0 + 7, ry1 - 4, 6):
         for x in (rx0 + 4, rx1 - 4):
-            r.set(x, y, "#58a840")
+            r.set(x, y, rug[2])
     for y in range(ry0 + 9, ry1 - 7, 8):
         for x in range(rx0 + 9, rx1 - 7, 8):
             if not (6 * T - 4 <= x <= 8 * T + 4 and 4 * T - 4 <= y <= 6 * T + 8):
@@ -814,7 +837,7 @@ def paint_home(frame):
     for y in range(ty1 - 2, ty1 + 6):
         for x in range(tx0 - 3, tx1 - 1):
             if (x + y) % 2 == 0 or y < ty1 + 4:
-                r.set(x, y, "#4c9a44")
+                r.set(x, y, rug[1])
     rbox(r, tx0, ty0, tx1, ty1 - 3, "#ffffff")
     for y in range(ty0 + 1, ty1 - 3):
         for x in range(tx0 + 1, tx1):
@@ -858,12 +881,73 @@ def paint_home(frame):
     return r
 
 
+def paint_cottage(frame):
+    """The neighbours' houses: the home's plan in sage and dark oak, a terracotta rug."""
+    return paint_home(frame, "cottage", ("#b8604c", "#96483a", "#a85442"))
+
+
+# ================================================================ THE LAB
+def paint_lab(frame):
+    r = Room(15, 10, "lab")
+    shell(r)
+    bookcase(r, T + 2, 3 * T - 3)
+    bookcase(r, 3 * T + 1, 5 * T - 4)
+    # --- field map: a wall screen of the Greenwood, contour rings and sightings
+    rbox(r, 6 * T - 4, 4, 10 * T - 4, 25, "#3c4a58", hi="#66788a", lo="#26303c")
+    vgrad(r, 6 * T - 2, 6, 10 * T - 6, 23, ["#14343c", "#184048", "#1c4c54"])
+    for cx, cy, rad in ((6 * T + 16, 14, 7), (8 * T + 14, 15, 6)):
+        for y in range(6, 24):
+            for x in range(6 * T - 2, 10 * T - 5):
+                if abs(hypot(x - cx, y - cy) - rad) < 0.6 or abs(hypot(x - cx, y - cy) - rad / 2) < 0.5:
+                    r.set(x, y, "#3f8f88")
+    for x, y in ((6 * T + 12, 11), (7 * T + 6, 17), (8 * T + 16, 12), (9 * T, 19)):
+        r.set(x, y, "#f8d040")
+    # --- instrument rack: dials, vents, one LED that blinks
+    x0, x1 = 11 * T, 14 * T - 2
+    r.shadow_rect(x0 - 4, 2 * T + 3, x1 - 2, 2 * T + 9)
+    rbox(r, x0, 3, x1, 2 * T + 7, "#d8e0e2", hi="#ffffff", lo="#9aa8b0")
+    rbox(r, x0 + 3, 6, x0 + 20, 17, "#14343c")
+    for i, x in enumerate(range(x0 + 5, x0 + 19)):
+        r.set(x, 12 + (0, -2, -3, -1, 1, 2, 0)[i % 7], "#7cf0d8")
+    for cx in (x0 + 27, x0 + 37):
+        for y in range(7, 16):
+            for x in range(cx - 4, cx + 5):
+                if hypot(x - cx, y - 11) <= 4.2:
+                    r.set(x, y, OL if hypot(x - cx, y - 11) > 3.2 else "#f4f6f6")
+        r.rect(cx, 8, cx, 11, "#e04838")
+    for y in range(22, 2 * T + 4, 2):
+        r.rect(x0 + 4, y, x1 - 16, y, "#9aa8b0")
+    r.rect(x1 - 9, 24, x1 - 7, 26, "#58e868" if frame % 2 == 0 else "#2a6a40")
+    # --- work bench: pale top, teal drawers, the day's samples
+    b0, b1, top = 3 * T - 2, 12 * T + 1, 3 * T - 3
+    r.shadow_rect(b0 - 2, top + 22, b1, top + 26)
+    rbox(r, b0, top, b1, top + 13, "#f2f5f4", hi="#ffffff", lo="#b8c8c8")
+    rbox(r, b0, top + 13, b1, top + 22, "#4f8088", hi="#7ab0b4", lo="#2f5a64")
+    for x in range(b0 + 8, b1 - 8, 24):
+        r.rect(x, top + 16, x + 7, top + 16, "#d8e0e2")
+    for x, col in ((4 * T, "#58c8b0"), (4 * T + 5, "#f07ca8"), (4 * T + 10, "#f8d040")):
+        bottle(r, x, top + 3, col)
+    r.box(9 * T + 2, top + 3, 10 * T + 2, top + 10, "#ffffff")               # open notebook
+    r.rect(9 * T + 10, top + 4, 9 * T + 10, top + 9, "#b8c8c8")
+    for y in (top + 5, top + 7):
+        r.rect(9 * T + 4, y, 9 * T + 8, y, "#7a8a94")
+        r.rect(9 * T + 12, y, 10 * T, y, "#7a8a94")
+    # --- side tables and plants
+    glass_table(r, T + 4, 5 * T + 2, item="magazine")
+    glass_table(r, 11 * T + 10, 5 * T + 2, item="cup")
+    plant_palm(r, T + 9, 9 * T - 2)
+    plant_palm(r, 14 * T - 9, 9 * T - 2)
+    r.block(*[(x, 3) for x in range(3, 12)])
+    r.block(*[(x, y) for x in (1, 2, 3, 11, 12, 13) for y in (5, 6)], (1, 8), (13, 8))
+    mat(r, 7)
+    return r
+
+
 # ==================================================== slice + dedupe + maps
 # origin_mart is dev-only until Hearthfield exists: Mossgate has no Mart.
-# ponytail: the lab and every house reuse the Centre and home rooms until they get their own art.
 ROOMS = {"mossgate_center": (paint_center, 3), "origin_mart": (paint_mart, 1), "dawnbrook_home": (paint_home, 1),
-         "dawnbrook_house": (paint_home, 1), "dawnbrook_lab": (paint_center, 3),
-         "mossgate_house_a": (paint_home, 1), "mossgate_house_b": (paint_home, 1)}
+         "dawnbrook_house": (paint_cottage, 1), "dawnbrook_lab": (paint_lab, 2),
+         "mossgate_house_a": (paint_cottage, 1), "mossgate_house_b": (paint_cottage, 1)}
 
 
 def _tile_bytes(img):
@@ -1024,6 +1108,8 @@ def lab():
         m.npc("professor", 7, 2, "professor", "down", *talk)
         m.sign("counter_professor", 7, 3, ops=talk)
         m.sign("books", 1, 1, text="Field notes on Pokemon of the Greenwood.")
+        m.sign("field_map", 8, 1, text="A map of the Greenwood, dotted with this season's sightings.")
+        m.sign("rack", 12, 1, text="The dials twitch whenever a wild Pokemon passes the lab.")
         m.npc("aide", 12, 4, "scientist", "left", say("The Professor studies how Pokemon and people first met."))
     return make_map("dawnbrook_lab", extras)
 

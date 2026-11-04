@@ -1050,11 +1050,11 @@
    "name": "interior",
    "image": "tilesets/interior.png",
    "imagewidth": 128,
-   "imageheight": 528,
+   "imageheight": 816,
    "tilewidth": 16,
    "tileheight": 16,
    "columns": 8,
-   "tilecount": 260,
+   "tilecount": 408,
    "margin": 0,
    "spacing": 0,
    "tiles": []

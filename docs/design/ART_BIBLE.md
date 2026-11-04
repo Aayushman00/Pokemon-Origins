@@ -13,7 +13,7 @@ GBA-era top-down pixel art is the genre. `pret/pokefirered/graphics` and screens
 ## Light and value
 
 - Light comes from the top-left. Lit planes face up and left, shaded planes face down and right.
-- Ground sits at luma 0.70-0.90 and stays low contrast. Objects span 0.15-0.95 and carry the contrast.
+- Meadow and trail sit at luma 0.70-0.90 and stay low contrast. Lawn, the darker ground tone, may drop to 0.55. Objects span 0.15-0.95 and carry the contrast.
 - No pure black. Shadows lean cool, highlights lean warm.
 
 ## Outlines and shadows
@@ -27,10 +27,17 @@ GBA-era top-down pixel art is the genre. `pret/pokefirered/graphics` and screens
 - Two tones: pale walkable meadow, darker lawn patches hugging buildings and fences.
 - Decor sits in clusters with empty space between. Never spread evenly.
 - Nothing visibly repeats on the 16px grid.
+- Routes are meadow with a worn trail, not open sand. The main road is 2 tiles wide to meet map connections, side paths 1.
+- Bridge boards lie across the direction of travel.
+
+## Light at runtime
+
+- Time of day is fixed per map, never a clock. Dusk and night multiply the scene, then lamps and windows add light back.
+- Pale effects on grass: anything near the grass's own greens disappears against it.
 
 ## Characters
 
-- At most 24 rows tall, head at most 11 rows, feet on the bottom row of the 16x32 cell.
+- At most 24 rows tall, head at most 11 rows, feet on the bottom row of the 16x32 cell. Known gap: non-player heads are still 13 rows, built from shared parts.
 - Side views are narrow, at most 13 px wide.
 - The silhouette must read in solid colour. Design shape first, colour second.
 - At most 15 colours per sprite.
