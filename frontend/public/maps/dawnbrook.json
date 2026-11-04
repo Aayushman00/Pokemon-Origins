@@ -3590,13 +3590,6 @@
        "tileid": 213,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -3613,13 +3606,6 @@
       {
        "tileid": 216,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -3638,13 +3624,6 @@
        "tileid": 219,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -3661,13 +3640,6 @@
       {
        "tileid": 222,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -3686,13 +3658,6 @@
        "tileid": 225,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -3709,13 +3674,6 @@
       {
        "tileid": 228,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -3734,13 +3692,6 @@
        "tileid": 231,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -3757,13 +3708,6 @@
       {
        "tileid": 234,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -3782,13 +3726,6 @@
        "tileid": 237,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -3805,13 +3742,6 @@
       {
        "tileid": 240,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -3830,13 +3760,6 @@
        "tileid": 243,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -3853,13 +3776,6 @@
       {
        "tileid": 246,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -3878,13 +3794,6 @@
        "tileid": 249,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -3901,13 +3810,6 @@
       {
        "tileid": 252,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -3926,13 +3828,6 @@
        "tileid": 255,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -3949,13 +3844,6 @@
       {
        "tileid": 258,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -3974,13 +3862,6 @@
        "tileid": 261,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -3997,13 +3878,6 @@
       {
        "tileid": 264,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4022,13 +3896,6 @@
        "tileid": 267,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4045,13 +3912,6 @@
       {
        "tileid": 270,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4070,13 +3930,6 @@
        "tileid": 273,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4093,13 +3946,6 @@
       {
        "tileid": 276,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4118,13 +3964,6 @@
        "tileid": 279,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4141,13 +3980,6 @@
       {
        "tileid": 282,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4166,13 +3998,6 @@
        "tileid": 285,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4189,13 +4014,6 @@
       {
        "tileid": 288,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4214,13 +4032,6 @@
        "tileid": 291,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4237,13 +4048,6 @@
       {
        "tileid": 294,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4262,13 +4066,6 @@
        "tileid": 297,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4285,13 +4082,6 @@
       {
        "tileid": 300,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4310,13 +4100,6 @@
        "tileid": 303,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4333,13 +4116,6 @@
       {
        "tileid": 306,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4358,13 +4134,6 @@
        "tileid": 309,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4381,13 +4150,6 @@
       {
        "tileid": 312,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4406,13 +4168,6 @@
        "tileid": 315,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4429,13 +4184,6 @@
       {
        "tileid": 318,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4454,13 +4202,6 @@
        "tileid": 321,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4477,13 +4218,6 @@
       {
        "tileid": 324,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4502,13 +4236,6 @@
        "tileid": 327,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4525,13 +4252,6 @@
       {
        "tileid": 330,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4550,13 +4270,6 @@
        "tileid": 333,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4573,13 +4286,6 @@
       {
        "tileid": 336,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4598,13 +4304,6 @@
        "tileid": 339,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4621,13 +4320,6 @@
       {
        "tileid": 342,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },
@@ -4646,13 +4338,6 @@
        "tileid": 345,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4670,13 +4355,6 @@
        "tileid": 348,
        "duration": 420
       }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
-      }
      ]
     },
     {
@@ -4693,13 +4371,6 @@
       {
        "tileid": 351,
        "duration": 420
-      }
-     ],
-     "properties": [
-      {
-       "name": "water",
-       "type": "bool",
-       "value": true
       }
      ]
     },

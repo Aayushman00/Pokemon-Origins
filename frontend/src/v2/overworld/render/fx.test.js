@@ -62,6 +62,16 @@ describe("ambient", () => {
 		assert.deepEqual(particles("leaves", 50), particles("leaves", 50));
 		assert.deepEqual(particles(undefined, 50), []);
 	});
+	it("stay put in the world when the camera moves", () => {
+		for (const kind of ["butterflies", "leaves", "fireflies", "rain", "snow"]) {
+			const still = particles(kind, 100, { x: 0, y: 0 });
+			const panned = particles(kind, 100, { x: 30, y: 20 });
+			still.forEach((p, i) => {
+				assert.equal(panned[i].x, (p.x - 30 + VIEW_W) % VIEW_W, kind);
+				assert.equal(panned[i].y, (p.y - 20 + VIEW_H) % VIEW_H, kind);
+			});
+		}
+	});
 
 	it("tints dusk and night but not day", () => {
 		assert.equal(tintFor("day"), null);
@@ -91,7 +101,7 @@ describe("sky", () => {
 });
 
 describe("tile flags in the map model", () => {
-	it("reads glow and water", () => {
+	it("reads glow", () => {
 		const layer = (name) => ({ name, type: "tilelayer", width: 1, height: 1, data: [0] });
 		const map = parseTiledMap(
 			{
@@ -111,7 +121,6 @@ describe("tile flags in the map model", () => {
 						tilecount: 2,
 						tiles: [
 							{ id: 0, properties: [{ name: "glow", type: "int", value: 18 }] },
-							{ id: 1, properties: [{ name: "water", type: "bool", value: true }] },
 						],
 					},
 					{ firstgid: 100, name: "collision", tilecount: 1 },
@@ -121,6 +130,5 @@ describe("tile flags in the map model", () => {
 		);
 		const ts = map.tilesets[0];
 		assert.equal(ts.glow.get(0), 18);
-		assert.ok(ts.water.has(1));
 	});
 });

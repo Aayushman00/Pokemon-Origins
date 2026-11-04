@@ -118,10 +118,10 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 		for (const r of clouds(tick, cam.x, cam.y)) g.fillRect(r.x, r.y, r.w, r.h);
 	}
 
-	function drawAmbient(map, tick) {
+	function drawAmbient(map, tick, cam) {
 		if (calm) return;
 		for (const kind of [map.properties.ambient, map.properties.weather]) {
-			for (const p of particles(kind, tick)) {
+			for (const p of particles(kind, tick, cam)) {
 				g.fillStyle = p.c;
 				g.fillRect(p.x, p.y, p.w, p.h);
 			}
@@ -234,7 +234,7 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 		g.fillRect(x + 2, y + 8, 2, 2);
 	}
 
-	function drawActor(a, ox, oy, camX, camY, tick, map) {
+	function drawActor(a, ox, oy, camX, camY, tick) {
 		if (a.kind === "legendary") return drawLegendary(a, ox, oy, camX, camY, tick);
 		const sheet = assets.sprites[a.sprite || "player"];
 		if (!sheet) return;
@@ -248,19 +248,6 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 		});
 		const sx = actorFrame(a, tick) * TILE;
 		const sy = ROW[a.facing] * 32;
-		// Standing just above water: a faint upside-down copy, clipped to that tile row.
-		if (map && !lift && tileFlag(map, a.x, a.y + 1, "water")) {
-			const feet = dy + 32;
-			g.save();
-			g.beginPath();
-			g.rect(dx - 2, feet, TILE + 4, TILE);
-			g.clip();
-			g.globalAlpha = 0.3;
-			g.translate(0, feet * 2);
-			g.scale(1, -1);
-			g.drawImage(sheet, sx, sy, TILE, 32, dx, dy, TILE, 32);
-			g.restore();
-		}
 		g.drawImage(sheet, sx, sy, TILE, 32, dx, dy, TILE, 32);
 	}
 
@@ -320,7 +307,7 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 				.filter((e) => e.d)
 				.sort((p, q) => actorPixel(p.a).py + p.d.oy - (actorPixel(q.a).py + q.d.oy));
 			for (const { a, d } of actors) {
-				drawActor(a, d.ox, d.oy, cam.x, cam.y, game.tickCount, d.map);
+				drawActor(a, d.ox, d.oy, cam.x, cam.y, game.tickCount);
 				drawCover(a, d, cam, ms);
 			}
 			stepFx(fx, { tick: game.tickCount, player: { ...game.player, mapId: map.id }, isGrass: (x, y) => Boolean(coverAt(map, x, y)) });
@@ -329,7 +316,7 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 			for (const d of drawn) drawLayer(d.map, "above", d.ox - cam.x, d.oy - cam.y, ms);
 			drawSky(map, cam, game.tickCount);
 			drawTime(map, cam, ms);
-			drawAmbient(map, game.tickCount);
+			drawAmbient(map, game.tickCount, cam);
 			overlay(game, cam.x, cam.y);
 			const seen = actors.find(({ a }) => a.id === game.alert);
 			if (seen) drawAlert(seen.a, seen.d.ox, seen.d.oy, cam.x, cam.y);

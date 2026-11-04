@@ -52,10 +52,11 @@ const KINDS = {
 		})),
 };
 
-/** Screen-space rects for this tick; [] for no ambient. */
-export function particles(kind, tick) {
+/** Rects for this tick, placed in the world so they stay put as `cam` pans; [] for no ambient. */
+export function particles(kind, tick, cam = { x: 0, y: 0 }) {
 	const make = KINDS[kind];
-	return make ? make(tick).map((p) => ({ ...p, x: Math.floor(p.x), y: Math.floor(p.y) })) : [];
+	const place = (v, c, size) => wrap(Math.floor(v) - Math.round(c), size);
+	return make ? make(tick).map((p) => ({ ...p, x: place(p.x, cam.x, VIEW_W), y: place(p.y, cam.y, VIEW_H) })) : [];
 }
 
 /** Puffs above a chimney, offsets from its mouth. `seed` keeps neighbours out of step. */

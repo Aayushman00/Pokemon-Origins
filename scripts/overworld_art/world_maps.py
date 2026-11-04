@@ -485,8 +485,7 @@ def finish(data, m):
     from .tiles_v2 import blob_masks
     for mask in blob_masks():  # pond: 3 frames, ripple drift + foam lap + sparkle
         f = [ID[f"pond_{mask}_{k}"] for k in range(3)]
-        tiles.append({"id": f[0], "animation": [{"tileid": i, "duration": 420} for i in f],
-                      "properties": [base.prop("water", True)]})
+        tiles.append({"id": f[0], "animation": [{"tileid": i, "duration": 420} for i in f]})
     ts["tiles"] = tiles + light_tiles()
     key = dict(m.props).get("nameKey")
     if key:
