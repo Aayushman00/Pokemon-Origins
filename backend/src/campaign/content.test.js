@@ -3,6 +3,8 @@
 // only existing IDs, and follow the campaign structure rules.
 const { describe, it, before } = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const loader = require("./loader");
 const campaignService = require("../services/campaignService");
 const { loadRewardPool } = require("../services/rewardService");
@@ -126,8 +128,15 @@ describe("campaign content (Phase 10)", () => {
 		);
 		assert.deepEqual(
 			nine.map((b) => b.trainerId),
-			["lorelei", "bruno", "agatha", "lance", "blue"]
+			["hollis_rime", "bastian_cairn", "morwen_hallow", "drake_zephyrin", "kestrel_vane"]
 		);
+
+		// League and villain names are Aurelia's own: no name carried over from another game.
+		const banned = /lorelei|bruno|agatha|lance|\bblue\b|rocket/i;
+		for (const file of ["regular", "gym_leaders", "elite_four", "champion"]) {
+			const text = fs.readFileSync(path.join(__dirname, `../../data/trainers/${file}.json`), "utf8");
+			assert.doesNotMatch(text, banned, file);
+		}
 
 		const ten = loader.listBattles(10);
 		assert.ok(ten.every((b) => b.type === "legendary"));

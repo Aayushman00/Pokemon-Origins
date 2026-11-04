@@ -10,7 +10,7 @@
 import json
 from pathlib import Path
 
-from . import build_sprites, world_maps
+from . import build_sprites, portraits, world_maps
 from .tiles import new_tiles, tileset_image
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -40,6 +40,7 @@ def pixel_rows(img):
 
 def main():
     build_sprites.main()
+    portraits.main()
     img, total = tileset_image()
     img.save(MAPS / "tilesets" / "overworld.png")
     print(f"wrote overworld.png with {total} tiles")

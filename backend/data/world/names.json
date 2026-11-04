@@ -18,9 +18,25 @@
     "route_6": "Route 6",
     "route_7": "Route 7",
     "route_8": "Route 8",
-    "route_9": "Route 9"
+    "route_9": "Route 9",
+    "hidden_grove": "Hidden Grove"
   },
   "people": {
-    "willow_thornby": "Willow Thornby"
+    "willow_thornby": "Willow Thornby",
+    "mara_quill": "Mara Quill",
+    "tavish_rook": "Tavish Rook",
+    "coral_marlowe": "Coral Marlowe",
+    "volt_dray": "Volt Dray",
+    "skye_corvin": "Skye Corvin",
+    "sage_ilmara": "Sage Ilmara",
+    "cinder_valko": "Cinder Valko",
+    "hollis_rime": "Hollis Rime",
+    "bastian_cairn": "Bastian Cairn",
+    "morwen_hallow": "Morwen Hallow",
+    "drake_zephyrin": "Drake Zephyrin",
+    "kestrel_vane": "Kestrel Vane"
+  },
+  "groups": {
+    "villains": "Team Hollow"
   }
 }

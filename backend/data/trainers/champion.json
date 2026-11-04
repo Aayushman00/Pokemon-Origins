@@ -1,15 +1,24 @@
 {
-  "blue": {
-    "id": "blue",
-    "name": "Blue",
+  "kestrel_vane": {
+    "id": "kestrel_vane",
+    "name": "Kestrel Vane",
     "title": "Champion",
     "specialization": "Varied",
     "region": "Aurelia",
-    "sprite": "blue",
+    "sprite": "kestrel_vane",
     "party": [
-      { "pokemonId": 18, "level": 57 },
-      { "pokemonId": 65, "level": 56 },
-      { "pokemonId": 6, "level": 60 }
+      {
+        "pokemonId": 18,
+        "level": 57
+      },
+      {
+        "pokemonId": 65,
+        "level": 56
+      },
+      {
+        "pokemonId": 6,
+        "level": 60
+      }
     ]
   }
 }

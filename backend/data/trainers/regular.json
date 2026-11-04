@@ -152,13 +152,13 @@
       { "pokemonId": 44, "level": 26 }
     ]
   },
-  "rocket_grunt_marco": {
-    "id": "rocket_grunt_marco",
-    "name": "Rocket Grunt Marco",
-    "title": "Team Rocket Grunt",
+  "hollow_grunt_marco": {
+    "id": "hollow_grunt_marco",
+    "name": "Hollow Grunt Marco",
+    "title": "Team Hollow Grunt",
     "specialization": "Poison",
     "region": "Aurelia",
-    "sprite": "rocket_grunt_marco",
+    "sprite": "hollow_grunt_marco",
     "party": [
       { "pokemonId": 41, "level": 25 },
       { "pokemonId": 23, "level": 26 }
@@ -213,13 +213,13 @@
       { "pokemonId": 109, "level": 31 }
     ]
   },
-  "rocket_grunt_petra": {
-    "id": "rocket_grunt_petra",
-    "name": "Rocket Grunt Petra",
-    "title": "Team Rocket Grunt",
+  "hollow_grunt_petra": {
+    "id": "hollow_grunt_petra",
+    "name": "Hollow Grunt Petra",
+    "title": "Team Hollow Grunt",
     "specialization": "Poison",
     "region": "Aurelia",
-    "sprite": "rocket_grunt_petra",
+    "sprite": "hollow_grunt_petra",
     "party": [
       { "pokemonId": 24, "level": 31 },
       { "pokemonId": 42, "level": 32 }
@@ -250,13 +250,13 @@
       { "pokemonId": 64, "level": 35 }
     ]
   },
-  "rocket_grunt_silas": {
-    "id": "rocket_grunt_silas",
-    "name": "Rocket Grunt Silas",
-    "title": "Team Rocket Grunt",
+  "hollow_grunt_silas": {
+    "id": "hollow_grunt_silas",
+    "name": "Hollow Grunt Silas",
+    "title": "Team Hollow Grunt",
     "specialization": "Fighting",
     "region": "Aurelia",
-    "sprite": "rocket_grunt_silas",
+    "sprite": "hollow_grunt_silas",
     "party": [
       { "pokemonId": 42, "level": 34 },
       { "pokemonId": 67, "level": 35 }
@@ -348,13 +348,13 @@
       { "pokemonId": 24, "level": 43 }
     ]
   },
-  "rocket_grunt_odessa": {
-    "id": "rocket_grunt_odessa",
-    "name": "Rocket Grunt Odessa",
-    "title": "Team Rocket Grunt",
+  "hollow_grunt_odessa": {
+    "id": "hollow_grunt_odessa",
+    "name": "Hollow Grunt Odessa",
+    "title": "Team Hollow Grunt",
     "specialization": "Poison",
     "region": "Aurelia",
-    "sprite": "rocket_grunt_odessa",
+    "sprite": "hollow_grunt_odessa",
     "party": [
       { "pokemonId": 42, "level": 43 },
       { "pokemonId": 89, "level": 44 }

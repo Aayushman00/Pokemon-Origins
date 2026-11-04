@@ -1,54 +1,90 @@
 {
-  "lorelei": {
-    "id": "lorelei",
-    "name": "Lorelei",
+  "hollis_rime": {
+    "id": "hollis_rime",
+    "name": "Hollis Rime",
     "title": "Elite Four",
     "specialization": "Ice",
     "region": "Aurelia",
-    "sprite": "lorelei",
+    "sprite": "hollis_rime",
     "party": [
-      { "pokemonId": 87, "level": 50 },
-      { "pokemonId": 91, "level": 49 },
-      { "pokemonId": 131, "level": 52 }
+      {
+        "pokemonId": 87,
+        "level": 50
+      },
+      {
+        "pokemonId": 91,
+        "level": 49
+      },
+      {
+        "pokemonId": 131,
+        "level": 52
+      }
     ]
   },
-  "bruno": {
-    "id": "bruno",
-    "name": "Bruno",
+  "bastian_cairn": {
+    "id": "bastian_cairn",
+    "name": "Bastian Cairn",
     "title": "Elite Four",
-    "specialization": "Fighting",
+    "specialization": "Rock",
     "region": "Aurelia",
-    "sprite": "bruno",
+    "sprite": "bastian_cairn",
     "party": [
-      { "pokemonId": 95, "level": 51 },
-      { "pokemonId": 107, "level": 52 },
-      { "pokemonId": 68, "level": 54 }
+      {
+        "pokemonId": 95,
+        "level": 51
+      },
+      {
+        "pokemonId": 112,
+        "level": 52
+      },
+      {
+        "pokemonId": 76,
+        "level": 54
+      }
     ]
   },
-  "agatha": {
-    "id": "agatha",
-    "name": "Agatha",
+  "morwen_hallow": {
+    "id": "morwen_hallow",
+    "name": "Morwen Hallow",
     "title": "Elite Four",
     "specialization": "Ghost",
     "region": "Aurelia",
-    "sprite": "agatha",
+    "sprite": "morwen_hallow",
     "party": [
-      { "pokemonId": 42, "level": 53 },
-      { "pokemonId": 24, "level": 54 },
-      { "pokemonId": 94, "level": 56 }
+      {
+        "pokemonId": 42,
+        "level": 53
+      },
+      {
+        "pokemonId": 24,
+        "level": 54
+      },
+      {
+        "pokemonId": 94,
+        "level": 56
+      }
     ]
   },
-  "lance": {
-    "id": "lance",
-    "name": "Lance",
+  "drake_zephyrin": {
+    "id": "drake_zephyrin",
+    "name": "Drake Zephyrin",
     "title": "Elite Four",
     "specialization": "Dragon",
     "region": "Aurelia",
-    "sprite": "lance",
+    "sprite": "drake_zephyrin",
     "party": [
-      { "pokemonId": 130, "level": 55 },
-      { "pokemonId": 148, "level": 54 },
-      { "pokemonId": 149, "level": 58 }
+      {
+        "pokemonId": 130,
+        "level": 55
+      },
+      {
+        "pokemonId": 148,
+        "level": 54
+      },
+      {
+        "pokemonId": 149,
+        "level": 58
+      }
     ]
   }
 }

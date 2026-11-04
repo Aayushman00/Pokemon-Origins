@@ -5,27 +5,27 @@
     {
       "battleNumber": 1,
       "type": "elite_four",
-      "trainerId": "lorelei"
+      "trainerId": "hollis_rime"
     },
     {
       "battleNumber": 2,
       "type": "elite_four",
-      "trainerId": "bruno"
+      "trainerId": "bastian_cairn"
     },
     {
       "battleNumber": 3,
       "type": "elite_four",
-      "trainerId": "agatha"
+      "trainerId": "morwen_hallow"
     },
     {
       "battleNumber": 4,
       "type": "elite_four",
-      "trainerId": "lance"
+      "trainerId": "drake_zephyrin"
     },
     {
       "battleNumber": 5,
       "type": "champion",
-      "trainerId": "blue"
+      "trainerId": "kestrel_vane"
     }
   ]
 }
