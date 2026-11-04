@@ -183,52 +183,62 @@ def _window(d, col):
         d.point((x, 62 + i % 2), fill=("#f4a0a8", "#fff2b0", "#f7d060")[i % 3])
 
 
-def house():
-    """80x80 house, 5x5 tiles: three rows of clay roof, two of wall."""
-    roof, wall, stone, wood = WORLD["roof_clay"], WORLD["wall"], WORLD["stone"], WORLD["wood"]
-    img = Image.new("RGBA", (80, 80))
+def building(cols, roof_name, door_col, windows, chimney=None, glass_door=False):
+    """Unoutlined building `cols` tiles wide, 5 tall: three rows of roof with
+    a lit left plane and shaded right plane, two rows of wall."""
+    roof, wall, stone, wood = WORLD[roof_name], WORLD["wall"], WORLD["stone"], WORLD["wood"]
+    W = cols * T
+    img = Image.new("RGBA", (W, 80))
     d = ImageDraw.Draw(img)
-    # walls
-    d.rectangle((5, 46, 74, 77), fill=wall[1])
+    d.rectangle((5, 46, W - 6, 77), fill=wall[1])
     d.rectangle((5, 46, 8, 77), fill=wall[0])
-    d.rectangle((69, 46, 74, 77), fill=wall[2])
+    d.rectangle((W - 11, 46, W - 6, 77), fill=wall[2])
     for y in range(53, 72, 6):
-        d.line((9, y, 68, y), fill=wall[2])
-    d.rectangle((5, 72, 74, 77), fill=stone[2])
-    d.line((5, 72, 74, 72), fill=stone[1])
-    d.rectangle((5, 48, 74, 50), fill=wall[3])  # eave shadow
-    # roof: front plane between a lit left and a shaded right side plane
+        d.line((9, y, W - 12, y), fill=wall[2])
+    d.rectangle((5, 72, W - 6, 77), fill=stone[2])
+    d.line((5, 72, W - 6, 72), fill=stone[1])
+    d.rectangle((5, 48, W - 6, 50), fill=wall[3])  # eave shadow
     for y in range(5, 46):
         t = (y - 5) / 40
         outer, inner = round(9 - 8 * t), round(15 - 6 * t)
         d.line((outer, y, inner - 1, y), fill=roof[0])
-        d.line((80 - inner, y, 79 - outer, y), fill=roof[3])
+        d.line((W - inner, y, W - 1 - outer, y), fill=roof[3])
         band = (y - 5) // 6
-        d.line((inner, y, 79 - inner, y), fill=roof[1] if band < 3 else roof[2])
+        d.line((inner, y, W - 1 - inner, y), fill=roof[1] if band < 3 else roof[2])
         if (y - 5) % 6 == 5:
-            d.line((inner, y, 79 - inner, y), fill=roof[3])
+            d.line((inner, y, W - 1 - inner, y), fill=roof[3])
         elif (y - 5) % 6 in (2, 3, 4):
-            for x in range(inner + (band % 2) * 5, 80 - inner, 10):
+            for x in range(inner + (band % 2) * 5, W - inner, 10):
                 d.point((x, y), fill=roof[2] if band < 3 else roof[3])
-    d.rectangle((1, 46, 78, 47), fill=roof[4])
-    d.line((9, 4, 70, 4), fill=roof[0])
-    # chimney
-    d.rectangle((54, 0, 62, 15), fill=stone[1])
-    d.rectangle((54, 0, 56, 15), fill=stone[0])
-    d.rectangle((60, 0, 62, 15), fill=stone[2])
-    d.rectangle((53, 0, 63, 2), fill=stone[3])
-    # door
-    dx = HOUSE_DOOR_COL * T
+    d.rectangle((1, 46, W - 2, 47), fill=roof[4])
+    d.line((9, 4, W - 10, 4), fill=roof[0])
+    if chimney is not None:
+        x = chimney * T + 6
+        d.rectangle((x, 0, x + 8, 15), fill=stone[1])
+        d.rectangle((x, 0, x + 2, 15), fill=stone[0])
+        d.rectangle((x + 6, 0, x + 8, 15), fill=stone[2])
+        d.rectangle((x - 1, 0, x + 9, 2), fill=stone[3])
+    dx = door_col * T
     d.rectangle((dx + 2, 54, dx + 13, 77), fill=LINE)
-    d.rectangle((dx + 3, 55, dx + 12, 77), fill=wood[1])
-    d.rectangle((dx + 3, 55, dx + 4, 77), fill=wood[0])
-    d.rectangle((dx + 11, 55, dx + 12, 77), fill=wood[2])
-    d.rectangle((dx + 5, 58, dx + 10, 61), fill=WORLD["glass"][1])
-    d.point((dx + 10, 67), fill=wood[0])
+    if glass_door:
+        d.rectangle((dx + 3, 55, dx + 7, 77), fill=WORLD["glass"][1])
+        d.rectangle((dx + 8, 55, dx + 12, 77), fill=WORLD["glass"][2])
+        d.line((dx + 4, 66, dx + 6, 62), fill=WORLD["glass"][0])
+    else:
+        d.rectangle((dx + 3, 55, dx + 12, 77), fill=wood[1])
+        d.rectangle((dx + 3, 55, dx + 4, 77), fill=wood[0])
+        d.rectangle((dx + 11, 55, dx + 12, 77), fill=wood[2])
+        d.rectangle((dx + 5, 58, dx + 10, 61), fill=WORLD["glass"][1])
+        d.point((dx + 10, 67), fill=wood[0])
     d.rectangle((dx, 78, dx + 15, 79), fill=stone[1])
-    _window(d, 2)
-    _window(d, 3)
-    return _outline(img)
+    for col in windows:
+        _window(d, col)
+    return img
+
+
+def house():
+    """The slice's house: door left of centre, two windows, one chimney."""
+    return _outline(building(5, "roof_clay", HOUSE_DOOR_COL, (2, 3), chimney=3))
 
 
 def fence(tiles, vertical=False):

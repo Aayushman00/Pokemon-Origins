@@ -931,7 +931,7 @@ class MapData(base.MapBuilder):
 
 
 # where each building's door is in its town (door cells, x list, y)
-DOORS = {"dawnbrook_home": ([7], 5), "dawnbrook_lab": ([22], 5), "dawnbrook_house": ([7], 14),
+DOORS = {"dawnbrook_home": ([7], 6), "dawnbrook_lab": ([22], 6), "dawnbrook_house": ([7], 16),
          "mossgate_center": ([6], 15), "mossgate_house_a": ([24], 6), "mossgate_house_b": ([24], 15),
          "origin_mart": ([7], 5)}
 # exit mat column inside each room; you arrive one row above it, facing up

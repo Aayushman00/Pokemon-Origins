@@ -38,7 +38,7 @@ class Town(base.MapBuilder):
 
     def sign(self, name, x, y, text):
         self.obj("signs", name, x, y, text=text)
-        self.put("objects", x, y, base.SIGN, SOLID)
+        self.put("objects", x, y, ID["prop_sign"], SOLID)
 
 
 def door(m, target, x, y):
@@ -52,14 +52,13 @@ def door(m, target, x, y):
           facing="up", transition="iris", enterDir="up")
 
 
-def stamp(m, name, x0, y0, w, h, door_x):
-    """Stretch a 4x4 building stamp to the outline's footprint: outer columns and
-    rows stay, the middle repeats, and the stamp's door column lands on door_x."""
-    for j in range(h):
-        r = 3 if j == h - 1 else 0 if j == 0 else 2 if j == h - 2 else 1
-        for i in range(w):
-            c = 0 if i == 0 else 3 if i == w - 1 else 1 if x0 + i == door_x else 2
-            m.put("above" if j == 0 else "objects", x0 + i, y0 + j, ID[f"{name}_{c}_{r}"], SOLID)
+def place(m, name, x0, y0):
+    """Put a whole building down at its own size, top-left tile at (x0, y0)."""
+    from .buildings import BUILDINGS
+    cols = BUILDINGS[name][0]().width // 16
+    for r in range(5):
+        for c in range(cols):
+            m.put("objects", x0 + c, y0 + r, ID[f"{name}_{c}_{r}"], SOLID)
 
 
 def trainer_script(trainer, *lines):
@@ -148,13 +147,14 @@ def paint(m, grid, walk_tile):
             m.put("objects", x, y, ID[f"fence_{links}"], SOLID)
         elif c == "h":
             m.put("objects", x, y, ID["bush"], SOLID)
-        elif c == "u":  # ponytail: no well tile yet, see assets/TODO_ART_AUDIO.md
-            m.put("objects", x, y, ID["barrel"], SOLID)
+        elif c == "u":
+            m.put("above", x, y - 1, ID["prop_well_top"])
+            m.put("objects", x, y, ID["prop_well_base"], SOLID)
         elif c == "n":
-            m.put("objects", x, y, ID["bench_l"], SOLID)
+            m.put("objects", x, y, ID["prop_bench"], SOLID)
         elif c == "L":
-            m.put("above", x, y - 1, ID["lamp_top"])
-            m.put("objects", x, y, ID["lamp_base"], SOLID)
+            m.put("above", x, y - 1, ID["prop_lamp_top"])
+            m.put("objects", x, y, ID["prop_lamp_base"], SOLID)
         elif c == "~":
             mask = blob_mask(lambda dx, dy: (x + dx, y + dy) not in water)
             m.put("ground", x, y, ID[f"pond_{mask}_0"], SOLID)
@@ -183,23 +183,23 @@ def dress_grass(m):
 
 DAWNBROOK = [
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-    "TTTTTTTTTTTT..........TTTTTTTT",
-    "TT.ffffffff.......BBBBBBBBB.TT",
-    "T..fBBBBBBf..hhh..BBBBBBBBB..T",
-    "T..fBBBBBBf.......BBBBBBBBB..T",
-    "T..fBBBDBBf....u..BBBBDBBBB..T",
-    "T..fFFF,FFf.........L.,.L....T",
-    "T..ffff,fff...........,......T",
-    "T......,s.............,.....sT",
+    "TTTTTTTTTTTT.......TTTTTTTTTTT",
+    "TT...BBBBB.........BBBBBBB..TT",
+    "T..f.BBBBB.f.hhh...BBBBBBB...T",
+    "T..f.BBBBB.f.......BBBBBBB...T",
+    "T..f.BBBBB.f...u...BBBBBBB...T",
+    "T..f.BBBBB.f.......BBBBBBB...T",
+    "T..fFFF,FFFf........L.,.L....T",
+    "T..ffff,ffff..........,.....sT",
     "T..L,,,,,,,,,,,,,,,,,,,,,,,,,,",
     "T...,,,,,,,,,,,,,,,,,,,,,,,,,,",
     "T....L.....,....L.........L..T",
-    "T...BBBBBB.,.ff.fff.....~~...T",
-    "T...BBBBBB.,.fFFFFf...~~~~~..T",
-    "T...BBBDBB.,.fFFFFf..~~~~~~n.T",
-    "T......,,,,,.fFFFFf...~~~~~..T",
-    "T.F.F.F......ffffff....~~~...T",
-    "T............................T",
+    "T....BBBBB.,.ff.fff.....~~...T",
+    "T....BBBBB.,.fFFFFf...~~~~~..T",
+    "T....BBBBB.,.fFFFFf..~~~~~~n.T",
+    "T....BBBBB.,.fFFFFf...~~~~~..T",
+    "T....BBBBB.,.ffffff....~~~...T",
+    "T......,,,,,.................T",
     "TT............TT............TT",
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
 ]
@@ -209,16 +209,16 @@ def dawnbrook():
     m = Town(30, 20, base.GRASS)
     m.props = [("nameKey", "dawnbrook"), ("border", BORDER), ("connect_east", "route_1"), ("connect_east_offset", 0)]
     paint(m, DAWNBROOK, "grass")
-    stamp(m, "house", 4, 3, 6, 3, 7)
-    stamp(m, "house", 18, 2, 9, 4, 22)  # ponytail: placeholder until the lab has its own art
-    stamp(m, "house", 4, 12, 6, 3, 7)
-    door(m, "dawnbrook_home", 7, 5)
-    door(m, "dawnbrook_lab", 22, 5)
-    door(m, "dawnbrook_house", 7, 14)
-    m.sign("town_sign", 8, 8, f"{NAMES['dawnbrook'].upper()} - Where every journey begins.")
+    place(m, "home_clay", 5, 2)
+    place(m, "lab", 19, 2)
+    place(m, "home_slate", 5, 12)
+    door(m, "dawnbrook_home", 7, 6)
+    door(m, "dawnbrook_lab", 22, 6)
+    door(m, "dawnbrook_house", 7, 16)
+    m.sign("town_sign", 12, 8, f"{NAMES['dawnbrook'].upper()} - Where every journey begins.")
     m.sign("route_sign", 28, 8, f"{NAMES['route_1'].upper()} - East to {NAMES['mossgate']}.")
     m.npc("old_woman", 15, 6, "old_woman", "up", "This old well has never run dry. Nobody remembers who dug it.")
-    m.npc("rival", 20, 7, "rival", "left", "Late again? The Professor's been waiting. I got here first, as usual.")
+    m.npc("rival", 21, 8, "rival", "left", "Late again? The Professor's been waiting. I got here first, as usual.")
     dress_grass(m)
     autotile_paths(m)
     return finish(m.build(), m)
@@ -227,7 +227,7 @@ def dawnbrook():
 MOSSGATE = [
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-    "TT....TTTTTTBBBBBBTTTTTTTTTTTT",
+    "TT....TTTTTTBBBBBBTTTTBBBBBTTT",
     "TTL...TTT..hBBBBBBh.T.BBBBBTTT",
     "TT....TT...hBBBBBBh.T.BBBBBTTT",
     "TTh..hT..L.hBBBBBBh.L.BBBBBTTT",
@@ -236,7 +236,7 @@ MOSSGATE = [
     "TT....L........,........,...TT",
     ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
     ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
-    "TT.hhhhhh.,....L....k....L.TTT",
+    "TT.BBBBBB.,....L....k.BBBBB.TT",
     "TT.BBBBBB.,.~~~~~~~.k.BBBBB.TT",
     "TT.BBBBBB.,~~~~~~~~~k.BBBBB.TT",
     "TT.BBBBBB.,kkkkkkkkkk.BBBBB.TT",
@@ -252,12 +252,10 @@ def mossgate():
     m = Town(30, 20, base.GRASS)
     m.props = [("nameKey", "mossgate"), ("border", BORDER), ("connect_west", "route_1"), ("connect_west_offset", 0)]
     paint(m, MOSSGATE, "grass")
-    for r in range(5):  # ponytail: stock Gym stamp until the hollow trunk has its own art
-        for c in range(6):
-            m.put("above" if r == 0 else "objects", 12 + c, 2 + r, ID[f"gym_{c}_{r}"], SOLID)
-    stamp(m, "house", 22, 3, 5, 4, 24)
-    stamp(m, "center", 3, 12, 6, 4, 6)
-    stamp(m, "house", 22, 12, 5, 4, 24)
+    place(m, "trunk_gym", 12, 2)
+    place(m, "home_moss", 22, 2)
+    place(m, "care_center", 3, 11)
+    place(m, "home_slate", 22, 11)
     m.block(15, 6, 0)
     m.obj("warps", "door_mossgate_gym", 15, 6, kind="door", targetMap="mossgate_gym", targetX=1, targetY=5,
           facing="right", transition="iris", enterDir="up")

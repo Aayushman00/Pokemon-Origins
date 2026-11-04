@@ -608,6 +608,17 @@ def new_tiles():
             add(f"forest_{mask}_{px}{py}", nature.forest_tile(mask, (px, py)))
     for links in range(16):
         add(f"fence_{links}", nature.fence_tile(links))
+    from .buildings import BUILDINGS, PROPS
+    for name, (make, _) in BUILDINGS.items():
+        art = make()
+        cols = art.width // T
+        for i, part in enumerate(slice_into(art, cols, 5)):
+            add(f"{name}_{i % cols}_{i // cols}", part)
+    for name in ("sign", "mailbox", "bench", "barrel", "crate"):
+        add(f"prop_{name}", PROPS[name])
+    for name in ("lamp", "well"):
+        add(f"prop_{name}_top", PROPS[name].crop((0, 0, T, T)))
+        add(f"prop_{name}_base", PROPS[name].crop((0, T, T, 2 * T)))
     return out
 
 
