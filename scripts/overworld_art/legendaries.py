@@ -530,24 +530,19 @@ def grove():
     Open it with /overworld?map=legend_grove. Their real homes are a design call."""
     from scripts import gen_overworld_placeholders as base
     from . import world_maps as town
-    from .tiles_v2 import blob_mask
 
-    ID = town.ID
     W, H = 18, 14
     m = town.Town(W, H, base.GRASS)
-    m.props = [("border", ",".join(str(ID[f"forestA_{x}_{y}"]) for y in (0, 1) for x in (0, 1)))]
-    for y in range(H):
-        for x in range(W):
-            m.put("ground", x, y, ID[f"grass{town.hashed(x, y) % 4}"])
-            if y < 2 or y >= H - 2 or x < 2 or x >= W - 2:
-                v = "A" if ((x // 2) + (y // 2)) % 2 == 0 else "B"
-                m.put("objects", x, y, ID[f"forest{v}_{x % 2}_{y % 2}"], base.SOLID)
+    m.props = [("border", town.BORDER)]
     path = {(x, y) for x in range(8, 10) for y in range(5, 12)} | {(x, y) for x in range(4, 14) for y in range(6, 8)}
-    for (x, y) in path:
-        mask = blob_mask(lambda dx, dy: (x + dx, y + dy) not in path)
-        m.put("ground", x, y, ID[f"path_{mask}"])
-    for x, y in ((3, 3), (14, 3), (3, 10), (14, 10), (6, 11), (11, 11)):
-        m.put("ground", x, y, ID["bedA" if (x + y) % 2 else "bed2A"])
+    beds = {(3, 3), (14, 3), (3, 10), (14, 10), (6, 11), (11, 11)}
+
+    def cell(x, y):
+        if y < 2 or y >= H - 2 or x < 2 or x >= W - 2:
+            return "T"
+        return "," if (x, y) in path else "F" if (x, y) in beds else "."
+
+    town.paint(m, ["".join(cell(x, y) for x in range(W)) for y in range(H)], "grass")
     spots = [(144, 4, 4, False), (145, 9, 3, False), (146, 13, 4, False), (150, 5, 9, False), (151, 12, 9, False), (151, 15, 7, True)]
     names = {dex: name for dex, name, *_ in ROSTER}
     cries = {144: "Kyaaa!", 145: "Gyaoo!", 146: "Gyaoo!", 150: "...!", 151: "Mew!"}
@@ -558,7 +553,7 @@ def grove():
         m.obj("npcs", f"{names[dex].lower()}{'_shiny' if shiny else ''}", x, y, point=True, sprite=f"legend_{dex}",
               facing="down", kind="legendary", dex=dex, shiny=shiny, script=json.dumps(script))
         m.block(x, y)
-    m.obj("signs", "grove_sign", 7, 11, text="LEGEND GROVE - A quiet place where legends rest. (Showcase: talk to one to meet it.)")
-    m.put("objects", 7, 11, base.SIGN, base.SOLID)
-    data = m.build()
-    return town.finish(data, m)
+    m.sign("grove_sign", 7, 11, "LEGEND GROVE - A quiet place where legends rest. (Showcase: talk to one to meet it.)")
+    town.autotile_paths(m)
+    town.dress_grass(m)
+    return town.finish(m.build(), m)

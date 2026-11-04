@@ -238,6 +238,21 @@ def flowers(seed, frame):
     return img
 
 
+def plank(across=True):
+    """Bridge deck, boards laid across the direction of travel. `across` is an
+    east-west bridge; False turns it for north-south. Dark rails on the open sides."""
+    wood = WORLD["wood"]
+    img = Image.new("RGBA", (T, T))
+    px = img.load()
+    for y in range(T):
+        for x in range(T):
+            tone = (3, 0, 1, 1)[x % 4]
+            if x % 4 == 2 and y in (2, 13):
+                tone = 2  # nail heads
+            px[x, y] = rgba(wood[3 if y in (0, T - 1) else tone])
+    return img if across else img.transpose(Image.TRANSPOSE)
+
+
 def bush():
     leaf = WORLD["leaf"]
     img = Image.new("RGBA", (T, T))

@@ -596,7 +596,8 @@ def new_tiles():
     swap = {f"grass{i}": meadow(i) for i in range(4)}
     swap.update(tufts=nature.tufts(0), flowers0=nature.flowers(1, 0), flowers1=nature.flowers(2, 0),
                 bedA=nature.flowers(3, 0), bedB=nature.flowers(3, 1), bed2A=nature.flowers(4, 0),
-                bed2B=nature.flowers(4, 1), tallA=nature.tall_grass(0), tallB=nature.tall_grass(1), bush=nature.bush())
+                bed2B=nature.flowers(4, 1), tallA=nature.tall_grass(0), tallB=nature.tall_grass(1), bush=nature.bush(),
+                plank=nature.plank(True))
     for mask in v2.blob_masks():
         for f in range(3):
             swap[f"pond_{mask}_{f}"] = nature.pond_tile(mask, f)
@@ -608,6 +609,7 @@ def new_tiles():
             add(f"forest_{mask}_{px}{py}", nature.forest_tile(mask, (px, py)))
     for links in range(16):
         add(f"fence_{links}", nature.fence_tile(links))
+    add("plank_v", nature.plank(False))
     from .buildings import BUILDINGS, PROPS
     for name, (make, _) in BUILDINGS.items():
         art = make()

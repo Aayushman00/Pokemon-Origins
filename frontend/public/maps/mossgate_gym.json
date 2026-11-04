@@ -330,7 +330,7 @@
     432,
     429,
     696,
-    1153,
+    1154,
     0,
     0,
     0,
@@ -802,7 +802,7 @@
    "tilewidth": 16,
    "tileheight": 16,
    "columns": 8,
-   "tilecount": 1161,
+   "tilecount": 1162,
    "margin": 0,
    "spacing": 0,
    "tiles": [
@@ -2121,7 +2121,7 @@
      ]
     },
     {
-     "id": 1157,
+     "id": 1158,
      "properties": [
       {
        "name": "glow",
@@ -2131,7 +2131,7 @@
      ]
     },
     {
-     "id": 968,
+     "id": 969,
      "properties": [
       {
        "name": "glow",
@@ -2141,7 +2141,7 @@
      ]
     },
     {
-     "id": 970,
+     "id": 971,
      "properties": [
       {
        "name": "glow",
@@ -2151,7 +2151,7 @@
      ]
     },
     {
-     "id": 993,
+     "id": 994,
      "properties": [
       {
        "name": "glow",
@@ -2161,7 +2161,7 @@
      ]
     },
     {
-     "id": 995,
+     "id": 996,
      "properties": [
       {
        "name": "glow",
@@ -2171,7 +2171,7 @@
      ]
     },
     {
-     "id": 1018,
+     "id": 1019,
      "properties": [
       {
        "name": "glow",
@@ -2181,17 +2181,7 @@
      ]
     },
     {
-     "id": 1020,
-     "properties": [
-      {
-       "name": "glow",
-       "type": "int",
-       "value": 9
-      }
-     ]
-    },
-    {
-     "id": 1049,
+     "id": 1021,
      "properties": [
       {
        "name": "glow",
@@ -2211,7 +2201,7 @@
      ]
     },
     {
-     "id": 1052,
+     "id": 1051,
      "properties": [
       {
        "name": "glow",
@@ -2231,7 +2221,7 @@
      ]
     },
     {
-     "id": 1081,
+     "id": 1054,
      "properties": [
       {
        "name": "glow",
@@ -2241,7 +2231,7 @@
      ]
     },
     {
-     "id": 1084,
+     "id": 1082,
      "properties": [
       {
        "name": "glow",
@@ -2251,7 +2241,7 @@
      ]
     },
     {
-     "id": 1111,
+     "id": 1085,
      "properties": [
       {
        "name": "glow",
@@ -2261,7 +2251,17 @@
      ]
     },
     {
-     "id": 1114,
+     "id": 1112,
+     "properties": [
+      {
+       "name": "glow",
+       "type": "int",
+       "value": 9
+      }
+     ]
+    },
+    {
+     "id": 1115,
      "properties": [
       {
        "name": "glow",

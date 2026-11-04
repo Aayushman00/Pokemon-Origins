@@ -15,6 +15,7 @@ from .tiles import FIRST_NEW, new_tiles, tile_ids
 
 COL_FIRST = 4000  # collision tileset firstgid: above every overworld tile id
 ID = tile_ids()
+NAMES_BY_ID = {v: k for k, v in ID.items()}
 ROOT = Path(__file__).resolve().parents[2]
 WORLD_NAMES = json.loads((ROOT / "backend" / "data" / "world" / "names.json").read_text())
 NAMES, PEOPLE = WORLD_NAMES["places"], WORLD_NAMES["people"]
@@ -88,7 +89,7 @@ def autotile_paths(m):
     """Lay the blob trail tile matching each path cell's 8 neighbours over the
     ground left under it. Paving and the map edge count as path (no rim there)."""
     from .tiles_v2 import blob_mask
-    joins = {PATH, ID["pave"], ID["plank"]} | {ID["pave_" + e] for e in ("n", "s", "w", "e", "nw", "ne", "sw", "se")}
+    joins = {PATH, ID["pave"], ID["plank"], ID["plank_v"]} | {ID["pave_" + e] for e in ("n", "s", "w", "e", "nw", "ne", "sw", "se")}
     is_path = [m.ground[i] - 1 == PATH for i in range(m.w * m.h)]
 
     def grass_at(x, y):
@@ -136,7 +137,8 @@ def paint(m, grid, walk_tile):
             mask = blob_mask(lambda dx, dy: outside(forest, x + dx, y + dy))
             m.put("objects", x, y, ID[f"forest_{mask}_{x % 2}{y % 2}"], SOLID)
         elif c == "k":
-            m.put("ground", x, y, ID["plank"])
+            run = "k" in (cells.get((x - 1, y)), cells.get((x + 1, y)))
+            m.put("ground", x, y, ID["plank" if run else "plank_v"])
         elif c == "g":
             m.put("ground", x, y, ID["tallA"])
         elif c == "F":
@@ -158,6 +160,42 @@ def paint(m, grid, walk_tile):
         elif c == "~":
             mask = blob_mask(lambda dx, dy: (x + dx, y + dy) not in water)
             m.put("ground", x, y, ID[f"pond_{mask}_0"], SOLID)
+
+
+# Worn lines through a route's meadow, by brush width: top-left brush corners,
+# walked corner to corner. Solid cells and tall grass stay as they are, so a
+# trail fades out under the grass and picks up on the far side. The main road
+# is 2 wide to meet the 2-tall map connections; side paths are footpaths.
+TRAILS = {
+    "route_1": {
+        2: [[(0, 9), (6, 9), (6, 7), (16, 7), (16, 5), (26, 5), (26, 9), (27, 9), (27, 12), (33, 12), (33, 13),
+             (36, 13), (36, 9), (39, 9)]],
+        1: [[(14, 9), (14, 15), (27, 15), (27, 13), (30, 13)]],
+    },
+}
+
+
+def worn(grid, lines, size=2):
+    """`grid` with "." turned to "," under each line, `size` cells wide."""
+    rows = [list(r) for r in grid]
+    for line in lines:
+        for (x0, y0), (x1, y1) in zip(line, line[1:]):
+            for x in range(min(x0, x1), max(x0, x1) + 1):
+                for y in range(min(y0, y1), max(y0, y1) + 1):
+                    for cx, cy in ((x + i, y + j) for i in range(size) for j in range(size)):
+                        if cy < len(rows) and cx < len(rows[cy]) and rows[cy][cx] == ".":
+                            rows[cy][cx] = ","
+    return ["".join(r) for r in rows]
+
+
+def fringe(m, grid):
+    """Tufts on open ground around tall grass, breaking up its square edge."""
+    tall = {(x, y) for y, row in enumerate(grid) for x, c in enumerate(row) if c == "g"}
+    for y, row in enumerate(grid):
+        for x, c in enumerate(row):
+            near = any((x + dx, y + dy) in tall for dx in (-1, 0, 1) for dy in (-1, 0, 1))
+            if c == "." and near and hashed(x, y) % 3:
+                m.put("decor", x, y, ID["tufts"])
 
 
 def dress_grass(m):
@@ -307,7 +345,10 @@ def route(route_id):
     links = {"route_1": [("connect_west", "dawnbrook"), ("connect_west_offset", 0),
                          ("connect_east", "mossgate"), ("connect_east_offset", 0)]}[route_id]
     m.props = [("nameKey", route_id), ("ambient", "leaves"), ("entry", r["entry"]["side"]), ("border", BORDER), *links]
-    paint(m, r["grid"], "path")
+    grid = r["grid"]
+    for size, lines in TRAILS[route_id].items():
+        grid = worn(grid, lines, size)
+    paint(m, grid, "grass")
     for i, g in enumerate(r["grass"]):
         m.obj("encounters", f"grass_{i + 1}", g["x"], g["y"], g["w"], g["h"], table=route_id)
     for t in r["trainers"]:
@@ -316,6 +357,8 @@ def route(route_id):
               trainer=t["id"], order=t["i"], sight=t["sight"], script=script)
         m.block(t["x"], t["y"])
     autotile_paths(m)
+    fringe(m, grid)
+    dress_grass(m)
     return finish(m.build(), m)
 
 
