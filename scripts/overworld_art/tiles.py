@@ -543,10 +543,10 @@ def new_tiles():
         add(f"shore_{sides}B", water_edge(sides, 1))
     add("gym_sign", gym_sign())
     add("bush", bush())
-    for name, img, cols, rows in (("house", v2.house_v2("orange").img, 4, 4),
-                                  ("center", v2.house_v2("red", kind="center").img, 4, 4),
-                                  ("mart", v2.house_v2("blue", kind="mart").img, 4, 4),
-                                  ("gym", v2.gym_v2().img, 6, 5)):
+    for name, img, cols, rows in (("house", v2.house_v3().img, 4, 4),
+                                  ("center", v2.center_v3().img, 4, 4),
+                                  ("mart", v2.mart_v3().img, 4, 4),
+                                  ("gym", v2.gym_v3().img, 6, 5)):
         for i, part in enumerate(slice_into(img, cols, rows)):
             add(f"{name}_{i % cols}_{i // cols}", part)
     # ---- v2 additions (stage 2 slice): appended so every older id is stable

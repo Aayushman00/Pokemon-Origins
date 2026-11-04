@@ -337,43 +337,6 @@ def pillar(t, x, y0, y1):
     t.rect(x - 1, y1, x + 6, y1, C["stone_lo"])
 
 
-def gym_v2():
-    """6x5 tiles, same footprint and door as v1: slate shingle roof with a
-    skylight band, fluted pillars, GYM plate, glass double doors, steps."""
-    t = Tile(96, 80)
-    t.paste(mown_block(96, 80))
-    wall_v2(t, 3, 31, 90, 46)
-    roof_v2(t, 1, 3, 94, 29, ROOFS["slate"])
-    for x in range(10, 86, 9):  # skylights: glass with a glint, dark frame
-        t.rect(x - 1, 10, x + 5, 16, ROOFS["slate"][4])
-        t.rect(x, 11, x + 4, 15, C["win_mid"])
-        t.rect(x, 11, x + 4, 11, C["win_top"])
-        t.set(x + 1, 12, C["water_hi"])
-        t.rect(x, 15, x + 4, 15, C["win_lo"])
-    for px in (8, 82):
-        pillar(t, px, 31, 75)
-    window3(t, 18, 40, w=14, h=10)
-    window3(t, 64, 40, w=14, h=10)
-    t.rect(34, 35, 61, 46, C["outline"])
-    t.rect(35, 36, 60, 45, "#e04838")
-    t.rect(35, 36, 60, 36, "#f07058")
-    t.rect(35, 45, 60, 45, "#a02c34")
-    text(t, 42, 39, "GYM", C["white"], shadow=C["outline"])
-    for dx in (36, 48):  # glass double doors
-        t.rect(dx - 1, 54, dx + 11, 75, C["outline"])
-        t.rect(dx, 55, dx + 10, 75, "#7884a8")
-        t.rect(dx + 2, 57, dx + 8, 70, C["win_mid"])
-        t.rect(dx + 2, 57, dx + 8, 58, C["win_top"])
-        t.set(dx + 3, 59, C["water_hi"])
-        t.rect(dx + 8, 57, dx + 8, 70, C["win_lo"])
-        t.set(dx + (9 if dx == 36 else 1), 66, C["knob"])
-    t.rect(30, 76, 65, 78, C["outline"])  # wide step
-    t.rect(31, 76, 64, 77, C["stone"])
-    t.rect(31, 76, 64, 76, "#c8c8d8")
-    base_shadow(t, 3, 92, 78)
-    return t
-
-
 def doormat():
     t = Tile()
     t.paste(mown_block(T, T))
@@ -855,4 +818,280 @@ def laundry(side):
         t.rect(x0 - 1, top, x0 + 2, top + h, C["outline"])
         t.rect(x0, top + 1, x0 + 1, top + h - 1, c)
         t.rect(x0 + 1, top + 1, x0 + 1, top + h - 1, lo)
+    return t
+
+
+# ======================================================== buildings v3
+# Each building type gets its own silhouette and roof type (FireRed-style
+# variety), not a recoloured house: Care Centre = wrap-around hip roof +
+# glass vestibule; Mart = flat roof + sign band + striped awning; Gym =
+# ribbed flat roof + pillared portico. Footprints and door columns match
+# v2, so maps do not move. Emblems are original (no Poke Ball).
+OL = C["outline"]
+WHITE_WALL = ["#ffffff", "#eef0f6", "#d4d8e6", "#aab0c6"]  # hi, base, shade, deep
+GLASS = ["#e8f8ff", "#98d0f8", "#5890d8", "#3a68b0"]
+
+
+def text2x(t, x, y, s, col, shadow=None):
+    """The 3x5 font drawn at 2x (6x10 glyphs, 8 px advance)."""
+    for ch in s:
+        for dy, rowg in enumerate(FONT_V3[ch]):
+            for dx, c in enumerate(rowg):
+                if c == "#":
+                    for sx in (0, 1):
+                        for sy in (0, 1):
+                            if shadow:
+                                t.set(x + dx * 2 + sx + 1, y + dy * 2 + sy + 1, shadow)
+                            t.set(x + dx * 2 + sx, y + dy * 2 + sy, col)
+        x += 8
+
+
+FONT_V3 = {
+    "M": ["#.#", "###", "###", "#.#", "#.#"], "A": [".#.", "#.#", "###", "#.#", "#.#"],
+    "R": ["##.", "#.#", "##.", "#.#", "#.#"], "T": ["###", ".#.", ".#.", ".#.", ".#."],
+    "G": ["###", "#..", "#.#", "#.#", "###"], "Y": ["#.#", "#.#", ".#.", ".#.", ".#."],
+}
+
+
+def boxed(t, x0, y0, x1, y1, fill):
+    t.rect(x0, y0, x1, y1, OL)
+    t.rect(x0 + 1, y0 + 1, x1 - 1, y1 - 1, fill)
+
+
+def glass_doors(t, x0, y0, x1, y1):
+    """Sliding glass double door: grey frame, two panes, centre split, glints."""
+    boxed(t, x0, y0, x1, y1, "#9aa0be")
+    mid = (x0 + x1) // 2
+    for a, b in ((x0 + 2, mid - 1), (mid + 1, x1 - 2)):
+        for y in range(y0 + 2, y1):
+            f = (y - y0) / max(1, y1 - y0)
+            t.rect(a, y, b, y, GLASS[0] if f < 0.18 else GLASS[1] if f < 0.65 else GLASS[2])
+        t.set(a + 1, y0 + 3, "#ffffff")
+        t.set(a + 1, y0 + 4, GLASS[0])
+        t.rect(b, y0 + 2, b, y1 - 1, GLASS[3])
+    t.rect(mid, y0 + 1, mid, y1 - 1, OL)
+
+
+def band_window(t, x, y, w, h=8):
+    """FireRed-style blue band window: white frame, dark glass with a glint."""
+    boxed(t, x - 1, y - 1, x + w, y + h, "#ffffff")
+    t.rect(x + 1, y + 1, x + w - 2, y + h - 2, GLASS[2])
+    t.rect(x + 1, y + 1, x + w - 2, y + 2, GLASS[1])
+    t.set(x + 2, y + 1, GLASS[0])
+    t.set(x + 3, y + 1, GLASS[0])
+    t.rect(x + w // 2, y + 1, x + w // 2, y + h - 2, "#ffffff")
+    t.rect(x - 1, y + h + 1, x + w, y + h + 1, WHITE_WALL[2])
+
+
+def plain_wall(t, x0, y0, w, h, pal=WHITE_WALL, footing=True):
+    """Smooth rendered wall: lit left edge, shaded right edge, footing."""
+    for y in range(y0, y0 + h):
+        for x in range(x0, x0 + w):
+            col = pal[1]
+            if x >= x0 + w - 5:
+                col = pal[2]
+            t.set(x, y, col)
+        t.set(x0, y, OL)
+        t.set(x0 + w - 1, y, OL)
+        t.set(x0 + 1, y, pal[0])
+    t.rect(x0 + 1, y0, x0 + w - 2, y0 + 2, pal[2])          # eave shadow
+    if footing:
+        t.rect(x0, y0 + h - 4, x0 + w - 1, y0 + h - 2, "#b8bccc")
+        t.rect(x0, y0 + h - 4, x0 + w - 1, y0 + h - 4, "#d8dce6")
+        t.rect(x0, y0 + h - 1, x0 + w - 1, y0 + h - 1, OL)
+
+
+# ------------------------------------------------------------ care centre
+def emblem_heart(t, cx, cy):
+    """Original Care Centre emblem: white badge, red ring, red heart with a
+    white plus. (Deliberately not a Poke Ball.)"""
+    for y in range(cy - 7, cy + 8):
+        for x in range(cx - 7, cx + 8):
+            d = hypot(x + 0.5 - cx - 0.5, y + 0.5 - cy - 0.5)
+            if d < 7.2:
+                t.set(x, y, OL)
+            if d < 6.2:
+                t.set(x, y, "#e04838")
+            if d < 4.9:
+                t.set(x, y, "#ffffff")
+    heart = [".##.##.", "#######", "#######", ".#####.", "..###..", "...#..."]
+    for dy, row in enumerate(heart):
+        for dx, c in enumerate(row):
+            if c == "#":
+                t.set(cx - 3 + dx, cy - 3 + dy, "#e84a3c")
+    for x, y in ((cx, cy - 2), (cx - 1, cy - 1), (cx, cy - 1), (cx + 1, cy - 1), (cx, cy)):
+        t.set(x, y, "#ffffff")
+    t.set(cx - 2, cy - 3, "#ffa088")
+
+
+def center_v3():
+    t = Tile(64, 64)
+    t.paste(mown_block(64, 64))
+    hi, light, base, dark, eave = ROOFS["red"]
+    plain_wall(t, 3, 31, 58, 31)
+    band_window(t, 7, 38, 10)
+    band_window(t, 47, 38, 10)
+    # wrap-around hip roof: flat top plateau, ribbed front slope, rounded corners
+    for y in range(2, 32):
+        inset = max(0, 7 - (y - 2))                 # hip: slopes widen to the eave
+        x0, x1 = 1 + inset, 62 - inset
+        corner = 0
+        if y >= 26:                                  # rounded front corners
+            corner = {26: 1, 27: 1, 28: 2, 29: 3, 30: 4, 31: 6}[y]
+        x0, x1 = x0 + corner, x1 - corner
+        for x in range(x0, x1 + 1):
+            if y <= 9 and 9 <= x <= 54:
+                col = light if (x + y) % 9 else hi    # plateau, faint grid
+            else:
+                right = x > 40
+                col = (base if (x // 3) % 2 else dark) if right else (light if (x // 3) % 2 else base)
+                if y >= 29:
+                    col = dark if y == 29 else eave
+            t.set(x, y, col)
+        t.set(x0 - 1, y, OL)
+        t.set(x1 + 1, y, OL)
+    t.rect(8, 1, 55, 1, OL)
+    t.rect(9, 9, 54, 9, base)                       # plateau rim
+    t.rect(9, 2, 54, 2, hi)
+    # glass vestibule, centred on the door column
+    boxed(t, 17, 40, 44, 62, WHITE_WALL[1])
+    t.rect(18, 41, 43, 43, "#ffffff")
+    t.rect(18, 44, 43, 44, WHITE_WALL[2])
+    t.rect(41, 45, 43, 61, WHITE_WALL[2])
+    glass_doors(t, 21, 46, 40, 62)
+    emblem_heart(t, 30, 31)
+    t.rect(14, 62, 47, 63, C["stone"])
+    t.rect(14, 62, 47, 62, "#d8dce6")
+    base_shadow(t, 3, 60, 62)
+    return t
+
+
+# ------------------------------------------------------------------ mart
+def mart_v3():
+    t = Tile(64, 64)
+    t.paste(mown_block(64, 64))
+    hi, light, base, dark, eave = ROOFS["blue"]
+    plain_wall(t, 3, 34, 58, 28, pal=["#ffffff", "#e8ecf6", "#c8d0e2", "#9aa4c2"])
+    # flat roof seen from the front: parapet + panel grid
+    boxed(t, 1, 3, 62, 22, light)
+    for y in range(4, 22):
+        for x in range(2, 62):
+            col = light if x < 40 else base
+            if (y - 4) % 6 == 5 or (x - 2) % 10 == 9:
+                col = base if x < 40 else dark
+            t.set(x, y, col)
+    t.rect(2, 4, 61, 5, hi)                          # parapet lip
+    t.rect(2, 21, 61, 21, dark)
+    t.rect(46, 9, 53, 15, OL)                        # rooftop AC unit
+    t.rect(47, 10, 52, 14, "#c8ccdc")
+    t.rect(47, 10, 52, 10, "#ffffff")
+    for x in (48, 50):
+        t.rect(x, 12, x, 14, "#8e92ac")
+    # sign band across the facade
+    boxed(t, 1, 22, 62, 34, "#ffffff")
+    t.rect(2, 23, 61, 23, "#e8ecf6")
+    t.rect(2, 33, 61, 33, "#c8d0e2")
+    text2x(t, 17, 24, "MART", base, shadow=eave)
+    for x0 in (5, 50):                               # little bag icons
+        t.rect(x0, 26, x0 + 7, 31, OL)
+        t.rect(x0 + 1, 27, x0 + 6, 30, "#f8d040")
+        t.rect(x0 + 2, 24, x0 + 2, 26, OL)
+        t.rect(x0 + 5, 24, x0 + 5, 26, OL)
+        t.rect(x0 + 2, 24, x0 + 5, 24, OL)
+    # striped awning with a scalloped edge and its shadow on the wall
+    for y in range(35, 41):
+        for x in range(3, 61):
+            stripe = ((x - 3) // 4) % 2
+            col = (base if stripe else "#ffffff") if y < 39 else (dark if stripe else WHITE_WALL[2])
+            if y == 40 and (x - 3) % 4 in (0, 3):
+                continue
+            t.set(x, y, col)
+    t.rect(3, 34, 60, 34, OL)
+    t.rect(3, 41, 60, 41, "#b8c0d4")
+    # door in column 1, big display window with goods on shelves
+    glass_doors(t, 17, 44, 30, 61)
+    boxed(t, 34, 44, 58, 58, GLASS[1])
+    for sy in (49, 54):
+        t.rect(35, sy, 57, sy, "#ffffff")
+        for i, c in enumerate(("#e84a3c", "#f8d040", "#40b8b0", "#f07ca8", "#4c78e0", "#e84a3c")):
+            t.rect(36 + i * 4, sy - 3, 37 + i * 4, sy - 1, c)
+    t.rect(35, 45, 36, 46, GLASS[0])
+    t.rect(14, 62, 33, 63, C["stone"])
+    t.rect(14, 62, 33, 62, "#d8dce6")
+    base_shadow(t, 3, 60, 62)
+    return t
+
+
+# ------------------------------------------------------------------- gym
+GYM_ROOF = ["#f6e4a4", "#e0c47a", "#c4a45a", "#9a7c40", "#5e4a2a"]
+
+
+def emblem_star(t, cx, cy):
+    """Original Gym emblem: red shield with a gold star."""
+    shield = ["#########", "#########", "#########", "#########", ".#######.", "..#####..", "...###...", "....#...."]
+    for dy, row in enumerate(shield):
+        for dx, c in enumerate(row):
+            if c == "#":
+                t.set(cx - 4 + dx, cy - 4 + dy, "#e04838" if dx < 6 else "#a02c34")
+    for dy, row in enumerate(shield):  # outline
+        for dx, c in enumerate(row):
+            if c == "#":
+                for ox, oy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    nx, ny = dx + ox, dy + oy
+                    if not (0 <= ny < len(shield) and 0 <= nx < 9 and shield[ny][nx] == "#"):
+                        t.set(cx - 4 + nx, cy - 4 + ny, OL)
+    for x, y in ((0, -3), (-1, -2), (0, -2), (1, -2), (-3, -1), (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1), (3, -1),
+                 (-1, 0), (0, 0), (1, 0), (-2, 1), (-1, 1), (1, 1), (2, 1)):
+        t.set(cx + x, cy + y, "#fff28c" if y < 0 else "#f2b832")
+
+
+def gym_v3():
+    t = Tile(96, 80)
+    t.paste(mown_block(96, 80))
+    hi, light, base, dark, eave = GYM_ROOF
+    plain_wall(t, 3, 42, 90, 35, pal=["#fffaf0", "#f0e4c8", "#d0b890", "#a88c68"])
+    for y in range(52, 58):                          # stripe band on the wall
+        t.rect(4, y, 91, y, "#e8d2a8" if y % 2 else "#d8bc8c")
+    # wide flat roof with vertical ribs, lit front lip, eave shadow
+    boxed(t, 1, 3, 94, 42, base)
+    for y in range(4, 42):
+        for x in range(2, 94):
+            k = (x - 2) % 4
+            col = [light, light, base, dark][k] if x < 62 else [base, base, dark, dark][k]
+            if y in (4, 5):
+                col = hi
+            if y >= 37:
+                col = [hi, light, light, hi][k] if y < 40 else (dark if y == 40 else eave)
+            t.set(x, y, col)
+    # entrance portico: canopy with the emblem, fluted pillars, glass doors
+    boxed(t, 30, 33, 65, 46, "#fffaf0")
+    t.rect(31, 34, 64, 35, "#ffffff")
+    t.rect(31, 44, 64, 45, "#d8c8a8")
+    emblem_star(t, 48, 39)
+    for px in (31, 59):
+        pillar(t, px, 46, 76)
+    glass_doors(t, 38, 50, 57, 77)
+    for x0 in (7, 69):                               # window strips
+        band_window(t, x0, 46, 18, 6)
+    boxed(t, 8, 61, 27, 71, "#e04838")               # GYM plate
+    t.rect(9, 62, 26, 62, "#f07058")
+    t.rect(9, 70, 26, 70, "#a02c34")
+    text(t, 12, 64, "GYM", "#ffffff", shadow=OL)
+    t.rect(28, 77, 67, 79, C["stone"])
+    t.rect(28, 77, 67, 77, "#d8dce6")
+    base_shadow(t, 3, 92, 78)
+    return t
+
+
+def house_v3():
+    """The approved v2 house plus flower boxes under its windows."""
+    t = house_v2("orange")
+    for x0 in (5, 40):
+        t.rect(x0, 51, x0 + 15, 54, OL)
+        t.rect(x0 + 1, 52, x0 + 14, 53, WOOD["base"])
+        t.rect(x0 + 1, 52, x0 + 14, 52, WOOD["hi"])
+        for i, c in enumerate(("#e84a3c", "#f8d040", "#ffffff", "#f07ca8", "#e84a3c", "#f8d040", "#ffffff")):
+            fx = x0 + 1 + i * 2
+            t.set(fx, 50, c)
+            t.set(fx + 1, 51, "#58a840")
     return t

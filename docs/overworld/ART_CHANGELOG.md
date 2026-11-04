@@ -2,6 +2,24 @@
 
 Art decisions, newest first. Each stage ships as its own commit.
 
+## Stage 3b: distinct building designs (v3)
+
+Review: the four buildings shared one template (pitched shingle roof, cream siding),
+so only colour told them apart. FireRed gives every building type its own silhouette
+and roof type; v3 does the same. Footprints and door columns are unchanged.
+
+- **House:** the approved v2 house (pitched shingles, chimney) plus flower boxes.
+- **Care Centre:** wrap-around red hip roof with a flat top and rounded front corners,
+  smooth white walls, blue band windows, a protruding glass vestibule with sliding doors
+  and an original heart-and-plus emblem badge on the eave.
+- **Mart:** flat panelled roof with a rooftop unit, full-width MART sign band (2x
+  lettering, bag icons), blue/white striped awning with a scalloped edge, glass door and
+  a display window with goods on shelves.
+- **Gym:** wide, low building with a ribbed tan flat roof and lit front lip, a pillared
+  portico with an original red-shield gold-star emblem, glass doors, window strips, a
+  wall stripe band and a GYM plate.
+- Emblems are deliberately original (no Poke Ball).
+
 ## Stage 3b/3c: environment pass (tileset + Origin Town)
 
 Five commits, one per area; existing tile ids never change (new tiles append).
