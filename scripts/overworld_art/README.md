@@ -7,6 +7,7 @@ drawing functions in this folder, so art changes are reviewable diffs.
 
 | file | what it holds |
 | --- | --- |
+| `legendaries.py` | legendary overworld sprites (2-frame idle), shiny palette maps, the Legend Grove showcase map |
 | `interiors.py` | interior tileset (`interior.png`) and the Care Centre, Mart and home maps, door/mat warps |
 | `tiles_v2.py` | v2 oak trees, tall grass, flower clusters, house, doormat |
 | `render_map.py` | renders a map JSON to PNG offline (1x / 3x review shots without the dev server) |

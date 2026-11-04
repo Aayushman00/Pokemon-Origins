@@ -21,7 +21,8 @@ const VALIDATORS = {
 		if (o.else !== undefined) validateScript(o.else);
 	},
 	heal: () => {},
-	battle: (o) => need(isStr(o.trainer), "battle needs trainer"),
+	battle: (o) => need(isStr(o.trainer) || (Number.isInteger(o.wild) && o.wild > 0), "battle needs trainer or wild (dex number)"),
+	cry: (o) => need(Number.isInteger(o.dex) && o.dex > 0, "cry needs dex"),
 	warp: (o) => need(isStr(o.map) && Number.isInteger(o.x) && Number.isInteger(o.y), "warp needs map,x,y"),
 	shop: (o) => need(isStr(o.shop), "shop needs shop"),
 	cutsceneMove: (o) =>

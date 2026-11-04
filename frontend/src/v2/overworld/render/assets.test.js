@@ -24,3 +24,12 @@ describe("overworld sprite sheets", () => {
 		assert.equal(cast.filter((s) => s.gender === "female").length, 12);
 	});
 });
+
+describe("shiny palette swap", () => {
+	it("recolours mapped colours only and leaves transparent pixels alone", async () => {
+		const { swapPalette } = await import("./assets.js");
+		const px = new Uint8ClampedArray([0x7c, 0xc4, 0xf0, 255, 0x12, 0x34, 0x56, 255, 0x7c, 0xc4, 0xf0, 0]);
+		swapPalette(px, { "#7cc4f0": "#a4e4f0" });
+		assert.deepEqual([...px], [0xa4, 0xe4, 0xf0, 255, 0x12, 0x34, 0x56, 255, 0x7c, 0xc4, 0xf0, 0]);
+	});
+});

@@ -8,6 +8,8 @@ const ROW = { down: 0, up: 1, left: 2, right: 3 };
 
 // Ground shadow under an actor in mid-air (ledge hop). Hand-drawn, 16x3.
 const HOP_SHADOW = ["....xxxxxxxx....", "..xxxxxxxxxxxx..", "....xxxxxxxx...."];
+// Ground shadow under a 32x32 legendary. Hand-drawn, 24x3.
+const LEGEND_SHADOW = ["......xxxxxxxxxxxx......", "..xxxxxxxxxxxxxxxxxxxx..", "......xxxxxxxxxxxx......"];
 
 function tileFrame(ts, localId, ms) {
 	const anim = ts.anim.get(localId);
@@ -98,7 +100,24 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 		}
 	}
 
+	// 32x32 legendary on its tile: 2-frame idle, soft ground shadow (drawn here,
+	// so the sheets need no translucent pixels), shiny = palette-swapped sheet.
+	function drawLegendary(a, ox, oy, camX, camY, tick) {
+		const sheet = (a.shiny && assets.sprites[`${a.sprite}_shiny`]) || assets.sprites[a.sprite];
+		if (!sheet) return;
+		const { px, py } = actorPixel(a);
+		const dx = Math.round(ox + px - camX) - 8;
+		const dy = Math.round(oy + py - camY) - TILE;
+		g.fillStyle = "rgba(24, 32, 40, 0.35)";
+		LEGEND_SHADOW.forEach((row, y) => {
+			for (let x = 0; x < row.length; x++) if (row[x] === "x") g.fillRect(dx + 4 + x, dy + 28 + y, 1, 1);
+		});
+		const frame = Math.floor(tick / 32) % 2;
+		g.drawImage(sheet, frame * 32, 0, 32, 32, dx, dy, 32, 32);
+	}
+
 	function drawActor(a, ox, oy, camX, camY, tick) {
+		if (a.kind === "legendary") return drawLegendary(a, ox, oy, camX, camY, tick);
 		const sheet = assets.sprites[a.sprite || "player"];
 		if (!sheet) return;
 		const { px, py, lift } = actorPixel(a);
@@ -166,6 +185,10 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 
 			for (const d of drawn) drawLayer(d.map, "above", d.ox - cam.x, d.oy - cam.y, ms);
 			overlay(game, cam.x, cam.y);
+			if (game.flash > 0) {
+				g.fillStyle = "#fff";
+				g.fillRect(0, 0, VIEW_W, VIEW_H);
+			}
 			this.present();
 		},
 		present() {

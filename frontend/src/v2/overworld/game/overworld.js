@@ -14,6 +14,9 @@ import { DOOR_PAUSE_TICKS, startTransition, tickTransition } from "../logic/tran
  *   { type: 'effect', effect } (give/heal/battle/shop requests) |
  *   { type: 'flag', flag } | { type: 'mapChange', mapId, reason }
  */
+// A legendary's cry whites out the screen for a couple of frames.
+export const CRY_FLASH_TICKS = 2;
+
 export function createOverworld({ store, flags, start, canRun = true, reducedMotion = false, emit = () => {} }) {
 	const world = createWorld((id) => store.get(id));
 	let player = createActor(start);
@@ -26,6 +29,7 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 	let aBlock = false;
 	let edgeGuard = 0; // ignore A edges queued around a dialogue close (they belong to the dialogue)
 	let tickCount = 0;
+	let flash = 0; // cry flash ticks (see CRY_FLASH_TICKS)
 	let pendingStep = null;
 
 	function npcsOf(mapId) {
@@ -34,7 +38,15 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		for (const n of map.npcs) {
 			const id = `${mapId}:${n.name}`;
 			if (!npcs.has(id)) {
-				npcs.set(id, { ...createActor({ mapId, x: n.x, y: n.y, facing: n.facing || "down" }), id, name: n.name, sprite: n.sprite || "npc", script: n.script });
+				npcs.set(id, {
+					...createActor({ mapId, x: n.x, y: n.y, facing: n.facing || "down" }),
+					id,
+					name: n.name,
+					sprite: n.sprite || "npc",
+					script: n.script,
+					// legendary encounters: drawn 32x32, shiny = palette swap of the same sheet
+					...(n.kind ? { kind: n.kind, dex: n.dex, shiny: !!n.shiny } : {}),
+				});
 			}
 		}
 		return [...npcs.values()].filter((n) => n.mapId === mapId);
@@ -67,6 +79,9 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 			} else if (fx.type === "warp") {
 				beginWarp({ targetMap: fx.map, targetX: fx.x, targetY: fx.y, facing: fx.facing || player.facing, transition: fx.transition || "fade", kind: "pad" });
 				return;
+			} else if (fx.type === "cry") {
+				flash = CRY_FLASH_TICKS;
+				emit({ type: "sound", cue: "cry" });
 			} else if (fx.type === "cutsceneMove") {
 				walks.push({ id: fx.actor === "player" ? "player" : `${player.mapId}:${fx.actor}`, path: fx.path, i: 0 });
 				mode = "script";
@@ -204,6 +219,7 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 	return {
 		tick(input = {}, edges = []) {
 			tickCount += 1;
+			if (flash > 0) flash -= 1;
 			if (mode === "warp") tickWarp();
 			else if (mode === "script") tickWalks();
 			else if (mode === "explore") tickExplore(input, edges);
@@ -232,6 +248,10 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		},
 		get transition() {
 			return transition;
+		},
+		/** Ticks left on the white "cry" flash (a legendary calls out). */
+		get flash() {
+			return flash;
 		},
 		get map() {
 			return currentMap();

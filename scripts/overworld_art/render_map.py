@@ -56,8 +56,23 @@ def render(map_id, frame_ms=0):
     actors = []
     for o in layers.get("npcs", {}).get("objects", []):
         p = {q["name"]: q["value"] for q in o.get("properties", [])}
-        actors.append((o["y"], o["x"], p.get("sprite", "npc"), p.get("facing", "down")))
-    for y, x, sprite, facing in sorted(actors):
+        actors.append((o["y"], o["x"], p.get("sprite", "npc"), p.get("facing", "down"), p))
+    legend = json.loads((SPRITES / "legendary" / "manifest.json").read_text()) if (SPRITES / "legendary" / "manifest.json").exists() else None
+    for y, x, sprite, facing, p in sorted(actors, key=lambda a: (a[0], a[1])):
+        if p.get("kind") == "legendary":
+            entry = next(l for l in legend["legendaries"] if l["dex"] == p["dex"])
+            cell = Image.open(SPRITES / "legendary" / f"{p['dex']}.png").convert("RGBA").crop((0, 0, 32, 32))
+            if p.get("shiny"):  # same palette swap the game does at load time
+                lut = {tuple(int(k[i:i + 2], 16) for i in (1, 3, 5)): tuple(int(v[i:i + 2], 16) for i in (1, 3, 5))
+                       for k, v in entry["shiny"].items()}
+                px = cell.load()
+                for yy in range(32):
+                    for xx in range(32):
+                        c = px[xx, yy]
+                        if c[3] and c[:3] in lut:
+                            px[xx, yy] = (*lut[c[:3]], 255)
+            out.alpha_composite(cell, (int(x) - 8, int(y) - T))
+            continue
         sheet = Image.open(SPRITES / f"{sprite}.png").convert("RGBA")
         cell = sheet.crop((0, ROW[facing] * 32, 16, ROW[facing] * 32 + 32))
         out.alpha_composite(cell, (int(x), int(y) - T))

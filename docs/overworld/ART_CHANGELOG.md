@@ -2,6 +2,30 @@
 
 Art decisions, newest first. Each stage ships as its own commit.
 
+## Stage 3e: legendary Pokemon overworld sprites
+
+- **Sprites** (`scripts/overworld_art/legendaries.py`): Articuno #144, Zapdos #145,
+  Moltres #146, Mewtwo #150, Mew #151 as 32x32 overworld sprites with a 2-frame idle
+  (birds flap wings up / down, Moltres' flame tips flicker, Mewtwo's tail sways, Mew
+  hovers 2 px). Painted from shapes in named colour roles, top-left rim shading per
+  role group, 1 px dark outline; at most 15 colours each, no translucent pixels.
+- **Shiny = palette swap:** the manifest maps every normal colour to a shiny colour;
+  the game recolours the sheet at load time (`swapPalette`, unit-tested). No new art.
+- **Encounters:** an NPC with `kind: "legendary"` (plus `dex`, `shiny`) is drawn 32x32
+  over its tile with a soft ground shadow from the renderer. Its script is
+  `cry` (sound + a 2-tick white flash) -> a line of dialogue -> `battle {wild: dex}`.
+  New script steps: `cry {dex}`; `battle` now accepts `wild` as well as `trainer`.
+- **Battle sprites:** all five already have front, front-b, back and back-b.
+- **Legend Grove** (`legend_grove.json`): a forest clearing with all five plus a shiny
+  Mew, not linked into the world yet (where each legendary lives is a design call).
+  Open it with `?map=legend_grove` on the overworld page.
+
+## Stage 3d: home staircase redraw
+
+The stairs stay inside the room and climb at a natural angle to a dark landing: lit
+treads over shaded risers, red runner with brass rods, saw-tooth stringer, handrail on
+spindles, newel post.
+
 ## Stage 3d v3: interior detailing pass
 
 Review: props read as flat rectangles. Every prop is now built from rounded,

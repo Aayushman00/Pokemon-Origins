@@ -1,0 +1,89 @@
+{
+ "frame": 32,
+ "frames": 2,
+ "legendaries": [
+  {
+   "dex": 144,
+   "name": "Articuno",
+   "sprite": "legend_144",
+   "flying": true,
+   "shiny": {
+    "#1c2c60": "#1c4a58",
+    "#2c5ca8": "#3c8aa8",
+    "#4c8ad0": "#68b8d0",
+    "#7cc4f0": "#a4e4f0",
+    "#b8e4ff": "#dcfaff",
+    "#eef8ff": "#fffef4",
+    "#c4dcf0": "#d8eef0",
+    "#e04838": "#f07c2e",
+    "#8e92ac": "#a8aac0",
+    "#6c6e8c": "#7a7694"
+   }
+  },
+  {
+   "dex": 145,
+   "name": "Zapdos",
+   "sprite": "legend_145",
+   "flying": true,
+   "shiny": {
+    "#3a2410": "#4a2410",
+    "#f8d040": "#f8a838",
+    "#fff28c": "#ffd888",
+    "#c08c28": "#c07028",
+    "#2e2a44": "#4a2a44",
+    "#f07c2e": "#d85040",
+    "#a84c24": "#8a2c30",
+    "#ffffff": "#fff6d0",
+    "#e88848": "#d86a48"
+   }
+  },
+  {
+   "dex": 146,
+   "name": "Moltres",
+   "sprite": "legend_146",
+   "flying": true,
+   "shiny": {
+    "#5a2010": "#5a1838",
+    "#f8c040": "#f8a8b8",
+    "#fff09a": "#ffd8e0",
+    "#d08828": "#d07088",
+    "#f05028": "#e83878",
+    "#f89838": "#f878a8",
+    "#fff28c": "#ffd0e8",
+    "#d8d4e4": "#e8e4f0",
+    "#2e2a44": "#3a2a44",
+    "#a87850": "#b07888"
+   }
+  },
+  {
+   "dex": 150,
+   "name": "Mewtwo",
+   "sprite": "legend_150",
+   "flying": false,
+   "shiny": {
+    "#3a2a4a": "#2a3a2a",
+    "#d8d4e4": "#dce4d4",
+    "#f6f4fc": "#f6fcf2",
+    "#a8a2c0": "#a8bca0",
+    "#9a68c8": "#68b858",
+    "#c4a0e8": "#a0e090",
+    "#6a4098": "#3c8040",
+    "#5a2a88": "#2a6a30"
+   }
+  },
+  {
+   "dex": 151,
+   "name": "Mew",
+   "sprite": "legend_151",
+   "flying": true,
+   "shiny": {
+    "#8a3a5a": "#3a4a8a",
+    "#f8b4cc": "#a8c8f8",
+    "#ffdcea": "#dceaff",
+    "#e080a8": "#7898e0",
+    "#3c62b0": "#3c8a50",
+    "#ffffff": "#fffff4"
+   }
+  }
+ ]
+}

@@ -13,7 +13,7 @@ const maps = Object.fromEntries(ids.map((id) => [id, parseTiledMap(JSON.parse(re
 
 describe("sample maps (smoke + lint)", () => {
 	it("finds the sample maps and the Origin Town showcase and parses them", () => {
-		assert.deepEqual(ids.sort(), ["origin_center", "origin_home", "origin_mart", "origin_town", "test_house", "test_route", "test_town"]);
+		assert.deepEqual(ids.sort(), ["legend_grove", "origin_center", "origin_home", "origin_mart", "origin_town", "test_house", "test_route", "test_town"]);
 		assert.equal(maps.test_town.width, 30);
 		assert.equal(maps.origin_town.width, 32);
 	});

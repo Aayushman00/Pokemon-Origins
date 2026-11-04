@@ -11,6 +11,7 @@ Rule: every **new** asset must be original or CC0. Record it here when added.
 | Sample maps `test_town`, `test_route`, `test_house` | `frontend/public/maps/*.json` | same script | CC0 |
 | v2 tiles: oak trees, tall grass, flower clusters, house, doormat | `frontend/public/maps/tilesets/overworld.png` | `scripts/overworld_art/tiles_v2.py` (original; FireRed used only as a style reference) | CC0 |
 | Interior tileset + Care Centre, Mart, home maps | `frontend/public/maps/tilesets/interior.png`, `frontend/public/maps/origin_{center,mart,home}.json` | `scripts/overworld_art/interiors.py` (original) | CC0 |
+| Legendary overworld sprites (Articuno, Zapdos, Moltres, Mewtwo, Mew) + Legend Grove map | `frontend/public/sprites/overworld/legendary/`, `frontend/public/maps/legend_grove.json` | `scripts/overworld_art/legendaries.py` (drawn from scratch; the creature designs are Nintendo / Game Freak IP, like the names) | original pixels, IP caveat |
 | Chiptune sound effects | `frontend/src/v2/battle/sfx.js` | Synthesized with WebAudio at runtime, no files | CC0 |
 
 ## Existing assets derived from Nintendo / Game Freak material — UNLICENSED

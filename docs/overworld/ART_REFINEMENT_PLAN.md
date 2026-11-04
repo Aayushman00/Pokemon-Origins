@@ -196,3 +196,7 @@ and `git revert` one stage without touching the others.
 
 Care Centre, Mart and home interiors are built with working door warps (fixed layouts).
 Gym interiors (leader room, maze) are on hold: the owner decides each gym's interior separately.
+
+## Status update: legendaries
+
+Overworld sprites (2-frame idle, palette-swap shinies) and encounter objects are in, shown in the unlinked Legend Grove (`?map=legend_grove`). Where each legendary lives in the world is still to be decided.

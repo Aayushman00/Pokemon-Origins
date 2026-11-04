@@ -55,6 +55,12 @@ def main():
         (MAPS / f"{map_id}.json").write_text(json.dumps(fn(), indent=1) + "\n")
     print(f"wrote interior.png ({total} tiles) and {len(interiors.MAPS)} interior maps")
 
+    # legendaries: overworld sheets + manifest (shiny palette maps), showcase map
+    from . import legendaries
+    roster = legendaries.build()
+    (MAPS / "legend_grove.json").write_text(json.dumps(legendaries.grove(), indent=1) + "\n")
+    print(f"wrote {len(roster)} legendary sheets and legend_grove.json")
+
     tiles = dict(new_tiles())
     from PIL import Image
     pine = Image.new("RGBA", (16, 32))

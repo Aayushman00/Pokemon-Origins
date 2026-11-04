@@ -52,3 +52,17 @@ describe("paginate", () => {
 	});
 	it("never returns zero pages", () => assert.deepEqual(paginate("   "), [""]));
 });
+
+describe("legendary script steps", () => {
+	it("battle takes a trainer or a wild dex number; cry needs a dex", () => {
+		assert.doesNotThrow(() => parseScript(JSON.stringify([{ op: "cry", dex: 150 }, { op: "battle", wild: 150 }]), "t"));
+		assert.doesNotThrow(() => parseScript(JSON.stringify([{ op: "battle", trainer: "marina" }]), "t"));
+		assert.throws(() => parseScript(JSON.stringify([{ op: "battle" }]), "t"), ScriptError);
+		assert.throws(() => parseScript(JSON.stringify([{ op: "battle", wild: 0 }]), "t"), ScriptError);
+		assert.throws(() => parseScript(JSON.stringify([{ op: "cry" }]), "t"), ScriptError);
+	});
+	it("resolves to cry and battle effects in order", () => {
+		const { effects } = resolveScript([{ op: "cry", dex: 144 }, { op: "battle", wild: 144, shiny: true }], new Set());
+		assert.deepEqual(effects, [{ type: "cry", dex: 144 }, { type: "battle", wild: 144, shiny: true }]);
+	});
+});

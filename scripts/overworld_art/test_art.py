@@ -134,6 +134,53 @@ class SheetTests(unittest.TestCase):
         self.assertFalse(clones, clones)
 
 
+class LegendaryTests(unittest.TestCase):
+    """Overworld legendaries: 2-frame 32x32 sheets, shiny by palette swap only,
+    battle sprites present, and a reachable showcase map."""
+
+    DEX = [144, 145, 146, 150, 151]
+
+    def setUp(self):
+        self.dir = SPRITES / "legendary"
+        self.manifest = json.loads((self.dir / "manifest.json").read_text())["legendaries"]
+
+    def test_roster(self):
+        self.assertEqual([l["dex"] for l in self.manifest], self.DEX)
+
+    def test_sheets(self):
+        for l in self.manifest:
+            img = Image.open(self.dir / f"{l['dex']}.png").convert("RGBA")
+            self.assertEqual(img.size, (64, 32), l["name"])
+            px = list(img.get_flattened_data())
+            self.assertTrue(all(p[3] in (0, 255) for p in px), f"{l['name']}: semi-transparent pixels")
+            colours = {hexs(p) for p in px if p[3]}
+            self.assertLessEqual(len(colours), 15, l["name"])
+            a, b = img.crop((0, 0, 32, 32)), img.crop((32, 0, 64, 32))
+            self.assertNotEqual(list(a.get_flattened_data()), list(b.get_flattened_data()), f"{l['name']}: idle frames identical")
+            self.assertIsNotNone(a.getbbox())
+            # shiny = palette swap: every colour has a different shiny colour, no new art
+            self.assertLessEqual(colours, set(l["shiny"]), f"{l['name']}: colours missing from the shiny map")
+            self.assertTrue(all(k != v for k, v in l["shiny"].items()), f"{l['name']}: shiny colour equals normal")
+
+    def test_battle_sprites_exist(self):
+        battle = ROOT / "frontend" / "public" / "sprites" / "battle"
+        for dex in self.DEX:
+            for name in ("front", "front-b", "back", "back-b"):
+                self.assertTrue((battle / str(dex) / f"{name}.png").exists(), f"{dex}/{name}")
+
+    def test_grove_places_every_legendary(self):
+        m = json.loads((MAPS / "legend_grove.json").read_text())
+        npcs = next(l for l in m["layers"] if l["name"] == "npcs")["objects"]
+        props = [{p["name"]: p["value"] for p in o["properties"]} for o in npcs]
+        legends = [p for p in props if p.get("kind") == "legendary"]
+        self.assertEqual(sorted({p["dex"] for p in legends}), self.DEX)
+        self.assertTrue(any(p.get("shiny") for p in legends), "a shiny is placed to show the palette swap")
+        for p in legends:
+            ops = [op["op"] for op in json.loads(p["script"])]
+            self.assertEqual(ops[0], "cry")
+            self.assertEqual(ops[-1], "battle")
+
+
 class WorldTests(unittest.TestCase):
     def test_tileset_keeps_8_columns_and_old_ids(self):
         with Image.open(MAPS / "tilesets" / "overworld.png") as img:

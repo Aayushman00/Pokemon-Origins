@@ -179,3 +179,30 @@ describe("Origin Town interiors (headless)", () => {
 		assert.ok(m.events.some((e) => e.type === "effect" && e.effect.type === "shop"), "shop requested");
 	});
 });
+
+describe("legendary encounters (headless)", () => {
+	it("talking to Articuno: cry sound + white flash, then a wild battle request", async () => {
+		const { CRY_FLASH_TICKS } = await import("./overworld.js");
+		const d = await boot({ mapId: "legend_grove", x: 4, y: 5, facing: "up" });
+		const legend = d.game.npcs().find((n) => n.name === "articuno");
+		assert.equal(legend.kind, "legendary");
+		assert.equal(legend.dex, 144);
+		d.game.tick({ dir: null, aHeld: true }, [{ button: "a", source: "keyboard" }]);
+		assert.ok(d.events.some((e) => e.type === "sound" && e.cue === "cry"), "cry sound");
+		assert.equal(d.game.flash, CRY_FLASH_TICKS, "flash starts");
+		d.idle(CRY_FLASH_TICKS);
+		assert.equal(d.game.flash, 0, "flash is over after its ticks");
+		assert.match(d.dialogues().at(-1).pages.join(" "), /ARTICUNO/);
+		d.close();
+		const battle = d.events.find((e) => e.type === "effect" && e.effect.type === "battle");
+		assert.ok(battle, "battle requested");
+		assert.equal(battle.effect.wild, 144);
+	});
+	it("the shiny Mew carries its shiny flag to the battle request", async () => {
+		const d = await boot({ mapId: "legend_grove", x: 15, y: 8, facing: "up" });
+		d.press();
+		d.close();
+		const battle = d.events.find((e) => e.type === "effect" && e.effect.type === "battle");
+		assert.deepEqual([battle.effect.wild, battle.effect.shiny], [151, true]);
+	});
+});

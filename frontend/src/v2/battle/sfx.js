@@ -61,6 +61,8 @@ const CUES = {
 	ledge: [[300, 0, 0.06, "triangle"], [200, 0.06, 0.08, "triangle"]],
 	door: [[392, 0, 0.06, "square"], [523, 0.06, 0.08, "square"]],
 	defeat: [[392, 0, 0.18, "triangle"], [370, 0.2, 0.18, "triangle"], [349, 0.4, 0.3, "triangle"]],
+	// a legendary calls out: a rising screech over a noise burst
+	cry: [["noise", 0, 0.1], [440, 0, 0.12, "sawtooth"], [660, 0.1, 0.12, "sawtooth"], [990, 0.2, 0.22, "square"]],
 };
 
 function noiseBuffer(ac) {
