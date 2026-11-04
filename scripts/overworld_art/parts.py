@@ -55,7 +55,7 @@ FACE = {
         .sssssss
         ..ssssss
         ...sssss
-        ......ss
+        ......tt
     """),
     "left": grid(10, """
         ......ssssss....

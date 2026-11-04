@@ -16,6 +16,13 @@ character gets them; heads, colours, outfits and height are unchanged.
   feet (v1 opened a wide A-shape, feet 4-6 px apart). Male and female.
 - **Front/back legs:** the 2 px gap between the legs is now a 1 px seam, male and female,
   in stand, walk and alert frames.
+- **Right-facing:** the engine's right row is the mirrored left row (tested), so every
+  side-view fix applies to right-facing frames too.
+- **Back view collar:** the 4 px skin strip between the hair and the shirt (shared back
+  face, and the player boy / Youngster back heads) is now the shirt collar, the way
+  FireRed back views run the hair straight into the collar.
+- **Rounder male shoulders:** the top body row is 2 px narrower, so the shoulders step
+  down from the neck instead of making a square box (female shoulders already did).
 
 ## Stage 2b: v2 tiles (approved from the slice)
 
