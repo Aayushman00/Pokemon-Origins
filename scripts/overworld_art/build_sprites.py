@@ -42,6 +42,8 @@ def ui_art(char):
                 col, tone = OUTLINE, None
             elif key == "white":
                 col, tone = WHITE, None
+            elif isinstance(key, str):
+                col, tone = key, None
             else:
                 m, tone = key
                 ramp = ramp_for(char["mats"], m)

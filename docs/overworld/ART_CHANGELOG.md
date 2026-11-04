@@ -2,6 +2,34 @@
 
 Art decisions, newest first. Each stage ships as its own commit.
 
+## Stage 3a (in review): v3 polish, player boy
+
+v3 = pixel-level polish of the v1 sheet (`scripts/overworld_art/polish.py`). Identity
+lock, enforced by `PolishTests`: every frame keeps the exact v1 silhouette (0 alpha
+pixels changed, same bounding boxes) and uses only colours already in the v1 sheet.
+Only the TONE a pixel takes from its own ramp changes.
+
+- **Face:** hand-set tone map with top-left light: clean base skin, right-cheek and chin
+  shadow, a brim shadow row on the forehead under the cap.
+- **Eyes:** the upper eye pixel takes the navy shadow already in his trousers: a sheen
+  on the eye without a new colour. Blink still closes to the lash line.
+- **Cap:** crown lit top-left, shaded right; white patch untouched; brim row kept dark.
+- **Back view:** hair strands and a parting (v / ^ in the hair's own ramp), cap
+  strap opening kept, nape shadow.
+- **Side view:** brim shadow on the face, ear shadow, hair lit behind the ear.
+- **Body:** a calmer shading rule (`shade_v3`) on the vest: right-hand form shadow,
+  hem shadow, left rim light. v1 shaded every pixel next to another material, which
+  made thin parts muddy.
+- **Kept exactly as v1:** trousers, legs, shoes (their dark navy is part of his look),
+  sleeves and hands (splitting 2 px runs into two tones leaves orphan pixels).
+- **Not done, and why:** a sole line (his shoes are 1 px tall, so a light sole would
+  erase the red shoes); extra arm swing (would move pixels and break the silhouette
+  lock; v1 already has the 1 px walk bob).
+- **Rejected during self-check:** an earlier v3 pass lifted the trousers to the mid
+  blue; next to v1 NPCs that read as a recolour, so legs went back to v1 tones. A
+  highlight pixel on the hands read as a white dot; highlights are now limited to cap,
+  hair and vest.
+
 ## Stage 2b: v2 tiles (approved from the slice)
 
 The stage 2 slice was reviewed: tiles approved, avatars rejected. The v2
