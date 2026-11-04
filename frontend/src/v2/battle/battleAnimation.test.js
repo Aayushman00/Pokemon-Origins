@@ -1,6 +1,17 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { getMoveAnimCategory, getImpactTier, hitResultLines, fxFamily } from "./battleAnimation.js";
+import { emptyRowsBelow, getMoveAnimCategory, getImpactTier, hitResultLines, fxFamily } from "./battleAnimation.js";
+
+describe("emptyRowsBelow", () => {
+  const sprite = (rows) => Uint8ClampedArray.from(rows.flatMap((r) => [...r].flatMap((c) => [0, 0, 0, c === "#" ? 255 : 0])));
+  it("counts fully transparent rows under the lowest pixel", () => {
+    assert.equal(emptyRowsBelow(sprite(["..", ".#", "..", ".."]), 2, 4), 2);
+    assert.equal(emptyRowsBelow(sprite(["..", "#."]), 2, 2), 0);
+  });
+  it("treats an empty image as no padding", () => {
+    assert.equal(emptyRowsBelow(sprite(["..", ".."]), 2, 2), 0);
+  });
+});
 
 describe("getMoveAnimCategory", () => {
   it("classifies contact-feel types as physical", () => {

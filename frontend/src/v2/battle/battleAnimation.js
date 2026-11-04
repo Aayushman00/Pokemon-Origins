@@ -4,6 +4,17 @@
  * classes driven by these tiers.)
  */
 
+// Empty rows under a sprite, from RGBA pixel data. Front sprites carry 0-22
+// rows of padding, so the stage uses this to stand each one on its oval.
+export function emptyRowsBelow(rgba, width, height) {
+  for (let y = height - 1; y >= 0; y--) {
+    for (let x = 0; x < width; x++) {
+      if (rgba[(y * width + x) * 4 + 3] > 0) return height - 1 - y;
+    }
+  }
+  return 0;
+}
+
 // Physical-feel types lunge into contact; ranged/special-feel types stay
 // put and fire a projectile. Unknown types fall through to "physical".
 const RANGED_FEEL_TYPES = new Set(["water", "electric", "psychic", "fire", "ice", "fairy", "flying"]);
