@@ -11,7 +11,7 @@ A ramp written "name:2" in a character keeps only base + shadow, which is
 how a busy outfit stays inside the 15-colour (+ transparent) budget.
 """
 
-OUTLINE = "#3a2426"  # dark brown, never pure black
+OUTLINE = "#26223a"  # world_palette.LINE: one outline for people and places
 WHITE = "#fffcf0"
 
 RAMPS = {

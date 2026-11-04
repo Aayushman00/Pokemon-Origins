@@ -9,139 +9,126 @@ from .compose import grid
 from .parts import EXTRAS, FACE, FEATURES, HAIR, HATS
 
 # ------------------------------------------------------------ player boy
-# Red cap with white front panel, dark spiky hair, red vest over a black
-# tee, navy trousers. Silhouette: cap brim + hair tufts at the temples.
+# Original design: no cap. A raised hair tuft and an amber scarf carry the
+# silhouette from every side, over a teal jacket.
 PLAYER_BOY = {
     "id": "player",
     "label": "Player (boy)",
     "gender": "male",
     "body": "male",
     "mats": {
-        "s": "skin_light", "h": "hair_dark", "c": "red", "x": "red",
-        "t": "red", "u": "charcoal:2", "a": "charcoal:2", "f": "skin_light",
-        "b": "navy", "l": "navy", "n": "red", "m": "skin_light",
+        "s": "skin_light", "h": "hair_black", "t": "teal", "u": "yellow:2", "a": "teal", "f": "teal",
+        "b": "charcoal:2", "l": "charcoal:2", "n": "brown:2", "m": "skin_light",
     },
     "heads": {
-        "down": grid(10, """
-            .....cccccc.....
-            ...cccccccccc...
-            ..cccwwwwwwccc..
-            ..cccwwwwwwccc..
-            ..cccccccccccc..
-            .hCCCCCCCCCCCCh.
-            .hhshsssssshshh.
-            .hhssessssesshh.
-            .hhssessssesshh.
-            ..ssssssssssss..
-            ...ssssMMssss...
-            .....ssssss.....
-        """),
-        "up": grid(10, """
-            .....cccccc.....
-            ...cccccccccc...
-            ..cccccccccccc..
-            ..cccccccccccc..
-            ..cccchhhhcccc..
-            .hhcccccccccchh.
-            .hhhhhhhhhhhhhh.
-            .hhhhhhhhhhhhhh.
-            .hhhhhhhhhhhhhh.
+        "down": grid(9, """
+            .......hh.......
+            ......hhhh......
+            ....hhhhhhhh....
+            ...hhhhhhhhhh...
             ..hhhhhhhhhhhh..
-            ...hh.hhhh.hh...
-            ......tttt......
+            ..hhhhhhhhhhhh..
+            ..hhsshhsshhhh..
+            ..hsssssssssh...
+            ...sseSsseSss...
+            ...sseSsseSss...
+            ...ssssMMssss...
+            ....ssssssss....
+            .....uuuuuu.....
         """),
-        "left": grid(10, """
-            ......cccccc....
-            ....cccccccccc..
-            ...cwwwccccccc..
-            ...cwwwccccccc..
-            ...ccccccccccch.
-            .CCCCCChhhhhhhh.
-            ...shsshhhhhhhh.
-            ...sesssshhhhhh.
-            ...sesssShhhhh..
-            ...ssssssshhhh..
-            ...sMssssshhh...
-            ....ssssss......
+        "up": grid(9, """
+            .......hh.......
+            ......hhhh......
+            ....hhhhhhhh....
+            ...hhhhhhhhhh...
+            ..hhhhhhhhhhhh..
+            ..hhhhhhhhhhhh..
+            ..hhhhhhhhhhhh..
+            ..hhhhhhhhhhhh..
+            ..hhhhhhhhhhhh..
+            ...hhhhhhhhhh...
+            ...hhhhhhhhhh...
+            ....hhhhhhhh....
+            .....uuuuuu.....
+        """),
+        "left": grid(9, """
+            ........hh......
+            .......hhhh.....
+            .....hhhhhhhh...
+            ....hhhhhhhhhh..
+            ...hhhhhhhhhhhh.
+            ...hhhhhhhhhhhh.
+            ...sshhhhhhhhhh.
+            ..ssssshhhhhhhh.
+            ..sessssshhhhhh.
+            ..sessssshhhhh..
+            ..sssMsssshhh...
+            ...sssssss......
+            ....uuuuuuuuuu..
         """),
     },
 }
 
 # ----------------------------------------------------------- player girl
-# White sun hat with red band, long brown hair with a high ponytail,
-# sky top, red skirt. Silhouette: wide hat brim + ponytail.
+# Same family, own shape: a high ponytail instead of the tuft, coral jacket.
 PLAYER_GIRL = {
     "id": "player_f",
     "label": "Player (girl)",
     "gender": "female",
     "body": "female",
     "mats": {
-        "s": "skin_light", "h": "hair_brown", "c": "white", "x": "red:2",
-        "t": "sky", "u": "white", "a": "sky", "f": "skin_light",
-        "b": "red:2", "l": "skin_light", "n": "red:2", "m": "skin_light",
+        "s": "skin_light", "h": "hair_dark", "t": "orange", "u": "teal:2", "a": "orange", "f": "orange",
+        "b": "denim:2", "l": "denim:2", "n": "brown:2", "m": "skin_light",
     },
     "heads": {
         "down": grid(9, """
-            ......cccc......
-            ....cccccccc....
-            ...cccccccccc...
-            ...xxxxxxxxxx...
-            .cccccccccccccc.
-            .hCCCCCCCCCCCCh.
-            .hhhhsssssshhhh.
-            .hhhsssssssshhh.
-            .hhheessssеehhh.
-            .hhhsesssseshhh.
-            .hhhsssssssshhh.
-            .hhhsssMMssshhh.
-            .hhh.ssssss.hhh.
-            .hhh........hhh.
-            .hHh........hHh.
-            ..h..........h..
-        """.replace("е", "e")),
+            ................
+            .....hhhhhh.....
+            ....hhhhhhhh....
+            ...hhhhhhhhhh...
+            ..hhhhhhhhhhhh..
+            ..hhhhhhhhhhhh..
+            ..hhsssshssshh..
+            .hhssssssssshhh.
+            .hhsseSsseSsshh.
+            .hhsseSsseSsshh.
+            .h.ssssMMssss.h.
+            ....ssssssss....
+            .....uuuuuu.....
+        """),
         "up": grid(9, """
-            ......cccc......
-            ....cccccccc....
-            ...cccccccccc...
-            ...xxxxxxxxxx...
-            .cccccccccccccc.
-            .CCCCCCCCCCCCCC.
-            .hhhhhhxxhhhhhh.
-            .hhhhhkhhkhhhhh.
-            .hhhhkhhhhkhhhh.
-            .hHhhkhhhhkhhHh.
-            .hHhkhhhhhhkhHh.
-            .hhhkhhhhhhkhhh.
-            .hhh.khhhhk.hhh.
-            .hhh..khhk..hhh.
-            .hHh..khhk..hHh.
-            ..h....hh....h..
-            .......hh.......
+            ................
+            .....hhhhhh.....
+            ....hhhhhhhh....
+            ...hhhhhhhhhh...
+            ..hhhhhhhhhhhh..
+            ..hhhhhhhhhhhh..
+            ..hhhhhhhhhhhh..
+            .hhhhhhhhhhhhhh.
+            .hhhhhhhhhhhhhh.
+            .hhhhhhhhhhhhhh.
+            .h.hhhhhhhhhh.h.
+            ....hhhhhhhh....
+            .....uuhhuu.....
         """),
         "left": grid(9, """
-            .......cccc.....
-            .....cccccccc...
-            ....cccccccccc..
-            ....xxxxxxxxxx..
-            .cccccccccccccc.
-            ..CCCCCCCCCCCC..
-            ...hhhhhhhhhhh..
-            ...ssshhhhhhxhh.
-            ..eessshhhhhhhhh
-            ...sesshhhhhhhhh
-            ...sssssshhhh.hh
-            ...sssssshhh..hh
-            ...sMsssshhh..hh
-            ....sssss.....hh
-            ..............hh
-            ...............h
+            ...........hh...
+            .....hhhhhhhhh..
+            ....hhhhhhhhhhh.
+            ...hhhhhhhhhhhh.
+            ...hhhhhhhhhhhh.
+            ...hhhhhhhhhhhhh
+            ...sshhhhhhhhhhh
+            ..ssssshhhhhhhhh
+            ..sessssshhhhh.h
+            ..sessssshhhhh.h
+            ..sssMsssshhh...
+            ...sssssss......
+            ....uuuuuuuu....
         """),
     },
 }
 
-# -------------------------------------------------------------- youngster
-# Backwards green cap (no brim over the eyes), messy fringe, big grin,
-# white tee, khaki shorts with bare knees. Silhouette: brim sticking
 # out the BACK in side view, knees showing.
 YOUNGSTER = {
     "id": "youngster",
@@ -326,3 +313,14 @@ CAST = [
 ]
 
 ROSTER = [PLAYER_BOY, PLAYER_GIRL, YOUNGSTER] + CAST
+
+# Body builds on top of the adult templates (sheets._build).
+BUILDS = {
+    "child": ("youngster", "bug_catcher", "twin", "lass", "picnicker"),
+    "heavy": ("hiker", "biker", "black_belt", "fisherman", "leader_m", "sailor"),
+    "elder": ("old_man", "old_woman"),
+}
+for _build_name, _ids in BUILDS.items():
+    for _c in ROSTER:
+        if _c["id"] in _ids:
+            _c["build"] = _build_name

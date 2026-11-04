@@ -34,6 +34,23 @@ def _lead(canvas, below):
     return [r[1:] + ["."] if i < below else r for i, r in enumerate(canvas)]
 
 
+def _widen(canvas, rows):
+    """Push each half of `rows` out one pixel: a broader torso."""
+    return [r[1:8] + [r[7], r[8]] + r[8:15] if i in rows else r for i, r in enumerate(canvas)]
+
+
+def _build(canvas, build, direction):
+    """Reshape an adult frame. Rows drop out below the chin, so feet stay put."""
+    if build == "child":
+        return _drop(canvas, {TORSO_ROW + 1, TORSO_ROW + 3})
+    if build == "heavy":
+        return _widen(canvas, range(CHIN_ROW + 1, TORSO_ROW + 4))
+    if build == "elder":
+        canvas = _lead(canvas, CHIN_ROW + 1) if direction == "left" else canvas
+        return _drop(canvas, {TORSO_ROW})
+    return canvas
+
+
 def frame_keys(char, direction, column):
     """Shaded key grid ((material, tone) / "outline" / "white") for one frame."""
     body, arms_up = BODIES[char["body"]][direction][_BODY[column]]
@@ -47,6 +64,7 @@ def frame_keys(char, direction, column):
     canvas = stack(body, *under, *head, *over, arms_up)
     if column == "blink":
         canvas = blink(canvas)
+    canvas = _build(canvas, char.get("build"), direction)
     if column in ("walkA", "walkB"):
         canvas = _drop(canvas, {TORSO_ROW})
     elif column.startswith("run"):

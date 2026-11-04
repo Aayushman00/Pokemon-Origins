@@ -18,7 +18,7 @@ import OverworldPad from "./OverworldPad";
 import { TEXT_SPEEDS, cycleTextSpeed, getTextSpeed } from "./textSpeed";
 import "./overworld.css";
 
-const DEFAULT_START = { mapId: "dawnbrook", x: 7, y: 6, facing: "down" };
+const DEFAULT_START = { mapId: "dawnbrook", x: 7, y: 7, facing: "down" };
 // Dev starts reachable with ?map=<id> (maps not yet linked into the world).
 const DEV_STARTS = { legend_grove: { mapId: "legend_grove", x: 8, y: 10, facing: "up" } };
 const START = DEV_STARTS[new URLSearchParams(window.location.search).get("map")] || DEFAULT_START;

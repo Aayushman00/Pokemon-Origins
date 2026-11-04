@@ -1,5 +1,5 @@
 {
-  "outline": "#3a2426",
+  "outline": "#26223a",
   "white": "#fffcf0",
   "ramps": {
     "skin_light": [
@@ -155,30 +155,26 @@
   "characters": {
     "player": {
       "s": "skin_light",
-      "h": "hair_dark",
-      "c": "red",
-      "x": "red",
-      "t": "red",
-      "u": "charcoal:2",
-      "a": "charcoal:2",
-      "f": "skin_light",
-      "b": "navy",
-      "l": "navy",
-      "n": "red",
+      "h": "hair_black",
+      "t": "teal",
+      "u": "yellow:2",
+      "a": "teal",
+      "f": "teal",
+      "b": "charcoal:2",
+      "l": "charcoal:2",
+      "n": "brown:2",
       "m": "skin_light"
     },
     "player_f": {
       "s": "skin_light",
-      "h": "hair_brown",
-      "c": "white",
-      "x": "red:2",
-      "t": "sky",
-      "u": "white",
-      "a": "sky",
-      "f": "skin_light",
-      "b": "red:2",
-      "l": "skin_light",
-      "n": "red:2",
+      "h": "hair_dark",
+      "t": "orange",
+      "u": "teal:2",
+      "a": "orange",
+      "f": "orange",
+      "b": "denim:2",
+      "l": "denim:2",
+      "n": "brown:2",
       "m": "skin_light"
     },
     "youngster": {

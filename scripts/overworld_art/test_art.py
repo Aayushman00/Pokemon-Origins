@@ -68,11 +68,11 @@ class SheetTests(unittest.TestCase):
             used = {hexs(p) for p in img.get_flattened_data() if p[3]}
             self.assertFalse(used - allowed, f"{cid}: off-palette {used - allowed}")
 
-    def test_outline_is_dark_brown_never_black(self):
+    def test_outline_is_dark_plum_never_black(self):
         for cid, img in self.sheets.items():
             self.assertNotIn((0, 0, 0), {p[:3] for p in img.get_flattened_data() if p[3]}, cid)
         r, g, b = (int(OUTLINE[i:i + 2], 16) for i in (1, 3, 5))
-        self.assertTrue(r > b and r > g and max(r, g, b) < 80, "outline should be a dark brown")
+        self.assertTrue(b > r > g and max(r, g, b) < 80, "outline should be a dark cool plum")
 
     def test_right_row_mirrors_left(self):
         for cid, img in self.sheets.items():
