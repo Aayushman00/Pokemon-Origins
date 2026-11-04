@@ -66,7 +66,7 @@ All objects must sit inside the map.
 | Layer | Properties |
 |---|---|
 | `warps` | Required: `targetMap`, `targetX`, `targetY`. Optional: `kind` (`door`), `facing`, `enterDir` (only fires when moving this way), `transition` (`iris`, `fade`, `none`). Must land on a free tile |
-| `npcs` | Point object. `script` required. `sprite` must be a sheet in `render/sheets.generated.js` (default `npc`), `facing` a direction. `kind: legendary` needs `dex` instead of a sheet. The tile must be blocked in `collision`. A trainer also has `trainer` (campaign id), `order` (1, 2, 3... along the road) and `sight` (tiles) |
+| `npcs` | Point object. `script` required. `sprite` must be a sheet in `render/sheets.generated.js` (default `npc`), `facing` a direction. `kind: legendary` needs `dex` instead of a sheet. The tile must be blocked in `collision`. A trainer also has `trainer` (campaign id), `order` (1, 2, 3... along the road) and `sight` (tiles). It sees along its `facing`, and walls and other NPCs block the view. The server sets the flag `trainer:<id>` on a win |
 | `signs` | `text` or `script` |
 | `triggers` | `when`: `step`, `enter` or `flag` (`flag` needs a `flag` property). `script` required. Optional: `requires` (flag), `once` |
 | `encounters` | `table` required |

@@ -754,7 +754,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"say\", \"text\": \"Welcome to the Grove. Take your time, nothing here grows in a hurry.\"}, {\"op\": \"battle\", \"trainer\": \"willow_thornby\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:willow_thornby\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"That was a good battle. Safe travels!\"}]}, {\"op\": \"say\", \"text\": \"Welcome to the Grove. Take your time, nothing here grows in a hurry.\"}, {\"op\": \"battle\", \"trainer\": \"willow_thornby\"}]"
       }
      ],
      "point": true

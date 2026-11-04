@@ -1,9 +1,30 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { doneFlag, dueTriggers, facingToward, interactionAt, triggerScript, warpFor } from "./events.js";
+import { defeatedFlag, doneFlag, dueTriggers, facingToward, interactionAt, spotter, triggerScript, warpFor } from "./events.js";
 import { asciiMap } from "./fixtures.js";
 
 const S = JSON.stringify([{ op: "say", text: "x" }]);
+
+describe("trainer sight", () => {
+	const field = asciiMap("f", ["......", "..#...", "......"]);
+	const foe = { name: "t", trainer: "t", order: 1, sight: 4, x: 0, y: 0, facing: "right" };
+	const none = new Set();
+	it("sees along its facing, up to its sight, and counts the walk", () => {
+		assert.deepEqual(spotter(field, { x: 3, y: 0 }, [foe], none), { npc: foe, steps: 2 });
+		assert.equal(spotter(field, { x: 5, y: 0 }, [foe], none), null);
+		assert.equal(spotter(field, { x: 0, y: 1 }, [foe], none), null);
+	});
+	it("is blocked by walls and by other people", () => {
+		assert.equal(spotter(field, { x: 3, y: 1 }, [{ ...foe, y: 1 }], none), null);
+		assert.equal(spotter(field, { x: 3, y: 0 }, [foe, { name: "o", x: 2, y: 0 }], none), null);
+	});
+	it("ignores beaten trainers and plain NPCs, and earlier trainers go first", () => {
+		assert.equal(spotter(field, { x: 3, y: 0 }, [foe], new Set([defeatedFlag("t")])), null);
+		assert.equal(spotter(field, { x: 3, y: 0 }, [{ name: "n", x: 0, y: 0, facing: "right" }], none), null);
+		const second = { ...foe, name: "u", trainer: "u", order: 2, x: 5, facing: "left" };
+		assert.equal(spotter(field, { x: 3, y: 0 }, [second, foe], none).npc, foe);
+	});
+});
 const map = asciiMap("m", ["......", "......", "......"], {
 	npcs: [{ name: "bob", x: 3, y: 1, props: { script: S } }],
 	signs: [{ name: "sign", x: 1, y: 0, props: { text: "HELLO" } }],

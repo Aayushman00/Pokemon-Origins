@@ -61,6 +61,13 @@ def stamp(m, name, x0, y0, w, h, door_x):
             m.put("above" if j == 0 else "objects", x0 + i, y0 + j, ID[f"{name}_{c}_{r}"], SOLID)
 
 
+def trainer_script(trainer, *lines):
+    """Battle until beaten, then a word in passing. The server sets trainer:<id> on a win."""
+    return json.dumps([{"op": "requireFlag", "flag": f"trainer:{trainer}", "not": True,
+                        "else": [{"op": "say", "text": "That was a good battle. Safe travels!"}]},
+                       *[{"op": "say", "text": t} for t in lines], {"op": "battle", "trainer": trainer}])
+
+
 def hashed(x, y):
     return (x * 73856093 ^ y * 19349663) & 0xFFFF
 
@@ -256,8 +263,7 @@ def mossgate_gym():
           transition="iris", enterDir="left")
     m.sign("hint", 0, 4, gym["hint"])
     m.obj("signs", "vine_gate", 7, 6, text="Thick vines bar the way. (Pushing seed pods opens in a later update.)")
-    script = json.dumps([{"op": "say", "text": "Welcome to the Grove. Take your time, nothing here grows in a hurry."},
-                         {"op": "battle", "trainer": "willow_thornby"}])
+    script = trainer_script("willow_thornby", "Welcome to the Grove. Take your time, nothing here grows in a hurry.")
     m.obj("npcs", "willow_thornby", 12, 5, point=True, sprite="leader_f", facing="left", script=script)
     m.block(12, 5)
     autotile_paths(m)
@@ -276,7 +282,7 @@ def route(route_id):
     for i, g in enumerate(r["grass"]):
         m.obj("encounters", f"grass_{i + 1}", g["x"], g["y"], g["w"], g["h"], table=route_id)
     for t in r["trainers"]:
-        script = json.dumps([{"op": "say", "text": "Our eyes met! That means we battle!"}, {"op": "battle", "trainer": t["id"]}])
+        script = trainer_script(t["id"], "Our eyes met! That means we battle!")
         m.obj("npcs", t["id"], t["x"], t["y"], point=True, sprite=t["id"].rsplit("_", 1)[0], facing=t["facing"],
               trainer=t["id"], order=t["i"], sight=t["sight"], script=script)
         m.block(t["x"], t["y"])

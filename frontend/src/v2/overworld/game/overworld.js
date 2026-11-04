@@ -1,13 +1,13 @@
 import { createActor, tickActor } from "../logic/movement.js";
 import { createWorld } from "../logic/world.js";
-import { dueTriggers, facingToward, interactionAt, triggerScript, warpFor } from "../logic/events.js";
+import { dueTriggers, facingToward, interactionAt, spotter, triggerScript, warpFor } from "../logic/events.js";
 import { resolveScript } from "../logic/script.js";
 import { paginate } from "../logic/dialogue.js";
 import { DOOR_PAUSE_TICKS, startTransition, tickTransition } from "../logic/transition.js";
 
 /**
  * Headless overworld session: owns player + NPC state and the mode machine
- * (explore | dialogue | script | warp). No canvas, no DOM: the host calls
+ * (explore | dialogue | script | warp | alert | battle). No canvas, no DOM: the host calls
  * tick(input) at 60 Hz and listens to emit() for sound/dialogue/effect requests.
  *
  * emit events: { type: 'sound', cue } | { type: 'dialogue', pages } |
@@ -16,6 +16,8 @@ import { DOOR_PAUSE_TICKS, startTransition, tickTransition } from "../logic/tran
  */
 // A legendary's cry whites out the screen for a couple of frames.
 export const CRY_FLASH_TICKS = 2;
+// How long the "!" hangs over a trainer who has spotted you.
+export const ALERT_TICKS = 40;
 
 export function createOverworld({ store, flags, start, canRun = true, reducedMotion = false, emit = () => {} }) {
 	const world = createWorld((id) => store.get(id));
@@ -30,6 +32,8 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 	let edgeGuard = 0; // ignore A edges queued around a dialogue close (they belong to the dialogue)
 	let tickCount = 0;
 	let flash = 0; // cry flash ticks (see CRY_FLASH_TICKS)
+	let alert = null; // { id, ticks }: the trainer showing "!"
+	let foe = null; // trainer id of the battle the host is running
 	let pendingStep = null;
 
 	function npcsOf(mapId) {
@@ -46,6 +50,7 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 					script: n.script,
 					// legendary encounters: drawn 32x32, shiny = palette swap of the same sheet
 					...(n.kind ? { kind: n.kind, dex: n.dex, shiny: !!n.shiny } : {}),
+					...(n.trainer ? { trainer: n.trainer, order: n.order, sight: n.sight } : {}),
 				});
 			}
 		}
@@ -85,6 +90,11 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 			} else if (fx.type === "cutsceneMove") {
 				walks.push({ id: fx.actor === "player" ? "player" : `${player.mapId}:${fx.actor}`, path: fx.path, i: 0 });
 				mode = "script";
+				return;
+			} else if (fx.type === "battle" && fx.trainer) {
+				mode = "battle";
+				foe = fx.trainer;
+				emit({ type: "effect", effect: fx });
 				return;
 			} else {
 				emit({ type: "effect", effect: fx });
@@ -176,6 +186,23 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		else if (e.type === "mapChange") onMapEnter(e.mapId, "edge");
 	}
 
+	function spotted({ npc, steps }) {
+		mode = "alert";
+		alert = { id: npc.id, ticks: reducedMotion ? 0 : ALERT_TICKS };
+		player = { ...player, facing: facingToward(player, npc) };
+		emit({ type: "sound", cue: "spotted" });
+		const walk = steps ? [{ op: "cutsceneMove", actor: npc.name, path: Array(steps).fill(npc.facing) }] : [];
+		queue.push(...resolveScript([...walk, ...npc.script], flags).effects);
+	}
+
+	function tickAlert() {
+		alert.ticks -= 1;
+		if (alert.ticks > 0) return;
+		alert = null;
+		mode = "explore";
+		pump();
+	}
+
 	function tickExplore(input, edges) {
 		const map = currentMap();
 		if (aBlock && !input.aHeld) aBlock = false;
@@ -202,6 +229,8 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 				if (w) return (pendingStep = { warp: w }), true;
 				const due = m ? dueTriggers(m, "step", flags, a) : [];
 				if (due.length) return (pendingStep = { trigger: due[0], map: m }), true;
+				const seen = m ? spotter(m, a, npcsOf(a.mapId), flags) : null;
+				if (seen) return (pendingStep = { seen }), true;
 				return false;
 			},
 		};
@@ -212,6 +241,7 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 			const p = pendingStep;
 			pendingStep = null;
 			if (p.warp) beginWarp(p.warp);
+			else if (p.seen) spotted(p.seen);
 			else runScript(triggerScript(p.map, p.trigger));
 		}
 	}
@@ -222,12 +252,23 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 			if (flash > 0) flash -= 1;
 			if (mode === "warp") tickWarp();
 			else if (mode === "script") tickWalks();
+			else if (mode === "alert") tickAlert();
 			else if (mode === "explore") tickExplore(input, edges);
 			// idle NPCs animate through their own tickActor only during cutscenes
 		},
 		/** Host calls when the player dismisses the last dialogue page. */
 		closeDialogue() {
 			if (mode !== "dialogue") return;
+			aBlock = true;
+			edgeGuard = tickCount + 2;
+			mode = "explore";
+			pump();
+		},
+		/** Host calls when a trainer battle is over, after refreshing flags. The trainer goes back to its post. */
+		endBattle() {
+			if (mode !== "battle") return;
+			for (const [id, n] of npcs) if (n.trainer === foe) npcs.delete(id);
+			foe = null;
 			aBlock = true;
 			edgeGuard = tickCount + 2;
 			mode = "explore";
@@ -252,6 +293,10 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		/** Ticks left on the white "cry" flash (a legendary calls out). */
 		get flash() {
 			return flash;
+		},
+		/** Id of the NPC showing "!", or null. */
+		get alert() {
+			return alert?.id ?? null;
 		},
 		get map() {
 			return currentMap();

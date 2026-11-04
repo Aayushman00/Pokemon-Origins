@@ -205,6 +205,55 @@ describe("Dawnbrook interiors and Route 1 (headless)", () => {
 	});
 });
 
+describe("route trainers (headless)", () => {
+	const joey = (d) => d.game.npcs().find((n) => n.name === "youngster_joey");
+	const walkIntoSight = async () => {
+		const d = await boot({ mapId: "route_1", x: 1, y: 9, facing: "right" });
+		d.hold("right", 60);
+		return d;
+	};
+	it("a trainer stops you, walks over, talks, then asks for the battle", async () => {
+		const { ALERT_TICKS } = await import("./overworld.js");
+		const d = await walkIntoSight();
+		assert.deepEqual(d.pos(), ["route_1", 3, 9], "stopped on the first tile of sight");
+		assert.equal(d.game.player.facing, "down");
+		assert.ok(d.events.some((e) => e.type === "sound" && e.cue === "spotted"));
+		d.idle(ALERT_TICKS + 40);
+		assert.equal(d.game.alert, null);
+		assert.deepEqual([joey(d).x, joey(d).y], [3, 10], "walked up next to you");
+		assert.equal(d.game.mode, "dialogue");
+		d.close();
+		const asked = d.events.find((e) => e.type === "effect" && e.effect.type === "battle");
+		assert.equal(asked.effect.trainer, "youngster_joey");
+		assert.equal(d.game.mode, "battle");
+		d.hold("right", 30);
+		assert.deepEqual(d.pos(), ["route_1", 3, 9], "no walking during a battle");
+	});
+	it("after a win the trainer is back at its post and lets you pass", async () => {
+		const { ALERT_TICKS } = await import("./overworld.js");
+		const d = await walkIntoSight();
+		d.idle(ALERT_TICKS + 40);
+		d.close();
+		d.flags.add("trainer:youngster_joey");
+		d.game.endBattle();
+		assert.equal(d.game.mode, "explore");
+		assert.deepEqual([joey(d).x, joey(d).y], [3, 11]);
+		d.idle(4);
+		d.hold("left", 20);
+		d.hold("right", 40);
+		assert.equal(d.game.mode, "explore");
+		assert.ok(d.game.player.x > 3, "walked on past");
+	});
+	it("a beaten trainer only chats", async () => {
+		const d = await boot({ mapId: "route_1", x: 3, y: 10, facing: "down" });
+		d.flags.add("trainer:youngster_joey");
+		d.press();
+		d.close();
+		assert.equal(d.game.mode, "explore");
+		assert.ok(!d.events.some((e) => e.type === "effect" && e.effect.type === "battle"));
+	});
+});
+
 describe("legendary encounters (headless)", () => {
 	it("talking to Articuno: cry sound + white flash, then a wild battle request", async () => {
 		const { CRY_FLASH_TICKS } = await import("./overworld.js");

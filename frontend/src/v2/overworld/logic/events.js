@@ -1,7 +1,25 @@
-import { DIRS } from "../constants.js";
+import { COL, DIRS } from "../constants.js";
+import { collisionAt } from "./mapModel.js";
 
 const inside = (o, x, y) => x >= o.x && y >= o.y && x < o.x + o.w && y < o.y + o.h;
 export const doneFlag = (mapId, obj) => `done:${mapId}:${obj.name}`;
+
+export const defeatedFlag = (trainer) => `trainer:${trainer}`;
+
+/** The first unbeaten trainer who can see `actor`: { npc, steps } (tiles to walk), or null. */
+export function spotter(map, actor, npcs, flags) {
+	const foes = npcs.filter((n) => n.trainer && !flags.has(defeatedFlag(n.trainer))).sort((a, b) => a.order - b.order);
+	for (const npc of foes) {
+		const { dx, dy } = DIRS[npc.facing];
+		for (let i = 1; i <= npc.sight; i++) {
+			const x = npc.x + dx * i;
+			const y = npc.y + dy * i;
+			if (x === actor.x && y === actor.y) return { npc, steps: i - 1 };
+			if (collisionAt(map, x, y) !== COL.FREE || npcs.some((o) => o.x === x && o.y === y)) break;
+		}
+	}
+	return null;
+}
 
 /** Triggers of `kind` ('step'|'enter'|'flag') that currently apply. */
 export function dueTriggers(map, kind, flags, pos) {

@@ -116,6 +116,20 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 		g.drawImage(sheet, frame * 32, 0, 32, 32, dx, dy, 32, 32);
 	}
 
+	// The "!" over a trainer who has spotted the player.
+	function drawAlert(a, ox, oy, camX, camY) {
+		const { px, py } = actorPixel(a);
+		const x = Math.round(ox + px - camX) + 5;
+		const y = Math.round(oy + py - camY) - TILE - 12;
+		g.fillStyle = "#3a2426";
+		g.fillRect(x, y, 6, 12);
+		g.fillStyle = "#fff";
+		g.fillRect(x + 1, y + 1, 4, 10);
+		g.fillStyle = "#e04838";
+		g.fillRect(x + 2, y + 2, 2, 5);
+		g.fillRect(x + 2, y + 8, 2, 2);
+	}
+
 	function drawActor(a, ox, oy, camX, camY, tick) {
 		if (a.kind === "legendary") return drawLegendary(a, ox, oy, camX, camY, tick);
 		const sheet = assets.sprites[a.sprite || "player"];
@@ -185,6 +199,8 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 
 			for (const d of drawn) drawLayer(d.map, "above", d.ox - cam.x, d.oy - cam.y, ms);
 			overlay(game, cam.x, cam.y);
+			const seen = actors.find(({ a }) => a.id === game.alert);
+			if (seen) drawAlert(seen.a, seen.d.ox, seen.d.oy, cam.x, cam.y);
 			if (game.flash > 0) {
 				g.fillStyle = "#fff";
 				g.fillRect(0, 0, VIEW_W, VIEW_H);

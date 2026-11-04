@@ -4215,7 +4215,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"say\", \"text\": \"Our eyes met! That means we battle!\"}, {\"op\": \"battle\", \"trainer\": \"youngster_joey\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:youngster_joey\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"That was a good battle. Safe travels!\"}]}, {\"op\": \"say\", \"text\": \"Our eyes met! That means we battle!\"}, {\"op\": \"battle\", \"trainer\": \"youngster_joey\"}]"
       }
      ],
      "point": true
@@ -4259,7 +4259,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"say\", \"text\": \"Our eyes met! That means we battle!\"}, {\"op\": \"battle\", \"trainer\": \"lass_annie\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:lass_annie\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"That was a good battle. Safe travels!\"}]}, {\"op\": \"say\", \"text\": \"Our eyes met! That means we battle!\"}, {\"op\": \"battle\", \"trainer\": \"lass_annie\"}]"
       }
      ],
      "point": true
@@ -4303,7 +4303,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"say\", \"text\": \"Our eyes met! That means we battle!\"}, {\"op\": \"battle\", \"trainer\": \"bug_catcher_tim\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:bug_catcher_tim\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"That was a good battle. Safe travels!\"}]}, {\"op\": \"say\", \"text\": \"Our eyes met! That means we battle!\"}, {\"op\": \"battle\", \"trainer\": \"bug_catcher_tim\"}]"
       }
      ],
      "point": true
@@ -4347,7 +4347,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"say\", \"text\": \"Our eyes met! That means we battle!\"}, {\"op\": \"battle\", \"trainer\": \"hiker_jack\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:hiker_jack\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"That was a good battle. Safe travels!\"}]}, {\"op\": \"say\", \"text\": \"Our eyes met! That means we battle!\"}, {\"op\": \"battle\", \"trainer\": \"hiker_jack\"}]"
       }
      ],
      "point": true
