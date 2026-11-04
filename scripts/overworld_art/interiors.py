@@ -195,150 +195,326 @@ def mat(r, cx):
 
 
 # ============================================================ shared props
+# Drawing vocabulary: every prop is built from rounded, bevelled shapes
+# (lit top-left edge, shaded bottom-right edge) plus small recognisable
+# details, never a flat rectangle.
+
+def rbox(r, x0, y0, x1, y1, fill, hi=None, lo=None, ol=OL):
+    """Rounded box: corners left open, optional bevel (hi top/left, lo bottom/right)."""
+    r.rect(x0 + 1, y0, x1 - 1, y0, ol)
+    r.rect(x0 + 1, y1, x1 - 1, y1, ol)
+    r.rect(x0, y0 + 1, x0, y1 - 1, ol)
+    r.rect(x1, y0 + 1, x1, y1 - 1, ol)
+    r.rect(x0 + 1, y0 + 1, x1 - 1, y1 - 1, fill)
+    if lo:
+        r.rect(x0 + 1, y1 - 1, x1 - 1, y1 - 1, lo)
+        r.rect(x1 - 1, y0 + 1, x1 - 1, y1 - 1, lo)
+    if hi:
+        r.rect(x0 + 1, y0 + 1, x1 - 2, y0 + 1, hi)
+        r.rect(x0 + 1, y0 + 1, x0 + 1, y1 - 2, hi)
+
+
+def vgrad(r, x0, y0, x1, y1, cols):
+    n = y1 - y0 + 1
+    for i, y in enumerate(range(y0, y1 + 1)):
+        r.rect(x0, y, x1, y, cols[min(len(cols) - 1, i * len(cols) // n)])
+
+
+def bottle(r, x, y, body, h=6, cap="#f4f4f8", label="#ffffff"):
+    """2 px wide bottle: cap, neck, body with a label band and a glint."""
+    r.set(x, y, cap)
+    r.set(x + 1, y, OL)
+    r.rect(x, y + 1, x + 1, y + h - 1, body)
+    r.rect(x, y + h // 2, x + 1, y + h // 2, label)
+    r.set(x, y + 2, "#ffffff")
+
+
+def box_item(r, x, y, w, h, col):
+    """Product box: lit top edge, darker side, a label stripe."""
+    r.rect(x, y, x + w - 1, y + h - 1, col)
+    r.rect(x, y, x + w - 1, y, "#ffffff")
+    r.rect(x + w - 1, y + 1, x + w - 1, y + h - 1, OL)
+    if h > 3:
+        r.rect(x, y + h - 2, x + w - 2, y + h - 2, "#ffffff")
+
+
+def book(r, x, y, h, col):
+    r.rect(x, y, x, y + h - 1, col)
+    r.set(x, y, "#ffffff")
+    r.set(x, y + h - 2, OL)
+
+
+LEAF = ["#c4ec80", "#9cd468", "#58a840", "#2f6a3c"]
+
+
 def plant_palm(r, cx, by):
-    """Tall potted palm (FireRed style): white pot on a stand, starry leaves.
-    cx = centre px, by = bottom px."""
-    r.shadow_ellipse(cx - 2, by - 1, 9, 3)
-    r.box(cx - 6, by - 12, cx + 5, by - 1, "#f4f4f8")
-    r.rect(cx - 5, by - 11, cx + 4, by - 10, "#ffffff")
-    r.rect(cx + 2, by - 9, cx + 4, by - 2, "#c8ccdc")
-    r.rect(cx - 4, by - 5, cx + 3, by - 5, "#c8ccdc")
-    r.rect(cx - 1, by - 20, cx, by - 12, "#8a5634")
-    leaves = [(0, -28, 6), (-6, -24, 5), (6, -24, 5), (-4, -18, 5), (4, -18, 5), (0, -21, 5)]
-    for dx, dy, rad in leaves:
-        for y in range(-rad, rad + 1):
-            for x in range(-rad, rad + 1):
-                if abs(x) + abs(y) <= rad and (abs(x) <= 1 or abs(y) <= 1 or abs(x) == abs(y)):
-                    lit = x + y < 0
-                    r.set(cx + dx + x, by + dy + y, "#9cd468" if lit else "#58a840")
-    for dx, dy, rad in leaves:
-        r.set(cx + dx, by + dy, "#c4ec80")
+    """Potted palm: rounded white pot with rim and band, fronds with veins."""
+    r.shadow_ellipse(cx - 2, by - 1, 10, 3)
+    # pot
+    rbox(r, cx - 6, by - 12, cx + 5, by - 1, "#eeeef4", hi="#ffffff", lo="#c4c8d8")
+    r.rect(cx - 7, by - 13, cx + 6, by - 11, OL)
+    r.rect(cx - 6, by - 12, cx + 5, by - 12, "#ffffff")
+    r.rect(cx - 5, by - 7, cx + 4, by - 6, "#9aa0be")
+    r.rect(cx - 4, by - 7, cx + 3, by - 7, "#c8ccdc")
+    r.rect(cx - 5, by - 13, cx + 4, by - 13, "#6a4a32")                  # soil
+    # fronds: arcs of leaf pixels with a dark midrib
+    fronds = [(-1, -1, -9, -6), (1, -1, 9, -6), (-1, -1, -7, -12), (1, -1, 7, -12), (0, -1, -2, -16), (0, -1, 3, -15)]
+    for _, _, ex, ey in fronds:
+        steps = max(abs(ex), abs(ey))
+        for s in range(1, steps + 1):
+            x = cx + round(ex * s / steps)
+            y = by - 13 + round(ey * s / steps)
+            w = 2 if s < steps - 1 else 1
+            for k in range(-w, w + 1):
+                px, py = (x, y + k) if abs(ex) > abs(ey) else (x + k, y)
+                r.set(px, py, LEAF[1] if k < 0 else LEAF[2])
+            r.set(x, y, LEAF[3] if s > 1 else LEAF[2])
+        r.set(cx + ex, by - 13 + ey, LEAF[0])
+    r.rect(cx - 1, by - 14, cx, by - 13, "#8a5634")
 
 
-def glass_pane(r, x0, y0, x1, y1, tint="#c4def4", goods=None):
-    """Glass with two diagonal glints (and optional goods behind it)."""
-    r.box(x0, y0, x1, y1, tint)
-    if goods:
-        for i, gy in enumerate(range(y0 + 4, y1 - 3, 7)):
-            for gx in range(x0 + 2, x1 - 2, 4):
-                r.rect(gx, gy, gx + 2, gy + 3, goods[(gx // 4 + i) % len(goods)])
-    for k in range(0, (x1 - x0) // 2):
-        for off in (0, 4):
-            x, y = x0 + 3 + k + off, y0 + 2 + k
-            if x < x1 and y < y1:
+def glass_pane(r, x0, y0, x1, y1, tint="#c4def4", goods=None, shelves=0):
+    """Framed glass with shelves of bottles behind it and two glints."""
+    rbox(r, x0, y0, x1, y1, tint, hi="#e8f6ff", lo="#9ab8d4")
+    if shelves:
+        step = (y1 - y0 - 2) // shelves
+        for i in range(shelves):
+            sy = y0 + 2 + i * step
+            for gx in range(x0 + 2, x1 - 2, 3):
+                bottle(r, gx, sy + 1, goods[(gx // 3 + i) % len(goods)], h=step - 2)
+            r.rect(x0 + 1, sy + step - 1, x1 - 1, sy + step - 1, "#8ea8c4")
+    for k in range(0, min(x1 - x0, y1 - y0) - 3):
+        for off in (0, 3):
+            x, y = x0 + 2 + k + off, y0 + 1 + k
+            if x < x1 and y < y1 and (k + off) % 5 != 4:
                 r.set(x, y, "#ffffff")
 
 
 def seat(r, x0, y0):
-    """Yellow cube seat in 3/4 view (top + front), with a shadow."""
-    r.shadow_rect(x0 - 3, y0 + 5, x0 + 12, y0 + 17)
-    r.box(x0, y0, x0 + 14, y0 + 13, "#f8d040")
-    r.rect(x0 + 1, y0 + 1, x0 + 13, y0 + 7, "#fff28c")
-    r.rect(x0 + 1, y0 + 8, x0 + 13, y0 + 8, OL)
-    r.rect(x0 + 11, y0 + 9, x0 + 13, y0 + 12, "#c08c28")
-    r.set(x0 + 3, y0 + 3, "#ffffff")
+    """Cushioned stool: rounded top with stitching, front band, little feet."""
+    r.shadow_rect(x0 - 3, y0 + 6, x0 + 12, y0 + 17)
+    r.rect(x0 + 2, y0 + 13, x0 + 3, y0 + 15, "#6c6e8c")
+    r.rect(x0 + 11, y0 + 13, x0 + 12, y0 + 15, "#6c6e8c")
+    rbox(r, x0, y0, x0 + 14, y0 + 13, "#f8d040", hi="#fff6a8", lo="#c08c28")
+    r.rect(x0 + 1, y0 + 9, x0 + 13, y0 + 12, "#e0a830")                  # front band
+    r.rect(x0 + 1, y0 + 9, x0 + 13, y0 + 9, OL)
+    for x in range(x0 + 3, x0 + 12, 2):                                   # stitching
+        r.set(x, y0 + 5, "#e0a830")
+    r.rect(x0 + 3, y0 + 2, x0 + 5, y0 + 2, "#ffffff")
 
 
-def glass_table(r, x0, y0, w=30, h=24):
+def glass_table(r, x0, y0, w=30, h=24, item=None):
+    """Glass coffee table: bevelled glass, metal frame, legs, something on top."""
     r.shadow_rect(x0 - 3, y0 + 8, x0 + w - 2, y0 + h + 6)
-    for lx in (x0 + 3, x0 + w - 4):
+    for lx in (x0 + 2, x0 + w - 4):
         r.rect(lx, y0 + h - 6, lx + 1, y0 + h + 1, "#6c6e8c")
-    r.box(x0, y0, x0 + w, y0 + h - 5, "#c4e6fa")
-    r.rect(x0 + 1, y0 + h - 9, x0 + w - 1, y0 + h - 6, "#8cc4ec")
-    r.rect(x0 + 1, y0 + 1, x0 + w - 1, y0 + 1, "#ffffff")
-    for k in range(10):
-        r.set(x0 + 6 + k, y0 + 3 + k // 2, "#ffffff")
-        r.set(x0 + 10 + k, y0 + 3 + k // 2, "#ffffff")
+        r.set(lx, y0 + h - 6, "#c8ccdc")
+    rbox(r, x0, y0, x0 + w, y0 + h - 5, "#c4e6fa", hi="#ffffff", lo="#7cb0dc")
+    r.rect(x0 + 1, y0 + h - 8, x0 + w - 1, y0 + h - 6, "#9cc8ec")         # glass thickness
+    r.rect(x0 + 1, y0 + h - 8, x0 + w - 1, y0 + h - 8, "#e8f6ff")
+    for k in range(9):
+        r.set(x0 + 5 + k, y0 + 3 + k // 2, "#ffffff")
+        r.set(x0 + 9 + k, y0 + 3 + k // 2, "#ffffff")
+    if item == "magazine":
+        r.box(x0 + w - 13, y0 + 5, x0 + w - 4, y0 + 13, "#f07ca8")
+        r.rect(x0 + w - 12, y0 + 6, x0 + w - 5, y0 + 7, "#ffffff")
+        for y in (y0 + 9, y0 + 11):
+            r.rect(x0 + w - 11, y, x0 + w - 6, y, "#ffc4da")
+    elif item == "cup":
+        r.box(x0 + 5, y0 + 7, x0 + 10, y0 + 12, "#ffffff")
+        r.rect(x0 + 6, y0 + 8, x0 + 9, y0 + 8, "#8a5634")
+        r.set(x0 + 11, y0 + 9, OL)
+        r.set(x0 + 11, y0 + 10, OL)
+
+
+def framed_picture(r, x0, y0, x1, y1):
+    """Little landscape: sky, sun, hills, frame with a lit corner."""
+    rbox(r, x0, y0, x1, y1, "#c08048", hi="#e0a868", lo="#86522e")
+    vgrad(r, x0 + 2, y0 + 2, x1 - 2, y1 - 2, ["#c2ecff", "#94c4ff"])
+    r.rect(x1 - 6, y0 + 3, x1 - 5, y0 + 4, "#fff28c")
+    for x in range(x0 + 2, x1 - 1):
+        hy = y1 - 3 - round(2 * abs(((x - x0) % 10) - 5) / 5)
+        r.rect(x, hy, x, y1 - 2, "#58a840")
+        r.set(x, hy, "#9cd468")
+
+
+def wall_clock(r, cx, cy):
+    for y in range(cy - 6, cy + 7):
+        for x in range(cx - 6, cx + 7):
+            d = hypot(x - cx, y - cy)
+            if d <= 6.2:
+                r.set(x, y, OL if d > 5.2 else "#ffffff" if d < 4.6 else "#d8dcea")
+    r.rect(cx, cy - 4, cx, cy, OL)
+    r.rect(cx, cy, cx + 3, cy, OL)
+    r.set(cx, cy, "#e04838")
+    r.set(cx - 2, cy - 3, "#ffffff")
 
 
 # =============================================================== CARE CENTRE
 def paint_center(frame):
     r = Room(15, 10, "center")
     shell(r)
-    th = WALLS["center"]
-    # bookshelf (top-left, on the wall)
-    r.box(T + 2, 6, 3 * T - 3, 2 * T + 2, "#58a840")
-    for i, sy in enumerate((10, 18)):
-        r.rect(T + 4, sy, 3 * T - 5, sy + 5, "#3a7c44")
-        for bx in range(T + 5, 3 * T - 5, 3):
-            r.rect(bx, sy, bx + 1, sy + 5, ("#e84a3c", "#f8d040", "#4c78e0", "#ffffff", "#f07ca8")[(bx + i) % 5])
-    r.rect(T + 3, 7, 3 * T - 4, 8, "#9cd468")
-    # wall monitor (centre-top) and PC terminal (right)
-    r.box(6 * T + 4, 6, 9 * T - 5, 21, "#4e4a66")
-    r.rect(6 * T + 6, 8, 9 * T - 7, 19, "#6c6e8c")
-    r.rect(6 * T + 6, 8, 9 * T - 7, 9, "#9aa0be")
-    r.box(13 * T - 2, 4, 14 * T - 2, 2 * T + 6, "#e6e6ee")
-    r.rect(13 * T, 6, 14 * T - 4, 14, "#4e4a66")
-    r.rect(13 * T + 1, 7, 14 * T - 5, 9, "#6898e8")
-    r.rect(13 * T, 18, 14 * T - 4, 24, "#c8ccdc")
-    for x in range(13 * T + 1, 14 * T - 4, 2):
-        r.set(x, 21, "#6c6e8c")
-    r.shadow_rect(13 * T - 4, 2 * T + 4, 14 * T - 4, 2 * T + 9)
-    # --- U-shaped counter: arms run back to the wall
-    c_top, c_hi, c_mid, c_front = "#f08070", "#f8a898", "#e06858", "#c85040"
+    # --- bookshelf: wood grain frame, books of mixed height, a plant on top
+    bx0, bx1 = T + 2, 3 * T - 3
+    rbox(r, bx0, 5, bx1, 2 * T + 3, "#9c6a3c", hi="#c89060", lo="#6a4428")
+    for gy in range(8, 2 * T + 2, 5):
+        r.set(bx0 + 1, gy, "#86582e")
+    for i, sy in enumerate((9, 2 * T - 6)):
+        r.rect(bx0 + 2, sy, bx1 - 2, sy + 9, "#4a2e22")                   # dark back
+        x = bx0 + 3
+        k = 0
+        while x < bx1 - 3:
+            h = 7 + (k * 7 + i * 3) % 3
+            book(r, x, sy + 9 - h, h, ("#e84a3c", "#f8d040", "#4c78e0", "#58a840", "#f07ca8", "#ffffff")[(k + i * 2) % 6])
+            if k % 5 == 3:  # a leaning book
+                r.set(x + 1, sy + 3, "#40b8b0")
+                r.rect(x + 1, sy + 4, x + 1, sy + 8, "#40b8b0")
+                x += 1
+            x += 2
+            k += 1
+        r.rect(bx0 + 1, sy + 10, bx1 - 1, sy + 10, "#c89060")             # shelf lip
+    r.rect(bx0 + 4, 3, bx0 + 8, 6, "#f8d040")                             # tiny pot on top
+    r.set(bx0 + 5, 2, "#58a840")
+    r.set(bx0 + 7, 1, "#9cd468")
+    r.set(bx0 + 6, 2, "#58a840")
+    # --- wall monitor with a heart-rate trace
+    rbox(r, 6 * T + 4, 5, 9 * T - 5, 22, "#4e4a66", hi="#7a7694", lo="#2e2a44")
+    vgrad(r, 6 * T + 6, 7, 9 * T - 7, 20, ["#1c2c60", "#22366e", "#2c4c98"])
+    trace = [0, 0, 0, -1, 0, -5, 4, 0, 0, 0, -1, 0, 0, 0, -5, 4, 0, 0, 0, -1, 0, 0, -5, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    for i, x in enumerate(range(6 * T + 7, 9 * T - 7)):
+        r.set(x, 14 + trace[i % len(trace)], "#9cf0a0")
+    for x in range(6 * T + 8, 6 * T + 16, 2):
+        r.set(x, 9, "#6898e8")
+    r.rect(7 * T + 14, 22, 8 * T + 1, 24, "#6c6e8c")                     # mount
+    # --- PC terminal: tall unit, screen with text, slots, grille, LED
+    px0, px1 = 13 * T - 2, 14 * T - 2
+    r.shadow_rect(px0 - 4, 2 * T + 3, px1 - 2, 2 * T + 9)
+    rbox(r, px0, 3, px1, 2 * T + 7, "#e6e6ee", hi="#ffffff", lo="#a8aac0")
+    rbox(r, px0 + 2, 5, px1 - 2, 16, "#2c3a6c")
+    for y in (7, 9, 11, 13):
+        r.rect(px0 + 4, y, px0 + 4 + (5 + y) % 9, y, "#9cf0e0")
+    r.set(px0 + 4 + 6, 13, "#ffffff")
+    for y in (19, 22):
+        r.rect(px0 + 3, y, px1 - 3, y, OL)
+        r.rect(px0 + 3, y + 1, px1 - 3, y + 1, "#ffffff")
+    for y in range(26, 2 * T + 4, 2):
+        for x in range(px0 + 3, px1 - 3, 2):
+            r.set(x, y, "#a8aac0")
+    r.set(px1 - 4, 19, "#58e868")
+    # --- U-shaped counter
+    c_hi, c_top, c_mid, c_edge, c_front, c_lo = "#ffc4b4", "#f4907c", "#e87864", "#d05c4c", "#c44c40", "#9c3434"
     L, R_, TOPY, FRONT = 3 * T, 12 * T - 1, 3 * T, 3 * T + 11
-    r.shadow_rect(L - 2, FRONT + 8, R_ + 2, FRONT + 20)          # floor shadow under the counter
-    for ax in (L, R_ - T + 1):                                   # side arms
-        r.box(ax, 2 * T - 6, ax + T - 1, FRONT, c_top)
-        r.rect(ax + 1, 2 * T - 5, ax + T - 2, 2 * T - 4, c_hi)
-    r.box(L, TOPY, R_, FRONT, c_top)                             # counter top
-    r.rect(L + 1, TOPY + 1, R_ - 1, TOPY + 2, c_hi)
-    r.rect(L + 1, FRONT - 3, R_ - 1, FRONT - 1, c_mid)
-    r.box(L, FRONT, R_, FRONT + 4, c_front)                      # front face
-    r.box(L + 2, FRONT + 4, R_ - 2, FRONT + 8, "#b8bccc")         # grey plinth
-    r.rect(L + 3, FRONT + 5, R_ - 3, FRONT + 5, "#e6e6ee")
-    r.rect(7 * T + 3, TOPY + 4, 8 * T - 4, TOPY + 9, OL)          # sign-in paper
-    r.rect(7 * T + 4, TOPY + 5, 8 * T - 5, TOPY + 8, "#ffffff")
-    # flower pots on the arms
+    r.shadow_rect(L - 2, FRONT + 8, R_ + 2, FRONT + 20)
+    for ax in (L, R_ - T + 1):
+        rbox(r, ax, 2 * T - 6, ax + T - 1, FRONT, c_top, hi=c_hi, lo=c_mid)
+        r.rect(ax + 3, 2 * T - 3, ax + 3, 2 * T + 6, "#ffd8cc")             # sheen streak
+    rbox(r, L, TOPY, R_, FRONT, c_top, hi=c_hi, lo=c_mid)
+    for x in range(L + 10, R_ - 6, 26):                                    # sheen streaks
+        r.rect(x, TOPY + 2, x + 6, TOPY + 2, "#ffd8cc")
+        r.rect(x + 1, TOPY + 3, x + 3, TOPY + 3, "#ffd8cc")
+    r.rect(L + 1, FRONT - 2, R_ - 1, FRONT - 1, c_edge)                    # rounded lip
+    r.box(L, FRONT, R_, FRONT + 5, c_front)
+    for x in range(L + 4, R_ - 8, 18):                                     # recessed front panels
+        r.rect(x, FRONT + 2, x + 13, FRONT + 3, c_lo)
+        r.rect(x, FRONT + 1, x + 13, FRONT + 1, "#e06858")
+    r.box(L + 2, FRONT + 5, R_ - 2, FRONT + 8, "#b8bccc")
+    r.rect(L + 3, FRONT + 6, R_ - 3, FRONT + 6, "#e6e6ee")
+    # sign-in sheet with lines and a pen, a desk bell
+    rbox(r, 7 * T + 2, TOPY + 3, 8 * T - 3, TOPY + 9, "#ffffff", lo="#d8dcea")
+    for y in (TOPY + 5, TOPY + 7):
+        r.rect(7 * T + 4, y, 8 * T - 6, y, "#9aa0be")
+    r.rect(8 * T - 6, TOPY + 3, 8 * T - 1, TOPY + 3, "#4c78e0")
+    r.set(8 * T, TOPY + 2, "#4c78e0")
+    for y, (a, b) in enumerate(((2, 3), (1, 4), (0, 5))):
+        r.rect(9 * T + 6 + a, TOPY + 3 + y, 9 * T + 6 + b, TOPY + 3 + y, "#f8d040" if y else "#fff28c")
+    r.rect(9 * T + 5, TOPY + 6, 9 * T + 12, TOPY + 6, "#c08c28")
+    r.set(9 * T + 9, TOPY + 2, OL)
+    # flower pots on the arms: shaped pot, leaves, five flower heads
     for px in (L + 8, R_ - 7):
-        r.box(px - 5, 2 * T - 2, px + 4, 2 * T + 7, "#f8d040")
-        r.rect(px + 2, 2 * T - 1, px + 3, 2 * T + 6, "#c08c28")
-        for dx, dy, c in ((-4, -6, "#ffffff"), (0, -8, "#f07ca8"), (3, -6, "#ffffff"), (-2, -4, "#f07ca8"),
-                          (2, -3, "#ffffff"), (-5, -3, "#58a840"), (5, -3, "#58a840")):
-            r.rect(px + dx, 2 * T + dy, px + dx + 1, 2 * T + dy + 1, c)
-        r.set(px, 2 * T - 7, "#f8d040")
-    # --- healing machine behind the counter (left of the nurse)
-    mx0, mx1 = 4 * T + 2, 6 * T + 6
-    r.box(mx0, 6, mx1, 2 * T + 12, "#f4f4f8")
-    r.rect(mx0 + 1, 7, mx1 - 1, 8, "#ffffff")
-    r.rect(mx1 - 3, 9, mx1 - 1, 2 * T + 11, "#c8ccdc")
-    r.box(mx0 + 6, 10, mx1 - 7, 25, "#2f6a3c")                     # screen with 6 lights
+        r.rect(px - 6, 2 * T - 2, px + 5, 2 * T - 1, OL)
+        r.rect(px - 5, 2 * T - 1, px + 4, 2 * T - 1, "#fff28c")
+        for y in range(2 * T, 2 * T + 8):
+            inset = (y - 2 * T) // 4
+            r.set(px - 5 + inset, y, OL)
+            r.set(px + 4 - inset, y, OL)
+            r.rect(px - 4 + inset, y, px + 3 - inset, y, "#f8d040")
+            r.set(px + 2 - inset, y, "#c08c28")
+            r.set(px - 3 + inset, y, "#fff28c")
+        r.rect(px - 3, 2 * T + 8, px + 2, 2 * T + 8, OL)
+        for dx, dy in ((-6, -4), (5, -4), (-4, -2), (4, -2)):
+            r.rect(px + dx, 2 * T + dy, px + dx + 1, 2 * T + dy, LEAF[2])
+            r.set(px + dx, 2 * T + dy - 1, LEAF[1])
+        for (dx, dy, petal, eye) in ((-3, -7, "#ffffff", "#f8d040"), (2, -8, "#f07ca8", "#ffffff"),
+                                     (-1, -4, "#f07ca8", "#ffffff"), (4, -5, "#ffffff", "#f8d040"),
+                                     (-5, -5, "#ffffff", "#f07ca8")):
+            fx, fy = px + dx, 2 * T + dy
+            for ox, oy in ((0, -1), (-1, 0), (1, 0), (0, 1)):
+                r.set(fx + ox, fy + oy, petal)
+            r.set(fx, fy, eye)
+    # --- healing machine
+    mx0, mx1 = 4 * T + 1, 6 * T + 7
+    rbox(r, mx0, 4, mx1, 2 * T + 13, "#f4f4f8", hi="#ffffff", lo="#c4c8d8")
+    r.rect(mx1 - 4, 6, mx1 - 2, 2 * T + 11, "#dde0ea")                     # side panel
+    for y in range(9, 22, 3):
+        r.rect(mx1 - 4, y, mx1 - 2, y, "#a8aac0")                          # vents
+    rbox(r, mx0 + 4, 7, mx1 - 7, 26, "#6c6e8c", hi="#9aa0be", lo="#4e4a66")  # screen bezel
+    r.rect(mx0 + 6, 9, mx1 - 9, 24, "#1e4a34")
     lit = frame % 3
     for i in range(3):
         for j in range(2):
             on = (i + j) % 3 == lit
-            x, y = mx0 + 9 + i * 6, 13 + j * 6
-            r.rect(x, y, x + 3, y + 3, "#9cf0a0" if on else "#58a840")
+            x, y = mx0 + 8 + i * 6, 11 + j * 6
+            r.box(x - 1, y - 1, x + 4, y + 4, "#2f6a3c")
+            r.rect(x, y, x + 3, y + 3, "#9cf0a0" if on else "#3e8a50")
+            r.set(x, y, "#ffffff" if on else "#58a840")
             if on:
-                r.set(x, y, "#ffffff")
-    r.rect(mx0 + 12, 2 * T - 1, mx0 + 17, 2 * T + 6, "#e04838")     # red cross
-    r.rect(mx0 + 9, 2 * T + 1, mx0 + 20, 2 * T + 4, "#e04838")
-    # desk phone (right of the nurse)
-    r.box(9 * T + 1, 2 * T - 4, 10 * T - 2, 2 * T + 9, "#f4f4f8")
-    r.rect(9 * T + 6, 2 * T - 1, 9 * T + 9, 2 * T + 2, "#e04838")
-    r.rect(9 * T + 3, 2 * T + 5, 10 * T - 4, 2 * T + 6, "#c8ccdc")
+                r.set(x + 1, y, "#e8ffe8")
+    for x in range(mx0 + 7, mx1 - 9, 2):
+        r.set(x, 23, "#2f6a3c")                                             # scanline
+    # tray with six dimples + red cross plate + buttons
+    r.box(mx0 + 3, 28, mx1 - 6, 2 * T - 2, "#c8ccdc")
+    for i in range(3):
+        r.rect(mx0 + 6 + i * 6, 2 * T - 5, mx0 + 8 + i * 6, 2 * T - 4, "#8e92ac")
+    rbox(r, mx0 + 8, 2 * T, mx0 + 21, 2 * T + 11, "#ffffff", lo="#d8dcea")
+    r.rect(mx0 + 13, 2 * T + 2, mx0 + 16, 2 * T + 9, "#e04838")
+    r.rect(mx0 + 10, 2 * T + 4, mx0 + 19, 2 * T + 7, "#e04838")
+    r.rect(mx0 + 13, 2 * T + 2, mx0 + 13, 2 * T + 5, "#f07058")
+    r.rect(mx0 + 16, 2 * T + 6, mx0 + 16, 2 * T + 9, "#a02c34")
+    r.set(mx0 + 25, 2 * T + 2, "#58e868")
+    r.set(mx0 + 25, 2 * T + 5, "#f8d040")
+    # --- desk phone: body, handset, keypad, LED, curly cord
+    ph0 = 9 * T + 1
+    rbox(r, ph0, 2 * T - 4, ph0 + 13, 2 * T + 9, "#eeeef4", hi="#ffffff", lo="#c4c8d8")
+    rbox(r, ph0 + 1, 2 * T - 7, ph0 + 12, 2 * T - 2, "#4e4a66", hi="#7a7694")
+    for y in range(2 * T + 1, 2 * T + 8, 2):
+        for x in range(ph0 + 3, ph0 + 11, 3):
+            r.set(x, y, "#9aa0be")
+    r.set(ph0 + 11, 2 * T, "#e04838")
+    for i, y in enumerate(range(2 * T + 10, 2 * T + 14)):
+        r.set(ph0 + 12 + (i % 2), y, "#4e4a66")
+    # --- wall clock + framed picture on the wall
+    wall_clock(r, 11 * T + 4, 14)
     # --- heal pad: a lit dome, shaded top half, bright lower half
     cx, cy, rx, ry = 7.5 * T, 6.0 * T, 2.4 * T, 2.0 * T
-    def pad(mode_lower):
+    def pad(lower):
         def inside(x, y):
             d = ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2
             if d >= 1.0 or (d > 0.86 and (x + y) % 2):
                 return False
-            return (y >= cy) == mode_lower
+            return (y >= cy) == lower
         return inside
     r.recolor(pad(True), "light")
     r.recolor(pad(False), "shadow")
-    # lounge: seats + glass tables, plants
+    # --- lounge
     seat(r, 12 * T, 5 * T)
-    glass_table(r, 12 * T - 2, 6 * T + 4)
+    glass_table(r, 12 * T - 2, 6 * T + 4, item="cup")
     seat(r, 2 * T + 1, 5 * T)
-    glass_table(r, T + 3, 6 * T + 4)
+    glass_table(r, T + 3, 6 * T + 4, item="magazine")
     mat(r, 7)
-    # collision
     r.block(*[(x, 2) for x in range(1, 14) if x != 7], (13, 2))
     r.block(*[(x, 3) for x in range(3, 12)], (3, 2), (11, 2))
     r.block((12, 5), (12, 6), (13, 6), (12, 7), (13, 7), (2, 5), (1, 6), (2, 6), (1, 7), (2, 7))
-    r.solid.discard((7, 2))      # the nurse stands here (her NPC blocks it)
+    r.solid.discard((7, 2))
     return r
 
 
@@ -346,85 +522,139 @@ def paint_center(frame):
 GOODS = ["#e84a3c", "#f8d040", "#58a840", "#4c78e0", "#f07ca8", "#ffffff", "#f07c2e", "#40b8b0"]
 
 
-def shelf_unit(r, x0, y0, h=3 * T):
-    """Tall white shelving unit, front-top view, goods on 3 shelves, shadow."""
+def shelf_unit(r, x0, y0, h=3 * T, seed=0):
+    """Tall shelving unit: header sign, three shelves of mixed products
+    (boxes, bottles, cans), yellow price tags, side panel, kick plate."""
     r.shadow_rect(x0 - 5, y0 + 6, x0 + 10, y0 + h + 5)
-    r.box(x0, y0, x0 + T - 1, y0 + h - 1, "#f4f4f8")
-    r.rect(x0 + 1, y0 + 1, x0 + T - 2, y0 + 4, "#ffffff")            # top cap
-    r.rect(x0 + T - 4, y0 + 5, x0 + T - 2, y0 + h - 2, "#c8ccdc")     # side panel
-    r.rect(x0 + 12, y0 + 5, x0 + 12, y0 + h - 2, "#9aa0be")
+    rbox(r, x0, y0, x0 + T - 1, y0 + h - 1, "#eeeef4", hi="#ffffff", lo="#c4c8d8")
+    r.rect(x0 + 1, y0 + 1, x0 + T - 2, y0 + 5, "#e04838" if seed % 2 else "#4870c8")   # header
+    r.rect(x0 + 1, y0 + 1, x0 + T - 2, y0 + 1, "#ffa088" if seed % 2 else "#6898e8")
+    for x in range(x0 + 3, x0 + T - 4, 2):
+        r.set(x, y0 + 3, "#ffffff")
+    r.rect(x0 + T - 4, y0 + 6, x0 + T - 2, y0 + h - 2, "#d4d8e4")         # side panel
+    r.rect(x0 + T - 4, y0 + 6, x0 + T - 4, y0 + h - 2, "#a8aac0")
     for i, sy in enumerate(range(y0 + 7, y0 + h - 8, 12)):
-        r.rect(x0 + 2, sy, x0 + 11, sy + 7, "#dde3ee")
-        for gx in range(x0 + 2, x0 + 11, 3):
-            c = GOODS[(gx // 3 + i * 2 + x0) % len(GOODS)]
-            r.rect(gx, sy + 1, gx + 1, sy + 6, c)
-            r.set(gx, sy + 1, "#ffffff")
-        r.rect(x0 + 2, sy + 8, x0 + 11, sy + 8, "#9aa0be")
-    r.rect(x0 + 1, y0 + h - 4, x0 + T - 2, y0 + h - 2, "#e04838")      # red kick plate
+        r.rect(x0 + 1, sy, x0 + T - 5, sy + 8, "#d8dee8")
+        kind = (i + seed) % 3
+        x = x0 + 2
+        while x < x0 + T - 6:
+            c = GOODS[(x + i * 3 + seed) % len(GOODS)]
+            if kind == 0:
+                box_item(r, x, sy + 2, 3, 6, c)
+                x += 4
+            elif kind == 1:
+                bottle(r, x, sy + 1, c, h=7)
+                x += 3
+            else:
+                r.rect(x, sy + 4, x + 2, sy + 7, c)
+                r.rect(x, sy + 4, x + 2, sy + 4, "#e6e6ee")
+                r.set(x, sy + 5, "#ffffff")
+                x += 3
+        r.rect(x0 + 1, sy + 9, x0 + T - 5, sy + 9, "#9aa0be")              # shelf lip
+        for tx in range(x0 + 2, x0 + T - 6, 5):
+            r.rect(tx, sy + 9, tx + 2, sy + 9, "#f8d040")                   # price tags
+    r.rect(x0 + 1, y0 + h - 4, x0 + T - 2, y0 + h - 2, "#e04838")
     r.rect(x0 + 1, y0 + h - 4, x0 + T - 2, y0 + h - 4, "#f07058")
 
 
+def potion(r, x, y, col):
+    """Tiny spray-bottle product for display cases."""
+    r.rect(x + 1, y, x + 2, y, "#9aa0be")
+    r.set(x + 3, y, "#9aa0be")
+    r.rect(x, y + 1, x + 3, y + 5, col)
+    r.rect(x, y + 3, x + 3, y + 3, "#ffffff")
+    r.set(x, y + 1, "#ffffff")
+
+
 def glass_counter(r, x0, y0, x1, y1):
-    """Glass display counter: glassy top with glints, blue front, yellow base."""
+    """Glass display counter: metal frame, glass top showing products inside,
+    glazed front with mullions, yellow plinth."""
     r.shadow_rect(x0 - 4, y1 - 2, x1 + 2, y1 + 8)
-    glass_pane(r, x0, y0, x1, y1 - 10, tint="#e8e4f4")
+    rbox(r, x0, y0, x1, y1 - 10, "#e6e2f4", hi="#ffffff", lo="#b8b4d0")
+    for i, x in enumerate(range(x0 + 4, x1 - 6, 7)):
+        potion(r, x, y0 + 4 + (i % 2) * 3, ("#8c62c8", "#40b8b0", "#e84a3c", "#f8d040")[i % 4])
+    for k in range(min(x1 - x0, y1 - y0) - 14):
+        r.set(x0 + 3 + k, y0 + 1 + k // 2, "#ffffff")
     r.box(x0, y1 - 10, x1, y1 - 3, "#a8c8f0")
     for x in range(x0 + 6, x1 - 2, 8):
-        r.rect(x, y1 - 9, x, y1 - 4, "#ffffff")
+        r.rect(x, y1 - 9, x, y1 - 4, "#e6e6ee")
+        r.rect(x + 1, y1 - 9, x + 1, y1 - 4, "#8ea8c4")
     r.rect(x0 + 1, y1 - 9, x1 - 1, y1 - 9, "#d4e6fa")
-    r.box(x0, y1 - 3, x1, y1, "#e8c858")
+    rbox(r, x0, y1 - 3, x1, y1 + 1, "#e8c858", hi="#fff0a0", lo="#b8902c")
 
 
 def paint_mart(frame):
     r = Room(14, 10, "mart")
     shell(r)
-    # poster
-    r.box(3 * T + 2, 6, 4 * T + 12, 26, "#ffffff")
-    r.rect(3 * T + 5, 9, 4 * T + 9, 12, "#4c78e0")
-    for x in range(3 * T + 5, 4 * T + 10, 3):
-        r.rect(x, 15, x + 1, 18, "#f8d040")
-    r.rect(3 * T + 5, 21, 4 * T + 9, 22, "#e84a3c")
-    # glass display cabinets on the back wall
+    # poster: headline bar, spray bottle, price burst, text lines
+    p0, p1 = 3 * T + 2, 4 * T + 12
+    rbox(r, p0, 5, p1, 27, "#ffffff", lo="#d8dcea")
+    r.rect(p0 + 2, 7, p1 - 2, 10, "#4870c8")
+    for x in range(p0 + 4, p1 - 4, 3):
+        r.set(x, 8, "#ffffff")
+    potion(r, p0 + 4, 13, "#8c62c8")
+    potion(r, p0 + 9, 13, "#40b8b0")
+    for y in range(13, 21):
+        for x in range(p1 - 10, p1 - 2):
+            if abs(x - (p1 - 6)) + abs(y - 17) <= 4:
+                r.set(x, y, "#f8d040" if abs(x - (p1 - 6)) + abs(y - 17) < 4 else "#e88848")
+    r.rect(p0 + 3, 23, p1 - 3, 23, "#9aa0be")
+    r.rect(p0 + 3, 25, p1 - 8, 25, "#9aa0be")
+    # glass wall cabinets with bottles on shelves
     for i in range(3):
         x0 = 6 * T + 1 + i * T
-        glass_pane(r, x0, 4, x0 + T - 2, 2 * T - 1, tint="#cfe6f6", goods=["#f8d040", "#f2b832", "#fff28c"])
-    # chiller cases (protrude into the floor)
+        glass_pane(r, x0, 4, x0 + T - 2, 2 * T - 1, tint="#cfe6f6",
+                   goods=["#f8d040", "#f2b832", "#e84a3c", "#58a840"], shelves=3)
+    # chiller cases: header light, glass doors, bottles with caps, handles, grille
     for i in range(2):
         x0 = 10 * T + i * T
         r.shadow_rect(x0 - 3, 3 * T - 2, x0 + T - 2, 3 * T + 6)
-        r.box(x0, 2 * T - 10, x0 + T - 1, 3 * T - 1, "#f4f4f8")
-        r.rect(x0 + 1, 2 * T - 9, x0 + T - 2, 2 * T - 6, "#ffffff")
-        r.rect(x0 + 4, 2 * T - 8, x0 + T - 5, 2 * T - 7, "#9cf0a0")
-        r.box(x0 + 1, 2 * T - 4, x0 + T - 2, 2 * T + 9, "#dde3ee")
-        for j, gy in enumerate((2 * T - 2, 2 * T + 3)):
+        rbox(r, x0, 2 * T - 11, x0 + T - 1, 3 * T - 1, "#eeeef4", hi="#ffffff", lo="#c4c8d8")
+        r.rect(x0 + 2, 2 * T - 9, x0 + T - 3, 2 * T - 7, "#58e868")
+        r.rect(x0 + 2, 2 * T - 9, x0 + T - 3, 2 * T - 9, "#c8ffd0")
+        rbox(r, x0 + 1, 2 * T - 5, x0 + T - 2, 2 * T + 9, "#d4ecf8", hi="#ffffff", lo="#8ea8c4")
+        for j, gy in enumerate((2 * T - 4, 2 * T + 2)):
             for gx in range(x0 + 2, x0 + T - 3, 3):
-                r.rect(gx, gy, gx + 1, gy + 3, GOODS[(gx + j + i) % 4])
-        r.box(x0, 2 * T + 9, x0 + T - 1, 3 * T - 1, "#6898e8")
-        r.rect(x0 + 2, 2 * T + 11, x0 + T - 3, 2 * T + 12, "#94c4ff")
-    # palm (top-left), box behind the counter
+                bottle(r, gx, gy, GOODS[(gx // 3 + j + i) % 5], h=5)
+            r.rect(x0 + 2, gy + 6, x0 + T - 3, gy + 6, "#8ea8c4")
+        r.rect(x0 + T - 4, 2 * T - 2, x0 + T - 4, 2 * T + 5, "#9aa0be")      # handle
+        r.set(x0 + 3, 2 * T - 3, "#ffffff")
+        rbox(r, x0, 2 * T + 9, x0 + T - 1, 3 * T - 1, "#6898e8", hi="#94c4ff", lo="#3c62b0")
+        for x in range(x0 + 2, x0 + T - 2, 2):
+            r.rect(x, 2 * T + 12, x, 2 * T + 13, "#2c4c98")                 # grille
     plant_palm(r, 2 * T + 8, 3 * T - 2)
+    # cardboard box: flaps, tape, label
     r.shadow_rect(T - 1, 4 * T - 3, 2 * T + 2, 4 * T + 3)
-    r.box(T + 1, 3 * T + 1, 2 * T + 1, 4 * T - 2, "#e8c070")
-    r.rect(T + 2, 3 * T + 2, 2 * T, 3 * T + 5, "#f8d890")
-    r.rect(T + 8, 3 * T + 2, T + 9, 4 * T - 3, "#c09048")
-    # register desk (vertical) + glass counter (L-shape around the clerk)
+    rbox(r, T + 1, 3 * T, 2 * T + 1, 4 * T - 2, "#e0b468", hi="#f8d890", lo="#b08440")
+    r.rect(T + 2, 3 * T + 4, 2 * T, 3 * T + 4, "#b08440")
+    r.rect(T + 8, 3 * T + 1, T + 9, 4 * T - 3, "#c8a050")
+    r.rect(T + 8, 3 * T + 1, T + 8, 3 * T + 3, "#f8e8b0")
+    r.box(T + 3, 3 * T + 7, T + 7, 3 * T + 11, "#ffffff")
+    r.set(T + 4, 3 * T + 9, "#e04838")
+    # register desk (vertical): bevelled top, cash register, receipt, drawer, side door
     r.shadow_rect(4 * T - 4, 6 * T - 4, 5 * T + 2, 6 * T + 6)
-    r.box(4 * T, 2 * T - 2, 5 * T - 1, 6 * T - 1, "#c8e0f8")
-    r.rect(4 * T + 1, 2 * T - 1, 5 * T - 2, 2 * T, "#ffffff")
-    r.rect(5 * T - 4, 2 * T + 1, 5 * T - 2, 6 * T - 6, "#94b4e0")
-    r.box(4 * T + 1, 6 * T - 6, 5 * T - 2, 6 * T - 1, "#8e92ac")
-    r.box(4 * T + 2, 2 * T + 2, 5 * T - 3, 3 * T + 4, "#e6e6ee")       # cash register
-    r.rect(4 * T + 3, 2 * T + 3, 5 * T - 4, 2 * T + 7, "#4e4a66")
-    r.rect(4 * T + 4, 2 * T + 4, 5 * T - 6, 2 * T + 5, "#9cf0a0")
-    for y in (2 * T + 10, 2 * T + 13):
-        for x in range(4 * T + 4, 5 * T - 4, 3):
-            r.rect(x, y, x + 1, y + 1, "#9aa0be")
-    r.box(4 * T + 4, 3 * T + 8, 5 * T - 5, 4 * T + 2, "#f6eebe")        # note pad
+    rbox(r, 4 * T, 2 * T - 3, 5 * T - 1, 6 * T - 1, "#c8e0f8", hi="#eef6ff", lo="#94b4e0")
+    r.rect(5 * T - 4, 2 * T + 1, 5 * T - 2, 6 * T - 6, "#a8c4ec")
+    r.rect(4 * T + 2, 5 * T - 6, 5 * T - 6, 5 * T - 6, "#94b4e0")             # cabinet door seam
+    r.rect(5 * T - 7, 5 * T - 2, 5 * T - 7, 5 * T + 2, "#6c6e8c")             # handle
+    rbox(r, 4 * T + 1, 6 * T - 6, 5 * T - 2, 6 * T - 1, "#8e92ac", hi="#b8bccc")
+    rbox(r, 4 * T + 1, 2 * T, 5 * T - 2, 3 * T + 6, "#e6e6ee", hi="#ffffff", lo="#a8aac0")
+    r.rect(4 * T + 3, 2 * T + 2, 5 * T - 4, 2 * T + 6, "#2e3a2e")             # display
+    for x in range(4 * T + 4, 5 * T - 5, 2):
+        r.set(x, 2 * T + 4, "#58e868")
+    for y in (2 * T + 9, 2 * T + 11, 2 * T + 13):
+        for x in range(4 * T + 3, 5 * T - 4, 2):
+            r.set(x, y, "#6c6e8c" if (x + y) % 4 else "#e04838")
+    r.rect(4 * T + 2, 3 * T + 2, 5 * T - 3, 3 * T + 5, "#c8ccdc")             # drawer
+    r.rect(4 * T + 6, 3 * T + 3, 4 * T + 9, 3 * T + 3, "#6c6e8c")
+    r.rect(5 * T - 4, 2 * T - 6, 5 * T - 2, 2 * T, "#ffffff")                 # receipt paper
+    r.set(5 * T - 3, 2 * T - 4, "#9aa0be")
+    rbox(r, 4 * T + 3, 3 * T + 9, 5 * T - 4, 4 * T + 3, "#f6eebe", lo="#dccf9a")  # notepad
+    for y in (3 * T + 11, 3 * T + 13):
+        r.rect(4 * T + 5, y, 5 * T - 6, y, "#c4b47a")
     glass_counter(r, T + 1, 4 * T + 6, 4 * T - 1, 6 * T - 1)
-    # shelving units (two together, a gap, one more)
-    for col in (9, 10, 12):
-        shelf_unit(r, col * T, 5 * T)
-    # second glass case (bottom-left)
+    for i, col in enumerate((9, 10, 12)):
+        shelf_unit(r, col * T, 5 * T, seed=i)
     glass_counter(r, 2 * T, 7 * T + 2, 4 * T + 6, 8 * T + 12)
     mat(r, 6)
     r.block((1, 2), (2, 2), (3, 2), (1, 3), (4, 2), (4, 3), (4, 4), (4, 5), (1, 4), (2, 4), (3, 4), (1, 5), (2, 5), (3, 5),
@@ -437,82 +667,178 @@ def paint_mart(frame):
 def paint_home(frame):
     r = Room(13, 10, "home")
     shell(r)
-    # kitchen: sink unit, glass cupboard, bin, cooker, TV
-    r.box(T + 1, 6, 3 * T - 1, 2 * T - 1, "#f4f4f8")
-    r.rect(T + 2, 7, 3 * T - 2, 8, "#ffffff")
-    r.box(T + 4, 9, 2 * T + 8, 15, "#c8ccdc")
-    r.rect(T + 11, 4, T + 12, 9, "#9aa0be")
-    r.box(2 * T + 11, 9, 3 * T - 4, 14, "#e6e6ee")
-    r.box(T + 1, 2 * T - 12, 3 * T - 1, 2 * T - 1, "#6898e8")
-    for x in (T + 6, 2 * T + 8):
-        r.rect(x, 2 * T - 8, x + 5, 2 * T - 7, "#c2ecff")
-    r.box(3 * T, 2, 4 * T, 2 * T - 1, "#e8c070")                          # glass cupboard
-    glass_pane(r, 3 * T + 2, 4, 4 * T - 2, 17, tint="#d4ecf8")
-    r.rect(3 * T + 2, 20, 4 * T - 2, 28, "#c09048")
-    r.rect(3 * T + 7, 23, 3 * T + 9, 24, "#8a5634")
-    r.box(4 * T + 3, 2 * T - 13, 5 * T - 4, 2 * T - 1, "#f4f4f8")         # bin
-    r.rect(4 * T + 4, 2 * T - 12, 5 * T - 5, 2 * T - 11, "#c8ccdc")
-    r.box(6 * T + 1, 4, 7 * T + 14, 2 * T - 1, "#e6e6ee")                  # cooker
-    r.box(6 * T + 4, 6, 7 * T + 11, 14, "#9aa0be")
-    for x in (6 * T + 7, 7 * T + 4):
-        r.box(x, 7, x + 5, 12, "#4e4a66")
-    r.box(6 * T + 4, 18, 7 * T + 11, 2 * T - 4, "#c2ecff")
-    r.rect(6 * T + 5, 19, 7 * T + 10, 20, "#ffffff")
-    r.box(8 * T + 2, 8, 9 * T + 13, 2 * T - 6, "#4e4a66")                  # TV
-    r.rect(8 * T + 4, 10, 9 * T + 11, 2 * T - 9, "#6898e8")
-    r.rect(8 * T + 4, 10, 9 * T + 11, 12, "#c2ecff")
-    r.rect(8 * T + 9, 16, 9 * T + 4, 19, "#f8d040")
-    r.box(8 * T + 6, 2 * T - 6, 9 * T + 9, 2 * T - 1, "#8a5634")
-    # staircase up (right), small rug at its foot
+    # --- sink unit: worktop lip, recessed basin, tap, cabinet doors with handles
+    s0, s1 = T + 1, 3 * T - 1
+    rbox(r, s0, 5, s1, 2 * T - 1, "#f4f4f8", hi="#ffffff", lo="#c4c8d8")
+    r.rect(s0 + 1, 15, s1 - 1, 16, "#d8dcea")                                  # worktop lip
+    rbox(r, s0 + 3, 8, s0 + 19, 14, "#9aa0be")                                 # basin
+    r.rect(s0 + 4, 9, s0 + 18, 9, "#6c6e8c")
+    r.rect(s0 + 5, 12, s0 + 17, 13, "#c8ccdc")
+    r.set(s0 + 11, 12, "#4e4a66")                                              # drain
+    r.rect(s0 + 10, 3, s0 + 12, 4, "#c8ccdc")                                  # tap
+    r.rect(s0 + 11, 4, s0 + 11, 8, "#9aa0be")
+    r.set(s0 + 10, 3, "#ffffff")
+    rbox(r, s0 + 22, 9, s1 - 2, 14, "#e6e6ee", hi="#ffffff")                   # dish rack
+    for x in range(s0 + 24, s1 - 3, 2):
+        r.rect(x, 7, x, 10, "#ffffff")
+    for d in range(2):                                                          # cabinet doors
+        dx0 = s0 + 2 + d * 15
+        rbox(r, dx0, 17, dx0 + 13, 2 * T - 2, "#6898e8", hi="#94c4ff", lo="#3c62b0")
+        r.rect(dx0 + (11 if d == 0 else 2), 21, dx0 + (11 if d == 0 else 2), 25, "#ffffff")
+    # --- glass cupboard: wood frame with grain, plates and cups inside, drawers
+    rbox(r, 3 * T, 1, 4 * T, 2 * T - 1, "#d8a868", hi="#ecc488", lo="#a8784a")
+    for y in range(3, 2 * T - 2, 4):
+        r.set(3 * T + 1, y, "#c08850")
+    rbox(r, 3 * T + 2, 3, 4 * T - 2, 17, "#d4ecf8", hi="#ffffff", lo="#8ea8c4")
+    r.rect(3 * T + 3, 10, 4 * T - 3, 10, "#a8784a")
+    for x in (3 * T + 4, 3 * T + 9):                                           # plates
+        r.box(x - 1, 4, x + 3, 9, "#ffffff")
+        r.rect(x, 6, x + 2, 7, "#d8dcea")
+    for x in (3 * T + 4, 3 * T + 8, 3 * T + 12):                               # cups
+        r.rect(x, 12, x + 1, 15, "#f07ca8")
+        r.set(x + 2, 13, "#f07ca8")
+    for k in range(6):
+        r.set(3 * T + 5 + k, 4 + k, "#ffffff")
+    for y in (20, 25):
+        rbox(r, 3 * T + 2, y, 4 * T - 2, y + 4, "#c08850", hi="#ecc488")
+        r.rect(3 * T + 7, y + 2, 3 * T + 9, y + 2, "#4a2a22")
+    # --- pedal bin
+    rbox(r, 4 * T + 3, 2 * T - 14, 5 * T - 4, 2 * T - 1, "#e6e6ee", hi="#ffffff", lo="#a8aac0")
+    r.rect(4 * T + 3, 2 * T - 11, 5 * T - 4, 2 * T - 11, OL)
+    r.rect(4 * T + 6, 2 * T - 15, 5 * T - 7, 2 * T - 15, "#9aa0be")
+    r.rect(4 * T + 5, 2 * T, 4 * T + 8, 2 * T, "#9aa0be")
+    # --- framed picture between bin and cooker
+    framed_picture(r, 5 * T, 5, 6 * T - 2, 17)
+    # --- cooker: burners, knobs, oven window with glare, handle
+    c0, c1 = 6 * T + 1, 7 * T + 14
+    rbox(r, c0, 3, c1, 2 * T - 1, "#e6e6ee", hi="#ffffff", lo="#a8aac0")
+    rbox(r, c0 + 2, 5, c1 - 2, 13, "#4e4a66")
+    for bx in (c0 + 6, c0 + 20):
+        for y in range(6, 13):
+            for x in range(bx - 4, bx + 5):
+                d = hypot(x - bx, (y - 9) * 1.3)
+                if 2.2 < d < 4.0:
+                    r.set(x, y, "#2e2a44" if d > 3.2 else "#7a7694")
+        r.set(bx, 9, "#e04838")
+    for x in range(c0 + 4, c1 - 3, 5):                                         # knobs
+        r.rect(x, 15, x + 1, 16, "#2e2a44")
+        r.set(x, 15, "#9aa0be")
+    rbox(r, c0 + 3, 18, c1 - 3, 2 * T - 3, "#2e2a44")                          # oven door
+    r.rect(c0 + 5, 21, c1 - 5, 2 * T - 6, "#4e4a66")
+    for k in range(4):
+        r.set(c0 + 7 + k, 21 + k, "#9aa0be")
+    r.rect(c0 + 5, 19, c1 - 5, 19, "#c8ccdc")                                  # handle
+    # --- TV: rounded casing, screen with a scene and glare, grille, stand
+    tv0, tv1 = 8 * T + 2, 9 * T + 13
+    rbox(r, tv0, 6, tv1, 2 * T - 6, "#4e4a66", hi="#7a7694", lo="#2e2a44")
+    rbox(r, tv0 + 2, 8, tv1 - 6, 2 * T - 9, "#94c4ff")
+    vgrad(r, tv0 + 3, 9, tv1 - 7, 16, ["#c2ecff", "#94c4ff"])
+    r.rect(tv0 + 3, 17, tv1 - 7, 2 * T - 10, "#58a840")
+    r.rect(tv0 + 3, 17, tv1 - 7, 17, "#9cd468")
+    r.rect(tv0 + 12, 13, tv0 + 15, 16, "#f8d040")                              # a little Pokemon-ish blob
+    r.set(tv0 + 13, 14, OL)
+    r.set(tv0 + 4, 9, "#ffffff")
+    r.set(tv0 + 5, 9, "#ffffff")
+    r.set(tv0 + 4, 10, "#ffffff")
+    for y in range(9, 2 * T - 10, 2):                                          # speaker grille
+        r.rect(tv1 - 4, y, tv1 - 2, y, "#2e2a44")
+    r.set(tv1 - 3, 2 * T - 9, "#e04838")
+    rbox(r, tv0 + 2, 2 * T - 6, tv1 - 2, 2 * T - 1, "#a8784a", hi="#d8a868")
+    r.rect(tv0 + 15, 2 * T - 5, tv0 + 15, 2 * T - 2, "#86522e")
+    r.set(tv0 + 12, 2 * T - 3, "#f8d040")
+    r.set(tv0 + 18, 2 * T - 3, "#f8d040")
+    # --- staircase: treads with nosing, red carpet runner + gold rods, banister
     sx0 = 10 * T + 2
     for i in range(6):
         y0 = 2 + i * 7
-        r.box(sx0 + i * 3, y0, 12 * T + 14, y0 + 7, "#f2d878")
-        r.rect(sx0 + i * 3 + 1, y0 + 1, 12 * T + 13, y0 + 2, "#fff0a6")
-        r.rect(sx0 + i * 3 + 1, y0 + 6, 12 * T + 13, y0 + 6, "#c8a848")
-    for i in range(7):
-        r.rect(sx0 + i * 3, 2 + i * 7, sx0 + i * 3 + 1, 2 + i * 7 + 3, "#a8803c")
-    r.rect(sx0, 2, sx0 + 1, 3 * T, "#c8a848")
+        x0 = sx0 + i * 3
+        r.box(x0, y0, 12 * T + 14, y0 + 7, "#f2d878")
+        r.rect(x0 + 1, y0 + 1, 12 * T + 13, y0 + 1, "#fff6c0")              # nosing
+        r.rect(x0 + 1, y0 + 6, 12 * T + 13, y0 + 6, "#c8a848")
+        r.rect(x0 + 1, y0 + 2, 12 * T + 13, y0 + 2, "#ecd070")
+        rx0 = x0 + 6
+        r.rect(rx0, y0 + 1, rx0 + 12, y0 + 6, "#c84038")                      # runner
+        r.rect(rx0, y0 + 1, rx0 + 12, y0 + 1, "#e86a4c")
+        r.rect(rx0, y0 + 6, rx0 + 12, y0 + 6, "#f8d040")                      # stair rod
+    for i in range(7):                                                         # balusters + rail
+        bx = sx0 + i * 3
+        r.rect(bx, 2 + i * 7 - 2, bx, 2 + i * 7 + 4, "#a8803c")
+        r.set(bx, 2 + i * 7 - 2, "#fff0a6")
+    for i in range(20):
+        r.set(sx0 + i, 1 + round(i * 7 / 3) - 1, "#8a6030")
+        r.set(sx0 + i, 1 + round(i * 7 / 3), "#d8b058")
     r.shadow_rect(10 * T, 3 * T - 2, 12 * T + 14, 3 * T + 6)
-    r.box(9 * T + 2, 2 * T + 1, 10 * T - 3, 3 * T + 12, "#f08c6c")
-    r.rect(9 * T + 4, 2 * T + 3, 10 * T - 5, 3 * T + 10, "#e86a4c")
-    for y in (2 * T + 1, 3 * T + 12):
+    # runner rug at the foot of the stairs, with fringe
+    rbox(r, 9 * T + 2, 2 * T + 1, 10 * T - 3, 3 * T + 12, "#e86a4c", hi="#f8a088", lo="#a83c34")
+    r.rect(9 * T + 5, 2 * T + 4, 10 * T - 6, 3 * T + 9, "#c84038")
+    for y in range(2 * T + 7, 3 * T + 7, 4):
+        r.set(9 * T + 7, y, "#f8d040")
+        r.set(9 * T + 8, y + 1, "#f8d040")
+    for y in (2 * T, 3 * T + 13):
         for x in range(9 * T + 3, 10 * T - 3, 2):
             r.set(x, y, "#fff0d8")
-    # big green rug with border + dots, checked table, four chairs
+    # --- big rug: border band with diamonds, flower dots, corner motifs
     rx0, ry0, rx1, ry1 = 3 * T, 3 * T, 11 * T - 1, 8 * T - 1
-    r.box(rx0, ry0, rx1, ry1, "#68b858")
+    rbox(r, rx0, ry0, rx1, ry1, "#68b858", lo="#4c9a44")
     r.rect(rx0 + 3, ry0 + 3, rx1 - 3, ry1 - 3, "#f4f4f8")
     r.rect(rx0 + 5, ry0 + 5, rx1 - 5, ry1 - 5, "#68b858")
+    for x in range(rx0 + 6, rx1 - 4, 6):                                       # diamonds in the band
+        for y in (ry0 + 4, ry1 - 4):
+            r.set(x, y, "#58a840")
+    for y in range(ry0 + 7, ry1 - 4, 6):
+        for x in (rx0 + 4, rx1 - 4):
+            r.set(x, y, "#58a840")
     for y in range(ry0 + 9, ry1 - 7, 8):
         for x in range(rx0 + 9, rx1 - 7, 8):
-            if not (6 * T - 4 <= x <= 8 * T + 4 and 4 * T - 2 <= y <= 6 * T + 6):
-                r.rect(x, y, x + 1, y + 1, "#f8d040")
+            if not (6 * T - 4 <= x <= 8 * T + 4 and 4 * T - 4 <= y <= 6 * T + 8):
+                r.set(x, y, "#fff28c")
+                for ox, oy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    r.set(x + ox, y + oy, "#f8d040")
+    for (cx_, cy_) in ((rx0 + 8, ry0 + 8), (rx1 - 8, ry0 + 8), (rx0 + 8, ry1 - 8), (rx1 - 8, ry1 - 8)):
+        for ox, oy in ((0, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)):
+            r.set(cx_ + ox, cy_ + oy, "#ffffff")
+    # --- table: hanging checked cloth with folds, plates, cups, vase
     tx0, ty0, tx1, ty1 = 6 * T, 4 * T + 2, 8 * T - 1, 6 * T + 4
-    for y in range(ty1 - 2, ty1 + 6):                                       # table shadow on the rug
+    for y in range(ty1 - 2, ty1 + 6):
         for x in range(tx0 - 3, tx1 - 1):
             if (x + y) % 2 == 0 or y < ty1 + 4:
                 r.set(x, y, "#4c9a44")
-    r.box(tx0, ty0, tx1, ty1 - 3, "#f2e098")
-    for y in range(ty0 + 2, ty1 - 6):
-        for x in range(tx0 + 2, tx1 - 2):
+    rbox(r, tx0, ty0, tx1, ty1 - 3, "#ffffff")
+    for y in range(ty0 + 1, ty1 - 3):
+        for x in range(tx0 + 1, tx1):
             on = ((x - tx0) // 4 + (y - ty0) // 4) % 2 == 0
             r.set(x, y, "#5c88dc" if on else "#ffffff")
-    r.box(tx0, ty1 - 3, tx1, ty1, "#c8a848")
+    for x in range(tx0 + 3, tx1 - 2, 5):                                       # hanging folds
+        r.rect(x, ty1 - 6, x, ty1 - 3, "#3c62b0")
+    r.rect(tx0 + 1, ty1 - 3, tx1 - 1, ty1 - 3, "#3c62b0")
     for lx in (tx0 + 2, tx1 - 3):
-        r.rect(lx, ty1, lx + 1, ty1 + 3, "#8a6a30")
+        r.rect(lx, ty1 - 2, lx + 1, ty1 + 2, "#8a6a30")
+    for (px_, py_) in ((tx0 + 4, ty0 + 4), (tx1 - 10, ty0 + 4), (tx0 + 4, ty1 - 14), (tx1 - 10, ty1 - 14)):
+        r.box(px_, py_, px_ + 6, py_ + 5, "#ffffff")
+        r.rect(px_ + 1, py_ + 1, px_ + 5, py_ + 1, "#d8dcea")
+        r.rect(px_ + 2, py_ + 2, px_ + 4, py_ + 3, "#f8d040")                # food
+    vx, vy = (tx0 + tx1) // 2, (ty0 + ty1) // 2 - 3
+    rbox(r, vx - 2, vy, vx + 2, vy + 6, "#94c4ff", hi="#ffffff")
+    r.set(vx, vy - 2, "#e84a3c")
+    r.set(vx - 1, vy - 1, "#e84a3c")
+    r.set(vx + 1, vy - 1, "#e84a3c")
+    r.set(vx, vy - 1, "#f8d040")
+    # --- chairs: wooden frame, slatted back, cushion with seam
     for (cx, cy, face) in ((5 * T + 1, 4 * T, "r"), (5 * T + 1, 5 * T + 2, "r"), (8 * T + 1, 4 * T, "l"), (8 * T + 1, 5 * T + 2, "l")):
         for y in range(cy + 11, cy + 16):
             for x in range(cx - 1, cx + 12):
                 if (x + y) % 2 == 0 or y > cy + 12:
                     r.set(x, y, "#4c9a44")
-        r.box(cx, cy + 3, cx + 12, cy + 12, "#94c4ff")
-        r.rect(cx + 1, cy + 4, cx + 11, cy + 6, "#c2ecff")
+        rbox(r, cx, cy + 3, cx + 12, cy + 12, "#d8a868", hi="#ecc488", lo="#a8784a")
+        rbox(r, cx + 2, cy + 4, cx + 10, cy + 10, "#94c4ff", hi="#c2ecff", lo="#6898e8")
+        r.rect(cx + 3, cy + 7, cx + 9, cy + 7, "#6898e8")
         back = cx if face == "r" else cx + 9
-        r.box(back, cy - 3, back + 3, cy + 12, "#6898e8")
-        r.rect(back + 1, cy - 2, back + 2, cy + 8, "#94c4ff")
+        rbox(r, back, cy - 3, back + 3, cy + 12, "#d8a868", hi="#ecc488", lo="#a8784a")
+        for sy in (cy, cy + 4):
+            r.set(back + 1, sy, "#86522e")
+            r.set(back + 2, sy, "#86522e")
         for lx in (cx + 1, cx + 10):
-            r.rect(lx, cy + 12, lx + 1, cy + 14, "#4e4a66")
+            r.rect(lx, cy + 12, lx + 1, cy + 14, "#86522e")
     plant_palm(r, T + 8, 8 * T + 14)
     plant_palm(r, 11 * T + 8, 8 * T + 14)
     mat(r, 4)
@@ -643,7 +969,7 @@ def mart():
     def extras(m):
         shop = [say("Welcome to the Mart! Potions, Poke Balls and everything a new trainer needs."),
                 {"op": "shop", "shop": "origin_mart"}]
-        m.npc("clerk", 3, 3, "clerk", "down", *shop)
+        m.npc("clerk", 3, 3, "clerk", "right", *shop)   # faces the register and its customer
         for x in (2, 3):
             m.sign(f"counter_{x}", x, 5, ops=shop)
         m.sign("register", 4, 3, ops=shop)

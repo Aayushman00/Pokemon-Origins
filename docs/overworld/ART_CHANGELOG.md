@@ -2,6 +2,30 @@
 
 Art decisions, newest first. Each stage ships as its own commit.
 
+## Stage 3d v3: interior detailing pass
+
+Review: props read as flat rectangles. Every prop is now built from rounded,
+bevelled shapes (lit top-left edge, shaded bottom-right) with recognisable parts,
+and the Mart clerk faces right, toward the register and its customer.
+
+- **Care Centre:** bookshelf with mixed-height books, a leaning book and a plant on
+  top; healing machine with bezelled screen, scanline, vents, tray dimples, cross plate
+  and status LEDs; wall monitor with a heart-rate trace; desk phone with keypad and
+  curly cord; sign-in sheet with pen; desk bell; wall clock; PC with text on screen,
+  drive slots, grille and LED; shaped flower pots with leaves and five flower heads;
+  stitched stools; a magazine and a cup on the glass tables.
+- **Mart:** shelving units with coloured headers, boxes / bottles / cans and yellow
+  price tags; cash register with display, keys, drawer and receipt paper; glass
+  counters with spray-bottle products inside; chillers with light strip, capped
+  bottles, handles and grille; taped cardboard box with a label; poster with products
+  and a price burst; palm with fronds.
+- **Home:** sink with basin, tap and dish rack, cabinet doors with handles; glass
+  cupboard with plates, cups and drawers; pedal bin; framed landscape; cooker with
+  burner rings, knobs and an oven window; TV with an on-screen scene, grille and stand;
+  stairs with nosing, red runner, gold rods and balusters; fringed runner rug; flower
+  dotted rug with corner motifs; checked tablecloth with folds, plates and a vase;
+  slat-backed chairs.
+
 ## Stage 3d v2: interiors repainted after the FireRed room references
 
 Rooms are now painted as whole pictures, then sliced into 16x16 tiles and
