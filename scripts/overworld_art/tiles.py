@@ -562,6 +562,12 @@ def new_tiles():
     # ---- stage 3b: dirt path autotile (47-tile blob set, soft grass edges)
     for mask in v2.blob_masks():
         add(f"path_{mask}", v2.path_tile(mask))
+    # ---- stage 3b: pond autotile (47 masks x 3 animation frames) + decor
+    for mask in v2.blob_masks():
+        for f in range(3):
+            add(f"pond_{mask}_{f}", v2.pond_tile(mask, f))
+    add("lily", v2.lily_pads())
+    add("reeds", v2.reeds())
     return out
 
 

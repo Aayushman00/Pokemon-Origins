@@ -461,3 +461,100 @@ def path_tile(mask, seed=0):
             t.set(px, py + 1, PATH_C["peb"])
             t.set(px + 1, py + 1, PATH_C["rim_lo"])
     return t
+
+
+# ================================================================== pond
+# Water autotile on the same 47 blob masks (bits = which neighbours are
+# land). Bands from the land inward: grass, dry sand, wet sand, foam,
+# shallow water, deep water. 3 frames: ripples drift, foam laps, sparkles.
+POND = {"sand_hi": "#f0e2a8", "sand": "#dcc68a", "wet": "#b49c6c", "foam": "#f4fcff",
+        "shallow": "#98d4f4", "water": "#6cb0ec", "deep": "#4c8ad8", "ripple": "#c4ecff",
+        "spark": "#ffffff"}
+
+
+def pond_tile(mask, frame):
+    t = grass(400 + mask % 5, tufts=0, specks=6)
+    R = 5.5
+    r = rng(1200 + mask * 7)
+    sparks = [(r(16), r(16)) for _ in range(3)]
+    for y in range(T):
+        for x in range(T):
+            ds = []
+            if mask & N:
+                ds.append(y + 0.5 - _wobble(x, 1) * 0.5)
+            if mask & S:
+                ds.append(15.5 - y - _wobble(x, 5) * 0.5)
+            if mask & Wb:
+                ds.append(x + 0.5 - _wobble(y, 9) * 0.5)
+            if mask & E:
+                ds.append(15.5 - x - _wobble(y, 15) * 0.5)
+            for bit, cx, cy in ((NE, 16, 0), (SE, 16, 16), (SW, 0, 16), (NW, 0, 0)):
+                if mask & bit:
+                    # concave shore: a wide arc around the land corner, not a pinch
+                    ds.append(hypot(x + 0.5 - cx, y + 0.5 - cy) - 1.0 - (5.5 - min(5.5, hypot(x + 0.5 - cx, y + 0.5 - cy))) * 0.6)
+            for a, b, cx, cy in ((N, Wb, R, R), (N, E, 16 - R, R), (S, Wb, R, 16 - R), (S, E, 16 - R, 16 - R)):
+                if mask & a and mask & b:
+                    inx = (x + 0.5 < cx) if cx < 8 else (x + 0.5 > cx)
+                    iny = (y + 0.5 < cy) if cy < 8 else (y + 0.5 > cy)
+                    if inx and iny:
+                        ds.append(R - hypot(x + 0.5 - cx, y + 0.5 - cy))
+            d = min(ds) if ds else 99
+            if d < 1.0:
+                continue
+            if d < 2.2:
+                col = POND["sand_hi"] if d < 1.6 else POND["sand"]
+            elif d < 3.0:
+                col = POND["wet"]
+            elif d < 3.8:
+                # foam laps: present on alternating stretches, shifting per frame
+                col = POND["foam"] if ((x + y + frame * 3) // 3) % 2 == 0 else POND["shallow"]
+            elif d < 6.0:
+                col = POND["shallow"]
+            elif d < 9.0:
+                col = POND["water"]
+            else:
+                col = POND["deep"]
+            if d >= 4.5:
+                # ripples: short light dashes drifting right, period 16 so tiles join
+                if y % 6 == (x // 8) * 3 % 6 and ((x + frame * 2 + y * 5) % 16) < 3:
+                    col = POND["ripple"]
+            t.set(x, y, col)
+    for i, (sx, sy) in enumerate(sparks):
+        if (i + frame) % 3 == 0:
+            for dx, dy in ((0, 0), (1, 0), (-1, 0), (0, 1), (0, -1)):
+                if 0 <= sx + dx < 16 and 0 <= sy + dy < 16 and t.px[sx + dx, sy + dy][:3] in (
+                        hexrgb(POND["water"])[:3], hexrgb(POND["deep"])[:3], hexrgb(POND["ripple"])[:3]):
+                    t.set(sx + dx, sy + dy, POND["spark"] if (dx, dy) == (0, 0) else POND["ripple"])
+    return t
+
+
+def lily_pads():
+    """Decor over open water: two pads (notched discs) and a pink flower."""
+    t = Tile()
+    pad, pad_hi, pad_lo = "#58b048", "#90d860", "#2f7a40"
+    for cx, cy, rad in ((6, 6, 4.6), (12, 12, 3.4)):
+        for y in range(16):
+            for x in range(16):
+                dx, dy = x + 0.5 - cx, y + 0.5 - cy
+                if hypot(dx, dy) < rad and not (dx > 0 and abs(dy) < 0.8):  # the notch
+                    col = pad_hi if dx + dy < -rad * 0.6 else pad_lo if dx + dy > rad * 0.7 else pad
+                    t.set(x, y, col)
+        t.set(int(cx) - 1, int(cy + rad), POND["deep"])  # tiny shadow on the water
+    for x, y, c in ((4, 4, "#ffc4da"), (5, 3, "#ffc4da"), (5, 4, "#f8d040"), (6, 4, "#f07ca8"), (5, 5, "#f07ca8"), (4, 3, "#ffc4da")):
+        t.set(x, y, c)
+    return t
+
+
+def reeds():
+    """Decor on a shore cell: a clump of reeds with cat-tail heads."""
+    t = Tile()
+    stem, stem_hi, stem_lo, head = "#5aa048", "#9cd468", "#2f6a3c", "#8a5634"
+    for x0, h, lean in ((3, 11, 0), (5, 13, 1), (7, 9, 0), (12, 10, -1), (14, 8, 0)):
+        for k in range(h):
+            x = x0 + (lean if k > h // 2 else 0)
+            y = 15 - k
+            t.set(x, y, stem_hi if k > h - 3 else stem if k > 2 else stem_lo)
+        if h >= 10:
+            t.rect(x0 + lean, 15 - h, x0 + lean, 15 - h + 2, head)
+            t.set(x0 + lean, 15 - h, "#b07448")
+    return t

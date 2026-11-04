@@ -189,12 +189,18 @@ def build():
     m.sign("mart_door", 26, 22, "MART - Potions, Poke Balls and everything a new trainer needs.")
     m.fill("ground", 25, 23, 26, 25, PATH)
 
-    # ---- pond with animated shores
+    # ---- pond: water autotile (sand bank, foam, ripples), lily pads, reeds
+    from .tiles_v2 import blob_mask
     px0, py0, px1, py1 = 18, 20, 23, 25
-    for y in range(py0, py1 + 1):
-        for x in range(px0, px1 + 1):
-            sides = ("n" if y == py0 else "s" if y == py1 else "") + ("w" if x == px0 else "e" if x == px1 else "")
-            m.put("ground", x, y, ID[f"shore_{sides}A"] if sides else WA, SOLID)
+    water = {(x, y) for y in range(py0, py1 + 1) for x in range(px0, px1 + 1)}
+    water -= {(px0, py0), (px1, py0), (px0, py1), (px1, py1), (px1 - 1, py1)}  # organic outline
+    for (x, y) in water:
+        mask = blob_mask(lambda dx, dy: (x + dx, y + dy) not in water)
+        m.put("ground", x, y, ID[f"pond_{mask}_0"], SOLID)
+    for x, y in ((20, 22), (22, 24)):
+        m.put("decor", x, y, ID["lily"])
+    for x, y in ((18, 21), (23, 23)):
+        m.put("decor", x, y, ID["reeds"])
 
     # ---- ledge, tall grass
     for x in range(2, 14):
@@ -260,6 +266,10 @@ def finish(data, m):
              {**anim(ID["tallA"], ID["tallB"], 900), "properties": [base.prop("cover", 9)]}]
     for sides in ("n", "s", "w", "e", "nw", "ne", "sw", "se"):
         tiles.append(anim(ID[f"shore_{sides}A"], ID[f"shore_{sides}B"], 500))
+    from .tiles_v2 import blob_masks
+    for mask in blob_masks():  # pond: 3 frames, ripple drift + foam lap + sparkle
+        f = [ID[f"pond_{mask}_{k}"] for k in range(3)]
+        tiles.append({"id": f[0], "animation": [{"tileid": i, "duration": 420} for i in f]})
     ts["tiles"] = tiles
     data["tilesets"][1]["firstgid"] = COL_FIRST
     for layer in data["layers"]:

@@ -20,7 +20,12 @@ describe("sample maps (smoke + lint)", () => {
 	it("Origin Town animates water shores, flower beds and tall grass", () => {
 		const ts = maps.origin_town.tilesets.find((t) => t.image.endsWith("overworld.png"));
 		assert.ok(ts.anim.size >= 12, `only ${ts.anim.size} animated tiles`);
-		for (const a of ts.anim.values()) assert.equal(a.frames.length, 2);
+		for (const a of ts.anim.values()) {
+			assert.ok(a.frames.length >= 2, "an animation needs at least 2 frames");
+			assert.ok(a.frames.every((f) => f.ms > 0), "every frame needs a duration");
+		}
+		// the pond water runs 3 frames (ripple drift, foam lap, sparkle)
+		assert.ok([...ts.anim.values()].some((a) => a.frames.length === 3), "no 3-frame water animation");
 		assert.ok([...ts.cover.values()].every((row) => row === 9));
 	});
 	it("test maps animate water and flowers (Tiled tiles[] use the 'id' key)", () => {
