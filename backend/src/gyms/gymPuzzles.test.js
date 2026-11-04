@@ -2,6 +2,7 @@ const { describe, it, before } = require("node:test");
 const assert = require("node:assert/strict");
 const gyms = require("./gymPuzzles");
 const loader = require("../campaign/loader");
+const { createFlagService, createMemoryFlagStore } = require("../services/flagService");
 
 describe("gym puzzles", () => {
 	before(() => gyms.resetCache());
@@ -29,6 +30,16 @@ describe("gym puzzles", () => {
 			assert.ok(sol, `gym ${s.gym} (${s.mechanic}) is solvable`);
 			assert.equal(sol.length, s.par, `gym ${s.gym} par`);
 		}
+	});
+
+	it("solveGym records a real solve and refuses anything else", async () => {
+		const flags = createFlagService({ store: createMemoryFlagStore() });
+		const sol = gyms.solve(gyms.buildPuzzle(gyms.getGymPuzzle("willow_thornby")));
+		await assert.rejects(gyms.solveGym(flags, 7, "willow_thornby", sol.slice(0, -1)), (e) => e.status === 400);
+		await assert.rejects(gyms.solveGym(flags, 7, "nobody", sol), (e) => e.status === 404);
+		assert.deepEqual(await flags.listFlags(7), []);
+		await gyms.solveGym(flags, 7, "willow_thornby", sol);
+		assert.deepEqual(await flags.listFlags(7), ["gym:willow_thornby:solved"]);
 	});
 
 	it("replay accepts a real solution and rejects a partial one", () => {

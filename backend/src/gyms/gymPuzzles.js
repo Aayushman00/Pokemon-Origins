@@ -1,6 +1,7 @@
 const path = require("path");
 const fs = require("fs");
 const engine = require("./puzzles");
+const { CampaignError } = require("../campaign/errors");
 
 const FILE = path.join(__dirname, "..", "..", "data", "gyms", "gym_puzzles.json");
 let cache = null;
@@ -49,8 +50,16 @@ function replay(spec, moves) {
 	return { solved: puz.won(state), moves: count };
 }
 
+/** Verify a claimed solve by replaying it, then record it. The leader refuses battle until then. */
+async function solveGym(flags, trainerId, leaderId, moves) {
+	const spec = getGymPuzzle(leaderId);
+	if (!spec) throw new CampaignError(404, "Unknown gym");
+	if (!replay(spec, moves).solved) throw new CampaignError(400, "That doesn't solve the puzzle");
+	await flags.setFlag(trainerId, `gym:${leaderId}:solved`);
+}
+
 function resetCache() {
 	cache = null;
 }
 
-module.exports = { getGymPuzzle, listGymPuzzles, buildPuzzle, replay, resetCache, solve: engine.solve };
+module.exports = { getGymPuzzle, listGymPuzzles, buildPuzzle, replay, solveGym, resetCache, solve: engine.solve };

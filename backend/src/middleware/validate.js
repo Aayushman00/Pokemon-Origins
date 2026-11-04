@@ -152,6 +152,11 @@ const evolutionConfirmSchema = z.object({
 	partyPosition: z.number().int().min(1).max(3),
 });
 
+const gymSolveSchema = z.object({
+	leaderId: z.string().regex(/^[a-z0-9_]{1,48}$/),
+	moves: z.array(z.enum(["up", "down", "left", "right"])).min(1).max(2000),
+});
+
 const moveLearnResolveSchema = z.object({
 	pendingId: z.number().int().positive(),
 	action: z.enum(["learn", "skip"], {
@@ -208,6 +213,7 @@ const playgroundExchangeSchema = z.object({
 });
 
 module.exports = {
+	gymSolveSchema,
 	playgroundExchangeSchema,
 	partyArrangeSchema,
 	trainerCardSchema,
