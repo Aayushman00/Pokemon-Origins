@@ -170,7 +170,8 @@ def despeckle(res):
                 continue
             same = [k for k in near if isinstance(k, tuple) and k[0] == key[0]]
             if same:
-                out[y][x] = max(set(same), key=same.count)
+                # sorted(): ties must not depend on Python's per-process hash seed
+                out[y][x] = max(sorted(set(same)), key=same.count)
     return out
 
 
