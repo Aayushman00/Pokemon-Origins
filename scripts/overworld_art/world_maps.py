@@ -122,6 +122,14 @@ def halo(grid):
     return lawn
 
 
+def forest_name(mask, x, y, deep):
+    """Deep forest shifts tone per 32px block, with a rare amber tree. Only blocks
+    `deep` inside the forest change: a rim would cut their clumps into scraps."""
+    tones = (None, None, "sun", "deep", None, "sun", "deep", None, "deep", None, "sun", None, "deep", None, None, None, "amber")
+    tone = tones[hashed(x // 2, y // 2) % len(tones)] if deep else None
+    return f"forest_{tone}_{x % 2}{y % 2}" if tone else f"forest_{mask}_{x % 2}{y % 2}"
+
+
 def paint(m, grid, walk_tile):
     """Lay a text grid onto m. `walk_tile` is what "." means: "grass" or "path"."""
     from .tiles_v2 import E, N, S, Wb, blob_mask
@@ -146,7 +154,9 @@ def paint(m, grid, walk_tile):
             m.put("ground", x, y, PATH)
         elif c in "Tb":
             mask = blob_mask(lambda dx, dy: outside(forest, x + dx, y + dy))
-            m.put("objects", x, y, ID[f"forest_{mask}_{x % 2}{y % 2}"], SOLID)
+            bx, by = x // 2 * 2, y // 2 * 2
+            deep = not any(outside(forest, bx + dx, by + dy) for dx in range(-1, 3) for dy in range(-1, 3))
+            m.put("objects", x, y, ID[forest_name(mask, x, y, deep)], SOLID)
         elif c == "k":
             run = "k" in (cells.get((x - 1, y)), cells.get((x + 1, y)))
             m.put("ground", x, y, ID["plank" if run else "plank_v"])

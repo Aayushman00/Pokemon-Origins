@@ -19,6 +19,7 @@ GBA-era top-down pixel art is the genre. `pret/pokefirered/graphics` and screens
 ## Outlines and shadows
 
 - Outlines belong to objects only, in `LINE` from `world_palette.py`. Ground has none. Trail and lawn may end in a one-pixel edge from their own ramp.
+- Buildings and forest also throw a shadow onto the next cell, east and south, away from the light.
 - Every standing object gets a contact shadow: translucent `SHADOW` from `world_palette.py`, hard pixel edge. Flat decals such as flowers get none.
 - Ground transitions wander and round off. No dither is needed.
 
@@ -29,6 +30,9 @@ GBA-era top-down pixel art is the genre. `pret/pokefirered/graphics` and screens
 - Nothing visibly repeats on the 16px grid.
 - Routes are meadow with a worn trail, not open sand. The main road is 2 tiles wide to meet map connections, side paths 1.
 - Bridge boards lie across the direction of travel.
+- Lawn edges wander up to three cells out from what stands on them. A straight lawn edge reads as a box.
+- Deep forest varies by clump, not by tile, and never at a rim: sun, deep, and a rare amber accent.
+- Ledges are grass hanging over an earth face. Thin brown strips read as fences.
 
 ## Light at runtime
 

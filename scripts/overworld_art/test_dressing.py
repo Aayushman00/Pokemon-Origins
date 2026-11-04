@@ -1,6 +1,7 @@
 """World dressing: ground that wanders, trees, pond life, shadows, ledges, props."""
 import unittest
 
+from . import nature
 from . import world_maps as W
 
 
@@ -91,6 +92,32 @@ class Route(unittest.TestCase):
         w = self.data["width"]
         for x, y, _ in W.DRESSING["route_1"]:
             self.assertFalse(W.NAMES_BY_ID.get(decor[y * w + x] - 1, "").startswith("trail_"), (x, y))
+
+
+class Terrain(unittest.TestCase):
+    def test_forests_are_not_one_green(self):
+        data = W.route("route_1")
+        tones = {t for t in ("sun", "deep", "amber") if cells(data, "objects", f"forest_{t}")}
+        self.assertGreaterEqual(tones, {"sun", "deep"})
+
+    def test_tones_never_touch_a_forest_rim(self):
+        data = W.route("route_1")
+        grid = W.ROUTES["route_1"]["grid"]
+        for t in ("sun", "deep", "amber"):
+            for x, y in cells(data, "objects", f"forest_{t}"):
+                near = [grid[y + dy][x + dx] for dx in (-1, 0, 1) for dy in (-1, 0, 1)
+                        if 0 <= y + dy < len(grid) and 0 <= x + dx < len(grid[0])]
+                self.assertTrue(all(c in "Tb" for c in near), (x, y))
+
+    def test_tones_keep_the_clump_shapes(self):
+        plain = nature._canopy().convert("RGB")
+        sun = nature._canopy("sun").convert("RGB")
+        self.assertNotEqual(plain.tobytes(), sun.tobytes())
+        self.assertEqual(plain.crop((0, 0, 32, 1)).tobytes(), sun.crop((0, 0, 32, 1)).tobytes())
+
+    def test_a_ledge_has_a_real_face(self):
+        alpha = nature.ledge("m").getchannel("A").load()
+        self.assertGreaterEqual(sum(alpha[8, y] > 0 for y in range(16)), 10)
 
 
 if __name__ == "__main__":

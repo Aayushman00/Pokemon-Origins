@@ -9,5 +9,5 @@
 - [ ] Bridge: a plank deck with dark rails, but no ropes (`nature.plank`, grid char `k`).
 
 ## Still to draw
-- [ ] Ledge and cliff tiles, needed by the later routes.
+- [ ] Cliff tiles and side-facing ledges, needed by the later routes. South-facing ledges exist (`nature.ledge`).
 - [ ] Bump / ledge / door sound effects are placeholder synth blips.

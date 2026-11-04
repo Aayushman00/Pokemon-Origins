@@ -610,6 +610,9 @@ def new_tiles():
     for links in range(16):
         add(f"fence_{links}", nature.fence_tile(links))
     add("plank_v", nature.plank(False))
+    for tone in nature.CANOPY_TONES:
+        for px, py in ((0, 0), (1, 0), (0, 1), (1, 1)):
+            add(f"forest_{tone}_{px}{py}", nature.forest_tile(0, (px, py), tone))
     add("pebbles", nature.pebbles())
     add("mushrooms", nature.mushrooms())
     add("reeds", nature.reeds())

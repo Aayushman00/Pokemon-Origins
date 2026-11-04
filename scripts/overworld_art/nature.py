@@ -85,10 +85,17 @@ def lawn_tile(mask, phase):
 CANOPY_CLUMPS = [(8, 6, 10), (25, 4, 10), (16, 17, 11), (0, 20, 10), (31, 21, 9), (9, 29, 10), (24, 31, 10)]
 
 
+# Which clumps of a canopy block take another tone. Only clumps wholly inside
+# the block change, so tones follow tree shapes and nothing breaks at a seam.
+CANOPY_TONES = {"sun": ("leaf_sun", 0), "deep": ("leaf_deep", 1), "amber": ("leaf_amber", 2)}
+
+
 @lru_cache(None)
-def _canopy():
+def _canopy(tone=None):
     """32x32 leaf pattern that wraps, so a forest has no seams and no gaps."""
-    leaf = WORLD["leaf"]
+    ramp, pick = CANOPY_TONES.get(tone, ("leaf", None))
+    inside = [i for i, (cx, cy, r) in enumerate(CANOPY_CLUMPS) if r <= cx <= 32 - r and r <= cy <= 32 - r]
+    chosen = set(inside[pick % len(inside)::2 if tone != "amber" else len(inside)]) if tone and inside else set()
     owner, img = {}, Image.new("RGBA", (32, 32))
     out = img.load()
 
@@ -106,16 +113,16 @@ def _canopy():
         tone = 1 if lit > .45 else 2 if lit > -.15 else 3
         if owner.get((x, (y + 1) % 32), i) != i or owner.get(((x + 1) % 32, y), i) != i:
             tone = 4
-        out[x, y] = rgba(leaf[tone])
+        out[x, y] = rgba(WORLD[ramp if i in chosen else "leaf"][tone])
     return img
 
 
-def forest_tile(mask, phase):
+def forest_tile(mask, phase, tone=None):
     """Canopy mass. The south rim drops to shaded undergrowth with trunks."""
     body = _shape(mask, phase, blur=3, salt=1.1)
     top = _shape(mask, phase, blur=3, salt=1.1, dy=6)
     canopy = {k: body[k] and top[k] for k in body}
-    pattern, bark = _canopy().load(), WORLD["bark"]
+    pattern, bark = _canopy(tone).load(), WORLD["bark"]
     trunk = (4, 9) if phase[0] else (9, 14)
     img = Image.new("RGBA", (T, T))
     out = img.load()
@@ -335,20 +342,25 @@ def crops(kind):
 
 
 def ledge(part):
-    """South-facing drop, one tile: ground stays clear above a lit lip and an
-    earth face. `part` is l, m or r; the ends round off into the grass."""
-    earth = WORLD["ledge"]
-    img, d = _decal()
-    left, right = (3 if part == "l" else 0), (12 if part == "r" else 15)
-    d.rectangle((left, 8, right, 13), fill=earth[1])
-    d.line((left, 8, right, 8), fill=earth[0])
-    d.line((left, 9, right, 9), fill=earth[0])
-    d.line((left, 14, right, 14), fill=earth[2])
-    for x in range(left + 2, right, 5):
-        d.line((x, 10, x, 12), fill=earth[2])
-    colour, opacity = SHADOW
-    for x in range(left, right + 1):
-        img.putpixel((x, 15), (*rgb(colour), round(opacity * 255)))
+    """South-facing drop, one tile: a lip of grass hanging over an earth face.
+    `part` is l, m or r; the ends curl back into the ground."""
+    earth, lawn = WORLD["ledge"], WORLD["lawn"]
+    img, _ = _decal()
+    px = img.load()
+    for x in range(T):
+        inset = {"l": max(0, 4 - x), "r": max(0, x - 11)}.get(part, 0)
+        hang = 8 + (0, 1, 2, 1, 0, 1)[x % 6]
+        for y in range(4 + inset, 15 - inset // 2):
+            if y <= hang:
+                tone = lawn[0] if y == 4 + inset else lawn[1]
+            elif y == hang + 1:
+                tone = earth[2]  # shade under the overhang
+            elif y >= 14 - inset // 2:
+                tone = earth[2]
+            else:
+                tone = earth[2] if (x * 3 + y) % 11 == 0 else earth[0] if x % 5 == 1 else earth[1]
+            px[x, y] = rgba(tone)
+    _cast(img)
     return img
 
 
