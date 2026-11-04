@@ -108,6 +108,10 @@ BUILDINGS = {  # name: (draw, door column)
 }
 
 
+WINDOWS = {"home_clay": (1, 3), "home_slate": (1, 3), "home_moss": (1, 3), "lab": (1, 2, 4, 5),
+           "care_center": (1, 4), "corner_shop": (1, 4)}
+
+
 def _prop(draw, size=(T, T)):
     img = Image.new("RGBA", size)
     draw(ImageDraw.Draw(img))

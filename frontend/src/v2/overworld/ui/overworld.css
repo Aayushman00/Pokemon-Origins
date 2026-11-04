@@ -75,3 +75,25 @@
 .ow .pad {
 	margin: 0;
 }
+
+/* Map name: slides in from the top left, holds, slides back out. */
+.ow__place {
+	position: absolute;
+	top: 0;
+	left: 4%;
+	padding: 0.5em 1em;
+	background: #fbf2dc;
+	color: #26223a;
+	border: 3px solid #26223a;
+	border-top: 0;
+	animation: ow-place 3s steps(12) forwards;
+	pointer-events: none;
+}
+@keyframes ow-place {
+	0% { transform: translateY(-110%); }
+	12%, 85% { transform: translateY(0); }
+	100% { transform: translateY(-110%); }
+}
+@media (prefers-reduced-motion: reduce) {
+	.ow__place { animation: none; opacity: 0.95; }
+}

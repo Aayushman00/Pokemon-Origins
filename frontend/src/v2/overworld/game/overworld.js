@@ -328,6 +328,10 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		get transition() {
 			return transition;
 		},
+		/** True while the player is going in through a building door, so it can be drawn open. */
+		get doorOpening() {
+			return Boolean(warp?.w?.kind === "door" && warp.w.enterDir === "up");
+		},
 		/** Ticks left on the white "cry" flash (a legendary calls out). */
 		get flash() {
 			return flash;

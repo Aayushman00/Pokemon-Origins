@@ -40,6 +40,7 @@ const OverworldScreen = () => {
 	const wrapRef = useRef(null);
 	const canvasRef = useRef(null);
 	const sessionRef = useRef(null);
+	const [place, setPlace] = useState(null);
 	const [status, setStatus] = useState("loading");
 	const [input, setInput] = useState(null);
 	const [size, setSize] = useState({ cssW: VIEW_W, cssH: VIEW_H, left: 0, top: 0 });
@@ -97,6 +98,7 @@ const OverworldScreen = () => {
 					},
 				});
 				const renderer = createRenderer({ canvas: canvasRef.current, assets, playerSprite });
+				let lastPlace = null;
 				inputApi = attachInput();
 				setInput(inputApi);
 				loop = createLoop({
@@ -116,6 +118,11 @@ const OverworldScreen = () => {
 					},
 					render: () => {
 						renderer.draw(game);
+						const name = game.map?.properties.mapName;
+						if (name && name !== lastPlace) {
+							lastPlace = name;
+							setPlace({ name, id: game.tickCount });
+						}
 						if (debug) {
 							const p = game.player;
 							setFrame({ tick: game.tickCount, facing: p.facing, phase: p.phase, t: p.t, dur: p.dur, pose: actorPose(p), moving: p.moving, running: p.running });
@@ -194,6 +201,11 @@ const OverworldScreen = () => {
 					<canvas ref={canvasRef} className="ow__canvas pixelated" aria-label="Overworld test map. Arrow keys or WASD to walk, X to run, Z or Enter to talk." role="img" />
 					{status === "loading" && <p className="ow__msg font-pixel">Loading map…</p>}
 					{status === "error" && <p className="ow__msg font-pixel">Could not load the test map.</p>}
+					{place && (
+						<div key={place.id} className="ow__place font-pixel" role="status">
+							{place.name}
+						</div>
+					)}
 					{dialogue && (
 						<div className="ow__dialogue">
 							<DialogueBox key={`${dialogue.i}:${dialogue.pages[dialogue.i]}`} text={dialogue.pages[dialogue.i]} onAdvance={advance} charMs={TEXT_SPEEDS[speed]} />

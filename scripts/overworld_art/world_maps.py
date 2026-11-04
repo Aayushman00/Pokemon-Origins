@@ -207,7 +207,7 @@ DAWNBROOK = [
 
 def dawnbrook():
     m = Town(30, 20, base.GRASS)
-    m.props = [("nameKey", "dawnbrook"), ("border", BORDER), ("connect_east", "route_1"), ("connect_east_offset", 0)]
+    m.props = [("nameKey", "dawnbrook"), ("ambient", "butterflies"), ("border", BORDER), ("connect_east", "route_1"), ("connect_east_offset", 0)]
     paint(m, DAWNBROOK, "grass")
     place(m, "home_clay", 5, 2)
     place(m, "lab", 19, 2)
@@ -250,7 +250,7 @@ MOSSGATE = [
 
 def mossgate():
     m = Town(30, 20, base.GRASS)
-    m.props = [("nameKey", "mossgate"), ("border", BORDER), ("connect_west", "route_1"), ("connect_west_offset", 0)]
+    m.props = [("nameKey", "mossgate"), ("time", "dusk"), ("ambient", "fireflies"), ("border", BORDER), ("connect_west", "route_1"), ("connect_west_offset", 0)]
     paint(m, MOSSGATE, "grass")
     place(m, "trunk_gym", 12, 2)
     place(m, "home_moss", 22, 2)
@@ -306,7 +306,7 @@ def route(route_id):
     m = Town(r["w"], r["h"], base.GRASS)
     links = {"route_1": [("connect_west", "dawnbrook"), ("connect_west_offset", 0),
                          ("connect_east", "mossgate"), ("connect_east_offset", 0)]}[route_id]
-    m.props = [("nameKey", route_id), ("entry", r["entry"]["side"]), ("border", BORDER), *links]
+    m.props = [("nameKey", route_id), ("ambient", "leaves"), ("entry", r["entry"]["side"]), ("border", BORDER), *links]
     paint(m, r["grid"], "path")
     for i, g in enumerate(r["grass"]):
         m.obj("encounters", f"grass_{i + 1}", g["x"], g["y"], g["w"], g["h"], table=route_id)
@@ -320,6 +320,15 @@ def route(route_id):
 
 
 MAPS = {"dawnbrook": dawnbrook, "route_1": lambda: route("route_1"), "mossgate": mossgate, "mossgate_gym": mossgate_gym}
+
+
+def light_tiles():
+    """Tiles that glow on dusk and night maps: lamps and every building's windows."""
+    from .buildings import BUILDINGS, WINDOWS
+    lit = [{"id": ID["prop_lamp_top"], "properties": [base.prop("glow", 20)]}]
+    for name in BUILDINGS:
+        lit += [{"id": ID[f"{name}_{c}_3"], "properties": [base.prop("glow", 9)]} for c in WINDOWS.get(name, ())]
+    return lit
 
 
 def finish(data, m):
@@ -337,8 +346,12 @@ def finish(data, m):
     from .tiles_v2 import blob_masks
     for mask in blob_masks():  # pond: 3 frames, ripple drift + foam lap + sparkle
         f = [ID[f"pond_{mask}_{k}"] for k in range(3)]
-        tiles.append({"id": f[0], "animation": [{"tileid": i, "duration": 420} for i in f]})
-    ts["tiles"] = tiles
+        tiles.append({"id": f[0], "animation": [{"tileid": i, "duration": 420} for i in f],
+                      "properties": [base.prop("water", True)]})
+    ts["tiles"] = tiles + light_tiles()
+    key = dict(m.props).get("nameKey")
+    if key:
+        data["properties"].append(base.prop("mapName", NAMES[key]))
     data["tilesets"][1]["firstgid"] = COL_FIRST
     for layer in data["layers"]:
         if layer["name"] == "collision":
