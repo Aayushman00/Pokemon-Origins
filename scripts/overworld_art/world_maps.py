@@ -15,7 +15,9 @@ from .tiles import FIRST_NEW, new_tiles, tile_ids
 COL_FIRST = 1000  # collision tileset firstgid: above every overworld tile id
 ID = tile_ids()
 ROOT = Path(__file__).resolve().parents[2]
-NAMES = json.loads((ROOT / "backend" / "data" / "world" / "names.json").read_text())["places"]
+WORLD_NAMES = json.loads((ROOT / "backend" / "data" / "world" / "names.json").read_text())
+NAMES, PEOPLE = WORLD_NAMES["places"], WORLD_NAMES["people"]
+GYMS = json.loads((ROOT / "backend" / "data" / "gyms" / "gym_puzzles.json").read_text(encoding="utf8"))
 ROUTES = {r["id"]: r for r in json.loads((Path(__file__).parent / "route_layouts.json").read_text())}
 PATH, MAILBOX, ROCK, WA, WB, FA, FB, TALL_OLD = (
     base.PATH, base.MAILBOX, base.ROCK, base.WA, base.WB, base.FA, base.FB, base.TALL)
@@ -183,12 +185,92 @@ def dawnbrook():
     return finish(m.build(), m)
 
 
+MOSSGATE = [
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "TT....TTTTTTBBBBBBTTTTTTTTTTTT",
+    "TTL...TTT..hBBBBBBh.T.BBBBBTTT",
+    "TT....TT...hBBBBBBh.T.BBBBBTTT",
+    "TTh..hT..L.hBBBBBBh.L.BBBBBTTT",
+    "TTh..h......BBBDBB....BBDBBTTT",
+    "TTh..h.........,........,..TTT",
+    "TT....L........,........,...TT",
+    ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+    ",,,,,,,,,,,,,,,,,,,,,,,,,,,,,,",
+    "TT.hhhhhh.,....L....k....L.TTT",
+    "TT.BBBBBB.,.~~~~~~~.k.BBBBB.TT",
+    "TT.BBBBBB.,~~~~~~~~~k.BBBBB.TT",
+    "TT.BBBBBB.,kkkkkkkkkk.BBBBB.TT",
+    "TT.BBBDBB.,~~~~~~~~.k.BBDBB.TT",
+    "TT.g..,,,,,..~~~~...k,,,,..gTT",
+    "TTgg.........gg...........TTTT",
+    "TTTTT...TTTTTTTTT..TTTTTTTTTTT",
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+]
+
+
+def mossgate():
+    m = Town(30, 20, base.GRASS)
+    m.props = [("nameKey", "mossgate"), ("border", BORDER), ("connect_west", "route_1"), ("connect_west_offset", 0)]
+    paint(m, MOSSGATE, "grass")
+    for r in range(5):  # ponytail: stock Gym stamp until the hollow trunk has its own art
+        for c in range(6):
+            m.put("above" if r == 0 else "objects", 12 + c, 2 + r, ID[f"gym_{c}_{r}"], SOLID)
+    stamp(m, "house", 22, 3, 5, 4, 24)
+    stamp(m, "center", 3, 12, 6, 4, 6)
+    stamp(m, "house", 22, 12, 5, 4, 24)
+    m.block(15, 6, 0)
+    m.obj("warps", "door_mossgate_gym", 15, 6, kind="door", targetMap="mossgate_gym", targetX=1, targetY=5,
+          facing="right", transition="iris", enterDir="up")
+    door(m, "mossgate_house_a", 24, 6)
+    door(m, "mossgate_center", 6, 15)
+    door(m, "mossgate_house_b", 24, 15)
+    m.sign("town_sign", 7, 8, f"{NAMES['mossgate'].upper()} - Nothing here grows in a hurry.")
+    m.sign("gym_sign", 16, 7, f"{NAMES['mossgate'].upper()} GYM - Leader: {PEOPLE['willow_thornby']}.")
+    m.sign("route_sign", 27, 8, f"{NAMES['route_2'].upper()} - East to {NAMES['hearthfield']}. (Opens in a later update.)")
+    m.npc("camper", 12, 8, "camper", "down", "The Gym is built inside a hollow trunk. Older than the town, they say.")
+    m.npc("picnicker", 18, 17, "picnicker", "up", "Rest at the Center before the Gym. The Leader won't rush you, but the seeds might.")
+    dress_grass(m)
+    autotile_paths(m)
+    return finish(m.build(), m)
+
+
+def mossgate_gym():
+    """The Seed pods puzzle, at the same coordinates as gym_puzzles.json so the
+    server's replay() and this map agree. Cols 10-12 are the Leader's chamber.
+    ponytail: pods are fixed rocks until the puzzle client lands, so the gate stays shut."""
+    gym = GYMS["willow_thornby"]
+    rows = [r + "####" for r in gym["rows"]]
+    rows[4] = rows[4][:10] + "...#"
+    rows[5] = "." + rows[5][1:10] + "...#"  # col 0 is the exit, one step west of the start
+    rows[6] = rows[6][:9] + "....#"
+    m = Town(14, 8, base.GRASS)
+    paint(m, ["".join({"#": "T", "g": "h"}.get(c, ".") for c in r) for r in rows], "path")
+    for y, r in enumerate(rows):
+        for x, c in enumerate(r):
+            if c == "_":
+                m.put("ground", x, y, ID["veg"])
+            elif c == "$":
+                m.put("objects", x, y, ID["rock2"], SOLID)
+    m.obj("warps", "exit", 0, 5, kind="door", targetMap="mossgate", targetX=15, targetY=7, facing="down",
+          transition="iris", enterDir="left")
+    m.sign("hint", 0, 4, gym["hint"])
+    m.obj("signs", "vine_gate", 7, 6, text="Thick vines bar the way. (Pushing seed pods opens in a later update.)")
+    script = json.dumps([{"op": "say", "text": "Welcome to the Grove. Take your time, nothing here grows in a hurry."},
+                         {"op": "battle", "trainer": "willow_thornby"}])
+    m.obj("npcs", "willow_thornby", 12, 5, point=True, sprite="leader_f", facing="left", script=script)
+    m.block(12, 5)
+    autotile_paths(m)
+    return finish(m.build(), m)
+
+
 def route(route_id):
     """A route from route_layouts.json. Its trainers carry `trainer`, `order` and
     `sight`, which validate:maps uses to prove they cannot be skipped."""
     r = ROUTES[route_id]
     m = Town(r["w"], r["h"], base.GRASS)
-    links = {"route_1": [("connect_west", "dawnbrook"), ("connect_west_offset", 0)]}[route_id]
+    links = {"route_1": [("connect_west", "dawnbrook"), ("connect_west_offset", 0),
+                         ("connect_east", "mossgate"), ("connect_east_offset", 0)]}[route_id]
     m.props = [("nameKey", route_id), ("entry", r["entry"]["side"]), ("border", BORDER), *links]
     paint(m, r["grid"], "path")
     for i, g in enumerate(r["grass"]):
@@ -202,7 +284,7 @@ def route(route_id):
     return finish(m.build(), m)
 
 
-MAPS = {"dawnbrook": dawnbrook, "route_1": lambda: route("route_1")}
+MAPS = {"dawnbrook": dawnbrook, "route_1": lambda: route("route_1"), "mossgate": mossgate, "mossgate_gym": mossgate_gym}
 
 
 def finish(data, m):

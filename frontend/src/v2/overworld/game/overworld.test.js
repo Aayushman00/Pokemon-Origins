@@ -169,10 +169,29 @@ describe("Dawnbrook interiors and Route 1 (headless)", () => {
 		d.hold("left", 60);
 		assert.equal(d.game.player.mapId, "dawnbrook");
 	});
+	it("enters the Mossgate gym at the puzzle start and leaves by the west door", async () => {
+		const d = await boot({ mapId: "mossgate", x: 15, y: 7, facing: "up" });
+		const walkUntilMap = (dir, mapId) => {
+			for (let i = 0; i < 400 && d.game.player.mapId !== mapId; i++) d.game.tick({ dir }, []);
+			d.idle(120);
+		};
+		walkUntilMap("up", "mossgate_gym");
+		assert.deepEqual(d.pos(), ["mossgate_gym", 1, 5]);
+		walkUntilMap("left", "mossgate");
+		assert.deepEqual(d.pos(), ["mossgate", 15, 7]);
+	});
+	it("walks east off Route 1 into Mossgate with no fade, and back", async () => {
+		const d = await boot({ mapId: "route_1", x: 37, y: 9, facing: "right" });
+		d.hold("right", 60);
+		assert.equal(d.game.player.mapId, "mossgate");
+		assert.equal(d.game.transition, null);
+		d.hold("left", 60);
+		assert.equal(d.game.player.mapId, "route_1");
+	});
 	it("the nurse heals across the counter, the clerk opens the shop", async () => {
-		const c = await boot({ mapId: "origin_center", x: 7, y: 5, facing: "up" });
+		const c = await boot({ mapId: "mossgate_center", x: 7, y: 5, facing: "up" });
 		c.hold("up", 20);
-		assert.deepEqual(c.pos(), ["origin_center", 7, 4]);
+		assert.deepEqual(c.pos(), ["mossgate_center", 7, 4]);
 		c.press();
 		assert.match(c.dialogues()[0].pages.join(" "), /Care\s+Centre/);
 		for (let i = 0; i < 6; i++) c.close();

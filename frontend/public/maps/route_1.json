@@ -5403,6 +5403,16 @@
    "name": "connect_west_offset",
    "type": "int",
    "value": 0
+  },
+  {
+   "name": "connect_east",
+   "type": "string",
+   "value": "mossgate"
+  },
+  {
+   "name": "connect_east_offset",
+   "type": "int",
+   "value": 0
   }
  ]
 }

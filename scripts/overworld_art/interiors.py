@@ -1,7 +1,7 @@
 """Interiors v2: Care Centre, Mart and home, painted as whole rooms.
 
   frontend/public/maps/tilesets/interior.png   unique 16x16 tiles, 8 columns
-  frontend/public/maps/origin_center.json, origin_mart.json, dawnbrook_home.json, dawnbrook_house.json, dawnbrook_lab.json
+  frontend/public/maps/mossgate_center.json, origin_mart.json, and the Dawnbrook and Mossgate houses and lab
 
 Each room is painted as ONE picture (so furniture spans tiles and casts big
 soft floor shadows across tile edges, the way FireRed rooms look), then
@@ -859,10 +859,11 @@ def paint_home(frame):
 
 
 # ==================================================== slice + dedupe + maps
-# origin_center and origin_mart are dev-only until Mossgate and Hearthfield exist.
-# ponytail: the lab and neighbour house reuse the Centre and home rooms until they get their own art.
-ROOMS = {"origin_center": (paint_center, 3), "origin_mart": (paint_mart, 1), "dawnbrook_home": (paint_home, 1),
-         "dawnbrook_house": (paint_home, 1), "dawnbrook_lab": (paint_center, 3)}
+# origin_mart is dev-only until Hearthfield exists: Mossgate has no Mart.
+# ponytail: the lab and every house reuse the Centre and home rooms until they get their own art.
+ROOMS = {"mossgate_center": (paint_center, 3), "origin_mart": (paint_mart, 1), "dawnbrook_home": (paint_home, 1),
+         "dawnbrook_house": (paint_home, 1), "dawnbrook_lab": (paint_center, 3),
+         "mossgate_house_a": (paint_home, 1), "mossgate_house_b": (paint_home, 1)}
 
 
 def _tile_bytes(img):
@@ -929,11 +930,13 @@ class MapData(base.MapBuilder):
         self.obj("signs", name, x, y, **({"script": script(*ops)} if ops else {"text": text}))
 
 
-# where each building's door is in Dawnbrook (door cells, x list, y)
+# where each building's door is in its town (door cells, x list, y)
 DOORS = {"dawnbrook_home": ([7], 5), "dawnbrook_lab": ([22], 5), "dawnbrook_house": ([7], 14),
-         "origin_center": ([7], 5), "origin_mart": ([7], 5)}
+         "mossgate_center": ([6], 15), "mossgate_house_a": ([24], 6), "mossgate_house_b": ([24], 15),
+         "origin_mart": ([7], 5)}
 # exit mat column inside each room; you arrive one row above it, facing up
-MAT = {"dawnbrook_home": 4, "dawnbrook_house": 4, "dawnbrook_lab": 7, "origin_center": 7, "origin_mart": 6}
+MAT = {"dawnbrook_home": 4, "dawnbrook_house": 4, "dawnbrook_lab": 7, "mossgate_center": 7,
+       "mossgate_house_a": 4, "mossgate_house_b": 4, "origin_mart": 6}
 ARRIVE = {k: [(MAT[k], 8)] * len(DOORS[k][0]) for k in DOORS}  # every room is 10 tall
 
 
@@ -947,7 +950,8 @@ def make_map(map_id, extras):
     door_xs, door_y = DOORS[map_id]
     mx = MAT[map_id]
     m.block(mx, room.h - 1, 0)
-    m.obj("warps", "exit", mx, room.h - 1, kind="door", targetMap="dawnbrook", targetX=door_xs[0], targetY=door_y + 1,
+    town = "dawnbrook" if map_id == "origin_mart" else map_id.split("_")[0]  # the id starts with its town
+    m.obj("warps", "exit", mx, room.h - 1, kind="door", targetMap=town, targetX=door_xs[0], targetY=door_y + 1,
           facing="down", transition="iris", enterDir="down")
     extras(m)
     data = m.build()
@@ -978,7 +982,7 @@ def center():
         m.npc("visitor", 1, 4, "gentleman", "right", say("The nurse here never forgets a Pokemon's name."))
         m.npc("trainer", 12, 4, "cooltrainer_f", "left",
               say("Healing is free for every Pokemon Origins trainer. Use it before you take on the Gym!"))
-    return make_map("origin_center", extras)
+    return make_map("mossgate_center", extras)
 
 
 def mart():
@@ -1005,12 +1009,12 @@ def home():
     return make_map("dawnbrook_home", extras)
 
 
-def house():
+def house(map_id, who, sprite, line, tv):
     def extras(m):
-        m.sign("tv", 8, 1, text="A nature show about the Greenwood is on.")
+        m.sign("tv", 8, 1, text=tv)
         m.sign("stairs", 10, 2, text="That's the neighbours' upstairs. Better not.")
-        m.npc("neighbour", 3, 5, "old_man", "right", say("You're the kid from next door! The Professor's lab is just across the road."))
-    return make_map("dawnbrook_house", extras)
+        m.npc(who, 3, 5, sprite, "right", say(line))
+    return make_map(map_id, extras)
 
 
 def lab():
@@ -1024,4 +1028,15 @@ def lab():
     return make_map("dawnbrook_lab", extras)
 
 
-MAPS = {"origin_center": center, "origin_mart": mart, "dawnbrook_home": home, "dawnbrook_house": house, "dawnbrook_lab": lab}
+MAPS = {
+    "mossgate_center": center, "origin_mart": mart, "dawnbrook_home": home, "dawnbrook_lab": lab,
+    "dawnbrook_house": lambda: house("dawnbrook_house", "neighbour", "old_man",
+                                     "You're the kid from next door! The Professor's lab is just across the road.",
+                                     "A nature show about the Greenwood is on."),
+    "mossgate_house_a": lambda: house("mossgate_house_a", "ranger", "camper",
+                                      "Moss only grows where it's left alone. So does the Gym Leader's patience.",
+                                      "The weather report: damp, then damper."),
+    "mossgate_house_b": lambda: house("mossgate_house_b", "fisher", "fisherman",
+                                      "I built that boardwalk myself. The bridge too. Mind the loose plank.",
+                                      "A fishing show. Nobody has caught anything yet."),
+}

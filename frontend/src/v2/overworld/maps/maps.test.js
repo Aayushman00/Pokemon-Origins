@@ -13,7 +13,7 @@ const maps = Object.fromEntries(ids.map((id) => [id, parseTiledMap(JSON.parse(re
 
 describe("sample maps (smoke + lint)", () => {
 	it("finds every map and parses it", () => {
-		assert.deepEqual(ids.sort(), ["dawnbrook", "dawnbrook_home", "dawnbrook_house", "dawnbrook_lab", "legend_grove", "origin_center", "origin_mart", "route_1", "test_house", "test_route", "test_town"]);
+		assert.deepEqual(ids.sort(), ["dawnbrook", "dawnbrook_home", "dawnbrook_house", "dawnbrook_lab", "legend_grove", "mossgate", "mossgate_center", "mossgate_gym", "mossgate_house_a", "mossgate_house_b", "origin_mart", "route_1", "test_house", "test_route", "test_town"]);
 		assert.equal(maps.test_town.width, 30);
 		assert.deepEqual([maps.dawnbrook.width, maps.dawnbrook.height], [30, 20]);
 		assert.deepEqual([maps.route_1.width, maps.route_1.height], [40, 20]);
@@ -43,15 +43,35 @@ describe("sample maps (smoke + lint)", () => {
 			assert.equal(from.collision[back.targetY * from.width + back.targetX], 0, `${to.id} -> ${from.id} lands on a solid cell`);
 		}
 	});
+	it("every Mossgate door round-trips, and the guard gate is gone", () => {
+		assert.deepEqual(maps.mossgate.warps.map((w) => w.targetMap).sort(), ["mossgate_center", "mossgate_gym", "mossgate_house_a", "mossgate_house_b"]);
+		for (const w of maps.mossgate.warps) {
+			const back = maps[w.targetMap].warps.find((b) => b.targetMap === "mossgate");
+			assert.ok(back, `${w.targetMap} has no way back`);
+			assert.deepEqual([back.targetX, back.targetY], [w.x, w.y + 1], `${w.targetMap} drops you off the door step`);
+		}
+		for (let x = 0; x < 30; x++) assert.notEqual(collisionAt(maps.mossgate, x, 0), COL.FREE, `north edge open at x=${x}`);
+		assert.equal(maps.mossgate.connections.north, undefined);
+	});
+	it("the Mossgate gym matches gym_puzzles.json cell for cell", () => {
+		const { rows } = JSON.parse(readFileSync(join(MAPS_DIR, "../../../backend/data/gyms/gym_puzzles.json"), "utf8")).willow_thornby;
+		const exit = maps.mossgate_gym.warps[0];
+		rows.forEach((row, y) => [...row].forEach((c, x) => {
+			if (x === exit.x && y === exit.y) return;
+			if (x === 9 && y === 6) return; // the puzzle's wall behind the goal opens into the Leader's chamber
+			const solid = collisionAt(maps.mossgate_gym, x, y) !== COL.FREE;
+			assert.equal(solid, "#g$".includes(c), `(${x},${y}) is "${c}"`);
+		}));
+	});
 	it("interiors use the interior tileset and talk-through counters", () => {
-		for (const id of ["dawnbrook_home", "dawnbrook_lab", "dawnbrook_house", "origin_center", "origin_mart"]) {
+		for (const id of ["dawnbrook_home", "dawnbrook_lab", "dawnbrook_house", "mossgate_center", "origin_mart"]) {
 			assert.ok(maps[id].tilesets.some((t) => t.image === "tilesets/interior.png"), id);
 		}
-		const sign = maps.origin_center.signs.find((s) => s.name === "counter_nurse");
+		const sign = maps.mossgate_center.signs.find((s) => s.name === "counter_nurse");
 		assert.ok(sign && sign.script.some((op) => op.op === "heal"), "nurse heals across the counter");
 		const shopSigns = maps.origin_mart.signs.filter((s) => s.script && s.script.some((op) => op.op === "shop"));
 		assert.ok(shopSigns.length >= 2, "clerk opens the shop across the glass counter and the register");
-		const machine = maps.origin_center.tilesets[0];
+		const machine = maps.mossgate_center.tilesets[0];
 		assert.ok([...machine.anim.values()].some((a) => a.frames.length === 3), "healing machine animates in 3 frames");
 	});
 	it("test maps animate water and flowers (Tiled tiles[] use the 'id' key)", () => {
