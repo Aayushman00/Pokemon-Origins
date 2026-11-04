@@ -56,6 +56,10 @@ class Players(unittest.TestCase):
         self.assertNotEqual(stand("player").tobytes(), stand("player_f").tobytes())
 
 
+# A child's body sits lower, so on these two the rows measure hair, not arms.
+BODY_WIDTH_CAST = [c for c in ROSTER if c["id"] not in ("lass", "twin")]
+
+
 class Proportions(unittest.TestCase):
     def rows(self, char):
         """Opaque pixel count per row of the stand-down frame."""
@@ -64,6 +68,37 @@ class Proportions(unittest.TestCase):
 
     def height(self, char_id):
         return sum(n > 0 for n in self.rows(BY_ID[char_id]))
+
+    def spans(self, char, sheet_row):
+        """Left-to-right extent of each pixel row of a stand frame."""
+        alpha = build_sheet(char).crop((0, sheet_row * 32, 16, sheet_row * 32 + 32)).getchannel("A").load()
+        rows = [[x for x in range(16) if alpha[x, y] > 0] for y in range(32)]
+        return [r[-1] - r[0] + 1 if r else 0 for r in rows]
+
+    def test_arms_hang_close_to_the_body(self):
+        for c in BODY_WIDTH_CAST:
+            limit = 14 if c.get("build") == "heavy" else 12
+            self.assertLessEqual(max(self.spans(c, 0)[24:26]), limit, c["id"])
+
+    def test_legs_are_slimmer_than_the_shoulders(self):
+        for c in ROSTER:
+            limit = 12 if c.get("build") == "heavy" else 10
+            self.assertLessEqual(self.spans(c, 0)[28], limit, c["id"])
+
+    def test_the_base_never_flares_from_the_front(self):
+        for c in ROSTER:
+            if c["id"] != "old_man":  # the cane stands beside him
+                self.assertLessEqual(max(self.spans(c, 0)[29:]), 10, c["id"])
+
+    def test_the_base_never_flares_from_the_side(self):
+        for c in ROSTER:
+            if c["id"] != "old_man":  # the cane reaches ahead of him
+                self.assertLessEqual(max(self.spans(c, 2)[29:]), 9, c["id"])
+
+    def test_coats_and_skirts_hang_straight_from_the_side(self):
+        for c in BODY_WIDTH_CAST:
+            if c.get("build") != "heavy" and c["id"] != "old_man":
+                self.assertLessEqual(max(self.spans(c, 2)[25:29]), 9, c["id"])
 
     def test_slimming_never_touches_the_eyes(self):
         row = list("0123456789abcdef")

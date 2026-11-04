@@ -44,6 +44,8 @@ GBA-era top-down pixel art is the genre. `pret/pokefirered/graphics` and screens
 - At most 24 rows tall, plus up to 2 for hair spikes and hats. Head at most 11 rows, feet on the bottom row of the 16x32 cell.
 - Children stand at least 3 rows shorter than adults, and the head stays under half the figure.
 - Side views are narrow, at most 13 px wide.
+- Front views are at most 12 px wide across the arms (14 for heavy builds). Legs stay inside 10 px and the feet never spread past that.
+- Nothing flares at the bottom: coats and skirts hang straight, at most 9 px from the side. Arms meet the torso with a shadow tone, not an outline, or the figure reads as toy blocks.
 - The silhouette must read in solid colour. Design shape first, colour second.
 - At most 15 colours per sprite.
 
