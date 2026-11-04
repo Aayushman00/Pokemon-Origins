@@ -60,6 +60,7 @@ const CUES = {
 	bump: [[110, 0, 0.05, "square"]],
 	ledge: [[300, 0, 0.06, "triangle"], [200, 0.06, 0.08, "triangle"]],
 	door: [[392, 0, 0.06, "square"], [523, 0.06, 0.08, "square"]],
+	push: [[196, 0, 0.07, "triangle"]],
 	spotted: [[880, 0, 0.05, "square"], [1175, 0.05, 0.1, "square"]],
 	defeat: [[392, 0, 0.18, "triangle"], [370, 0.2, 0.18, "triangle"], [349, 0.4, 0.3, "triangle"]],
 	// a legendary calls out: a rising screech over a noise burst

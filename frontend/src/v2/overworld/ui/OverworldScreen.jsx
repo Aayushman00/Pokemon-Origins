@@ -87,6 +87,13 @@ const OverworldScreen = () => {
 						if (e.type === "sound") play(e.cue);
 						else if (e.type === "dialogue") setDialogue({ pages: e.pages, i: 0 });
 						else if (e.type === "effect" && e.effect.type === "battle" && e.effect.trainer) setBattle(e.effect.trainer);
+						else if (e.type === "effect" && e.effect.type === "solve") {
+							const { leaderId, moves } = e.effect;
+							api
+								.post("/api/world/gym/solve", { leaderId, moves })
+								.then(() => game.flags.add(`gym:${leaderId}:solved`))
+								.catch((err) => console.error("Could not record the solve:", err));
+						}
 					},
 				});
 				const renderer = createRenderer({ canvas: canvasRef.current, assets, playerSprite });

@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 5,
+ "nextobjectid": 4,
  "layers": [
   {
    "id": 1,
@@ -114,9 +114,9 @@
     26,
     177,
     182,
-    172,
-    26,
-    178,
+    170,
+    170,
+    170,
     170,
     201,
     169,
@@ -317,11 +317,11 @@
     161,
     162,
     163,
-    362,
+    0,
     159,
     160,
     0,
-    362,
+    0,
     0,
     0,
     0,
@@ -365,7 +365,7 @@
     0,
     0,
     0,
-    67,
+    0,
     0,
     0,
     0,
@@ -567,34 +567,9 @@
     1000,
     1000,
     1000,
-    1000,
-    1000,
-    1000,
-    0,
-    1000,
-    0,
-    0,
     0,
     1000,
     1000,
-    1000,
-    1000,
-    1000,
-    1000,
-    0,
-    0,
-    0,
-    0,
-    0,
-    1000,
-    0,
-    0,
-    1000,
-    0,
-    0,
-    0,
-    1000,
-    0,
     0,
     0,
     0,
@@ -604,6 +579,31 @@
     1000,
     1000,
     1000,
+    1000,
+    1000,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1000,
+    0,
+    0,
+    1000,
+    0,
+    0,
+    0,
+    1000,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1000,
+    1000,
+    1000,
+    1000,
     0,
     0,
     1000,
@@ -615,7 +615,7 @@
     0,
     0,
     0,
-    1000,
+    0,
     0,
     0,
     0,
@@ -731,7 +731,7 @@
    "visible": true,
    "objects": [
     {
-     "id": 4,
+     "id": 3,
      "name": "willow_thornby",
      "type": "",
      "rotation": 0,
@@ -785,25 +785,7 @@
       {
        "name": "text",
        "type": "string",
-       "value": "A sign at the door: \u201cSeeds only go forward. Think before you push one into a corner.\u201d"
-      }
-     ]
-    },
-    {
-     "id": 3,
-     "name": "vine_gate",
-     "type": "",
-     "rotation": 0,
-     "visible": true,
-     "x": 112,
-     "y": 96,
-     "width": 16,
-     "height": 16,
-     "properties": [
-      {
-       "name": "text",
-       "type": "string",
-       "value": "Thick vines bar the way. (Pushing seed pods opens in a later update.)"
+       "value": "A sign at the door: \u201cSeeds only go forward. Think before you push one into a corner.\u201d Stuck? Leave the room and the seeds roll back."
       }
      ]
     }
@@ -1822,5 +1804,21 @@
    "spacing": 0
   }
  ],
- "properties": []
+ "properties": [
+  {
+   "name": "puzzle",
+   "type": "string",
+   "value": "willow_thornby"
+  },
+  {
+   "name": "puzzle_pod",
+   "type": "int",
+   "value": 362
+  },
+  {
+   "name": "puzzle_gate",
+   "type": "int",
+   "value": 67
+  }
+ ]
 }

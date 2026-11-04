@@ -245,24 +245,23 @@ def mossgate():
 def mossgate_gym():
     """The Seed pods puzzle, at the same coordinates as gym_puzzles.json so the
     server's replay() and this map agree. Cols 10-12 are the Leader's chamber.
-    ponytail: pods are fixed rocks until the puzzle client lands, so the gate stays shut."""
+    Pods and the gate are not in the map: game/overworld.js runs them from the
+    `puzzle` property, drawing `puzzle_pod` and `puzzle_gate` (gids)."""
     gym = GYMS["willow_thornby"]
     rows = [r + "####" for r in gym["rows"]]
     rows[4] = rows[4][:10] + "...#"
     rows[5] = "." + rows[5][1:10] + "...#"  # col 0 is the exit, one step west of the start
     rows[6] = rows[6][:9] + "....#"
     m = Town(14, 8, base.GRASS)
-    paint(m, ["".join({"#": "T", "g": "h"}.get(c, ".") for c in r) for r in rows], "path")
+    m.props = [("puzzle", "willow_thornby"), ("puzzle_pod", ID["rock2"] + 1), ("puzzle_gate", ID["bush"] + 1)]
+    paint(m, ["".join("T" if c == "#" else "." for c in r) for r in rows], "path")
     for y, r in enumerate(rows):
         for x, c in enumerate(r):
             if c == "_":
                 m.put("ground", x, y, ID["veg"])
-            elif c == "$":
-                m.put("objects", x, y, ID["rock2"], SOLID)
     m.obj("warps", "exit", 0, 5, kind="door", targetMap="mossgate", targetX=15, targetY=7, facing="down",
           transition="iris", enterDir="left")
-    m.sign("hint", 0, 4, gym["hint"])
-    m.obj("signs", "vine_gate", 7, 6, text="Thick vines bar the way. (Pushing seed pods opens in a later update.)")
+    m.sign("hint", 0, 4, gym["hint"] + " Stuck? Leave the room and the seeds roll back.")
     script = trainer_script("willow_thornby", "Welcome to the Grove. Take your time, nothing here grows in a hurry.")
     m.obj("npcs", "willow_thornby", 12, 5, point=True, sprite="leader_f", facing="left", script=script)
     m.block(12, 5)

@@ -4,6 +4,7 @@ import { createMapStore } from "../maps/mapStore.js";
 import { fetchFromDisk } from "../maps/diskFetch.js";
 import { createMemoryFlags } from "./flags.js";
 import { createOverworld } from "./overworld.js";
+import AP, { GYM_PUZZLES } from "../logic/puzzles.generated.js";
 
 async function boot(start = { mapId: "test_town", x: 14, y: 12, facing: "up" }) {
 	const store = createMapStore({ fetchJson: fetchFromDisk });
@@ -251,6 +252,80 @@ describe("route trainers (headless)", () => {
 		d.close();
 		assert.equal(d.game.mode, "explore");
 		assert.ok(!d.events.some((e) => e.type === "effect" && e.effect.type === "battle"));
+	});
+});
+
+describe("gym puzzle room (headless)", () => {
+	const spec = GYM_PUZZLES.willow_thornby;
+	const solution = AP.solve(AP.seeds(spec.rows));
+	const enter = async () => {
+		const d = await boot({ mapId: "mossgate_gym", x: 1, y: 5, facing: "right" });
+		d.game.enter();
+		return d;
+	};
+	// one tile: hold until the step starts, then let go so it doesn't chain into another
+	const step = (d, dir) => {
+		for (let i = 0; i < 40 && d.game.player.phase !== "walk"; i++) d.game.tick({ dir }, []);
+		for (let i = 0; i < 40 && d.game.player.phase !== "idle"; i++) d.game.tick({ dir: null }, []);
+	};
+	const solved = (d) => d.events.find((e) => e.type === "effect" && e.effect.type === "solve");
+
+	it("draws the pods and the shut gate from the puzzle", async () => {
+		const d = await enter();
+		const tiles = d.game.puzzleTiles();
+		assert.equal(tiles.length, 3, "two pods and the gate");
+		assert.ok(tiles.some((t) => t.x === 7 && t.y === 6), "gate");
+		assert.ok(tiles.some((t) => t.x === 1 && t.y === 3) && tiles.some((t) => t.x === 5 && t.y === 3), "pods");
+	});
+	it("walking the shortest solution pushes the pods, opens the gate and reports the same moves", async () => {
+		const d = await enter();
+		solution.forEach((dir) => step(d, dir));
+		assert.deepEqual(d.pos(), ["mossgate_gym", 8, 6], "on the goal");
+		assert.deepEqual(solved(d).effect, { type: "solve", leaderId: "willow_thornby", moves: solution });
+		assert.ok(!d.game.puzzleTiles().some((t) => t.x === 7 && t.y === 6), "gate gone");
+		assert.ok(d.events.some((e) => e.type === "sound" && e.cue === "push"));
+		step(d, "right");
+		step(d, "right");
+		assert.deepEqual(d.pos(), ["mossgate_gym", 10, 6], "on into the chamber");
+	});
+	it("held keys chain steps without losing the puzzle, and the shut gate holds", async () => {
+		const d = await enter();
+		d.hold("right", 200);
+		assert.deepEqual(d.pos(), ["mossgate_gym", 5, 5]);
+		d.hold("down", 200);
+		d.hold("right", 200);
+		assert.deepEqual(d.pos(), ["mossgate_gym", 6, 6], "stopped at the vines");
+		assert.equal(solved(d), undefined);
+	});
+	it("bumping a wall costs no move", async () => {
+		const d = await enter();
+		step(d, "down");
+		d.hold("left", 30);
+		d.hold("down", 30);
+		step(d, "up");
+		solution.forEach((dir) => step(d, dir));
+		assert.deepEqual(solved(d).effect.moves, ["down", "up", ...solution]);
+	});
+	it("leaving rolls the seeds back", async () => {
+		const d = await enter();
+		const start = d.game.puzzleTiles();
+		step(d, "up");
+		step(d, "up"); // shoves the pod at (1,3) up to (1,2)
+		assert.notDeepEqual(d.game.puzzleTiles(), start);
+		step(d, "down");
+		step(d, "down");
+		for (let i = 0; i < 400 && d.pos()[0] !== "mossgate"; i++) d.game.tick({ dir: "left" }, []);
+		d.idle(120);
+		assert.deepEqual(d.game.puzzleTiles(), [], "nothing to draw outside");
+		for (let i = 0; i < 400 && d.pos()[0] !== "mossgate_gym"; i++) d.game.tick({ dir: "up" }, []);
+		d.idle(120);
+		assert.deepEqual(d.game.puzzleTiles(), start);
+	});
+	it("a solved gym stays open: no pods, no gate", async () => {
+		const d = await boot({ mapId: "mossgate_gym", x: 1, y: 5, facing: "right" });
+		d.flags.add("gym:willow_thornby:solved");
+		d.game.enter();
+		assert.deepEqual(d.game.puzzleTiles(), []);
 	});
 });
 

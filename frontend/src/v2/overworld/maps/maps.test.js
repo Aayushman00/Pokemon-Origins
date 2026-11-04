@@ -60,7 +60,7 @@ describe("sample maps (smoke + lint)", () => {
 			if (x === exit.x && y === exit.y) return;
 			if (x === 9 && y === 6) return; // the puzzle's wall behind the goal opens into the Leader's chamber
 			const solid = collisionAt(maps.mossgate_gym, x, y) !== COL.FREE;
-			assert.equal(solid, "#g$".includes(c), `(${x},${y}) is "${c}"`);
+			assert.equal(solid, c === "#", `(${x},${y}) is "${c}"`); // pods and the gate are run by the game
 		}));
 	});
 	it("interiors use the interior tileset and talk-through counters", () => {

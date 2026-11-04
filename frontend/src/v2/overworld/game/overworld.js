@@ -3,6 +3,7 @@ import { createWorld } from "../logic/world.js";
 import { dueTriggers, facingToward, interactionAt, spotter, triggerScript, warpFor } from "../logic/events.js";
 import { resolveScript } from "../logic/script.js";
 import { paginate } from "../logic/dialogue.js";
+import AP, { GYM_PUZZLES } from "../logic/puzzles.generated.js";
 import { DOOR_PAUSE_TICKS, startTransition, tickTransition } from "../logic/transition.js";
 
 /**
@@ -13,6 +14,7 @@ import { DOOR_PAUSE_TICKS, startTransition, tickTransition } from "../logic/tran
  * emit events: { type: 'sound', cue } | { type: 'dialogue', pages } |
  *   { type: 'effect', effect } (give/heal/battle/shop requests) |
  *   { type: 'flag', flag } | { type: 'mapChange', mapId, reason }
+ * A puzzle room also emits { type: 'effect', effect: { type: 'solve', leaderId, moves } }.
  */
 // A legendary's cry whites out the screen for a couple of frames.
 export const CRY_FLASH_TICKS = 2;
@@ -34,6 +36,7 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 	let flash = 0; // cry flash ticks (see CRY_FLASH_TICKS)
 	let alert = null; // { id, ticks }: the trainer showing "!"
 	let foe = null; // trainer id of the battle the host is running
+	let room = null; // the puzzle in play: { map, leaderId, puz, state, moves, done }
 	let pendingStep = null;
 
 	function npcsOf(mapId) {
@@ -62,7 +65,39 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		const ids = new Set([player.mapId, ...Object.values(currentMap()?.connections || {}).map((c) => c.map)]);
 		return [...ids].flatMap(npcsOf);
 	};
+	const roomStep = (ref) => room.puz.step(room.state, [ref.x - room.state.p[0], ref.y - room.state.p[1]]);
+	const isExit = (ref) => room.map.warpIndex.has(`${ref.x},${ref.y}`);
+
+	// While a puzzle is unsolved it decides every step, as replay() will. After that only the pods are in the way.
+	function roomBlocks(ref) {
+		if (!room || ref.mapId !== room.map.id || isExit(ref)) return false;
+		if (room.done) return room.state.pods.some(([x, y]) => x === ref.x && y === ref.y);
+		return !roomStep(ref);
+	}
+
+	function enterRoom(map) {
+		room = null;
+		const leaderId = map?.properties.puzzle;
+		if (!leaderId || flags.has(`gym:${leaderId}:solved`)) return;
+		const spec = GYM_PUZZLES[leaderId];
+		const puz = AP[spec.mechanic](spec.rows, spec.config);
+		room = { map, leaderId, puz, state: puz.init(), moves: [], done: false };
+	}
+
+	/** The player just set off for `to`, so the puzzle takes the same step. */
+	function advanceRoom(to, dir) {
+		if (!room || room.done || isExit(to)) return;
+		const next = roomStep(to);
+		if (next.pods !== room.state.pods) emit({ type: "sound", cue: "push" });
+		room.state = next;
+		room.moves.push(dir);
+		if (!room.puz.won(next)) return;
+		room.done = true;
+		emit({ type: "effect", effect: { type: "solve", leaderId: room.leaderId, moves: room.moves } });
+	}
+
 	const isBlocked = (ref) =>
+		roomBlocks(ref) ||
 		allNpcs().some((n) => n.mapId === ref.mapId && ((n.x === ref.x && n.y === ref.y) || (n.to && n.to.mapId === ref.mapId && n.to.x === ref.x && n.to.y === ref.y)));
 
 	function runScript(script) {
@@ -112,6 +147,7 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		emit({ type: "mapChange", mapId, reason });
 		store.loadAround(mapId).catch(() => {});
 		const map = store.get(mapId);
+		enterRoom(map);
 		if (!map) return;
 		const due = dueTriggers(map, "enter", flags, player);
 		if (due.length) runScript(triggerScript(map, due[0]));
@@ -234,8 +270,10 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 				return false;
 			},
 		};
+		const before = player.to;
 		const r = tickActor(player, { dir: input.dir, run: input.run }, ctx);
 		player = r.actor;
+		if (player.to && player.to !== before) advanceRoom(player.to, player.facing);
 		for (const e of r.events) handleActorEvent(e, true);
 		if (pendingStep) {
 			const p = pendingStep;
@@ -293,6 +331,20 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		/** Ticks left on the white "cry" flash (a legendary calls out). */
 		get flash() {
 			return flash;
+		},
+		/** Moving parts of the puzzle in this room, to draw over the map: [{ x, y, gid }]. */
+		puzzleTiles() {
+			if (!room || room.map.id !== player.mapId) return [];
+			const cells = room.puz.cells(room.state);
+			const gids = { pod: room.map.properties.puzzle_pod, "socket-full": room.map.properties.puzzle_pod, gate: room.map.properties.puzzle_gate };
+			const tiles = [];
+			for (let y = 0; y < cells.h; y++) {
+				for (let x = 0; x < cells.w; x++) {
+					const gid = gids[cells.at(x, y)];
+					if (gid) tiles.push({ x, y, gid });
+				}
+			}
+			return tiles;
 		},
 		/** Id of the NPC showing "!", or null. */
 		get alert() {

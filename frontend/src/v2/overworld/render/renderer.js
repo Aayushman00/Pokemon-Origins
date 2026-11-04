@@ -188,6 +188,7 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 			for (const name of ["ground", "decor", "objects"]) for (const d of drawn) drawLayer(d.map, name, d.ox - cam.x, d.oy - cam.y, ms);
 
 			const originOf = (id) => drawn.find((d) => d.map.id === id);
+			for (const t of game.puzzleTiles()) drawGid(map, t.gid, t.x * TILE - cam.x, t.y * TILE - cam.y, ms);
 			const actors = [{ ...game.player, sprite: playerSprite, mapId: map.id }, ...game.npcs()]
 				.map((a) => ({ a, d: originOf(a.mapId) }))
 				.filter((e) => e.d)

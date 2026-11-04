@@ -83,6 +83,7 @@ A `script` is a JSON array of ops, stored as a string property: `say`, `give`, `
 | `connect_<side>_offset` | Tiles the neighbour's origin is shifted along the shared edge (x for north/south, y for east/west) |
 | `border` | Local tile id `a`, or `a,b,c,d` for a 2x2 block, drawn outside an edge with no connection. Omit it for black, as in interiors |
 | `nameKey` | Key in `places` of `backend/data/world/names.json` |
+| `puzzle` | Gym leader id in `backend/data/gyms/gym_puzzles.json`. The room plays that puzzle at the same coordinates, starting from the arrival tile. Moving parts stay out of the map: `puzzle_pod` and `puzzle_gate` are the gids drawn for them. Leaving resets it |
 | `entry` | The edge the player arrives on (`north`, `south`, `east`, `west`). Required on any map with trainers |
 
 Connections must be reciprocal with opposite offsets. Every tile a player can step off along a connected edge must meet a non-solid tile on the other map, and each connected edge needs at least one open tile.
