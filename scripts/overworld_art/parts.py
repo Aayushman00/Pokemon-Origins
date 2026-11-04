@@ -67,7 +67,7 @@ FACE = {
         ...ssssssssssss.
         ...sesssssSssss.
         ...sesssssSssss.
-        ..sssssssssssss.
+        ...ssssssssssss.
         ...ssssssssss...
         ....ssssss......
     """),

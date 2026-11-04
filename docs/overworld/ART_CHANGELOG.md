@@ -2,6 +2,21 @@
 
 Art decisions, newest first. Each stage ships as its own commit.
 
+## Stage 3a: v1 polish, side views and legs (whole cast)
+
+v1 stays the baseline (v3 boy polish reverted). Template-level fixes only, so every
+character gets them; heads, colours, outfits and height are unchanged.
+
+- **Side views, less chunky:** the male side torso is 6 px of fill (was 8) and sits
+  under the head the way FireRed tucks the body under a wider head.
+- **No pointy nose:** the side face front is flat. The shared side face (`parts.FACE`)
+  and the hand-drawn side heads of the player boy, player girl and Youngster each had a
+  1 px nose that the outline turned into a spike.
+- **Compact side stride:** walk frames step 1-2 px forward/back with a 1 px gap at the
+  feet (v1 opened a wide A-shape, feet 4-6 px apart). Male and female.
+- **Front/back legs:** the 2 px gap between the legs is now a 1 px seam, male and female,
+  in stand, walk and alert frames.
+
 ## Stage 2b: v2 tiles (approved from the slice)
 
 The stage 2 slice was reviewed: tiles approved, avatars rejected. The v2

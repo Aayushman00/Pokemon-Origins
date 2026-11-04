@@ -60,7 +60,7 @@ PLAYER_BOY = {
             ...shsshhhhhhhh.
             ...sesssshhhhhh.
             ...sesssShhhhh..
-            ..sssssssshhhh..
+            ...ssssssshhhh..
             ...sMssssshhh...
             ....ssssss......
         """),
@@ -130,7 +130,7 @@ PLAYER_GIRL = {
             ..eessshhhhhhhhh
             ...sesshhhhhhhhh
             ...sssssshhhh.hh
-            ..ssssssshhh..hh
+            ...sssssshhh..hh
             ...sMsssshhh..hh
             ....sssss.....hh
             ..............hh
@@ -192,7 +192,7 @@ YOUNGSTER = {
             ..shshhhhhhhhh..
             ..sesssshhhhhh..
             ..sesssShhhhh...
-            .sssssssshhhh...
+            ..ssssssshhhh...
             ..smwsssshhh....
             ...ssssss.......
         """),
