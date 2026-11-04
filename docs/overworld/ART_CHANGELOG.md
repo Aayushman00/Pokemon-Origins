@@ -2,6 +2,22 @@
 
 Art decisions, newest first. Each stage ships as its own commit.
 
+## Stage 3e v3: Mewtwo and Mew redrawn by hand
+
+Review: Mewtwo and Mew looked bad. Built from ovals and sticks they had blob legs,
+stick arms and boxy heads, and extra detail could not fix the construction. Both are
+now hand-drawn 32x32 pixel grids (every pixel chosen); only the tails stay separate
+layers behind the body so the idle can animate them. The birds are unchanged.
+
+- **Mewtwo:** short horns, a skull that widens at the brow, angled brow over narrow
+  eyes, tapered jaw with a small mouth, the neck tube, a sculpted chest, a purple belly
+  with segments, arms ending in bulbous hands, thick thighs over thinner shins and
+  feet, and a thick tail (lit stripe, ring) curling up on his right that sways.
+- **Mew:** round head with triangular ears (inner shading), big eyes with dark top,
+  iris, light bottom and catch-light, a small smile, a pale chest, tiny arms, dangling
+  feet with toe lines, a long thin tail curving up to an oval tip; it bobs 2 px.
+- Shinies are still the same palette swap.
+
 ## Stage 3e v2: legendary detailing pass
 
 - **Wings** (`wing_detail`): darker feather tips, a feather shaft from near the shoulder

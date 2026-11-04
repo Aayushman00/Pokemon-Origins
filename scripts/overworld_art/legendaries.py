@@ -358,6 +358,8 @@ def moltres(f):
 
 
 # ==================================================================== Mewtwo
+# Hand-drawn pixel grids (every pixel chosen), not shapes: the body is one
+# grid; the tail is a separate layer behind it so the idle can sway it.
 MEWTWO = {
     "ol": "#3a2a4a", "grey": "#d8d4e4", "glight": "#f6f4fc", "gdark": "#a8a2c0", "gdeep": "#7e7896",
     "purple": "#9a68c8", "plight": "#c4a0e8", "pdark": "#6a4098", "eye": "#5a2a88",
@@ -366,61 +368,66 @@ MEWTWO_SHINY = {
     "ol": "#2a3a2a", "grey": "#dce4d4", "glight": "#f6fcf2", "gdark": "#a8bca0", "gdeep": "#7a9076",
     "purple": "#68b858", "plight": "#a0e090", "pdark": "#3c8040", "eye": "#2a6a30",
 }
+MEWTWO_KEY = {"K": "ol", "W": "glight", "g": "grey", "d": "gdark", "D": "gdeep",
+              "P": "plight", "p": "purple", "q": "pdark", "e": "eye"}
+
+MEWTWO_BODY = [
+    "................................",
+    "...........K........K...........",
+    "..........KWK......KgK..........",
+    "..........KgdKKKKKKdgK..........",
+    "...........KWggggggdK...........",
+    "..........KWgDggggDgdK..........",
+    "..........KggeDggDegdK..........",
+    "...........KgggggggdK...........",
+    "............KggddgdK............",
+    ".............KDggdKKDK..........",
+    "...........KKWggggdDDK..........",
+    "........KKKWggggggggdKKK........",
+    ".......KWgKgWgggggggddKgdK......",
+    ".......KggKgggdggdgggdKgdK......",
+    ".......KggKdggggggggddKgdK......",
+    ".......KgdKKdPppppppqdKKgdK.....",
+    ".......KgdK.KPpppppqqK.KgdK.....",
+    "......KWggdKKqqqqqqqqKKggdK.....",
+    "......KgWgdK.KPppppqK.KgggdK....",
+    "......KgggdK.KPppppqK.KggddK....",
+    "......KDgDK..KKqqqqKK..KDgDK....",
+    ".......KKK..KWggKKggdK..KKK.....",
+    "...........KWgggKKgggdK.........",
+    "...........KggggK.KggddK........",
+    "...........KgggdK.KgdddK........",
+    "............KgdK...KgdK.........",
+    "............KgdK...KgdK.........",
+    "............KgdK...KgdK.........",
+    "...........KWgdK...KgddK........",
+    "..........KWgggdK.KggdddK.......",
+    "..........KKKKKKK.KKKKKKK.......",
+    "................................",
+]
+
+
+def grid_layer(p, rows, key):
+    for y, row in enumerate(rows):
+        assert len(row) == S, (y, len(row), row)
+        for x, ch in enumerate(row):
+            if ch != ".":
+                p.px(x, y, key[ch])
 
 
 def mewtwo(f):
     p = Paint()
-    tail = [(19, 23), (25, 25), (28, 21), (29, 15)] if f == 0 else [(19, 23), (25, 26), (29, 23), (30, 17)]
-    p.line(tail, "purple", 3)
-    p.ell(tail[-1][0], tail[-1][1], 2.2, 2.2, "purple")
-    p.ell(12, 24, 3, 4.5, "grey")
-    p.ell(19, 24, 3, 4.5, "grey")
-    p.ell(11.5, 29, 2.5, 1.5, "grey")
-    p.ell(19.5, 29, 2.5, 1.5, "grey")
-    p.ell(15.5, 15, 5, 4, "grey")
-    p.ell(15.5, 20, 3.5, 3.5, "purple")
-    p.line([(10, 13), (7, 18), (7, 21)], "grey", 2)
-    p.line([(21, 13), (24, 18), (24, 21)], "grey", 2)
-    p.ell(7, 22, 1.8, 1.6, "grey")
-    p.ell(24, 22, 1.8, 1.6, "grey")
-    p.line([(15, 10), (15, 12)], "grey", 2)
-    p.ell(15.5, 7, 4, 4, "grey")
-    p.poly([(11, 6), (11, 1), (13, 4)], "grey")
-    p.poly([(20, 6), (20, 1), (18, 4)], "grey")
-    p.shade({"grey": ("glight", "gdark"), "purple": ("plight", "pdark")})
-    # tail: lit stripe along its top, a ring near the base
-    lit = [(20, 22), (25, 24), (27, 21), (28, 16)] if f == 0 else [(20, 22), (25, 25), (28, 22), (29, 18)]
+    # tail behind the body: thick, curls up on his right; sways per frame
+    path = [(21, 22), (25, 25), (28, 23), (29, 19), (28, 15)] if f == 0 else [(21, 22), (25, 26), (29, 24), (30, 20), (30, 16)]
+    p.line(path, "purple", 3)
+    tip = path[-1]
+    p.ell(tip[0] + 0.5, tip[1] + 0.5, 1.8, 2.2, "purple")
+    lit = [(22, 21), (25, 24), (27, 22), (28, 18)] if f == 0 else [(22, 21), (25, 25), (28, 23), (29, 19)]
     p.line(lit, "plight")
-    p.line([(21, 22), (21, 25)], "pdark")
-    # inner ears, brow ridge, eyes, neck tube with a highlight
-    p.px(11, 3, "gdark")
-    p.px(20, 3, "gdark")
-    p.line([(13, 6), (14, 6)], "gdeep")
-    p.line([(17, 6), (18, 6)], "gdeep")
-    for x in (13, 17):                                                      # narrow 2 px eyes
-        p.px(x, 7, "eye")
-        p.px(x + 1, 7, "eye")
-    p.px(14, 8, "gdark")
-    p.px(17, 8, "gdark")
-    p.px(15, 9, "gdark")
-    p.line([(19, 9), (21, 11), (19, 13)], "gdeep")
-    p.px(20, 10, "glight")
-    # chest / shoulder definition, belly segments, knees
-    p.line([(12, 13), (14, 15)], "gdark")
-    p.line([(19, 13), (17, 15)], "gdark")
-    p.line([(14, 18), (17, 18)], "pdark")
-    p.line([(14, 21), (17, 21)], "pdark")
-    p.px(12, 25, "glight")
-    p.px(19, 25, "glight")
-    p.px(11, 26, "gdark")
-    p.px(18, 26, "gdark")
-    # three-fingered hands, toes
-    for hx in (6, 23):
-        for k in range(3):
-            p.px(hx + k, 23, "gdeep" if k != 1 else "gdark")
-    for fx in (10, 12, 18, 20):
-        p.px(fx, 30, "gdeep")
+    for x, y in ((24, 26), (28, 24)) if f == 0 else ((24, 27), (29, 25)):
+        p.px(x, y, "pdark")
     p.outline()
+    grid_layer(p, MEWTWO_BODY, MEWTWO_KEY)
     return p
 
 
@@ -429,51 +436,61 @@ MEW = {"ol": "#8a3a5a", "pink": "#f8b4cc", "plight": "#ffdcea", "pdark": "#e080a
        "eye": "#3c62b0", "eye_dk": "#1c2c60", "eye_lt": "#6c9ce8", "eyehi": "#ffffff"}
 MEW_SHINY = {"ol": "#3a4a8a", "pink": "#a8c8f8", "plight": "#dceaff", "pdark": "#7898e0", "pdeep": "#5070c0",
              "eye": "#3c8a50", "eye_dk": "#1c4c28", "eye_lt": "#70c070", "eyehi": "#fffff4"}
+MEW_KEY = {"K": "ol", "P": "plight", "p": "pink", "d": "pdark", "q": "pdeep",
+           "E": "eye_dk", "e": "eye", "L": "eye_lt", "H": "eyehi"}
+
+MEW_BODY = [
+    "................................",
+    "................................",
+    "................................",
+    "..........K..........K..........",
+    ".........KPK........KdK.........",
+    ".........KpqK......KqdK.........",
+    ".........KpqqKKKKKKqqdK.........",
+    "........KPpppPPPPPPpppdK........",
+    "........KPpPPpppppppppdK........",
+    ".......KPppppppppppppppdK.......",
+    ".......KpppEEppppppEEppdK.......",
+    ".......KpppHeppppppHeppdK.......",
+    ".......KpppLLppppppLLppdK.......",
+    "........KdpppppqqppppddK........",
+    ".........KddppppppppddK.........",
+    "..........KKdPPPPPPdKK..........",
+    ".........KpKPPPPPPPPKdK.........",
+    "........KppKpPPPPPPdKpdK........",
+    ".........KKKpPPPPPPdKKK.........",
+    "...........KppPPPPddK...........",
+    "..........KpppppppdddK..........",
+    ".........KPpdKKKKKKpddK.........",
+    ".........KPpdK....KppdK.........",
+    ".........KpqqK....KpqqK.........",
+    "..........KKK......KKK..........",
+    "................................",
+    "................................",
+    "................................",
+    "................................",
+    "................................",
+    "................................",
+    "................................",
+]
 
 
 def mew(f):
     p = Paint()
-    tail = [(19, 21), (24, 23), (28, 19), (28, 12), (26, 8)] if f == 0 else [(19, 21), (25, 22), (29, 17), (29, 11), (27, 7)]
-    p.line(tail, "pink")
-    tip = tail[-1]
-    p.ell(tip[0], tip[1] - 1, 2.2, 2.7, "pink")
-    p.ell(16, 20, 4, 4, "pink")
-    p.ell(12, 25, 2, 1.6, "pink")
-    p.ell(20, 25, 2, 1.6, "pink")
-    p.ell(11, 18, 1.6, 1.4, "pink")
-    p.ell(21, 18, 1.6, 1.4, "pink")
-    p.ell(16, 12, 6, 5, "pink")
-    p.poly([(11, 9), (10, 4), (14, 8)], "pink")
-    p.poly([(21, 9), (22, 4), (18, 8)], "pink")
-    p.shade({"pink": ("plight", "pdark")})
-    # inner ears, head fluff tuft, lighter belly
-    p.px(11, 6, "pdeep")
-    p.px(11, 7, "pdark")
-    p.px(21, 6, "pdeep")
-    p.px(21, 7, "pdark")
-    p.px(16, 7, "plight")
-    p.px(15, 6, "plight")
-    p.ell(16, 21, 2.2, 2.2, "plight")
-    # big eyes: dark top, iris, lighter bottom, catch-light
-    for x0 in (13, 18):
-        p.px(x0, 10, "eye_dk")
-        p.px(x0 + 1, 10, "eye_dk")
-        p.px(x0, 11, "eye")
-        p.px(x0 + 1, 11, "eye")
-        p.px(x0, 12, "eye_lt")
-        p.px(x0 + 1, 12, "eye_lt")
-        p.px(x0, 11, "eyehi")
-    p.px(16, 14, "pdeep")                                                   # tiny smile
-    p.px(15, 13, "pdark")
-    p.px(17, 13, "pdark")
-    # paws with toe lines, tail highlight, tail-tip shading
-    for x in (11, 13, 19, 21):
-        p.px(x, 26, "pdark")
-    p.line([(20, 20), (24, 22)], "plight")
+    # long thin tail behind: from the right hip, curving up to an oval tip
+    path = [(21, 20), (25, 22), (27, 20), (28, 15), (27, 10), (26, 7)] if f == 0 else \
+           [(21, 20), (25, 23), (28, 21), (29, 16), (28, 11), (27, 8)]
+    p.line(path, "pink", 2)
+    p.line([(x - 1, y) for x, y in path[2:]], "plight")
+    tip = path[-1]
+    p.ell(tip[0] + 0.5, tip[1] - 1.5, 2.3, 3.0, "pink")
+    p.px(tip[0] - 1, tip[1] - 3, "plight")
+    p.px(tip[0], tip[1] - 3, "plight")
+    p.px(tip[0] + 1, tip[1] - 1, "pdark")
     p.px(tip[0] + 1, tip[1], "pdark")
-    p.px(tip[0] - 1, tip[1] - 2, "plight")
     p.outline()
-    p.shift(-3 if f == 0 else -5)
+    grid_layer(p, MEW_BODY, MEW_KEY)
+    p.shift(0 if f == 0 else -2)                                       # hover bob
     return p
 
 
