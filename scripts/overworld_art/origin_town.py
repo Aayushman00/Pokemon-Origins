@@ -101,6 +101,25 @@ def stagger_edge(m):
                 m.put("objects", x, y, ID["bush"], SOLID)
 
 
+def autotile_paths(m):
+    """Swap every plain dirt-path cell for the blob tile matching its 8
+    neighbours. Paving and the map edge count as path (no grass rim there)."""
+    from .tiles_v2 import blob_mask
+    joins = {PATH, ID["pave"]} | {ID["pave_" + e] for e in ("n", "s", "w", "e", "nw", "ne", "sw", "se")}
+    is_path = [m.ground[i] - 1 == PATH for i in range(W * H)]
+
+    def grass_at(x, y):
+        if not (0 <= x < W and 0 <= y < H):
+            return False
+        return not (is_path[m.i(x, y)] or m.ground[m.i(x, y)] - 1 in joins)
+
+    for y in range(H):
+        for x in range(W):
+            if is_path[m.i(x, y)]:
+                mask = blob_mask(lambda dx, dy: grass_at(x + dx, y + dy))
+                m.put("ground", x, y, ID[f"path_{mask}"])
+
+
 def build():
     m = Town(W, H, base.GRASS)
     # off-map fill: the 2x2 forest block, picked by tile parity like FireRed
@@ -224,6 +243,7 @@ def build():
         x, y = x0 + hashed(x0, y0) % 3, y0 + hashed(y0, x0) % 3
         m.put("decor", x, y, decals[hashed(x, y) % len(decals)])
 
+    autotile_paths(m)
     data = m.build()
     return finish(data, m)
 

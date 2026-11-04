@@ -372,3 +372,92 @@ def border_tree(variant="A", leaf="forest"):
                 if not (13 <= x <= 19 and y >= 22):
                     t.set(x, y, line)
     return t
+
+
+# ================================================================= paths
+# Dirt path autotile (the 47-tile "blob" set). Bits: N=1 E=2 S=4 W=8 for
+# orthogonal grass neighbours; NE=16 SE=32 SW=64 NW=128 for diagonal grass
+# that only matters when both touching orthogonals are path (inner corner).
+PATH_C = {"hi": "#f2e0b0", "base": "#dcc08a", "mid": "#c8aa74", "rim": "#a88a5c",
+          "rim_lo": "#8c7050", "peb": "#a89c8c", "peb_hi": "#ece6d8"}
+N, E, S, Wb, NE, SE, SW, NW = 1, 2, 4, 8, 16, 32, 64, 128
+
+
+def blob_mask(grass_at):
+    """grass_at(dx, dy) -> bool. Returns the canonical 8-bit blob mask."""
+    m = 0
+    for bit, (dx, dy) in ((N, (0, -1)), (E, (1, 0)), (S, (0, 1)), (Wb, (-1, 0))):
+        if grass_at(dx, dy):
+            m |= bit
+    for bit, (dx, dy), a, b in ((NE, (1, -1), N, E), (SE, (1, 1), S, E), (SW, (-1, 1), S, Wb), (NW, (-1, -1), N, Wb)):
+        if not (m & a) and not (m & b) and grass_at(dx, dy):
+            m |= bit
+    return m
+
+
+def blob_masks():
+    """All 47 canonical masks, in a stable order."""
+    seen = []
+    for raw in range(256):
+        bits = {(0, -1): raw & 1, (1, 0): raw & 2, (0, 1): raw & 4, (-1, 0): raw & 8,
+                (1, -1): raw & 16, (1, 1): raw & 32, (-1, 1): raw & 64, (-1, -1): raw & 128}
+        m = blob_mask(lambda dx, dy: bool(bits[(dx, dy)]))
+        if m not in seen:
+            seen.append(m)
+    return sorted(seen)
+
+
+def _wobble(i, salt):
+    """Edge jitter in px, periodic over 16 so neighbouring tiles join."""
+    return (0, 1, 1, 0, -1, 0, 1, 0, 0, -1, 0, 1, 1, 0, -1, 0)[(i * 5 + salt) % 16]
+
+
+def path_tile(mask, seed=0):
+    t = grass(300 + mask % 7, tufts=0, specks=6)
+    R = 4.5  # outer corner radius
+    r = rng(900 + mask * 13 + seed)
+    for y in range(T):
+        for x in range(T):
+            ds = []
+            if mask & N:
+                ds.append(y + 0.5 - _wobble(x, 3))
+            if mask & S:
+                ds.append(15.5 - y - _wobble(x, 7))
+            if mask & Wb:
+                ds.append(x + 0.5 - _wobble(y, 11))
+            if mask & E:
+                ds.append(15.5 - x - _wobble(y, 13))
+            for bit, cx, cy in ((NE, 16, 0), (SE, 16, 16), (SW, 0, 16), (NW, 0, 0)):
+                if mask & bit:  # inner corner: grass bite around the corner point
+                    ds.append(hypot(x + 0.5 - cx, y + 0.5 - cy) - 2.5)
+            for a, b, cx, cy in ((N, Wb, R, R), (N, E, 16 - R, R), (S, Wb, R, 16 - R), (S, E, 16 - R, 16 - R)):
+                if mask & a and mask & b:
+                    inx = (x + 0.5 < cx) if cx < 8 else (x + 0.5 > cx)
+                    iny = (y + 0.5 < cy) if cy < 8 else (y + 0.5 > cy)
+                    if inx and iny:  # rounded outer corner
+                        ds.append(R - hypot(x + 0.5 - cx, y + 0.5 - cy))
+            d = min(ds) if ds else 99
+            if d < 1.0:
+                continue                       # grass shows through
+            if d < 2.0:
+                col = PATH_C["rim_lo"] if (mask & (N | Wb)) and d == min(ds) else PATH_C["rim"]
+            elif d < 3.0:
+                col = PATH_C["mid"]
+            else:
+                col = PATH_C["base"]
+                n = r(40)
+                if n == 0:
+                    col = PATH_C["mid"]
+                elif n < 3 and d > 6:
+                    col = PATH_C["hi"]        # worn, lighter centre (sparse)
+            t.set(x, y, col)
+    # at most one pebble, away from the edge
+    for _ in range(r(2)):
+        px, py = 3 + r(10), 3 + r(10)
+        if all(t.px[px + dx, py + dy][:3] in (hexrgb(PATH_C["base"])[:3], hexrgb(PATH_C["hi"])[:3], hexrgb(PATH_C["mid"])[:3])
+               for dx in (0, 1) for dy in (0, 1)):
+            t.set(px, py, PATH_C["peb_hi"])
+            t.set(px + 1, py, PATH_C["peb"])
+            t.set(px, py + 1, PATH_C["peb"])
+            t.set(px + 1, py + 1, PATH_C["rim_lo"])
+    return t

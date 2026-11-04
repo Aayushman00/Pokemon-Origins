@@ -559,6 +559,9 @@ def new_tiles():
     for variant, leaf in (("A", "forest"), ("B", "forest2")):
         for i, part in enumerate(slice_into(v2.border_tree(variant, leaf).img, 2, 2)):
             add(f"forest{variant}_{i % 2}_{i // 2}", part)
+    # ---- stage 3b: dirt path autotile (47-tile blob set, soft grass edges)
+    for mask in v2.blob_masks():
+        add(f"path_{mask}", v2.path_tile(mask))
     return out
 
 
