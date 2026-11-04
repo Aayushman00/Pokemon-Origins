@@ -747,36 +747,48 @@ def paint_home(frame):
     r.rect(tv0 + 15, 2 * T - 5, tv0 + 15, 2 * T - 2, "#86522e")
     r.set(tv0 + 12, 2 * T - 3, "#f8d040")
     r.set(tv0 + 18, 2 * T - 3, "#f8d040")
-    # --- staircase: treads with nosing, red carpet runner + gold rods, banister
-    sx0 = 10 * T + 2
-    for i in range(6):
-        y0 = 2 + i * 7
-        x0 = sx0 + i * 3
-        r.box(x0, y0, 12 * T + 14, y0 + 7, "#f2d878")
-        r.rect(x0 + 1, y0 + 1, 12 * T + 13, y0 + 1, "#fff6c0")              # nosing
-        r.rect(x0 + 1, y0 + 6, 12 * T + 13, y0 + 6, "#c8a848")
-        r.rect(x0 + 1, y0 + 2, 12 * T + 13, y0 + 2, "#ecd070")
-        rx0 = x0 + 6
-        r.rect(rx0, y0 + 1, rx0 + 12, y0 + 6, "#c84038")                      # runner
-        r.rect(rx0, y0 + 1, rx0 + 12, y0 + 1, "#e86a4c")
-        r.rect(rx0, y0 + 6, rx0 + 12, y0 + 6, "#f8d040")                      # stair rod
-    for i in range(7):                                                         # balusters + rail
-        bx = sx0 + i * 3
-        r.rect(bx, 2 + i * 7 - 2, bx, 2 + i * 7 + 4, "#a8803c")
-        r.set(bx, 2 + i * 7 - 2, "#fff0a6")
-    for i in range(20):
-        r.set(sx0 + i, 1 + round(i * 7 / 3) - 1, "#8a6030")
-        r.set(sx0 + i, 1 + round(i * 7 / 3), "#d8b058")
-    r.shadow_rect(10 * T, 3 * T - 2, 12 * T + 14, 3 * T + 6)
-    # runner rug at the foot of the stairs, with fringe
-    rbox(r, 9 * T + 2, 2 * T + 1, 10 * T - 3, 3 * T + 12, "#e86a4c", hi="#f8a088", lo="#a83c34")
-    r.rect(9 * T + 5, 2 * T + 4, 10 * T - 6, 3 * T + 9, "#c84038")
-    for y in range(2 * T + 7, 3 * T + 7, 4):
-        r.set(9 * T + 7, y, "#f8d040")
-        r.set(9 * T + 8, y + 1, "#f8d040")
-    for y in (2 * T, 3 * T + 13):
-        for x in range(9 * T + 3, 10 * T - 3, 2):
-            r.set(x, y, "#fff0d8")
+    # --- staircase (cols 10-11): rises away up the back wall to a dark landing.
+    # Treads (lit nosing) over shaded risers, a red runner with brass rods,
+    # a wooden stringer whose saw-tooth edge follows the steps, a handrail
+    # with spindles and a newel post at the foot.
+    X0, X1, YB, N, RISE, SHIFT = 9 * T + 8, 12 * T - 1, 3 * T - 1, 6, 7, 4
+    r.shadow_rect(9 * T, YB - 2, 12 * T - 1, YB + 6)
+    r.rect(X0 + N * SHIFT - 1, 0, X1, YB - N * RISE, "#2e2a44")              # landing opening
+    r.rect(X0 + N * SHIFT - 1, YB - N * RISE, X1, YB - N * RISE, "#6c6e8c")
+    for i in range(N):
+        y1 = YB - i * RISE
+        y0 = y1 - RISE + 1
+        x0 = X0 + i * SHIFT
+        r.rect(x0, y0, X1, y1, "#c8a050")                                      # riser
+        r.rect(x0, y0, X1, y0 + 2, "#f2d878")                                  # tread
+        r.rect(x0, y0, X1, y0, "#fff6c0")                                      # nosing
+        r.rect(x0, y1, X1, y1, "#8c6a30")
+        rx0, rx1 = x0 + 5, X1 - 4                                              # runner
+        r.rect(rx0, y0, rx1, y1 - 1, "#b83a34")
+        r.rect(rx0, y0, rx1, y0 + 2, "#d85040")
+        r.rect(rx0, y0, rx1, y0, "#f08870")
+        r.rect(rx0, y1 - 1, rx1, y1 - 1, "#f8d040")                             # brass rod
+        r.set(rx0, y1 - 1, "#fff28c")
+        r.rect(x0 - 3, y0, x0 - 1, y1, "#a8784a")                              # stringer
+        r.set(x0 - 3, y0, "#d8a868")
+        r.rect(x0 - 4, y0, x0 - 4, y1, OL)
+    r.rect(X0 - 4, YB, X0 + 1, YB, OL)
+    for i in range(N):                                                         # spindles
+        x = X0 - 6 + i * SHIFT
+        foot = YB - i * RISE - 1
+        r.rect(x, foot - 9, x, foot, "#d8a868")
+        r.set(x + 1, foot - 8, "#86522e")
+        r.rect(x + 1, foot - 7, x + 1, foot, "#a8784a")
+    for i in range(N * SHIFT + 1):                                             # handrail
+        x = X0 - 6 + i
+        y = YB - 11 - round(i * RISE / SHIFT)
+        r.rect(x, y - 1, x, y, "#c08048")
+        r.set(x, y - 2, OL)
+        r.set(x, y + 1, "#6a4428")
+    rbox(r, X0 - 9, YB - 13, X0 - 5, YB, "#a8784a", hi="#d8a868", lo="#6a4428")  # newel post
+    r.rect(X0 - 10, YB - 15, X0 - 4, YB - 13, "#c08048")
+    r.rect(X0 - 9, YB - 16, X0 - 5, YB - 16, "#d8a868")
+    r.set(X0 - 8, YB - 17, "#fff0a6")
     # --- big rug: border band with diamonds, flower dots, corner motifs
     rx0, ry0, rx1, ry1 = 3 * T, 3 * T, 11 * T - 1, 8 * T - 1
     rbox(r, rx0, ry0, rx1, ry1, "#68b858", lo="#4c9a44")
@@ -842,7 +854,7 @@ def paint_home(frame):
     plant_palm(r, T + 8, 8 * T + 14)
     plant_palm(r, 11 * T + 8, 8 * T + 14)
     mat(r, 4)
-    r.block((10, 2), (11, 2), (12, 2), (6, 4), (7, 4), (6, 5), (7, 5), (5, 4), (5, 5), (8, 4), (8, 5), (1, 8), (11, 8))
+    r.block((9, 2), (10, 2), (11, 2), (6, 4), (7, 4), (6, 5), (7, 5), (5, 4), (5, 5), (8, 4), (8, 5), (1, 8), (11, 8))
     return r
 
 
