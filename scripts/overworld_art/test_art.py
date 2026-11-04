@@ -14,7 +14,6 @@ from PIL import Image
 from .characters import ROSTER
 from .origin_town import GRASS_IDS, plain_windows
 from .palette import OUTLINE, RAMPS, WHITE
-from .polish import EYE_IRIS
 from .sheets import COLUMNS, ROWS
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -110,7 +109,7 @@ class SheetTests(unittest.TestCase):
         """Every shading tone pixel touches another pixel of its colour; only
         line work (outline, eyes) and white glints may stand alone. The alert
         pose and hat brims may leave a few single pixels (at most 4 a frame)."""
-        free = {OUTLINE, WHITE, EYE_IRIS}  # eyes are line work, like the outline
+        free = {OUTLINE, WHITE}
         for cid, img in self.sheets.items():
             for r, c, f in frames(img):
                 p = f.load()
@@ -133,29 +132,6 @@ class SheetTests(unittest.TestCase):
             seen.setdefault((mask, side), []).append(cid)
         clones = [v for v in seen.values() if len(v) > 1]
         self.assertFalse(clones, clones)
-
-
-class PolishTests(unittest.TestCase):
-    """v3 polish identity lock: a polished sheet keeps the v1 silhouette in
-    every frame and uses no colour outside the v1 sheet's own palette."""
-
-    def test_polish_keeps_v1_silhouette_and_colours(self):
-        from .characters import PLAYER_BOY_V1
-        from .sheets import build_sheet
-        pairs = [(PLAYER_BOY_V1, next(c for c in ROSTER if c["id"] == "player"))]
-        for v1_char, v3_char in pairs:
-            self.assertTrue(v3_char.get("polish"), v3_char["id"])
-            v1 = build_sheet(v1_char)
-            v3 = Image.open(SPRITES / f"{v3_char['id']}.png").convert("RGBA")
-            a, b = v1.load(), v3.load()
-            moved = [(x, y) for y in range(128) for x in range(128) if (a[x, y][3] > 0) != (b[x, y][3] > 0)]
-            self.assertEqual(moved, [], f"{v3_char['id']}: silhouette changed")
-            c1 = {a[x, y][:3] for y in range(128) for x in range(128) if a[x, y][3]}
-            c3 = {b[x, y][:3] for y in range(128) for x in range(128) if b[x, y][3]}
-            self.assertLessEqual(c3, c1, f"{v3_char['id']}: new colours {c3 - c1}")
-            for r, c, f in frames(v3):
-                v1f = v1.crop((c * 16, r * 32, c * 16 + 16, r * 32 + 32))
-                self.assertEqual(f.getbbox(), v1f.getbbox(), f"{v3_char['id']} row {r} col {c}: size changed")
 
 
 class WorldTests(unittest.TestCase):

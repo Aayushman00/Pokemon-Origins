@@ -322,11 +322,4 @@ CAST = [
          "b": "denim", "n": "hair_brown:2"}, "short"),
 ]
 
-# v3 polish (polish.py): same pixels and colours as v1, better tone placement.
-# One character at a time; the player boy is first.
-from .polish import PLAYER as _PLAYER_POLISH  # noqa: E402
-
-PLAYER_BOY_V1 = PLAYER_BOY
-PLAYER_BOY = {**PLAYER_BOY, "polish": _PLAYER_POLISH}
-
 ROSTER = [PLAYER_BOY, PLAYER_GIRL, YOUNGSTER] + CAST

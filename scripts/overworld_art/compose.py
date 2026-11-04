@@ -186,8 +186,6 @@ def resolve(shaded, mats):
                 continue
             if key == "outline":
                 col = OUTLINE
-            elif isinstance(key, str) and key.startswith("#"):
-                col = key  # a named accent (v3 polish), already a palette colour
             elif key == "white":
                 col = WHITE
             else:

@@ -11,8 +11,7 @@ the shoulders 1px, and in side view the head also leads by 1px.
 from PIL import Image, ImageOps
 
 from .bodies import BODIES
-from . import polish
-from .compose import H, W, MATERIALS, blink, despeckle, outline, resolve, shade, stack
+from .compose import H, W, blink, despeckle, outline, resolve, shade, stack
 
 COLUMNS = ["stand", "walkA", "walkB", "runStand", "runA", "runB", "blink", "alert"]
 ROWS = ["down", "up", "left", "right"]
@@ -46,22 +45,15 @@ def frame_keys(char, direction, column):
     over = char.get("over", {}).get(direction, [])
     # body, things behind the head, head, things in front, raised arms last
     canvas = stack(body, *under, *head, *over, arms_up)
-    tones = polish.tone_canvas(char, direction)  # v3 head tone map ('.' grid if none)
     if column == "blink":
         canvas = blink(canvas)
     if column in ("walkA", "walkB"):
         canvas = _drop(canvas, {TORSO_ROW})
-        tones = _drop(tones, {TORSO_ROW})
     elif column.startswith("run"):
         if direction == "left":
             canvas = _lead(canvas, CHIN_ROW + 1)
-            tones = _lead(tones, CHIN_ROW + 1)
         canvas = _drop(canvas, {CHIN_ROW, TORSO_ROW})
-        tones = _drop(tones, {CHIN_ROW, TORSO_ROW})
-    canvas = outline(canvas)
-    if char.get("polish"):
-        return despeckle(polish.apply(polish.shade_v3(canvas, MATERIALS), shade(canvas), canvas, tones))
-    return despeckle(shade(canvas))
+    return despeckle(shade(outline(canvas)))
 
 
 def frame(char, direction, column):
