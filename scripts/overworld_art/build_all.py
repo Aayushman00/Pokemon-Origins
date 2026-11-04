@@ -63,13 +63,6 @@ def main():
     TILE_JS.write_text(build_sprites.HEADER + f"export const TILE_ART = {json.dumps(art, separators=(',', ':'))};\n")
     print("wrote tileArt.generated.js")
 
-    # tile-name index for /art-slice.html (preview page only; maps use ids)
-    from .tiles import tile_ids
-    slice_dir = ROOT / "frontend" / "public" / "art-slice"
-    slice_dir.mkdir(parents=True, exist_ok=True)
-    (slice_dir / "tiles.json").write_text(json.dumps(tile_ids(), indent=0) + "\n")
-    print("wrote art-slice/tiles.json")
-
 
 if __name__ == "__main__":
     main()

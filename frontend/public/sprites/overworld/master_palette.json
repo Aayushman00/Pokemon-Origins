@@ -150,175 +150,36 @@
     ],
     "blush": [
       "#f69a9a"
-    ],
-    "v2_skin": [
-      "#fff0d8",
-      "#f8c8a0",
-      "#d8907c"
-    ],
-    "v2_hair_dark": [
-      "#a06850",
-      "#6a3c3c",
-      "#462838"
-    ],
-    "v2_hair_brown": [
-      "#eeac6a",
-      "#b46c42",
-      "#7a3c38"
-    ],
-    "v2_hair_black": [
-      "#6a6c9c",
-      "#3c3a62",
-      "#262440"
-    ],
-    "v2_red": [
-      "#ffa084",
-      "#e84a3c",
-      "#a82c44",
-      "#5c1830"
-    ],
-    "v2_blue": [
-      "#94c4ff",
-      "#4c78e0",
-      "#3048a0",
-      "#1c2458"
-    ],
-    "v2_teal": [
-      "#a4f0e0",
-      "#40b8b0",
-      "#24788c",
-      "#184058"
-    ],
-    "v2_navy": [
-      "#6c84d8",
-      "#3c4ca0",
-      "#283070",
-      "#1a1a48"
-    ],
-    "v2_pink": [
-      "#ffc4da",
-      "#f07ca8",
-      "#b04880"
-    ],
-    "v2_white": [
-      "#fffcf0"
     ]
   },
   "characters": {
     "player": {
-      "skin": [
-        "#fff0d8",
-        "#f8c8a0",
-        "#d8907c"
-      ],
-      "hair": [
-        "#a06850",
-        "#6a3c3c",
-        "#462838"
-      ],
-      "hat": [
-        "#ffa084",
-        "#e84a3c",
-        "#a82c44"
-      ],
-      "top": [
-        "#94c4ff",
-        "#4c78e0",
-        "#3048a0",
-        "#1c2458"
-      ],
-      "arm": [
-        "#94c4ff",
-        "#4c78e0",
-        "#3048a0"
-      ],
-      "bottom": [
-        "#4c78e0",
-        "#3048a0",
-        "#1c2458",
-        "#1c2458"
-      ],
-      "acc": [
-        "#ffa084",
-        "#e84a3c",
-        "#a82c44"
-      ],
-      "shoes": [
-        "#ffa084",
-        "#e84a3c",
-        "#a82c44"
-      ],
-      "white": [
-        "#fffcf0",
-        "#94c4ff"
-      ],
-      "eye": [
-        "#1c2458",
-        "#4c78e0"
-      ],
-      "mouth": [
-        "#d8907c"
-      ],
-      "blush": [
-        "#d8907c"
-      ]
+      "s": "skin_light",
+      "h": "hair_dark",
+      "c": "red",
+      "x": "red",
+      "t": "red",
+      "u": "charcoal:2",
+      "a": "charcoal:2",
+      "f": "skin_light",
+      "b": "navy",
+      "l": "navy",
+      "n": "red",
+      "m": "skin_light"
     },
     "player_f": {
-      "skin": [
-        "#fff0d8",
-        "#f8c8a0",
-        "#d8907c"
-      ],
-      "hair": [
-        "#eeac6a",
-        "#b46c42",
-        "#7a3c38"
-      ],
-      "hat": [
-        "#fffcf0",
-        "#a4f0e0"
-      ],
-      "top": [
-        "#a4f0e0",
-        "#40b8b0",
-        "#24788c",
-        "#184058"
-      ],
-      "arm": [
-        "#fff0d8",
-        "#f8c8a0",
-        "#d8907c"
-      ],
-      "bottom": [
-        "#ffa084",
-        "#e84a3c",
-        "#a82c44",
-        "#a82c44"
-      ],
-      "acc": [
-        "#ffa084",
-        "#e84a3c",
-        "#a82c44"
-      ],
-      "shoes": [
-        "#ffa084",
-        "#e84a3c",
-        "#a82c44"
-      ],
-      "white": [
-        "#fffcf0",
-        "#a4f0e0"
-      ],
-      "eye": [
-        "#184058",
-        "#24788c"
-      ],
-      "mouth": [
-        "#a82c44"
-      ],
-      "blush": [
-        "#ffa084"
-      ]
+      "s": "skin_light",
+      "h": "hair_brown",
+      "c": "white",
+      "x": "red:2",
+      "t": "sky",
+      "u": "white",
+      "a": "sky",
+      "f": "skin_light",
+      "b": "red:2",
+      "l": "skin_light",
+      "n": "red:2",
+      "m": "skin_light"
     },
     "youngster": {
       "s": "skin_tan",
@@ -552,62 +413,17 @@
       "n": "brown"
     },
     "lass": {
-      "skin": [
-        "#fff0d8",
-        "#f8c8a0",
-        "#d8907c"
-      ],
-      "hair": [
-        "#6a6c9c",
-        "#3c3a62",
-        "#262440"
-      ],
-      "hat": [
-        "#ffc4da",
-        "#f07ca8",
-        "#b04880"
-      ],
-      "top": [
-        "#fffcf0",
-        "#fffcf0",
-        "#6c84d8",
-        "#1a1a48"
-      ],
-      "arm": [
-        "#fffcf0",
-        "#fffcf0",
-        "#6c84d8"
-      ],
-      "bottom": [
-        "#6c84d8",
-        "#3c4ca0",
-        "#283070",
-        "#1a1a48"
-      ],
-      "acc": [
-        "#ffc4da",
-        "#f07ca8",
-        "#b04880"
-      ],
-      "shoes": [
-        "#ffc4da",
-        "#f07ca8",
-        "#b04880"
-      ],
-      "white": [
-        "#fffcf0",
-        "#6c84d8"
-      ],
-      "eye": [
-        "#1a1a48",
-        "#283070"
-      ],
-      "mouth": [
-        "#b04880"
-      ],
-      "blush": [
-        "#ffc4da"
-      ]
+      "f": "skin_light",
+      "m": "skin_light",
+      "l": "skin_light",
+      "u": "red:2",
+      "a": "white",
+      "s": "skin_light",
+      "h": "hair_brown",
+      "x": "red:2",
+      "t": "white",
+      "b": "navy",
+      "n": "navy"
     },
     "picnicker": {
       "f": "skin_tan",

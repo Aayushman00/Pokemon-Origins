@@ -1,7 +1,6 @@
 # Overworld art refinement: audit (stage 0) and plan (stage 1)
 
-Status: stages 0-1 approved (all six decisions). Stage 2 slice delivered, **waiting for OK** before stage 3.
-Art decisions per stage: `docs/overworld/ART_CHANGELOG.md`.
+Status: **waiting for OK** before stage 2 (vertical slice).
 Goal: refine the existing Origin Town build until it matches, then beats, the
 FireRed refs (town, gym, gym maze, Pokemon Center). Refinement, not rewrite.
 UI copy says "Pokemon Origins".

@@ -7,9 +7,6 @@ drawing functions in this folder, so art changes are reviewable diffs.
 
 | file | what it holds |
 | --- | --- |
-| `handmade.py` | **v2** hand-placed characters: shared male/female body templates, per-character heads, accessories, `right` layer; replaces v1 sheets by id |
-| `tiles_v2.py` | **v2** oak trees, tall grass, flower clusters, house, doormat |
-| `render_map.py` | renders a map JSON to PNG offline (1x / 3x review shots without the dev server) |
 | `palette.py` | master palette: hue-shifted ramps (warm highlight, cool shadow), dark-brown outline |
 | `compose.py` | layer stacking, auto outline, top-left light shading, despeckle (no orphan pixels) |
 | `bodies.py` | male / female body templates per direction and frame |
@@ -30,9 +27,4 @@ python3 -m unittest scripts.overworld_art.test_art  # art checks
 python3 -m scripts.overworld_art.preview cast.png   # 4x contact sheet + cast.gif
 ```
 
-In the running app, `/sprite-preview.html` animates every sheet at 4x and
-`/art-slice.html` shows the stage 2 slice before/after.
-
-```bash
-python3 -m scripts.overworld_art.render_map origin_town town.png --scale 3
-```
+In the running app, `/sprite-preview.html` animates every sheet at 4x.

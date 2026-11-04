@@ -510,8 +510,6 @@ def bush():
 
 
 # -------------------------------------------------------------- assembly
-from . import tiles_v2 as v2  # noqa: E402  (v2 art reuses the helpers above)
-
 def slice_into(img, cols, rows):
     return [img.crop((x * T, y * T, (x + 1) * T, (y + 1) * T)) for y in range(rows) for x in range(cols)]
 
@@ -526,8 +524,8 @@ def new_tiles():
     add("tufts", tuft_decal())
     add("flowers0", flowers_decal(1))
     add("flowers1", flowers_decal(2))
-    add("bedA", v2.flowers_v2(0, 0))       # v2: clusters on grass, not a soil square
-    add("bedB", v2.flowers_v2(1, 0))
+    add("bedA", flower_bed(0))
+    add("bedB", flower_bed(1))
     add("pave", herringbone())
     for edges in ("n", "s", "w", "e", "nw", "ne", "sw", "se"):
         add(f"pave_{edges}", herringbone(edges))
@@ -536,25 +534,18 @@ def new_tiles():
     p = pine()
     add("pine_top", p.img.crop((0, 0, T, T)))
     add("pine_base", p.img.crop((0, T, T, 2 * T)))
-    add("tallA", v2.tall_grass_v2(0))      # v2: leaning blades, no dark band
-    add("tallB", v2.tall_grass_v2(1))
+    add("tallA", tall_grass(0))
+    add("tallB", tall_grass(1))
     for sides in ("n", "s", "w", "e", "nw", "ne", "sw", "se"):
         add(f"shore_{sides}A", water_edge(sides, 0))
         add(f"shore_{sides}B", water_edge(sides, 1))
     add("gym_sign", gym_sign())
     add("bush", bush())
-    for name, img, cols, rows in (("house", v2.house_v2("orange").img, 4, 4), ("center", house("red", emblem=True).img, 4, 4),
+    for name, img, cols, rows in (("house", house("orange").img, 4, 4), ("center", house("red", emblem=True).img, 4, 4),
                                   ("mart", house("blue", ("MART", "#4870c8")).img, 4, 4),
                                   ("gym", gym().img, 6, 5)):
         for i, part in enumerate(slice_into(img, cols, rows)):
             add(f"{name}_{i % cols}_{i // cols}", part)
-    # ---- v2 additions (stage 2 slice): appended so every older id is stable
-    add("bed2A", v2.flowers_v2(0, 1, seed=160))
-    add("bed2B", v2.flowers_v2(1, 1, seed=160))
-    for variant, leaf in (("A", "oak"), ("B", "lime")):
-        for i, part in enumerate(slice_into(v2.oak(variant, leaf).img, 2, 2)):
-            add(f"oak{variant}_{i % 2}_{i // 2}", part)
-    add("doormat", v2.doormat())
     return out
 
 

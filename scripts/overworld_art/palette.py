@@ -51,21 +51,3 @@ RAMPS = {
     "mouth": ["#8a3442"],
     "blush": ["#f69a9a"],
 }
-
-
-# v2 4-tone ramps (hi, base, shadow, deep) for the hand-placed cast in
-# handmade.py. Hue-shifted the same way; the deep tone doubles as the
-# outline of that material (navy on blue cloth, wine on red).
-V2 = {
-    "v2_skin": ["#fff0d8", "#f8c8a0", "#d8907c"],
-    "v2_hair_dark": ["#a06850", "#6a3c3c", "#462838"],
-    "v2_hair_brown": ["#eeac6a", "#b46c42", "#7a3c38"],
-    "v2_hair_black": ["#6a6c9c", "#3c3a62", "#262440"],
-    "v2_red": ["#ffa084", "#e84a3c", "#a82c44", "#5c1830"],
-    "v2_blue": ["#94c4ff", "#4c78e0", "#3048a0", "#1c2458"],
-    "v2_teal": ["#a4f0e0", "#40b8b0", "#24788c", "#184058"],
-    "v2_navy": ["#6c84d8", "#3c4ca0", "#283070", "#1a1a48"],
-    "v2_pink": ["#ffc4da", "#f07ca8", "#b04880"],
-    "v2_white": ["#fffcf0"],
-}
-RAMPS.update(V2)

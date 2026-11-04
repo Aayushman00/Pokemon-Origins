@@ -11,7 +11,6 @@ from pathlib import Path
 
 from PIL import Image
 
-from . import handmade
 from .characters import ROSTER
 from .origin_town import GRASS_IDS, plain_windows
 from .palette import OUTLINE, RAMPS, WHITE
@@ -77,20 +76,12 @@ class SheetTests(unittest.TestCase):
         self.assertTrue(r > b and r > g and max(r, g, b) < 80, "outline should be a dark brown")
 
     def test_right_row_mirrors_left(self):
-        """Right = mirrored left, except where a v2 character declares a
-        `right` layer (one-sided details such as a shoulder bag). The mask
-        is widened for the walk bob (+1 row), run lean (+2) and lean shift."""
-        by_id = {c["id"]: c for c in ROSTER}
         for cid, img in self.sheets.items():
-            fix = handmade.right_fix_mask(by_id[cid])
-            mask = {(x + dx, y + dy) for x, y in fix for dx in (-1, 0, 1) for dy in (0, 1, 2)}
             left = img.crop((0, 64, 128, 96))
             right = img.crop((0, 96, 128, 128))
             for c in range(8):
-                lf = left.crop((c * 16, 0, c * 16 + 16, 32)).transpose(Image.FLIP_LEFT_RIGHT).load()
-                rt = right.crop((c * 16, 0, c * 16 + 16, 32)).load()
-                diff = [(x, y) for y in range(32) for x in range(16) if lf[x, y] != rt[x, y] and (x, y) not in mask]
-                self.assertEqual(diff, [], f"{cid} col {c}")
+                lf = left.crop((c * 16, 0, c * 16 + 16, 32)).transpose(Image.FLIP_LEFT_RIGHT)
+                self.assertEqual(list(lf.get_flattened_data()), list(right.crop((c * 16, 0, c * 16 + 16, 32)).get_flattened_data()), f"{cid} col {c}")
 
     def test_feet_anchor_on_the_tile(self):
         """Every frame stands on the cell's last row: no floating or clipped feet."""
@@ -119,10 +110,7 @@ class SheetTests(unittest.TestCase):
         line work (outline, eyes) and white glints may stand alone. The alert
         pose and hat brims may leave a few single pixels (at most 4 a frame)."""
         free = {OUTLINE, WHITE}
-        v2 = {c["id"] for c in ROSTER if c.get("v2")}
         for cid, img in self.sheets.items():
-            if cid in v2:
-                continue  # stricter letter-level check in HandmadeTests
             for r, c, f in frames(img):
                 p = f.load()
                 lone = []
@@ -144,76 +132,6 @@ class SheetTests(unittest.TestCase):
             seen.setdefault((mask, side), []).append(cid)
         clones = [v for v in seen.values() if len(v) > 1]
         self.assertFalse(clones, clones)
-
-
-class HandmadeTests(unittest.TestCase):
-    """v2 hand-placed characters (handmade.py)."""
-
-    FEATURES = set("Oeimuk.")  # line work and facial features may be single pixels
-
-    def setUp(self):
-        self.cast = [c for c in ROSTER if c.get("v2")]
-        self.assertTrue(self.cast)
-
-    def test_no_isolated_material_pixels(self):
-        """Every shading pixel touches another pixel of its material family
-        (zero tolerance; eyes, mouth, blush, decals and outline excepted)."""
-        for c in self.cast:
-            fam = lambda ch: set(c["mats"][handmade.LETTERS[ch][0]])
-            for d in handmade.ROWS:
-                for col in handmade.COLUMNS:
-                    L = handmade.frame_letters(c, d, col)
-                    lone = [(x, y) for y in range(32) for x in range(16) if L[y][x] not in self.FEATURES
-                            and not any((dx or dy) and 0 <= x + dx < 16 and 0 <= y + dy < 32
-                                        and L[y + dy][x + dx] not in self.FEATURES
-                                        and fam(L[y + dy][x + dx]) & fam(L[y][x])
-                                        for dx in (-1, 0, 1) for dy in (-1, 0, 1))]
-                    self.assertEqual(lone, [], f"{c['id']} {d} {col}")
-
-    def test_proportions_head_torso_legs(self):
-        """FireRed-style ratio: chin on row 13, torso rows 14-25, legs 26-31."""
-        torso = set("TtrRAaf")
-        for c in self.cast:
-            L = handmade.frame_letters(c, "down", "stand")
-            top = next(y for y in range(32) if any(ch != "." for ch in L[y]))
-            self.assertLessEqual(top, 5, f"{c['id']}: head starts too low")
-            first_torso = next(y for y in range(32) if any(ch in torso for ch in L[y]))
-            self.assertIn(first_torso, (14, 15), f"{c['id']}: torso starts on row {first_torso}")
-            shoes = [y for y in range(32) if any(ch in "nN" for ch in L[y])]
-            self.assertGreaterEqual(min(shoes), 26, f"{c['id']}: shoes above the leg band")
-            self.assertEqual(max(y for y in range(32) if any(ch != "." for ch in L[y])), 31)
-
-    def test_gender_reads_by_shoulder_width(self):
-        """Boys are 16 px wide at the shoulders, girls at most 12 (1x silhouette)."""
-        for c in self.cast:
-            L = handmade.frame_letters(c, "down", "stand")
-            row = "".join(L[17])
-            width = len(row.strip("."))
-            if c["gender"] == "male":
-                self.assertEqual(width, 16, c["id"])
-            else:
-                self.assertLessEqual(width, 12, c["id"])
-
-    def test_no_pure_black(self):
-        for c in self.cast:
-            for ramp in c["mats"].values():
-                self.assertNotIn("#000000", [col.lower() for col in ramp], c["id"])
-
-    def test_eyes_blink_and_alert_changes_the_face(self):
-        for c in self.cast:
-            stand = handmade.frame_letters(c, "down", "stand")
-            blink = handmade.frame_letters(c, "down", "blink")
-            alert = handmade.frame_letters(c, "down", "alert")
-            self.assertTrue(any("e" in r for r in stand), c["id"])
-            self.assertFalse(any("e" in r for r in blink), f"{c['id']}: blink keeps open eyes")
-            self.assertNotEqual(stand[:14], alert[:14], f"{c['id']}: alert face equals neutral")
-
-    def test_accessories_read_from_behind(self):
-        """Back views keep the character's silhouette features (pack, ponytail, long hair)."""
-        for c in self.cast:
-            up = handmade.frame_letters(c, "up", "stand")
-            down = handmade.frame_letters(c, "down", "stand")
-            self.assertNotEqual(up, down, c["id"])
 
 
 class WorldTests(unittest.TestCase):
