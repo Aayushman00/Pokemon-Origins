@@ -7441,7 +7441,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:psychic_rodney\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"You are going to take the left path. Or the right one. It is blurry.\"}]}, {\"op\": \"say\", \"text\": \"I knew you would say that. Go on, say it. \\u2026Well, now you have ruined it.\"}, {\"op\": \"battle\", \"trainer\": \"psychic_rodney\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:psychic_rodney\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"You are going to take the left path. Or the right one. It is blurry.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:channeler_hope\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"I knew you would say that. Go on, say it. \\u2026Well, now you have ruined it.\"}, {\"op\": \"battle\", \"trainer\": \"psychic_rodney\"}]"
       }
      ],
      "point": true
@@ -7485,7 +7485,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_silas\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Everyone wants what is behind that door. Nobody asks what it wants.\"}]}, {\"op\": \"say\", \"text\": \"The sealed door opens for those who hold their nerve. You will not get that far.\"}, {\"op\": \"battle\", \"trainer\": \"hollow_grunt_silas\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_silas\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Everyone wants what is behind that door. Nobody asks what it wants.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:psychic_rodney\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"The sealed door opens for those who hold their nerve. You will not get that far.\"}, {\"op\": \"battle\", \"trainer\": \"hollow_grunt_silas\"}]"
       }
      ],
      "point": true
@@ -7529,7 +7529,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:blackbelt_kiyo\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Master Tavish says I shout too much. HAH!\"}]}, {\"op\": \"say\", \"text\": \"Hah! Fists first, questions never! Stand ready!\"}, {\"op\": \"battle\", \"trainer\": \"blackbelt_kiyo\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:blackbelt_kiyo\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Master Tavish says I shout too much. HAH!\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_silas\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"Hah! Fists first, questions never! Stand ready!\"}, {\"op\": \"battle\", \"trainer\": \"blackbelt_kiyo\"}]"
       }
      ],
      "point": true

@@ -5023,7 +5023,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:beauty_grace\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Do come by again. Wear something nicer.\"}]}, {\"op\": \"say\", \"text\": \"Oh, are you going to look at me or at my Pok\\u00e9mon? Decide quickly.\"}, {\"op\": \"battle\", \"trainer\": \"beauty_grace\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:beauty_grace\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Do come by again. Wear something nicer.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:lass_kaylee\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"Oh, are you going to look at me or at my Pok\\u00e9mon? Decide quickly.\"}, {\"op\": \"battle\", \"trainer\": \"beauty_grace\"}]"
       }
      ],
      "point": true
@@ -5067,7 +5067,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_marco\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Nobody told me kids would be this tough. It is not in the handbook.\"}]}, {\"op\": \"say\", \"text\": \"Team Hollow is working here! Walk away, or get walked over!\"}, {\"op\": \"battle\", \"trainer\": \"hollow_grunt_marco\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_marco\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Nobody told me kids would be this tough. It is not in the handbook.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:beauty_grace\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"Team Hollow is working here! Walk away, or get walked over!\"}, {\"op\": \"battle\", \"trainer\": \"hollow_grunt_marco\"}]"
       }
      ],
      "point": true
@@ -5111,7 +5111,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:juggler_dalton\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Three is easy. Four is a hobby. Five is a mistake.\"}]}, {\"op\": \"say\", \"text\": \"Keep your eyes on the Pok\\u00e9 Balls. Not that one. That one! Too late!\"}, {\"op\": \"battle\", \"trainer\": \"juggler_dalton\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:juggler_dalton\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Three is easy. Four is a hobby. Five is a mistake.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_marco\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"Keep your eyes on the Pok\\u00e9 Balls. Not that one. That one! Too late!\"}, {\"op\": \"battle\", \"trainer\": \"juggler_dalton\"}]"
       }
      ],
      "point": true

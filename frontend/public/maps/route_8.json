@@ -5841,7 +5841,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:tamer_jude\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"A strong team is a calm team. Yours is calm.\"}]}, {\"op\": \"say\", \"text\": \"These are the ones nobody else could handle. Now they are all yours.\"}, {\"op\": \"battle\", \"trainer\": \"tamer_jude\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:tamer_jude\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"A strong team is a calm team. Yours is calm.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:cooltrainer_vince\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"These are the ones nobody else could handle. Now they are all yours.\"}, {\"op\": \"battle\", \"trainer\": \"tamer_jude\"}]"
       }
      ],
      "point": true
@@ -5885,7 +5885,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_odessa\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Go on, climb. You will find the door before we open it. Maybe.\"}]}, {\"op\": \"say\", \"text\": \"Last chance. Turn back, or the summit is the last thing you will see.\"}, {\"op\": \"battle\", \"trainer\": \"hollow_grunt_odessa\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_odessa\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Go on, climb. You will find the door before we open it. Maybe.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:tamer_jude\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"Last chance. Turn back, or the summit is the last thing you will see.\"}, {\"op\": \"battle\", \"trainer\": \"hollow_grunt_odessa\"}]"
       }
      ],
      "point": true
@@ -5929,7 +5929,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:cooltrainer_selena\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Tell the Champion I said hello. She owes me a rematch.\"}]}, {\"op\": \"say\", \"text\": \"I have held this road for years. Show me why I should step aside.\"}, {\"op\": \"battle\", \"trainer\": \"cooltrainer_selena\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:cooltrainer_selena\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Tell the Champion I said hello. She owes me a rematch.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_odessa\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"I have held this road for years. Show me why I should step aside.\"}, {\"op\": \"battle\", \"trainer\": \"cooltrainer_selena\"}]"
       }
      ],
      "point": true

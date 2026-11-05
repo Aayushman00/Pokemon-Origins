@@ -1404,7 +1404,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:cinder_valko\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Eight badges. The road north climbs to Zenith Summit. Go, and do not dim!\"}]}, {\"op\": \"say\", \"text\": \"You crossed on the beat of the forge! Few keep time with fire. Stand and be tested!\"}, {\"op\": \"battle\", \"trainer\": \"cinder_valko\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:cinder_valko\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Eight badges. The road north climbs to Zenith Summit. Go, and do not dim!\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:cooltrainer_selena\", \"else\": [{\"op\": \"say\", \"text\": \"A Leader only meets trainers who finished the road. Someone further back is still waiting for you.\"}]}, {\"op\": \"say\", \"text\": \"You crossed on the beat of the forge! Few keep time with fire. Stand and be tested!\"}, {\"op\": \"battle\", \"trainer\": \"cinder_valko\"}]"
       }
      ],
      "point": true

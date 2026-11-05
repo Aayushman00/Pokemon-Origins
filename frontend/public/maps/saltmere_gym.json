@@ -1354,7 +1354,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:coral_marlowe\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Harbor is yours any time, sailor. Mind the third plank. It bites.\"}]}, {\"op\": \"say\", \"text\": \"Ha! Walked the tide and kept your socks dry! Welcome aboard, landlubber!\"}, {\"op\": \"battle\", \"trainer\": \"coral_marlowe\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:coral_marlowe\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Harbor is yours any time, sailor. Mind the third plank. It bites.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:juggler_dalton\", \"else\": [{\"op\": \"say\", \"text\": \"A Leader only meets trainers who finished the road. Someone further back is still waiting for you.\"}]}, {\"op\": \"say\", \"text\": \"Ha! Walked the tide and kept your socks dry! Welcome aboard, landlubber!\"}, {\"op\": \"battle\", \"trainer\": \"coral_marlowe\"}]"
       }
      ],
      "point": true

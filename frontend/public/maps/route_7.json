@@ -5841,7 +5841,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:super_nerd_miguel\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Technically you only won by a margin of everything.\"}]}, {\"op\": \"say\", \"text\": \"I have calculated your exact chance of winning. I will not share it.\"}, {\"op\": \"battle\", \"trainer\": \"super_nerd_miguel\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:super_nerd_miguel\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Technically you only won by a margin of everything.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:burglar_quinn\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"I have calculated your exact chance of winning. I will not share it.\"}, {\"op\": \"battle\", \"trainer\": \"super_nerd_miguel\"}]"
       }
      ],
      "point": true
@@ -5885,7 +5885,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:swimmer_nora\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Warm spots near Emberhold. The sea runs hot this far along.\"}]}, {\"op\": \"say\", \"text\": \"This far from shore, nobody hears you lose!\"}, {\"op\": \"battle\", \"trainer\": \"swimmer_nora\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:swimmer_nora\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Warm spots near Emberhold. The sea runs hot this far along.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:super_nerd_miguel\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"This far from shore, nobody hears you lose!\"}, {\"op\": \"battle\", \"trainer\": \"swimmer_nora\"}]"
       }
      ],
      "point": true
@@ -5929,7 +5929,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:scientist_ivan\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"I used to work near the Hollow Lab. I sleep better now.\"}]}, {\"op\": \"say\", \"text\": \"A live subject! Hold still, this is for the data.\"}, {\"op\": \"battle\", \"trainer\": \"scientist_ivan\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:scientist_ivan\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"I used to work near the Hollow Lab. I sleep better now.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:swimmer_nora\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"A live subject! Hold still, this is for the data.\"}, {\"op\": \"battle\", \"trainer\": \"scientist_ivan\"}]"
       }
      ],
      "point": true

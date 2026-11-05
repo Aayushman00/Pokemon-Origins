@@ -5041,7 +5041,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:engineer_baily\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"If it creaks, it is fine. If it stops creaking, run.\"}]}, {\"op\": \"say\", \"text\": \"Every bridge on this road, I bolted. Every battle, I win. So far.\"}, {\"op\": \"battle\", \"trainer\": \"engineer_baily\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:engineer_baily\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"If it creaks, it is fine. If it stops creaking, run.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:sailor_dwayne\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"Every bridge on this road, I bolted. Every battle, I win. So far.\"}, {\"op\": \"battle\", \"trainer\": \"engineer_baily\"}]"
       }
      ],
      "point": true
@@ -5085,7 +5085,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:gentleman_tucker\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Do give my regards to the road ahead.\"}]}, {\"op\": \"say\", \"text\": \"Good day. Might I trouble you for a civil thrashing?\"}, {\"op\": \"battle\", \"trainer\": \"gentleman_tucker\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:gentleman_tucker\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Do give my regards to the road ahead.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:engineer_baily\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"Good day. Might I trouble you for a civil thrashing?\"}, {\"op\": \"battle\", \"trainer\": \"gentleman_tucker\"}]"
       }
      ],
      "point": true
@@ -5129,7 +5129,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:rocker_luca\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Dynamo Station has the best amps in Aurelia. Do not tell them I said so.\"}]}, {\"op\": \"say\", \"text\": \"One, two, three, four! This next battle is called YOU LOSE!\"}, {\"op\": \"battle\", \"trainer\": \"rocker_luca\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:rocker_luca\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Dynamo Station has the best amps in Aurelia. Do not tell them I said so.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:gentleman_tucker\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"One, two, three, four! This next battle is called YOU LOSE!\"}, {\"op\": \"battle\", \"trainer\": \"rocker_luca\"}]"
       }
      ],
      "point": true

@@ -10,8 +10,9 @@ export const defeatedFlag = (trainer) => `trainer:${trainer}`;
 
 /** The first unbeaten trainer who can see `actor`: { npc, steps } (tiles to walk), or null. */
 export function spotter(map, actor, npcs, flags) {
-	const foes = npcs.filter((n) => n.trainer && !flags.has(defeatedFlag(n.trainer))).sort((a, b) => a.order - b.order);
-	for (const npc of foes) {
+	// The server plays a road's trainers in order, so only the next one in line may challenge.
+	const [next] = npcs.filter((n) => n.trainer && !flags.has(defeatedFlag(n.trainer))).sort((a, b) => a.order - b.order);
+	for (const npc of next ? [next] : []) {
 		const { dx, dy } = DIRS[npc.facing];
 		for (let i = 1; i <= npc.sight; i++) {
 			const x = npc.x + dx * i;

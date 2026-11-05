@@ -1354,7 +1354,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:sage_ilmara\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The dome stays open at night. \\u2026Your chart has a bright stretch coming.\"}]}, {\"op\": \"say\", \"text\": \"Two of you arrived. One of you remains. \\u2026I did say the stars were watching.\"}, {\"op\": \"battle\", \"trainer\": \"sage_ilmara\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:sage_ilmara\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The dome stays open at night. \\u2026Your chart has a bright stretch coming.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:scientist_ivan\", \"else\": [{\"op\": \"say\", \"text\": \"A Leader only meets trainers who finished the road. Someone further back is still waiting for you.\"}]}, {\"op\": \"say\", \"text\": \"Two of you arrived. One of you remains. \\u2026I did say the stars were watching.\"}, {\"op\": \"battle\", \"trainer\": \"sage_ilmara\"}]"
       }
      ],
      "point": true

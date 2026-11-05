@@ -14,6 +14,12 @@ describe("trainer sight", () => {
 		assert.equal(spotter(field, { x: 5, y: 0 }, [foe], none), null);
 		assert.equal(spotter(field, { x: 0, y: 1 }, [foe], none), null);
 	});
+	it("only the next trainer in line challenges, because the server plays them in order", () => {
+		const first = { ...foe, trainer: "first", order: 1, x: 0, y: 3 };
+		const second = { ...foe, trainer: "second", order: 2 };
+		assert.equal(spotter(field, { x: 3, y: 0 }, [first, second], none), null);
+		assert.equal(spotter(field, { x: 3, y: 0 }, [first, second], { has: (f) => f === defeatedFlag("first") }).npc, second);
+	});
 	it("is blocked by walls and by other people", () => {
 		assert.equal(spotter(field, { x: 3, y: 1 }, [{ ...foe, y: 1 }], none), null);
 		assert.equal(spotter(field, { x: 3, y: 0 }, [foe, { name: "o", x: 2, y: 0 }], none), null);

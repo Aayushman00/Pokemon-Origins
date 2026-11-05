@@ -68,11 +68,26 @@ def place(m, name, x0, y0):
             m.put("objects", x0 + c, y0 + r, ID[f"{name}_{c}_{r}"], SOLID)
 
 
+def before_in_stage(trainer):
+    """The trainer the server plays just before this one in the same stage, or None."""
+    for path in (ROOT / "backend/data/campaign").glob("level*.json"):
+        ids = [b.get("trainerId") for b in json.loads(path.read_text(encoding="utf8"))["battles"]]
+        if trainer in ids:
+            return ids[ids.index(trainer) - 1] if ids.index(trainer) else None
+    return None
+
+
 def trainer_script(trainer):
-    """Battle until beaten, then a word in passing. The server sets trainer:<id> on a win."""
+    """Battle until beaten, then a word in passing. The server sets trainer:<id> on a win and plays
+    a stage in order, so anyone walked past sends the player back rather than asking it out of turn."""
     voice = VOICES[trainer]
+    prior = before_in_stage(trainer)
+    wait = "You walked past someone further back on the road. They get first go at you."
+    if trainer in GYMS:
+        wait = "A Leader only meets trainers who finished the road. Someone further back is still waiting for you."
     return json.dumps([{"op": "requireFlag", "flag": f"trainer:{trainer}", "not": True,
                         "else": [{"op": "say", "text": voice["after"]}]},
+                       *([{"op": "requireFlag", "flag": f"trainer:{prior}", "else": [{"op": "say", "text": wait}]}] if prior else []),
                        {"op": "say", "text": voice.get("greet") or voice["intro"]}, {"op": "battle", "trainer": trainer}])
 
 

@@ -7441,7 +7441,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:bird_keeper_roger\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Up past Gale Spire, the air is so thin the birds go quiet.\"}]}, {\"op\": \"say\", \"text\": \"My flock saw you coming a mile back. They told me everything.\"}, {\"op\": \"battle\", \"trainer\": \"bird_keeper_roger\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:bird_keeper_roger\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Up past Gale Spire, the air is so thin the birds go quiet.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:tamer_evan\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"My flock saw you coming a mile back. They told me everything.\"}, {\"op\": \"battle\", \"trainer\": \"bird_keeper_roger\"}]"
       }
      ],
      "point": true
@@ -7485,7 +7485,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:biker_jaxon\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Ride safe, kid. Or do not. Up to you.\"}]}, {\"op\": \"say\", \"text\": \"Nice road. Shame about you standing on it.\"}, {\"op\": \"battle\", \"trainer\": \"biker_jaxon\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:biker_jaxon\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Ride safe, kid. Or do not. Up to you.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:bird_keeper_roger\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"Nice road. Shame about you standing on it.\"}, {\"op\": \"battle\", \"trainer\": \"biker_jaxon\"}]"
       }
      ],
      "point": true
@@ -7529,7 +7529,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_petra\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The boss says the Lab is the point. I just carry the boxes.\"}]}, {\"op\": \"say\", \"text\": \"You again? No, wait, a different kid. They keep making more of you!\"}, {\"op\": \"battle\", \"trainer\": \"hollow_grunt_petra\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_petra\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The boss says the Lab is the point. I just carry the boxes.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:biker_jaxon\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"You again? No, wait, a different kid. They keep making more of you!\"}, {\"op\": \"battle\", \"trainer\": \"hollow_grunt_petra\"}]"
       }
      ],
      "point": true

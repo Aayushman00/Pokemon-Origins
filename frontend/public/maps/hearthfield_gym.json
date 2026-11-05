@@ -1354,7 +1354,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:mara_quill\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Eat something before you leave, dear. Nobody battles well on an empty stomach.\"}]}, {\"op\": \"say\", \"text\": \"You rode the belts all the way here! Sit down, dear, the ovens are warm.\"}, {\"op\": \"battle\", \"trainer\": \"mara_quill\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:mara_quill\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Eat something before you leave, dear. Nobody battles well on an empty stomach.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:camper_rick\", \"else\": [{\"op\": \"say\", \"text\": \"A Leader only meets trainers who finished the road. Someone further back is still waiting for you.\"}]}, {\"op\": \"say\", \"text\": \"You rode the belts all the way here! Sit down, dear, the ovens are warm.\"}, {\"op\": \"battle\", \"trainer\": \"mara_quill\"}]"
       }
      ],
      "point": true

@@ -1459,7 +1459,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:skye_corvin\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The view is always free up here. Look up.\"}]}, {\"op\": \"say\", \"text\": \"You trusted the wind and it set you here. Not everyone lets it.\"}, {\"op\": \"battle\", \"trainer\": \"skye_corvin\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:skye_corvin\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The view is always free up here. Look up.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:blackbelt_kiyo\", \"else\": [{\"op\": \"say\", \"text\": \"A Leader only meets trainers who finished the road. Someone further back is still waiting for you.\"}]}, {\"op\": \"say\", \"text\": \"You trusted the wind and it set you here. Not everyone lets it.\"}, {\"op\": \"battle\", \"trainer\": \"skye_corvin\"}]"
       }
      ],
      "point": true

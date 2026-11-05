@@ -1404,7 +1404,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:volt_dray\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Grid is stable, mostly! Ninety-one percent! Do come back, I have graphs!\"}]}, {\"op\": \"say\", \"text\": \"All panels lit! Eighteen of eighteen! Do you know what the odds are? I do! Let us test you!\"}, {\"op\": \"battle\", \"trainer\": \"volt_dray\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:volt_dray\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Grid is stable, mostly! Ninety-one percent! Do come back, I have graphs!\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_petra\", \"else\": [{\"op\": \"say\", \"text\": \"A Leader only meets trainers who finished the road. Someone further back is still waiting for you.\"}]}, {\"op\": \"say\", \"text\": \"All panels lit! Eighteen of eighteen! Do you know what the odds are? I do! Let us test you!\"}, {\"op\": \"battle\", \"trainer\": \"volt_dray\"}]"
       }
      ],
      "point": true

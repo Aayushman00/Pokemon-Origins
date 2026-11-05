@@ -232,6 +232,14 @@ describe("route trainers (headless)", () => {
 		d.hold("right", 30);
 		assert.deepEqual(d.pos(), ["route_1", 3, 9], "no walking during a battle");
 	});
+	it("a trainer passed by sends you back, so the server is never asked out of order", async () => {
+		const d = await boot({ mapId: "route_1", x: 12, y: 7, facing: "left" });
+		d.press();
+		assert.match(d.dialogues().at(-1).pages.join(" "), /further\s+back/);
+		d.close();
+		assert.ok(!d.events.some((e) => e.type === "effect" && e.effect.type === "battle"));
+		assert.equal(d.game.mode, "explore");
+	});
 	it("after a win the trainer is back at its post and lets you pass", async () => {
 		const { ALERT_TICKS } = await import("./overworld.js");
 		const d = await walkIntoSight();

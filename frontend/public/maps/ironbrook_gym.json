@@ -1354,7 +1354,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:tavish_rook\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The dojo door stays open. Train. Return.\"}]}, {\"op\": \"say\", \"text\": \"The screens opened. Your feet learned before your head did. Good.\"}, {\"op\": \"battle\", \"trainer\": \"tavish_rook\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:tavish_rook\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The dojo door stays open. Train. Return.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:rocker_luca\", \"else\": [{\"op\": \"say\", \"text\": \"A Leader only meets trainers who finished the road. Someone further back is still waiting for you.\"}]}, {\"op\": \"say\", \"text\": \"The screens opened. Your feet learned before your head did. Good.\"}, {\"op\": \"battle\", \"trainer\": \"tavish_rook\"}]"
       }
      ],
      "point": true

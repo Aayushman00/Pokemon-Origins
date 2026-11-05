@@ -4223,7 +4223,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:picnicker_dana\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Want half? It is mostly crust now.\"}]}, {\"op\": \"say\", \"text\": \"Careful of the blanket! And my sandwich! And my Pok\\u00e9mon!\"}, {\"op\": \"battle\", \"trainer\": \"picnicker_dana\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:picnicker_dana\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Want half? It is mostly crust now.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:swimmer_luis\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"Careful of the blanket! And my sandwich! And my Pok\\u00e9mon!\"}, {\"op\": \"battle\", \"trainer\": \"picnicker_dana\"}]"
       }
      ],
      "point": true
@@ -4267,7 +4267,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:fisherman_ned\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Biggest catch I ever had got away. So did you, come to think of it.\"}]}, {\"op\": \"say\", \"text\": \"Shh! You will scare the... oh, too late. Might as well battle.\"}, {\"op\": \"battle\", \"trainer\": \"fisherman_ned\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:fisherman_ned\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Biggest catch I ever had got away. So did you, come to think of it.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:picnicker_dana\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"Shh! You will scare the... oh, too late. Might as well battle.\"}, {\"op\": \"battle\", \"trainer\": \"fisherman_ned\"}]"
       }
      ],
      "point": true
@@ -4311,7 +4311,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:camper_rick\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"If you hear howling, that is probably me.\"}]}, {\"op\": \"say\", \"text\": \"I have slept out here nine nights! My team is half wild by now!\"}, {\"op\": \"battle\", \"trainer\": \"camper_rick\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:camper_rick\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"If you hear howling, that is probably me.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:fisherman_ned\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"I have slept out here nine nights! My team is half wild by now!\"}, {\"op\": \"battle\", \"trainer\": \"camper_rick\"}]"
       }
      ],
      "point": true

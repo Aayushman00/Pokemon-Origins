@@ -4259,7 +4259,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:lass_annie\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The birds here like you. That is annoying.\"}]}, {\"op\": \"say\", \"text\": \"You walked right through my favorite spot. Now you owe me a battle.\"}, {\"op\": \"battle\", \"trainer\": \"lass_annie\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:lass_annie\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The birds here like you. That is annoying.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:youngster_joey\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"You walked right through my favorite spot. Now you owe me a battle.\"}, {\"op\": \"battle\", \"trainer\": \"lass_annie\"}]"
       }
      ],
      "point": true
@@ -4303,7 +4303,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:bug_catcher_tim\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"There is a rare one in this grass. I am almost sure of it.\"}]}, {\"op\": \"say\", \"text\": \"Wait! Do not step there! Oh, you did. Now we have to battle.\"}, {\"op\": \"battle\", \"trainer\": \"bug_catcher_tim\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:bug_catcher_tim\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"There is a rare one in this grass. I am almost sure of it.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:lass_annie\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"Wait! Do not step there! Oh, you did. Now we have to battle.\"}, {\"op\": \"battle\", \"trainer\": \"bug_catcher_tim\"}]"
       }
      ],
      "point": true
@@ -4347,7 +4347,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:hiker_jack\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Keep your boots dry and your pack light. That is all I know.\"}]}, {\"op\": \"say\", \"text\": \"Ho there! Legs tired yet? Mine neither! Let us have a battle!\"}, {\"op\": \"battle\", \"trainer\": \"hiker_jack\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:hiker_jack\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Keep your boots dry and your pack light. That is all I know.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:bug_catcher_tim\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"Ho there! Legs tired yet? Mine neither! Let us have a battle!\"}, {\"op\": \"battle\", \"trainer\": \"hiker_jack\"}]"
       }
      ],
      "point": true

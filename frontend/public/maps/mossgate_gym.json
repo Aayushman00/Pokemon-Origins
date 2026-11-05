@@ -816,7 +816,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:willow_thornby\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The vines remember you now. Come sit by the roots whenever the road feels long.\"}]}, {\"op\": \"say\", \"text\": \"You cleared the seeds without forcing one. That is most of what I teach.\"}, {\"op\": \"battle\", \"trainer\": \"willow_thornby\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:willow_thornby\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The vines remember you now. Come sit by the roots whenever the road feels long.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:hiker_jack\", \"else\": [{\"op\": \"say\", \"text\": \"A Leader only meets trainers who finished the road. Someone further back is still waiting for you.\"}]}, {\"op\": \"say\", \"text\": \"You cleared the seeds without forcing one. That is most of what I teach.\"}, {\"op\": \"battle\", \"trainer\": \"willow_thornby\"}]"
       }
      ],
      "point": true
