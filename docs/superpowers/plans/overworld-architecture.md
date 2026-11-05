@@ -68,9 +68,9 @@ The existing content is already shaped like a Kanto-style run, so **no recount i
 
 | Level | Content name | World mapping | Gauntlet 1-4 → | Boss → |
 |------:|---|---|---|---|
-| 1 | Pewter City | Town 2 + Route 1 (Town 1 = starting town, no battles) | 4 route/gym-yard trainers with line of sight | Gym leader 1 (badge 1) |
-| 2-8 | Cerulean … Viridian | one town + route each | trainers split between route and gym interior | Gym leaders 2-8 |
-| 9 | Indigo Plateau | one building, 5 rooms, **lockout run**: no PC/Center/Mart | E4 x4 | Champion |
+| 1 | Mossgate | Town 2 + Route 1 (Town 1 = starting town, no battles) | 4 route/gym-yard trainers with line of sight | Gym leader 1 (badge 1) |
+| 2-8 | Hearthfield … Emberhold | one town + route each | trainers split between route and gym interior | Gym leaders 2-8 |
+| 9 | Zenith Summit | lobby plus 5 rooms in a line, doors back stay open | E4 x4 | Champion |
 | 10 | Legendary Gauntlet | post-game cave map, 5 static encounters (not trainers) | — | — |
 
 Proposed rule: the Phase-3 starting town, Route 1, the first town, a cave and one gym are authored first, and only gym 1 is wired to level 1. Levels 2-8 get maps in Phase 7 after the engine proves out. The "Rival" arc is new content; nothing in `backend/data` models a rival.
