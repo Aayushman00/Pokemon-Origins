@@ -3,7 +3,8 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import { COL } from "../constants.js";
-import { collisionAt, parseTiledMap, MapError } from "../logic/mapModel.js";
+import { wildTable } from "../logic/events.js";
+import { collisionAt, coverAt, parseTiledMap, MapError } from "../logic/mapModel.js";
 import { createMapStore } from "./mapStore.js";
 
 import { MAPS_DIR, fetchFromDisk } from "./diskFetch.js";
@@ -129,6 +130,19 @@ describe("sample maps (smoke + lint)", () => {
 		const ts = maps.test_town.tilesets.find((t) => t.image.endsWith("overworld.png"));
 		assert.equal(ts.cover.get(14), 9);
 		assert.equal(ts.cover.get(0), undefined);
+	});
+	it("every route's wild battles happen in grass the player can see, and nowhere else", () => {
+		for (const id of ids.filter((m) => /^route_\d$/.test(m))) {
+			const map = maps[id];
+			let cells = 0;
+			for (let y = 0; y < map.height; y++) {
+				for (let x = 0; x < map.width; x++) {
+					assert.equal(Boolean(wildTable(map, { x, y })), coverAt(map, x, y), `${id} ${x},${y}`);
+					cells += coverAt(map, x, y);
+				}
+			}
+			assert.ok(cells > 0, `${id} has no grass`);
+		}
 	});
 	it("rejects broken maps with a clear message", () => {
 		const good = JSON.parse(readFileSync(join(MAPS_DIR, "test_house.json"), "utf8"));

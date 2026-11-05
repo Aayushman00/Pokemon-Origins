@@ -16,6 +16,7 @@
 /* Positioned by JS on a whole device pixel (engine/scale.js); do not centre with flex. */
 .ow__stage {
 	position: absolute;
+	container-type: size;
 }
 .ow__canvas {
 	display: block;
@@ -72,6 +73,13 @@
 .ow__dialogue .dialogue {
 	margin: 0;
 	min-height: 0;
+	padding: 0.5em 0.8em 0.7em;
+	font-size: min(calc(var(--fs-lg) * 2), 6cqw);
+}
+.ow__dialogue .dialogue__text {
+	max-width: none;
+	font-size: 1em;
+	line-height: 1.25;
 }
 .ow__hud {
 	position: absolute;
@@ -99,12 +107,16 @@
 	margin: 0;
 }
 
-/* Map name: slides in from the top left, holds, slides back out. */
+/* Map name: drops in at top centre, holds, slides back out. */
 .ow__place {
 	position: absolute;
 	top: 0;
-	left: 4%;
-	padding: 0.5em 1em;
+	left: 50%;
+	max-width: 100%;
+	padding: 0.2em 0.6em;
+	font-size: min(3em, 8cqw);
+	line-height: 1.2;
+	white-space: nowrap;
 	background: #fbf2dc;
 	color: #26223a;
 	border: 3px solid #26223a;
@@ -113,10 +125,10 @@
 	pointer-events: none;
 }
 @keyframes ow-place {
-	0% { transform: translateY(-110%); }
-	12%, 85% { transform: translateY(0); }
-	100% { transform: translateY(-110%); }
+	0% { transform: translate(-50%, -110%); }
+	12%, 85% { transform: translate(-50%, 0); }
+	100% { transform: translate(-50%, -110%); visibility: hidden; }
 }
 @media (prefers-reduced-motion: reduce) {
-	.ow__place { animation: none; opacity: 0.95; }
+	.ow__place { animation: none; opacity: 0.95; transform: translateX(-50%); }
 }

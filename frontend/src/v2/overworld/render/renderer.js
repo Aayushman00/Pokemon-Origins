@@ -1,4 +1,5 @@
 import { TICK_MS, TILE, VIEW_H, VIEW_W } from "../constants.js";
+import { coverAt } from "../logic/mapModel.js";
 import { actorFrame, actorPixel } from "../logic/movement.js";
 import { computeCamera } from "../logic/camera.js";
 import { neighbourOrigin } from "../logic/world.js";
@@ -181,13 +182,6 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 				drawGid(map, gid, d.ox + c.x * TILE - cam.x, d.oy + c.y * TILE - cam.y, ms, row);
 			}
 		}
-	}
-
-	function coverAt(map, x, y) {
-		if (x < 0 || y < 0 || x >= map.width || y >= map.height) return false;
-		const gid = map.layers.ground[y * map.width + x];
-		const ts = gid && map.tilesets.find((t) => gid >= t.firstgid);
-		return ts ? ts.cover.has(gid - ts.firstgid) : false;
 	}
 
 	function drawLayer(map, name, ox, oy, ms) {

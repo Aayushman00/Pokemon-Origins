@@ -125,3 +125,13 @@ export function collisionAt(map, x, y) {
 	if (x < 0 || y < 0 || x >= map.width || y >= map.height) return COL.SOLID;
 	return map.collision[y * map.width + x];
 }
+
+/** True where a tile stands that actors wade through: tall grass. */
+export function coverAt(map, x, y) {
+	if (x < 0 || y < 0 || x >= map.width || y >= map.height) return false;
+	return ["ground", "decor"].some((name) => {
+		const gid = map.layers[name][y * map.width + x];
+		const ts = gid && map.tilesets.find((t) => gid >= t.firstgid);
+		return ts ? ts.cover.has(gid - ts.firstgid) : false;
+	});
+}

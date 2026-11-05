@@ -34,3 +34,15 @@ WORLD = {
     "tall": ["#c8ec98", "#86c86c", "#58a860", "#3e8458"],
     "fence": ["#f4ecdc", "#d8ccb8", "#aea298", "#807a84"],
 }
+
+# Tall grass per biome: tip, lit blade, shaded blade, the dark between tufts.
+TALL = {
+    "meadow": WORLD["tall"],
+    "hills": ["#e8e098", "#b0b860", "#809850", "#5c7444"],
+    "sand": ["#e0eca4", "#a4c474", "#6ca064", "#4c7c5c"],
+    "concrete": ["#bce094", "#80b474", "#548e64", "#3c6c5c"],
+    "cliff": ["#d4f0c4", "#98d0a0", "#68ac8c", "#4a8a7c"],
+    "slate": ["#a8dcc4", "#6cb4a4", "#488c90", "#345c74"],
+    "basalt": ["#e4b474", "#b8804c", "#885a40", "#5a3c38"],
+    "marble": ["#ecf0d4", "#b4d4b4", "#84b09c", "#5e8c84"],
+}

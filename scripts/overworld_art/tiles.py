@@ -597,7 +597,7 @@ def new_tiles():
     swap = {f"grass{i}": meadow(i) for i in range(4)}
     swap.update(tufts=nature.tufts(0), flowers0=nature.flowers(1, 0), flowers1=nature.flowers(2, 0),
                 bedA=nature.flowers(3, 0), bedB=nature.flowers(3, 1), bed2A=nature.flowers(4, 0),
-                bed2B=nature.flowers(4, 1), tallA=nature.tall_grass(0), tallB=nature.tall_grass(1), bush=nature.bush(),
+                bed2B=nature.flowers(4, 1), tallA=nature.tall_grass("meadow", 0, 0, 0), tallB=nature.tall_grass("meadow", 0, 0, 1), bush=nature.bush(),
                 plank=nature.plank(True))
     for mask in v2.blob_masks():
         for f in range(3):
@@ -611,6 +611,11 @@ def new_tiles():
     for links in range(16):
         add(f"fence_{links}", nature.fence_tile(links))
     add("plank_v", nature.plank(False))
+    for biome in nature.TALL:
+        for mask in range(16):
+            for phase in (0, 1):
+                add(f"tall_{biome}_{mask}_{phase}_0", nature.tall_grass(biome, mask, phase, 0))
+                add(f"tall_{biome}_{mask}_{phase}_1", nature.tall_grass(biome, mask, phase, 1))
     for tone in nature.CANOPY_TONES:
         for px, py in ((0, 0), (1, 0), (0, 1), (1, 1)):
             add(f"forest_{tone}_{px}{py}", nature.forest_tile(0, (px, py), tone))

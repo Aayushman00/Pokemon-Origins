@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .nature import bush, fence_tile, flowers, forest_tile, lawn_tile, pond_tile, tall_grass, trail_tile, tufts
 from .tiles_v2 import E, N, S, Wb, blob_masks
-from .world_palette import WORLD
+from .world_palette import TALL, WORLD
 
 MAPS = Path(__file__).resolve().parents[2] / "frontend" / "public" / "maps"
 PHASES = [(0, 0), (1, 0), (0, 1), (1, 1)]
@@ -72,9 +72,22 @@ class Decor(unittest.TestCase):
         for img in (tufts(0), flowers(0, 0), bush()):
             self.assertIn(0, alpha(img))
 
-    def test_tall_grass_is_opaque_and_sways(self):
-        self.assertTrue(all(a == 255 for a in alpha(tall_grass(0))))
-        self.assertNotEqual(tall_grass(0).tobytes(), tall_grass(1).tobytes())
+    def test_tall_grass_fills_the_middle_of_a_patch_and_sways(self):
+        for phase in (0, 1):
+            self.assertTrue(all(a == 255 for a in alpha(tall_grass("meadow", 0, phase, 0))))
+        self.assertNotEqual(tall_grass("meadow", 0, 0, 0).tobytes(), tall_grass("meadow", 0, 0, 1).tobytes())
+        self.assertNotEqual(tall_grass("meadow", 0, 0, 0).tobytes(), tall_grass("meadow", 0, 1, 0).tobytes())
+
+    def test_tall_grass_thins_out_raggedly_at_a_patch_edge(self):
+        top = [tall_grass("meadow", N, 0, 0).getpixel((x, 1))[3] for x in range(16)]
+        self.assertTrue(0 in top and 255 in top, "tips, with gaps between them")
+        left = [tall_grass("meadow", Wb, 0, 0).getpixel((1, y))[3] for y in range(16)]
+        self.assertTrue(0 in left and 255 in left)
+
+    def test_every_biome_has_grass(self):
+        for biome, ramp in TALL.items():
+            self.assertEqual(len(ramp), 4, biome)
+            self.assertTrue(all(a == 255 for a in alpha(tall_grass(biome, 0, 0, 0))), biome)
 
 
 class BuiltMaps(unittest.TestCase):

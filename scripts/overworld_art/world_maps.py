@@ -6,6 +6,7 @@ tile; `paint` turns them into layers, so a new town is a grid plus its doors.
 Display names come from backend/data/world/names.json.
 """
 import json
+from itertools import groupby
 from pathlib import Path
 
 from scripts import gen_overworld_placeholders as base
@@ -160,7 +161,7 @@ def forest_name(mask, x, y, deep):
     return f"forest_{tone}_{x % 2}{y % 2}" if tone else f"forest_{mask}_{x % 2}{y % 2}"
 
 
-def paint(m, grid, walk_tile):
+def paint(m, grid, walk_tile, biome="meadow"):
     """Lay a text grid onto m. `walk_tile` is what "." means: "grass" or "path"."""
     from .tiles_v2 import E, N, S, Wb, blob_mask
     cells = {(x, y): c for y, row in enumerate(grid) for x, c in enumerate(row)}
@@ -191,7 +192,9 @@ def paint(m, grid, walk_tile):
             run = "k" in (cells.get((x - 1, y)), cells.get((x + 1, y)))
             m.put("ground", x, y, ID["plank" if run else "plank_v"])
         elif c == "g":
-            m.put("ground", x, y, ID["tallA"])
+            edge = sum(bit for (dx, dy), bit in (((0, -1), N), ((1, 0), E), ((0, 1), S), ((-1, 0), Wb))
+                       if cells.get((x + dx, y + dy), "g") != "g")
+            m.put("decor", x, y, ID[f"tall_{biome}_{edge}_{(x + y) % 2}_0"])
         elif c == "F":
             m.put("decor", x, y, ID["bedA" if (x + y) % 2 else "bed2A"])
         elif c == "f":
@@ -246,6 +249,17 @@ def worn(grid, lines, size=2):
                         if cy < len(rows) and cx < len(rows[cy]) and rows[cy][cx] == ".":
                             rows[cy][cx] = ","
     return ["".join(r) for r in rows]
+
+
+def grass_runs(grid):
+    """Tall grass as (x, y, w) strips, so wild battles happen only where it is drawn."""
+    for y, row in enumerate(grid):
+        x = 0
+        for c, run in groupby(row):
+            w = len(list(run))
+            if c == "g":
+                yield x, y, w
+            x += w
 
 
 def fringe(m, grid):
@@ -457,8 +471,8 @@ def route(route_id):
     for size, lines in TRAILS[route_id].items():
         grid = worn(grid, lines, size)
     paint(m, grid, "grass")
-    for i, g in enumerate(r["grass"]):
-        m.obj("encounters", f"grass_{i + 1}", g["x"], g["y"], g["w"], g["h"], table=route_id)
+    for i, (x, y, w) in enumerate(grass_runs(grid)):
+        m.obj("encounters", f"grass_{i + 1}", x, y, w, 1, table=route_id)
     for t in r["trainers"]:
         m.obj("npcs", t["id"], t["x"], t["y"], point=True, sprite=t["id"].rsplit("_", 1)[0], facing=t["facing"],
               trainer=t["id"], order=t["i"], sight=t["sight"], script=trainer_script(t["id"]))
@@ -505,6 +519,9 @@ def finish(data, m):
     for mask in blob_masks():  # pond: 3 frames, ripple drift + foam lap + sparkle
         f = [ID[f"pond_{mask}_{k}"] for k in range(3)]
         tiles.append({"id": f[0], "animation": [{"tileid": i, "duration": 420} for i in f]})
+    decor = next(l for l in data["layers"] if l["name"] == "decor")["data"]
+    grass = {g - 1 for g in decor if NAMES_BY_ID.get(g - 1, "").startswith("tall_")}  # only what this map shows
+    tiles += [{**anim(i, i + 1, 900), "properties": [base.prop("cover", 9)]} for i in sorted(grass)]
     ts["tiles"] = tiles + light_tiles()
     key = dict(m.props).get("nameKey")
     if key:

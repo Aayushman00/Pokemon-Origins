@@ -12,7 +12,7 @@ from scripts import gen_overworld_placeholders as base
 from .gym_rooms import ROOMS
 from .tiles_v2 import blob_mask
 from .town_art import LAYOUTS, town_buildings
-from .world_maps import (BADGES, BORDER, GYMS, ID, NAMES, PEOPLE, PATH, ROUTES, SOLID, Town, autotile_paths, door, finish, fringe, hashed,
+from .world_maps import (BADGES, BORDER, GYMS, ID, NAMES, PEOPLE, PATH, ROUTES, SOLID, Town, autotile_paths, door, finish, fringe, grass_runs, hashed,
                          lone_tree, paint, say, trainer_script)
 
 COMMON = {".": "walk", ",": "road", "p": "plaza", "g": "grass", "=": "stairs", "k": "plank", "b": "plank", "B": "bld", "D": "bld",
@@ -35,7 +35,7 @@ def terrain(m, grid, biome, legend, stairs="ns"):
     """Lay `grid` onto m. The grass-world painter does trees, water and street
     furniture; everything else is laid over it from the legend."""
     kind_of = lambda c: legend.get(c) or COMMON[c]
-    paint(m, ["".join(PAINTED.get(kind_of(c), ".") for c in row) for row in grid], "grass")
+    paint(m, ["".join(PAINTED.get(kind_of(c), ".") for c in row) for row in grid], "grass", biome)
     cells = {(x, y): kind_of(c) for y, row in enumerate(grid) for x, c in enumerate(row)}
     group = lambda name: {k for k, v in cells.items() if v == name or v.startswith(f"{name}:") or v.startswith(f"over:{name.split(':')[-1]}:")}
     open_at = lambda g, x, y: (x, y) in cells and (x, y) not in g
@@ -282,8 +282,8 @@ def route(rid):
     if biome == "basalt":
         m.props.append(("time", "dusk"))
     terrain(m, r["grid"], biome, legend, stairs)
-    for i, g in enumerate(r["grass"]):
-        m.obj("encounters", f"grass_{i + 1}", g["x"], g["y"], g["w"], g["h"], table=rid)
+    for i, (x, y, w) in enumerate(grass_runs(r["grid"])):
+        m.obj("encounters", f"grass_{i + 1}", x, y, w, 1, table=rid)
     for t in r["trainers"]:
         sprite = ROAD_SPRITES.get(t["id"]) or t["id"].rsplit("_", 1)[0]
         m.obj("npcs", t["id"], t["x"], t["y"], point=True, sprite=sprite, facing=t["facing"],

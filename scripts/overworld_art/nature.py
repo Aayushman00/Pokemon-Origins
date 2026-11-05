@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw, ImageFilter
 
 from .slice_art import T, _lawn, _outline, _trail, _wave, meadow, rgb
 from .tiles_v2 import E, N, NE, NW, S, SE, SW, Wb
-from .world_palette import LINE, SHADOW, WORLD
+from .world_palette import LINE, SHADOW, TALL, WORLD
 
 SIDES = {(0, -1): N, (1, 0): E, (0, 1): S, (-1, 0): Wb}
 CORNERS = {(1, -1): NE, (1, 1): SE, (-1, 1): SW, (-1, -1): NW}
@@ -197,18 +197,55 @@ def _cast(img):
                 break
 
 
-def tall_grass(frame):
-    """Opaque clumps on meadow: dense tufts, each tile reads as a plant."""
-    g = WORLD["tall"]
-    img = meadow(0).copy()
-    d = ImageDraw.Draw(img)
-    for cx, base in ((3, 8), (11, 7), (7, 15), (15, 15), (-1, 15)):
-        lean = frame if cx % 8 == 3 else 1 - frame
-        d.polygon(((cx - 3, base), (cx + 3, base), (cx + lean, base - 7)), fill=g[2])
-        d.line((cx - 2, base, cx - 1 + lean, base - 5), fill=g[1])
-        d.line((cx + 2, base, cx + 1 + lean, base - 4), fill=g[3])
-        d.line((cx - 3, base, cx + 3, base), fill=g[3])
-        d.point((cx + lean, base - 6), fill=g[0])
+# Each tuft fans from its root: x offset, how far the tip bends, height lost, tone.
+# Outer blades go down first, so the lit middle lies over them.
+BLADES = ((-4, -2, 3, 3), (4, 2, 3, 3), (-3, -2, 2, 2), (3, 2, 1, 2), (-2, -1, 1, 1), (2, 1, 2, 2), (-1, -1, 0, 1), (1, 1, 1, 1), (0, 0, 0, 1))
+
+
+def _tuft(put, cx, base, seed, frame, ramp):
+    r = random.Random(f"tall{seed}")
+    lean = r.choice((-1, 0, 0, 1)) + (frame if r.random() < .6 else 0)
+    height = r.randint(7, 8)
+    for x, bend, short, tone in BLADES:
+        tall = height - short
+        for i in range(tall):
+            t = i / (tall - 1)
+            tip = i == tall - 1 and tone == 1
+            put(round(cx + x * (1 - .35 * t) + (bend + lean) * t * t), base - i, ramp[0] if tip else ramp[tone])
+
+
+def tall_grass(biome, mask, phase, frame):
+    """Rows of tufts that run on across tiles, so a patch reads as one field.
+    `mask` holds N/E/S/W bits for open sides: tufts past them are left out and
+    the gaps stay see-through, so the patch ends in tips, not a square. Tiles
+    alternate `phase` to double the repeat."""
+    ramp = TALL[biome]
+    img = Image.new("RGBA", (T, T))
+    px = img.load()
+
+    def put(x, y, tone):
+        if 0 <= x < T and 0 <= y < T:
+            px[x, y] = rgba(tone)
+
+    for cx, base in ((4, 7), (12, 7), (0, 15), (8, 15), (16, 15)):
+        if (cx == 0 and mask & Wb) or (cx == T and mask & E):
+            continue
+        _tuft(put, cx, base, (cx + T * phase) % 32 + base * 32, frame, ramp)
+
+    drawn = {(x, y) for x in range(T) for y in range(T) if px[x, y][3]}
+
+    def closed(x, y, dx, dy, bit):
+        """Blades lie that way, or the patch runs on past the tile."""
+        while 0 <= x < T and 0 <= y < T:
+            if (x, y) in drawn:
+                return True
+            x, y = x + dx, y + dy
+        return not mask & bit
+
+    for x in range(T):
+        for y in range(T):
+            if (x, y) not in drawn and all(closed(x, y, *d, bit) for d, bit in SIDES.items()):
+                px[x, y] = rgba(ramp[3])
     return img
 
 
