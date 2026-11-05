@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 5,
+ "nextobjectid": 9,
  "layers": [
   {
    "id": 1,
@@ -115,7 +115,7 @@
     1493,
     1494,
     1493,
-    1493,
+    1317,
     1396,
     1396,
     1396,
@@ -145,7 +145,7 @@
     1493,
     1493,
     1493,
-    1493,
+    1317,
     1396,
     1396,
     1396,
@@ -175,7 +175,7 @@
     1493,
     1493,
     1493,
-    1493,
+    1400,
     1393,
     1392,
     1395,
@@ -2567,37 +2567,7 @@
     4000,
     4000,
     4000,
-    4000,
     0,
-    0,
-    0,
-    0,
-    0,
-    4000,
-    4000,
-    4000,
-    4000,
-    4000,
-    4000,
-    4000,
-    4000,
-    4000,
-    4000,
-    4000,
-    4000,
-    4000,
-    4000,
-    4000,
-    4000,
-    0,
-    0,
-    0,
-    0,
-    0,
-    4000,
-    4000,
-    4000,
-    4000,
     0,
     0,
     0,
@@ -2627,6 +2597,36 @@
     4000,
     4000,
     4000,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4000,
+    4000,
+    4000,
+    4000,
+    4000,
+    4000,
+    4000,
+    4000,
+    4000,
+    4000,
+    4000,
+    4000,
+    4000,
+    4000,
+    4000,
+    4000,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4000,
+    4000,
+    4000,
     4000,
     0,
     0,
@@ -2640,7 +2640,7 @@
     4000,
     4000,
     4000,
-    4000,
+    0,
     4000,
     4000,
     4000,
@@ -3098,7 +3098,152 @@
    "y": 0,
    "opacity": 1,
    "visible": true,
-   "objects": []
+   "objects": [
+    {
+     "id": 1,
+     "name": "door_league",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 224,
+     "y": 80,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "zenith_league"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 7
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "iris"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "up"
+      }
+     ]
+    },
+    {
+     "id": 6,
+     "name": "lab_door_3",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 16,
+     "y": 48,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "hollow_lab"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 4
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "left"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "iris"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "left"
+      }
+     ]
+    },
+    {
+     "id": 7,
+     "name": "lab_door_4",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 16,
+     "y": 64,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "hollow_lab"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 24
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 4
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "left"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "iris"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "left"
+      }
+     ]
+    }
+   ]
   },
   {
    "id": 8,
@@ -3109,7 +3254,31 @@
    "y": 0,
    "opacity": 1,
    "visible": true,
-   "objects": []
+   "objects": [
+    {
+     "id": 8,
+     "name": "lab_seal",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 32,
+     "y": 48,
+     "width": 16,
+     "height": 32,
+     "properties": [
+      {
+       "name": "when",
+       "type": "string",
+       "value": "step"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:kestrel_vane\", \"else\": [{\"op\": \"say\", \"text\": \"The door is sealed by League order. Only a Champion may open it.\"}, {\"op\": \"cutsceneMove\", \"actor\": \"player\", \"path\": [\"right\"]}]}]"
+      }
+     ]
+    }
+   ]
   },
   {
    "id": 9,
@@ -3122,7 +3291,7 @@
    "visible": true,
    "objects": [
     {
-     "id": 3,
+     "id": 4,
      "name": "veteran",
      "type": "",
      "rotation": 0,
@@ -3151,7 +3320,7 @@
      "point": true
     },
     {
-     "id": 4,
+     "id": 5,
      "name": "warden",
      "type": "",
      "rotation": 0,
@@ -3192,7 +3361,7 @@
    "visible": true,
    "objects": [
     {
-     "id": 1,
+     "id": 2,
      "name": "town_sign",
      "type": "",
      "rotation": 0,
@@ -3210,7 +3379,7 @@
      ]
     },
     {
-     "id": 2,
+     "id": 3,
      "name": "league_sign",
      "type": "",
      "rotation": 0,

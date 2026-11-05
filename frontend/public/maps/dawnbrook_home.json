@@ -893,7 +893,7 @@
       {
        "name": "text",
        "type": "string",
-       "value": "Your room is upstairs. (It opens in a later update.)"
+       "value": "Your room is upstairs. You made the bed this morning, and that's enough for today."
       }
      ]
     },

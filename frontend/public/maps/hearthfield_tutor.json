@@ -844,7 +844,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"say\", \"text\": \"Pokemon forget, you know. Same as people. I help them remember. (The Move Learner opens with the party screen.)\"}]"
+       "value": "[{\"op\": \"say\", \"text\": \"Pokemon forget, you know. Same as people. A good battle helps them remember.\"}]"
       }
      ],
      "point": true

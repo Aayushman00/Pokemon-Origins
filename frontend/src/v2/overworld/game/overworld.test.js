@@ -451,6 +451,84 @@ describe("all eight gyms on foot (headless)", () => {
 	});
 });
 
+describe("the League and the Hollow Lab (headless)", () => {
+	const walk = (d, dir, until, limit = 400) => {
+		for (let i = 0; i < limit && !until(); i++) {
+			d.game.tick({ dir }, []);
+			if (d.game.mode === "dialogue") return;
+		}
+	};
+	const settle = (d) => {
+		for (let i = 0; i < 300 && d.game.mode !== "explore"; i++) d.game.tick({ dir: null }, []);
+		d.idle(30);
+	};
+	const on = (d, map) => () => d.pos()[0] === map;
+
+	it("Zenith's great door opens on the League lobby", async () => {
+		const d = await boot({ mapId: "zenith", x: 14, y: 6, facing: "up" });
+		walk(d, "up", on(d, "zenith_league"));
+		settle(d);
+		assert.equal(d.pos()[0], "zenith_league");
+	});
+	it("a League door stays shut until that room's trainer is beaten", async () => {
+		const d = await boot({ mapId: "league_1", x: 4, y: 3, facing: "up" });
+		d.hold("right", 16); // onto the rug, one below the door's step
+		walk(d, "up", () => d.game.mode === "dialogue");
+		assert.match(d.dialogues().at(-1).pages.join(" "), /won't open/);
+		d.close();
+		settle(d);
+		assert.equal(d.game.player.y, 3, "walked back from the door");
+		d.flags.add("trainer:hollis_rime");
+		walk(d, "up", on(d, "league_2"));
+		settle(d);
+		assert.equal(d.pos()[0], "league_2");
+	});
+	it("beating the Champion plays the ending and lands back at Zenith", async () => {
+		const d = await boot({ mapId: "league_5", x: 5, y: 5, facing: "up" });
+		d.press();
+		assert.equal(d.game.mode, "battle");
+		d.flags.add("trainer:kestrel_vane");
+		d.game.endBattle();
+		while (d.game.mode === "dialogue") d.close();
+		for (let i = 0; i < 50 && d.game.mode !== "explore"; i++) {
+			d.idle(30);
+			await new Promise((r) => setTimeout(r, 5)); // a script warp loads its map on the way
+		}
+		assert.equal(d.pos()[0], "zenith");
+		assert.ok(d.flags.has("story:champion"));
+		assert.ok(d.dialogues().some((e) => /Thank\s+you\s+for\s+playing/.test(e.pages.join(" "))));
+	});
+	it("the Hollow Lab is sealed to anyone but the Champion", async () => {
+		const d = await boot({ mapId: "zenith", x: 3, y: 3, facing: "left" });
+		walk(d, "left", () => d.game.mode === "dialogue");
+		assert.match(d.dialogues().at(-1).pages.join(" "), /sealed/);
+		d.close();
+		settle(d);
+		assert.equal(d.game.player.x, 3, "walked back from the door");
+		d.flags.add("trainer:kestrel_vane");
+		walk(d, "left", on(d, "hollow_lab"));
+		settle(d);
+		assert.equal(d.pos()[0], "hollow_lab");
+	});
+	it("each legendary bars the way to the next, then leaves once met", async () => {
+		const d = await boot({ mapId: "hollow_lab", x: 21, y: 4, facing: "left" });
+		const names = () => d.game.npcs().map((n) => n.name);
+		assert.deepEqual(names(), ["articuno", "zapdos", "moltres", "mew", "mewtwo"]);
+		d.hold("left", 40);
+		assert.equal(d.game.player.x, 21, "Articuno fills the doorway");
+		d.press();
+		d.close();
+		const battle = d.events.find((e) => e.type === "effect" && e.effect.type === "battle");
+		assert.equal(battle.effect.trainer, "articuno");
+		d.flags.add("trainer:articuno");
+		d.game.endBattle();
+		assert.ok(!names().includes("articuno"));
+		d.idle(4);
+		d.hold("left", 60);
+		assert.ok(d.game.player.x < 20, "the doorway is clear");
+	});
+});
+
 describe("legendary encounters (headless)", () => {
 	it("talking to Articuno: cry sound + white flash, then a wild battle request", async () => {
 		const { CRY_FLASH_TICKS } = await import("./overworld.js");

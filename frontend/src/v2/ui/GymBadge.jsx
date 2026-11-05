@@ -2,7 +2,7 @@ import React from "react";
 import PixelArt from "./PixelArt";
 
 // 16x16 pixel badges, one per campaign stop (route order): the eight Aurelia gym
-// badges, then a Pokéball for Indigo Plateau and a crown for the final stage.
+// badges, then a Pokéball for Zenith Summit and a crown for the final stage.
 // K is always the outline, so locked silhouettes keep a readable edge.
 export const BADGES = [
 	{

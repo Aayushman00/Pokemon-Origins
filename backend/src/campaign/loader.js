@@ -218,7 +218,7 @@ function listBattles(levelNumber, dataDir = DATA_DIR) {
 /** Where a campaign trainer sits in the gauntlet: { level, battleNumber, type }, or null. */
 function findTrainerBattle(trainerId, dataDir = DATA_DIR) {
 	for (let level = 1; level <= CAMPAIGN_LEVELS; level++) {
-		const battle = loadLevel(level, dataDir).battles.find((b) => b.trainerId === trainerId);
+		const battle = loadLevel(level, dataDir).battles.find((b) => b.trainerId === trainerId || b.encounterId === trainerId);
 		if (battle) return { level, battleNumber: battle.battleNumber, type: battle.type };
 	}
 	return null;

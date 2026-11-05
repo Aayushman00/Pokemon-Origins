@@ -36,7 +36,7 @@ function checkObjects(map, err) {
 			err(`npcs "${n.name}" uses unknown sprite "${n.sprite}"`);
 		}
 		if (!isDir(n.facing)) err(`npcs "${n.name}" has bad facing "${n.facing}"`);
-		if (collisionAt(map, n.x, n.y) === COL.FREE) err(`npcs "${n.name}" stands on a walkable tile`);
+		if (!n.hideFlag && collisionAt(map, n.x, n.y) === COL.FREE) err(`npcs "${n.name}" stands on a walkable tile`);
 	}
 }
 

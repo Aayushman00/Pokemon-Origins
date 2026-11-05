@@ -22,7 +22,7 @@ All ten levels are populated and playable under progress locks:
 | Levels | Structure | Battle types |
 |--------|-----------|--------------|
 | 1–8 | 4 road trainers + gym leader (Willow Thornby, Mara Quill, Tavish Rook, Coral Marlowe, Volt Dray, Skye Corvin, Sage Ilmara, Cinder Valko) | `trainer` ×4, `gym_boss` |
-| 9 | Indigo Plateau: Lorelei, Bruno, Agatha, Lance, then Blue | `elite_four` ×4, `champion` |
+| 9 | Zenith Summit: Hollis, Bastian, Morwen, Drake, then Kestrel | `elite_four` ×4, `champion` |
 | 10 | Legendary Gauntlet: Articuno, Zapdos, Moltres, Mew, Mewtwo | `legendary` ×5 |
 
 Legendary battles reference `encounters/legendary.json` by `encounterId`; the loader resolves them and `campaignService` hydrates the single legendary like a one-mon trainer party (same Pokéball → Pokémon presentation, no trainer art anywhere).

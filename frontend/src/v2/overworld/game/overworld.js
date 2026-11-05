@@ -45,6 +45,10 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		if (!map) return [];
 		for (const n of map.npcs) {
 			const id = `${mapId}:${n.name}`;
+			if (n.hideFlag && flags.has(n.hideFlag)) {
+				npcs.delete(id);
+				continue;
+			}
 			if (!npcs.has(id)) {
 				npcs.set(id, {
 					...createActor({ mapId, x: n.x, y: n.y, facing: n.facing || "down" }),

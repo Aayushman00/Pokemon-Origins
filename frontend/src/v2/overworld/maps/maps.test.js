@@ -114,7 +114,7 @@ describe("sample maps (smoke + lint)", () => {
 		}
 	});
 	it("NPCs and sign scripts stand on tiles that are not walls, and npc tiles are blocked", () => {
-		for (const m of Object.values(maps)) for (const n of m.npcs) assert.notEqual(collisionAt(m, n.x, n.y), COL.FREE, `${m.id}/${n.name} is walkable (players could overlap it)`);
+		for (const m of Object.values(maps)) for (const n of m.npcs.filter((n) => !n.hideFlag)) assert.notEqual(collisionAt(m, n.x, n.y), COL.FREE, `${m.id}/${n.name} is walkable (players could overlap it)`);
 	});
 	it("outdoor maps have a border block and interiors are black outside", () => {
 		assert.deepEqual(maps.test_town.border, [3, 3, 3, 3]); // local tree tile 2, firstgid 1

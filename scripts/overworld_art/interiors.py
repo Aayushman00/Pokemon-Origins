@@ -1063,7 +1063,7 @@ def center(map_id="mossgate_center"):
                  say("All done! Your Pokemon are fighting fit. We hope to see you again!")]
         m.npc("nurse", 7, 2, "nurse", "down", *nurse)
         m.sign("counter_nurse", 7, 3, ops=nurse)
-        m.sign("pc", 13, 2, text="It's the storage PC. (Box storage opens in a later update.)")
+        m.sign("pc", 13, 2, text="It's the storage PC. Every Pokemon you've ever met is logged here.")
         m.sign("books", 1, 2, text="Books about caring for Pokemon. One is called 'Rest Is A Move Too'.")
         m.npc("visitor", 1, 4, "gentleman", "right", say("The nurse here never forgets a Pokemon's name."))
         m.npc("trainer", 13, 4, "cooltrainer_f", "left",
@@ -1079,7 +1079,7 @@ def mart(map_id="origin_mart"):
         for x in (2, 3):
             m.sign(f"counter_{x}", x, 5, ops=shop)
         m.sign("register", 4, 3, ops=shop)
-        m.sign("chiller", 10, 2, text="Cold drinks in the chiller. (They go on sale with the shop update.)")
+        m.sign("chiller", 10, 2, text="Cold drinks in the chiller. The clerk says they're for staff.")
         m.npc("shopper", 6, 2, "youngster", "up", say("Which drink gives a Pokemon the most energy? ...I'll take them all."))
         m.npc("browser", 11, 6, "twin", "up", say("These shelves go up to the ceiling! I can't reach the top."))
     return make_map(map_id, extras)
@@ -1088,7 +1088,7 @@ def mart(map_id="origin_mart"):
 def home():
     def extras(m):
         m.sign("tv", 8, 1, text="A quiz show is on. 'Which Pokemon Origins town has a pond?' ...Easy!")
-        m.sign("stairs", 10, 2, text="Your room is upstairs. (It opens in a later update.)")
+        m.sign("stairs", 10, 2, text="Your room is upstairs. You made the bed this morning, and that's enough for today.")
         m.sign("sink", 1, 1, text="The dishes are done. Mom's handiwork.")
         m.sign("cooker", 6, 1, text="Something smells delicious. Dinner later!")
         m.npc("mom", 3, 5, "mom", "right", say("Off on an adventure? Don't forget to come home for dinner!"))
@@ -1106,7 +1106,7 @@ def house(map_id, who, sprite, line, tv):
 def lab():
     def extras(m):
         talk = [say("Ah, you made it! Every journey starts with a first partner."),
-                say("(Choosing your partner here opens in a later update.)")]
+                say("Yours chose you well. Take care of each other, and Mossgate is east along Route 1.")]
         m.npc("professor", 7, 2, "professor", "down", *talk)
         m.sign("counter_professor", 7, 3, ops=talk)
         m.sign("books", 1, 1, text="Field notes on Pokemon of the Greenwood.")
@@ -1127,8 +1127,7 @@ HOUSES = {  # who lives there, their sprite, what they say, what's on the televi
     "starfall_house_a": ("watcher", "gentleman", "I've logged every clear night for fifty years. The Hollow people asked to buy the logs.", "A documentary about the moon."),
     "emberhold_house_a": ("founder", "biker", "My grandfather's anvil is in that forge. He says it hums. He's been gone twenty years.", "A sports match. Everyone is on fire."),
 }
-TUTOR_LINE = ("Pokemon forget, you know. Same as people. I help them remember. "
-              "(The Move Learner opens with the party screen.)")
+TUTOR_LINE = "Pokemon forget, you know. Same as people. A good battle helps them remember."
 
 
 def town_map(map_id, town, kind):

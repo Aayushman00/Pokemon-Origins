@@ -5,6 +5,7 @@ const {
 	listBattles,
 	countBattles,
 	getTrainer,
+	findTrainerBattle,
 	resetCache,
 } = require("./loader");
 const { CampaignError } = require("./errors");
@@ -55,6 +56,10 @@ describe("campaign loader", () => {
 		assert.equal(battles[0].trainer.name, "Youngster Joey");
 		assert.equal(battles[0].trainer.party[0].pokemonId, 19);
 		assert.equal(battles[0].trainer.party[0].max_hp, undefined);
+	});
+
+	it("finds a legendary by its encounter id, as the Hollow Lab asks for it", () => {
+		assert.deepEqual(findTrainerBattle("zapdos"), { level: 10, battleNumber: 2, type: "legendary" });
 	});
 
 	it("fails clearly for a missing level", () => {

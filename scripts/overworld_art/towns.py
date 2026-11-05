@@ -170,7 +170,7 @@ TOWNS = {
               ("widow", 25, 11, "old_woman", "down", "Eight badges is a lot of road, dear. Sit by the fire a minute.")]),
     "zenith": dict(
         biome="marble", leader=None, props=[("clouds", True)], links={"east": "route_9"}, onward=None,
-        legend={"v": "void", "X": "void"}, patch=[(0, 3, "v"), (0, 4, "v")],
+        legend={"v": "void", "X": "road"}, patch=[(0, 3, "v"), (0, 4, "v")],
         signs=[("town_sign", 19, 11, "ZENITH SUMMIT - Every road in Aurelia ends here."),
                ("league_sign", 15, 6, "POKEMON LEAGUE - Eight badges. No way back once you begin.")],
         npcs=[("veteran", 11, 7, "cooltrainer_m", "right", "I've stood at this door nine times. Stock up in the lobby. There's no second chance past it."),
@@ -226,7 +226,10 @@ def town(tid):
         x, y, label = d["x"], d["y"], d["label"]
         if label == "G":
             if tid == "zenith":
-                continue  # the League hall is wired up in league.py
+                m.block(x, y, 0)
+                m.obj("warps", "door_league", x, y, kind="door", targetMap="zenith_league", targetX=7, targetY=9, facing="up",
+                      transition="iris", enterDir="up")
+                continue
             leader = spec["leader"]
             rows = GYMS[leader]["rows"]
             px, py = next((i, j) for j, r in enumerate(rows) for i, c in enumerate(r) if c == "P")
@@ -243,9 +246,23 @@ def town(tid):
         m.npc(name, x, y, sprite, facing, *lines)
     if spec["onward"]:
         gate(m, spec["onward"], spec["leader"], spec["links"][spec["onward"]])
+    if tid == "zenith":
+        hollow_lab_door(m)
     if spec["biome"] == "meadow":
         autotile_paths(m)
     return finish(m.build(), m)
+
+
+def hollow_lab_door(m):
+    """Two cells of old stone in the west wall. Only a Champion gets past the step in front."""
+    for y in (3, 4):
+        m.put("ground", 1, y, ID["gym_dome_exit"])
+        m.obj("warps", f"lab_door_{y}", 1, y, kind="door", targetMap="hollow_lab", targetX=24, targetY=4, facing="left",
+              transition="iris", enterDir="left")
+    m.obj("triggers", "lab_seal", 2, 3, 1, 2, when="step", script=json.dumps([
+        {"op": "requireFlag", "flag": "trainer:kestrel_vane",
+         "else": [{"op": "say", "text": "The door is sealed by League order. Only a Champion may open it."},
+                  {"op": "cutsceneMove", "actor": "player", "path": ["right"]}]}]))
 
 
 def route(rid):
