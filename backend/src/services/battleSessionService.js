@@ -287,6 +287,17 @@ function defaultGetEnemyBattle() {
 	};
 }
 
+/** One wild Pokémon from a route's table, with trainer battles' stat and move math. */
+function defaultGetWildBattle(random) {
+	return async ({ species, levels: [low, high] }) => {
+		const { hydrateParty } = require("../campaign/hydrate");
+		const pokemonId = species[Math.floor(random() * species.length)];
+		const level = low + Math.floor(random() * (high - low + 1));
+		const party = await hydrateParty([{ pokemonId, level }]);
+		return { trainerName: `Wild ${party[0].nickname}`, party, battleType: "wild" };
+	};
+}
+
 function defaultEngine() {
 	const battleService = require("./battleService");
 	return {
@@ -420,6 +431,8 @@ function createBattleSessionService(deps = {}) {
 	const getFlagService = () => deps.flags || require("./flagService");
 	const findWorldTrainer = deps.findWorldTrainer || require("../campaign/loader").findTrainerBattle;
 	const overworldOn = deps.overworldOn || (() => require("../config/flags").isEnabled("OVERWORLD"));
+	const findWildTable = deps.findWildTable || require("../campaign/loader").getWildTable;
+	const getWildBattle = deps.getWildBattle || defaultGetWildBattle(random);
 
 	const winKey = (trainerId, level, battleNumber) =>
 		`${Number(trainerId)}:${level}:${battleNumber}`;
@@ -461,15 +474,26 @@ function createBattleSessionService(deps = {}) {
 		return spot;
 	}
 
-	async function startBattle(trainerId, { level, battleNumber, force, worldTrainer }) {
+	/** The grass the client says it walked in. Only roads the campaign has reached pay XP. */
+	function resolveWildTable(id, progress) {
+		if (!overworldOn()) throw new CampaignError(404, "Not found");
+		const table = findWildTable(id);
+		if (!table) throw new CampaignError(404, "Unknown encounter table");
+		if (progress.current_level < table.minLevel) throw new CampaignError(403, "This road is not open yet");
+		return table;
+	}
+
+	async function startBattle(trainerId, { level, battleNumber, force, worldTrainer, wild }) {
 		const progressService = getProgressService();
 		const progress = await progressService.getProgress(trainerId);
+		const wildTable = wild ? resolveWildTable(wild, progress) : null;
 		if (worldTrainer) {
 			({ level, battleNumber } = await resolveWorldTrainer(trainerId, worldTrainer, progress));
 		}
 		if (
-			progress.current_level !== level ||
-			progress.current_battle !== battleNumber
+			!wildTable &&
+			(progress.current_level !== level ||
+				progress.current_battle !== battleNumber)
 		) {
 			throw new CampaignError(
 				403,
@@ -492,6 +516,7 @@ function createBattleSessionService(deps = {}) {
 				: Infinity;
 			if (
 				!force &&
+				!wildTable &&
 				existing &&
 				existing.status === "active" &&
 				existing.level === level &&
@@ -505,7 +530,7 @@ function createBattleSessionService(deps = {}) {
 
 		const [partyRaw, enemyBattle] = await Promise.all([
 			getPlayerParty(trainerId),
-			getEnemyBattle(level, battleNumber),
+			wildTable ? getWildBattle(wildTable) : getEnemyBattle(level, battleNumber),
 		]);
 		if (!Array.isArray(partyRaw) || !partyRaw.length) {
 			throw new CampaignError(400, "No Pokémon found for this trainer");
@@ -557,6 +582,7 @@ function createBattleSessionService(deps = {}) {
 			voiceId: enemyBattle.trainerId || null,
 			playerName: usesPlayerName(enemyBattle.trainerId) ? await playerName(trainerId) : null,
 			worldTrainer: worldTrainer || null,
+			wild: Boolean(wildTable),
 			party,
 			// `player` always references the active party entry, so beat
 			// resolution mutates the party snapshot in place.
@@ -1636,7 +1662,7 @@ function createBattleSessionService(deps = {}) {
 	// Win/loss record for trainer profiles. Best-effort, once per session:
 	// a history write failure must never break the battle response.
 	async function recordResultOnBattleEnd(session, trainerId) {
-		if (session.status === "active" || session.historyRecorded) return;
+		if (session.status === "active" || session.historyRecorded || session.wild) return;
 		session.historyRecorded = true;
 		try {
 			await getHistoryStore().record({
@@ -1659,16 +1685,19 @@ function createBattleSessionService(deps = {}) {
 		}
 		if (
 			!action ||
-			!["move", "switch", "item"].includes(action.type)
+			!["move", "switch", "item", ...(session.wild ? ["run"] : [])].includes(action.type)
 		) {
 			throw new CampaignError(400, "Unsupported action type");
 		}
 
 		session.busy = true;
 		try {
+			if (action.type === "run") session.status = "fled";
 			const events = addVoice(
 				session,
-				action.type === "switch"
+				action.type === "run"
+					? []
+					: action.type === "switch"
 					? await resolveSwitch(session, action)
 					: action.type === "item"
 					? await resolveItem(session, action, trainerId)
@@ -1683,7 +1712,15 @@ function createBattleSessionService(deps = {}) {
 			// completion.
 			let progress;
 			let reward;
-			if (session.status === "won") {
+			if (session.status === "won" && session.wild) {
+				// Wild wins sit outside the campaign: XP only. `progress` just tells the client it's settled.
+				progress = { wild: true };
+				try {
+					events.push(...(await grantWinXp(session, trainerId)));
+				} catch (xpErr) {
+					console.error("Failed to award XP after a wild win:", xpErr.message);
+				}
+			} else if (session.status === "won") {
 				wonBattles.add(
 					winKey(trainerId, session.level, session.battleNumber)
 				);

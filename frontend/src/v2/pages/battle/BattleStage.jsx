@@ -12,6 +12,7 @@ const THEMES = {
 	champion: "hall",
 	gym_boss: "arena",
 	legendary: "mystic",
+	wild: "field",
 };
 
 function monClass(f) {

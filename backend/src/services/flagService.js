@@ -1,6 +1,7 @@
 /**
  * Per-trainer world flags (migration 012). Set only by server code (resolved
- * events, battle wins); the only client-facing surface is the read-only list.
+ * events, battle wins). Clients read the list and may add story flags only, see
+ * storyFlag in worldService.
  */
 const FLAG_RE = /^[A-Za-z0-9_:.-]{1,64}$/;
 

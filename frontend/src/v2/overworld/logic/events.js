@@ -2,6 +2,8 @@ import { COL, DIRS } from "../constants.js";
 import { collisionAt } from "./mapModel.js";
 
 const inside = (o, x, y) => x >= o.x && y >= o.y && x < o.x + o.w && y < o.y + o.h;
+/** The wild table of the grass at this cell, or undefined. */
+export const wildTable = (map, pos) => map.encounters.find((e) => inside(e, pos.x, pos.y))?.table;
 export const doneFlag = (mapId, obj) => `done:${mapId}:${obj.name}`;
 
 export const defeatedFlag = (trainer) => `trainer:${trainer}`;

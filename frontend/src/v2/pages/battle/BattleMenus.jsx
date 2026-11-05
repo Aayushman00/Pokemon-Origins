@@ -20,7 +20,9 @@ export const CommandMenu = ({ battle }) => (
 				{ id: "fight", label: "Fight", onSelect: () => battle.setPhase("moveSelect") },
 				{ id: "bag", label: "Bag", onSelect: battle.openBag },
 				{ id: "mon", label: "Pokémon", onSelect: battle.openParty },
-				{ id: "restart", label: "Restart", onSelect: () => battle.setPhase("restartConfirm") },
+				battle.session?.battleType === "wild"
+					? { id: "run", label: "Run", onSelect: battle.run }
+					: { id: "restart", label: "Restart", onSelect: () => battle.setPhase("restartConfirm") },
 			]}
 		/>
 	</div>
@@ -246,7 +248,7 @@ export const LearnMenu = ({ battle, charMs }) => {
 };
 
 /** Post-battle results: rewards, save state, next step. */
-export const ResultPanel = ({ battle, onContinue, onLeave }) => {
+export const ResultPanel = ({ battle, onContinue, onLeave, onLost }) => {
 	const win = battle.outcome?.result === "win";
 	return (
 		<Panel variant={win ? undefined : "inset"} className="result" plate={win ? "Victory" : "Defeat"} plateTone={win ? "grass" : undefined}>
@@ -276,6 +278,10 @@ export const ResultPanel = ({ battle, onContinue, onLeave }) => {
 							Continue
 						</Button>
 					)
+				) : onLost ? (
+					<Button variant="go" size="lg" onClick={onLost} autoFocus>
+						Continue
+					</Button>
 				) : (
 					<>
 						<Button variant="primary" size="lg" onClick={battle.restart} autoFocus>

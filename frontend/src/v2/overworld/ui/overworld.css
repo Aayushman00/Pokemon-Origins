@@ -40,6 +40,29 @@
 	overflow: auto;
 	background: var(--bg, #101418);
 }
+.ow__menu {
+	position: absolute;
+	top: 6px;
+	right: 6px;
+	display: flex;
+	flex-direction: column;
+	min-width: 38%;
+	padding: 6px;
+}
+.ow__menu-item {
+	padding: 4px 8px 4px 18px;
+	border: 0;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+.ow__menu-item[aria-current="true"]::before {
+	content: "\25B6";
+	position: absolute;
+	margin-left: -14px;
+}
 .ow__dialogue {
 	position: absolute;
 	left: 0;

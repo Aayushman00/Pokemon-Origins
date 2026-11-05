@@ -51,6 +51,8 @@ function createResetService(deps = {}) {
 			await connection.query(`DELETE FROM trainer_inventory WHERE trainer_id = ?`, [trainerId]);
 			await connection.query(`DELETE FROM badges WHERE trainer_id = ?`, [trainerId]);
 			await connection.query(`DELETE FROM reward_offers WHERE trainer_id = ?`, [trainerId]);
+			await connection.query(`DELETE FROM trainer_flags WHERE trainer_id = ?`, [trainerId]);
+			await connection.query(`DELETE FROM trainer_world_state WHERE trainer_id = ?`, [trainerId]);
 
 			await connection.query(
 				`INSERT INTO trainer_progress (trainer_id, current_level, current_battle, unlocked_level, status)

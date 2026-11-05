@@ -72,6 +72,14 @@ describe("resetService", () => {
 		assert.ok(!pool.rolledBack);
 	});
 
+	it("clears the overworld too, or every beaten trainer would refuse the rematch", async () => {
+		const pool = fakePool();
+		await createResetService({ pool }).resetTrainer(7);
+		for (const table of ["trainer_flags", "trainer_world_state"]) {
+			assert.ok(pool.calls.some((c) => c.sql.includes(`DELETE FROM ${table}`) && c.params?.[0] === 7), table);
+		}
+	});
+
 	it("leaves battles and trainer card untouched", async () => {
 		const pool = fakePool();
 		const service = createResetService({ pool });

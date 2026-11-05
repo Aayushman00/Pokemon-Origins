@@ -6,12 +6,12 @@ import { createMemoryFlags } from "./flags.js";
 import { createOverworld } from "./overworld.js";
 import AP, { GYM_PUZZLES } from "../logic/puzzles.generated.js";
 
-async function boot(start = { mapId: "test_town", x: 14, y: 12, facing: "up" }) {
+async function boot(start = { mapId: "test_town", x: 14, y: 12, facing: "up" }, opts = {}) {
 	const store = createMapStore({ fetchJson: fetchFromDisk });
 	await store.loadAround(start.mapId);
 	const events = [];
 	const flags = createMemoryFlags();
-	const game = createOverworld({ store, flags, start, emit: (e) => events.push(e) });
+	const game = createOverworld({ store, flags, start, emit: (e) => events.push(e), ...opts });
 	const drive = {
 		events,
 		flags,
@@ -440,6 +440,15 @@ describe("all eight gyms on foot (headless)", () => {
 			assert.ok(d.game.puzzleTiles().length > 0, `${leaderId} draws nothing`);
 		}
 	});
+	it("the Start menu's way out leaves a stuck puzzle through its door", async () => {
+		const d = await enter("tavish_rook");
+		assert.ok(d.game.puzzleActive);
+		move(d, "up");
+		d.game.leaveRoom();
+		for (let i = 0; i < 300 && d.game.mode !== "explore"; i++) d.game.tick({ dir: null }, []);
+		assert.equal(d.pos()[0], "ironbrook");
+		assert.equal(d.game.puzzleActive, false);
+	});
 	it("a solved gym sends the door straight to the Leader's chamber", async () => {
 		const d = await boot({ mapId: "hearthfield", x: 15, y: 7, facing: "up" });
 		d.flags.add("gym:mara_quill:solved");
@@ -448,6 +457,40 @@ describe("all eight gyms on foot (headless)", () => {
 		d.idle(120);
 		const [x, y] = d.game.map.properties.puzzleChamber.split(",").map(Number);
 		assert.deepEqual(d.pos(), ["hearthfield_gym", x, y]);
+	});
+});
+
+describe("wild grass and whiting out (headless)", () => {
+	const grass = { mapId: "route_1", x: 14, y: 13, facing: "right" }; // inside grass_2
+	const wild = (d) => d.events.find((e) => e.type === "effect" && e.effect.type === "battle");
+
+	it("a step that ends in grass can meet that route's table", async () => {
+		const d = await boot(grass, { encounterRoll: () => 0 });
+		d.hold("right", 30);
+		assert.equal(d.game.mode, "battle");
+		assert.equal(wild(d).effect.table, "route_1");
+		d.game.endBattle();
+		assert.equal(d.game.mode, "explore");
+	});
+	it("most steps meet nothing", async () => {
+		const d = await boot(grass, { encounterRoll: () => 0.5 });
+		d.hold("right", 30);
+		assert.equal(wild(d), undefined);
+	});
+	it("nothing lives outside the grass", async () => {
+		const d = await boot({ mapId: "route_1", x: 12, y: 18, facing: "left" }, { encounterRoll: () => 0 });
+		assert.ok(!d.game.map.encounters.some((e) => e.x <= 11 && 11 < e.x + e.w && e.y <= 18 && 18 < e.y + e.h));
+		d.hold("left", 30);
+		assert.equal(wild(d), undefined);
+	});
+	it("losing sends the player to the last place they healed", async () => {
+		const d = await boot(grass, { encounterRoll: () => 0 });
+		d.hold("right", 30);
+		d.game.whiteout({ mapId: "route_1", x: 13, y: 12 });
+		assert.match(d.dialogues().at(-1).pages.join(" "), /hurried/);
+		d.close();
+		for (let i = 0; i < 300 && d.game.mode !== "explore"; i++) d.game.tick({ dir: null }, []);
+		assert.deepEqual(d.pos(), ["route_1", 13, 12]);
 	});
 });
 

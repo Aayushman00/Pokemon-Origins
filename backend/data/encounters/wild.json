@@ -1,0 +1,11 @@
+{
+	"route_1": { "minLevel": 1, "levels": [3, 5], "species": [16, 19, 10, 13] },
+	"route_2": { "minLevel": 2, "levels": [10, 13], "species": [21, 29, 32, 43] },
+	"route_3": { "minLevel": 3, "levels": [14, 17], "species": [27, 74, 23, 41] },
+	"route_4": { "minLevel": 4, "levels": [20, 23], "species": [98, 54, 60, 118] },
+	"route_5": { "minLevel": 5, "levels": [25, 28], "species": [100, 81, 25, 96] },
+	"route_6": { "minLevel": 6, "levels": [30, 33], "species": [17, 22, 84, 83] },
+	"route_7": { "minLevel": 7, "levels": [34, 37], "species": [63, 96, 35, 39] },
+	"route_8": { "minLevel": 8, "levels": [38, 41], "species": [58, 77, 126, 66] },
+	"route_9": { "minLevel": 9, "levels": [44, 47], "species": [75, 67, 111, 42] }
+}

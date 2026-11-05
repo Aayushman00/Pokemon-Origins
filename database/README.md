@@ -60,6 +60,7 @@ Apply after the dump (trainer schema must exist). Do **not** rewrite `pokedex` t
 | [`migrations/006_backfill_move_pp.sql`](migrations/006_backfill_move_pp.sql) | Data backfill, no schema change: `trainer_pokemon_moves.current_pp = pokedex.Move.pp` wherever it is `NULL`/`0` (rows written before Phase 14 stored 0 — battles now track and persist PP, so 0 would mean an unusable move). Idempotent; safe to re-run. |
 
 | [`migrations/012_trainer_flags.sql`](migrations/012_trainer_flags.sql) | `trainer.trainer_flags` — server-owned per-trainer world flags (overworld events, one-shot triggers). Additive; rollback = `DROP TABLE trainer_flags`. Read through `GET /api/world/flags` (404 unless `FLAG_OVERWORLD`). 010/011 are reserved for the avatar and world-position tables in later phases. |
+| [`migrations/013_world_state.sql`](migrations/013_world_state.sql) | `trainer.trainer_world_state`: saved overworld position and last healing spot |
 
 ### Existing volume / local MySQL
 

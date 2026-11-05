@@ -24,7 +24,10 @@ const IDLE_FX = { lunge: false, hit: null, crit: false, fainted: false, tick: nu
  * phase: encounter → intro → command ↔ (moveSelect | partySelect |
  * bagSelect | restartConfirm) → acting → … → [moveLearn] → finished; restarting.
  */
-export default function useBattle({ levelNumber, battleNumber, worldTrainer, trainerId, onBattleWon, textSpeed = "normal" }) {
+// Nobody sends these out: they are simply there.
+const appearsAtOnce = (state) => state.battleType === "legendary" || state.battleType === "wild";
+
+export default function useBattle({ levelNumber, battleNumber, worldTrainer, wild, trainerId, onBattleWon, onRun, textSpeed = "normal" }) {
 	const reduce = useReducedMotion();
 	const [session, setSession] = useState(null);
 	const [player, setPlayer] = useState(null);
@@ -105,7 +108,7 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, tra
 		await wait(900); // transition wipe + opponent slide-in
 		if (myGen !== gen.current) return;
 		setPhase("intro");
-		if (state.battleType === "legendary") {
+		if (appearsAtOnce(state)) {
 			await say(`A wild ${state.enemy.nickname} appeared!`);
 		} else {
 			await say(`${state.trainerName || "A trainer"} wants to battle!`);
@@ -150,7 +153,7 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, tra
 			setError("");
 			try {
 				const { data } = await api.post("/api/battle/start", {
-					...(worldTrainer ? { worldTrainer } : { level: levelNumber, battleNumber }),
+					...(wild ? { wild } : worldTrainer ? { worldTrainer } : { level: levelNumber, battleNumber }),
 					...(force ? { force: true } : {}),
 				});
 				if (!data?.success || !data.state) throw new Error(data?.error || "Failed to start battle");
@@ -161,7 +164,7 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, tra
 				setEnemy(data.state.enemy);
 				setFx({
 					player: { ...IDLE_FX, hidden: true },
-					enemy: { ...IDLE_FX, hidden: data.state.battleType !== "legendary" },
+					enemy: { ...IDLE_FX, hidden: !appearsAtOnce(data.state) },
 				});
 				runIntro(data.state, myGen);
 			} catch (err) {
@@ -170,7 +173,7 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, tra
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[levelNumber, battleNumber, worldTrainer]
+		[levelNumber, battleNumber, worldTrainer, wild]
 	);
 
 	useEffect(() => {
@@ -304,6 +307,12 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, tra
 		nextLearn();
 	};
 
+	// Leaving is always allowed: a failed report only leaves a session the next battle replaces.
+	const run = async () => {
+		await api.post("/api/battle/action", { sessionId: sessionId.current, action: { type: "run" } }).catch((err) => console.error("Could not report the escape:", err));
+		onRun?.();
+	};
+
 	const act = async (action) => {
 		const myGen = gen.current;
 		const { player: p, enemy: e, session: s } = liveRef.current;
@@ -414,6 +423,7 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, tra
 		resolveLearn,
 		error,
 		chooseMove,
+		run,
 		switchTo,
 		chooseItem,
 		openBag,

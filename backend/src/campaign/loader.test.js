@@ -6,6 +6,7 @@ const {
 	countBattles,
 	getTrainer,
 	findTrainerBattle,
+	getWildTable,
 	resetCache,
 } = require("./loader");
 const { CampaignError } = require("./errors");
@@ -60,6 +61,15 @@ describe("campaign loader", () => {
 
 	it("finds a legendary by its encounter id, as the Hollow Lab asks for it", () => {
 		assert.deepEqual(findTrainerBattle("zapdos"), { level: 10, battleNumber: 2, type: "legendary" });
+	});
+
+	it("has a wild table for every route, opening with that route's stage", () => {
+		for (let n = 1; n <= 9; n++) {
+			const table = getWildTable(`route_${n}`);
+			assert.equal(table.minLevel, n);
+			assert.ok(table.species.length >= 2 && table.levels[0] <= table.levels[1], `route_${n}`);
+		}
+		assert.equal(getWildTable("nowhere"), null);
 	});
 
 	it("fails clearly for a missing level", () => {

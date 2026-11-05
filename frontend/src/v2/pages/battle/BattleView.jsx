@@ -22,13 +22,13 @@ const readSpeed = () => {
 };
 
 /** Battle screen: stage on top, FRLG-style text + command boxes below. */
-const BattleView = ({ levelNumber, battleNumber, worldTrainer, levelName, onBattleWon, onContinue, onLeave }) => {
+const BattleView = ({ levelNumber, battleNumber, worldTrainer, wild, levelName, onBattleWon, onContinue, onLeave, onLost, onRun }) => {
 	const navigate = useNavigate();
 	const leave = onLeave || (() => navigate("/game"));
 	const { user } = useUser();
 	const [speed, setSpeed] = useState(readSpeed);
 	const [soundOn, setSound] = useState(isSoundOn);
-	const battle = useBattle({ levelNumber, battleNumber, worldTrainer, trainerId: user?.trainer_id, onBattleWon, textSpeed: speed });
+	const battle = useBattle({ levelNumber, battleNumber, worldTrainer, wild, trainerId: user?.trainer_id, onBattleWon, onRun, textSpeed: speed });
 	const { phase, player, session } = battle;
 	const slow = useDelayedHint(phase === "loading" || phase === "restarting");
 
@@ -71,7 +71,7 @@ const BattleView = ({ levelNumber, battleNumber, worldTrainer, levelName, onBatt
 	else if (phase === "partySelect") hud = <PartyMenu battle={battle} />;
 	else if (phase === "bagSelect") hud = <BagMenu battle={battle} />;
 	else if (phase === "moveLearn") hud = <LearnMenu key={battle.learnOffer.pendingId} battle={battle} charMs={TEXT_SPEEDS[speed]} />;
-	else if (phase === "finished") hud = <ResultPanel battle={battle} onContinue={onContinue} onLeave={leave} />;
+	else if (phase === "finished") hud = <ResultPanel battle={battle} onContinue={onContinue} onLeave={leave} onLost={onLost} />;
 	else if (phase === "command" || phase === "restartConfirm") {
 		hud = (
 			<div className="hud__split hud__split--cmd">

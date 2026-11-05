@@ -111,6 +111,11 @@ const battleStartSchema = z.union([
 		worldTrainer: z.string().regex(/^[a-z0-9_]{1,48}$/),
 		force: z.boolean().optional(),
 	}),
+	// Grass in the overworld. The server rolls what is in it.
+	z.object({
+		wild: z.string().regex(/^[a-z0-9_]{1,48}$/),
+		force: z.boolean().optional(),
+	}),
 ]);
 
 const rewardClaimSchema = z.object({
@@ -126,6 +131,7 @@ const battleActionSchema = z.object({
 			type: z.literal("move"),
 			moveId: z.number().int(),
 		}),
+		z.object({ type: z.literal("run") }),
 		z.object({
 			type: z.literal("switch"),
 			partyPosition: z.number().int().min(1).max(3),
@@ -151,6 +157,15 @@ const martPurchaseSchema = z.object({
 const evolutionConfirmSchema = z.object({
 	partyPosition: z.number().int().min(1).max(3),
 });
+
+const worldSpot = {
+	mapId: z.string().regex(/^[a-z0-9_]{1,48}$/),
+	x: z.number().int().min(0).max(500),
+	y: z.number().int().min(0).max(500),
+};
+const worldPositionSchema = z.object({ ...worldSpot, facing: z.enum(["up", "down", "left", "right"]) });
+const worldHealSchema = z.object(worldSpot);
+const worldFlagSchema = z.object({ flag: z.string().min(1).max(64) });
 
 const gymSolveSchema = z.object({
 	leaderId: z.string().regex(/^[a-z0-9_]{1,48}$/),
@@ -214,6 +229,9 @@ const playgroundExchangeSchema = z.object({
 
 module.exports = {
 	gymSolveSchema,
+	worldPositionSchema,
+	worldHealSchema,
+	worldFlagSchema,
 	playgroundExchangeSchema,
 	partyArrangeSchema,
 	trainerCardSchema,

@@ -215,6 +215,11 @@ function listBattles(levelNumber, dataDir = DATA_DIR) {
 	});
 }
 
+/** A route's wild table ({ minLevel, levels, species }), or null. */
+function getWildTable(id, dataDir = DATA_DIR) {
+	return readJson(path.join(dataDir, "encounters", "wild.json"))[id] || null;
+}
+
 /** Where a campaign trainer sits in the gauntlet: { level, battleNumber, type }, or null. */
 function findTrainerBattle(trainerId, dataDir = DATA_DIR) {
 	for (let level = 1; level <= CAMPAIGN_LEVELS; level++) {
@@ -232,6 +237,7 @@ module.exports = {
 	listBattles,
 	countBattles,
 	findTrainerBattle,
+	getWildTable,
 	getTrainer,
 	getEncounter,
 	resetCache,

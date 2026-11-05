@@ -269,6 +269,7 @@ function makeService({
 	flags,
 	findWorldTrainer,
 	overworldOn = () => true,
+	findWildTable,
 } = {}) {
 	const progress = createProgressService({
 		store: createMemoryStore(),
@@ -317,6 +318,8 @@ function makeService({
 		...(now ? { now } : {}),
 		...(flags ? { flags } : {}),
 		...(findWorldTrainer ? { findWorldTrainer } : {}),
+		...(findWildTable ? { findWildTable } : {}),
+		getWildBattle: async () => ({ trainerName: "Wild Pidgey", pokemon: enemy, battleType: "wild" }),
 		overworldOn,
 		getPlayerParty,
 		getEnemyBattle: async (level, battleNumber) => ({
@@ -329,6 +332,60 @@ function makeService({
 	});
 	return { service, progress, engine, xp, xpStore, wallet, history };
 }
+
+describe("wild battles", () => {
+	const tables = { route_1: { minLevel: 1 }, route_5: { minLevel: 5 } };
+	const setup = (opts = {}) => {
+		const flags = createFlagService({ store: createMemoryFlagStore() });
+		return { flags, ...makeService({ flags, trainerId: 7, findWildTable: (id) => tables[id] || null, ...opts }) };
+	};
+	const code = (status) => (err) => err.status === status;
+	const hit = (damage) => stubEngine([{ result: "hit", damage }]);
+
+	it("a win pays XP but no coins, leaves the campaign where it was and records nothing", async () => {
+		const { service, flags, progress, wallet, history } = setup({ engine: hit(30) });
+		const before = await progress.getProgress(7);
+		const { state } = await service.startBattle(7, { wild: "route_1" });
+		assert.equal(state.battleType, "wild");
+		const result = await service.performAction(7, { sessionId: state.sessionId, action: { type: "move", moveId: 33 } });
+		assert.equal(result.state.status, "won");
+		assert.ok(result.progress, "the client is told the win is settled");
+		assert.ok(result.events.some((e) => e.type === "xp_gain"), "XP is paid");
+		assert.ok(!result.events.some((e) => e.type === "coins"));
+		assert.equal(await wallet.getBalance(7), STARTING_COINS);
+		assert.deepEqual(await progress.getProgress(7), before);
+		assert.deepEqual(await flags.listFlags(7), []);
+		assert.deepEqual(history.rows, []);
+	});
+	it("never resumes an old wild battle: each patch of grass is a new meeting", async () => {
+		const { service } = setup();
+		const first = await service.startBattle(7, { wild: "route_1" });
+		const second = await service.startBattle(7, { wild: "route_1" });
+		assert.equal(second.resumed, false);
+		assert.notEqual(second.state.sessionId, first.state.sessionId);
+	});
+	it("refuses an unknown table, and one the campaign has not reached", async () => {
+		const { service } = setup();
+		await assert.rejects(service.startBattle(7, { wild: "nowhere" }), code(404));
+		await assert.rejects(service.startBattle(7, { wild: "route_5" }), code(403));
+	});
+	it("is dark while the overworld is off", async () => {
+		const { service } = setup({ overworldOn: () => false });
+		await assert.rejects(service.startBattle(7, { wild: "route_1" }), code(404));
+	});
+	it("running ends a wild battle with damage carried and no reward", async () => {
+		const { service } = setup();
+		const { state } = await service.startBattle(7, { wild: "route_1" });
+		const result = await service.performAction(7, { sessionId: state.sessionId, action: { type: "run" } });
+		assert.equal(result.state.status, "fled");
+		assert.deepEqual(result.events.filter((e) => e.type === "xp_gain"), []);
+	});
+	it("a trainer battle cannot be run from", async () => {
+		const { service } = makeService();
+		const { state } = await service.startBattle(1, { level: 1, battleNumber: 1 });
+		await assert.rejects(service.performAction(1, { sessionId: state.sessionId, action: { type: "run" } }), code(400));
+	});
+});
 
 describe("trainer voice in a battle", () => {
 	it("opens with the leader's line and closes on their defeat line", async () => {

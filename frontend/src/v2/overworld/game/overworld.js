@@ -1,7 +1,7 @@
 import { DIRS } from "../constants.js";
 import { createActor, tickActor } from "../logic/movement.js";
 import { createWorld } from "../logic/world.js";
-import { dueTriggers, facingToward, interactionAt, spotter, triggerScript, warpFor } from "../logic/events.js";
+import { dueTriggers, facingToward, interactionAt, spotter, triggerScript, warpFor, wildTable } from "../logic/events.js";
 import { resolveScript } from "../logic/script.js";
 import { paginate } from "../logic/dialogue.js";
 import AP, { GYM_PUZZLES } from "../logic/puzzles.generated.js";
@@ -21,8 +21,11 @@ import { DOOR_PAUSE_TICKS, startTransition, tickTransition } from "../logic/tran
 export const CRY_FLASH_TICKS = 2;
 // How long the "!" hangs over a trainer who has spotted you.
 export const ALERT_TICKS = 40;
+// Chance that a step ending in grass meets something.
+export const WILD_CHANCE = 0.1;
 
-export function createOverworld({ store, flags, start, canRun = true, reducedMotion = false, emit = () => {} }) {
+// encounterRoll is the host's Math.random. Left out, nothing lives in the grass.
+export function createOverworld({ store, flags, start, canRun = true, reducedMotion = false, emit = () => {}, encounterRoll = () => 1 }) {
 	const world = createWorld((id) => store.get(id));
 	let player = createActor(start);
 	const npcs = new Map(); // `${mapId}:${name}` -> actor + script/sprite
@@ -322,6 +325,8 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 				if (due.length) return (pendingStep = { trigger: due[0], map: m }), true;
 				const seen = m ? spotter(m, a, npcsOf(a.mapId), flags) : null;
 				if (seen) return (pendingStep = { seen }), true;
+				const table = m && wildTable(m, a);
+				if (table && encounterRoll() < WILD_CHANCE) return (pendingStep = { wild: table }), true;
 				return false;
 			},
 		};
@@ -339,7 +344,10 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 			if (p.room) settleRoom();
 			else if (p.warp) beginWarp(p.warp);
 			else if (p.seen) spotted(p.seen);
-			else runScript(triggerScript(p.map, p.trigger));
+			else if (p.wild) {
+				mode = "battle";
+				emit({ type: "effect", effect: { type: "battle", table: p.wild } });
+			} else runScript(triggerScript(p.map, p.trigger));
 		}
 	}
 
@@ -370,6 +378,25 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 			edgeGuard = tickCount + 2;
 			mode = "explore";
 			pump();
+		},
+		/** Host calls instead of endBattle after a loss: the server has healed the party, so walk them home. */
+		whiteout({ mapId, x, y }) {
+			if (mode !== "battle") return;
+			for (const [id, n] of npcs) if (n.trainer === foe) npcs.delete(id);
+			foe = null;
+			queue = [
+				{ type: "say", pages: ["With nothing left to fight, you hurried back to safety."] },
+				{ type: "warp", map: mapId, x, y, facing: "up" },
+			];
+			pump();
+		},
+		/** The Start menu's way out of a puzzle: back through the room's door. Coming back in starts it fresh. */
+		leaveRoom() {
+			if (mode === "explore" && room && !room.done) beginWarp(room.map.warps[0]);
+		},
+		/** True while an unsolved puzzle decides every step, so a saved spot here would not match its state. */
+		get puzzleActive() {
+			return Boolean(room && !room.done);
 		},
 		/** Enter the start map's triggers once the first map is loaded. */
 		enter() {

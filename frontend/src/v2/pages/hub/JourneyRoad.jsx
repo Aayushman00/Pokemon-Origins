@@ -6,6 +6,7 @@ import GymBadge from "../../ui/GymBadge";
 import SkyFlock from "../../ui/SkyFlock";
 import { scatter } from "../../ui/scatter";
 import { MAX_CAMPAIGN_LEVEL } from "../battle/JourneyScreen";
+import { isEnabled } from "../../../flags";
 
 const STAR_COUNT = 36;
 
@@ -73,9 +74,16 @@ const JourneyRoad = ({ user, progress, profile, lead }) => {
 						View trainer card
 					</Button>
 				) : (
-					<Button variant="go" size="lg" to={`/level/${entryLevel}`}>
-						Continue journey
-					</Button>
+					<>
+						{isEnabled("OVERWORLD") && (
+							<Button variant="go" size="lg" to="/overworld">
+								Explore the world
+							</Button>
+						)}
+						<Button variant="go" size="lg" to={`/level/${entryLevel}`}>
+							Continue journey
+						</Button>
+					</>
 				)}
 			</div>
 

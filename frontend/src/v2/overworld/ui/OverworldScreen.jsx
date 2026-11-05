@@ -1,7 +1,9 @@
-import React, { useCallback, useContext, useEffect, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { api } from "../../../api";
 import DialogueBox from "../../ui/DialogueBox";
 import BattleView from "../../pages/battle/BattleView";
+import RewardScreen from "../../pages/battle/RewardScreen";
 import { play } from "../../battle/sfx";
 import { attachInput, drainEdges, snapshot } from "../engine/input";
 import { createLoop } from "../engine/loop";
@@ -15,13 +17,14 @@ import { UserContext } from "../../data/user";
 import { VIEW_H, VIEW_W } from "../constants";
 import { actorPose } from "../logic/movement";
 import OverworldPad from "./OverworldPad";
+import StartMenu from "./StartMenu";
 import { TEXT_SPEEDS, cycleTextSpeed, getTextSpeed } from "./textSpeed";
 import "./overworld.css";
 
 const DEFAULT_START = { mapId: "dawnbrook", x: 7, y: 7, facing: "down" };
 // Dev starts reachable with ?map=<id> (maps not yet linked into the world).
 const DEV_STARTS = { legend_grove: { mapId: "legend_grove", x: 8, y: 10, facing: "up" } };
-const START = DEV_STARTS[new URLSearchParams(window.location.search).get("map")] || DEFAULT_START;
+const DEV_START = DEV_STARTS[new URLSearchParams(window.location.search).get("map")];
 
 const fetchJson = async (url) => {
 	const r = await fetch(url);
@@ -32,6 +35,16 @@ const fetchJson = async (url) => {
 const reduced = () => !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
 const fetchFlags = async () => (await api.get("/api/world/flags")).data.flags;
+// A save that won't load must not lock the player out of the world.
+const fetchWorld = () => api.get("/api/world/state").then((r) => r.data).catch(() => ({}));
+const logFailure = (what) => (err) => console.error(`Could not ${what}:`, err);
+
+/** Saves where the player stands, unless a puzzle is mid-solve: the door they came in by stays the save. */
+const savePosition = async (game) => {
+	if (game.puzzleActive) return;
+	const { mapId, x, y, facing } = game.player;
+	await api.post("/api/world/position", { mapId, x, y, facing }).catch(logFailure("save the position"));
+};
 
 /** The overworld: tile movement, dialogue, warps, streaming, and trainer battles over the top of it. */
 const OverworldScreen = () => {
@@ -45,7 +58,11 @@ const OverworldScreen = () => {
 	const [input, setInput] = useState(null);
 	const [size, setSize] = useState({ cssW: VIEW_W, cssH: VIEW_H, left: 0, top: 0 });
 	const [dialogue, setDialogue] = useState(null); // { pages, i }
-	const [battle, setBattle] = useState(null); // trainer id
+	const [battle, setBattle] = useState(null); // { trainer } | { wild }, then reward: true while claiming a boss's prize
+	const [menuOpen, setMenuOpen] = useState(false);
+	const menuKeys = useRef(null); // the open Start menu's button handler
+	const healSpot = useRef(null); // where a whiteout returns to
+	const navigate = useNavigate();
 	const [speed, setSpeed] = useState(getTextSpeed);
 	const [hud, setHud] = useState(null);
 	// Debug overlay: always in dev builds, or with ?debug elsewhere.
@@ -73,22 +90,38 @@ const OverworldScreen = () => {
 		(async () => {
 			try {
 				const store = createMapStore({ fetchJson });
-				const [flagList] = await Promise.all([fetchFlags(), store.loadAround(START.mapId)]);
-				// the start map, every map its doors / edges lead to (interiors use their own
-				// tileset), and the test maps
-				const reachable = [START.mapId, ...store.neighbours(store.get(START.mapId)), "test_town", "test_route", "test_house"];
+				const [flagList, save] = await Promise.all([fetchFlags(), fetchWorld()]);
+				const start = DEV_START || save.position || DEFAULT_START;
+				healSpot.current = save.heal || DEFAULT_START;
+				await Promise.all([store.loadAround(start.mapId), store.loadAround(DEFAULT_START.mapId)]);
+				// the start map, Dawnbrook (its doors reach the interior tileset wherever the save
+				// starts), every map their doors / edges lead to, and the test maps
+				const home = DEFAULT_START.mapId;
+				const reachable = [start.mapId, ...store.neighbours(store.get(start.mapId)), home, ...store.neighbours(store.get(home)), "test_town", "test_route", "test_house"];
 				const assets = await loadAssets([...new Set(reachable)].map((id) => store.get(id)).filter(Boolean));
 				if (disposed) return;
 				const game = createOverworld({
 					store,
 					flags: createMemoryFlags(flagList),
-					start: START,
+					start,
 					reducedMotion: reduced(),
+					encounterRoll: Math.random,
 					emit: (e) => {
 						if (e.type === "sound") play(e.cue);
 						else if (e.type === "dialogue") setDialogue({ pages: e.pages, i: 0 });
-						else if (e.type === "effect" && e.effect.type === "battle" && e.effect.trainer) setBattle(e.effect.trainer);
-						else if (e.type === "effect" && e.effect.type === "solve") {
+						else if (e.type === "flag") {
+							if (/^(done|story):/.test(e.flag)) api.post("/api/world/flags", { flag: e.flag }).catch(logFailure("save a story flag"));
+						} else if (e.type === "mapChange") {
+							if (e.reason !== "start") savePosition(game);
+						} else if (e.type === "effect" && e.effect.type === "battle" && e.effect.trainer) setBattle({ trainer: e.effect.trainer });
+						else if (e.type === "effect" && e.effect.type === "battle" && e.effect.table) setBattle({ wild: e.effect.table });
+						else if (e.type === "effect" && e.effect.type === "heal") {
+							const { mapId, x, y } = game.player;
+							healSpot.current = { mapId, x, y };
+							api.post("/api/world/heal", { mapId, x, y }).catch(logFailure("heal the party"));
+						} else if (e.type === "effect" && e.effect.type === "shop") {
+							savePosition(game).finally(() => navigate("/game/mart"));
+						} else if (e.type === "effect" && e.effect.type === "solve") {
 							const { leaderId, moves } = e.effect;
 							api
 								.post("/api/world/gym/solve", { leaderId, moves })
@@ -106,6 +139,14 @@ const OverworldScreen = () => {
 						inputApi.poll();
 						const snap = snapshot(inputApi.state);
 						const edges = drainEdges(inputApi.state);
+						if (menuKeys.current) {
+							for (const e of edges) menuKeys.current?.(e.button);
+							return;
+						}
+						if (game.mode === "explore" && edges.some((e) => e.button === "start")) {
+							setMenuOpen(true);
+							return;
+						}
 						if (game.mode === "dialogue") {
 							// Keyboard A already reaches the DialogueBox itself; relay pad/gamepad A as the same key.
 							if (edges.some((e) => e.button === "a" && e.source !== "keyboard")) {
@@ -159,7 +200,7 @@ const OverworldScreen = () => {
 			sessionRef.current = null;
 			delete window.__overworld;
 		};
-	}, [resize, debug, playerSprite]);
+	}, [resize, debug, playerSprite, navigate]);
 
 	useEffect(() => {
 		const wrap = wrapRef.current;
@@ -173,7 +214,7 @@ const OverworldScreen = () => {
 		};
 	}, [resize]);
 
-	const endBattle = async () => {
+	const endBattle = async (lost = false) => {
 		const { game } = sessionRef.current;
 		try {
 			for (const f of await fetchFlags()) game.flags.add(f);
@@ -181,8 +222,34 @@ const OverworldScreen = () => {
 			console.error("Could not refresh flags after a battle:", e);
 		}
 		setBattle(null);
-		game.endBattle();
+		if (lost) game.whiteout(healSpot.current);
+		else game.endBattle();
 	};
+
+	const closeMenu = useCallback(() => setMenuOpen(false), []);
+	const menuItems = useMemo(() => {
+		if (!menuOpen) return [];
+		const { game } = sessionRef.current;
+		const go = (path) => () => savePosition(game).finally(() => navigate(path));
+		const save = async () => {
+			await savePosition(game);
+			setMenuOpen(false);
+			setPlace({ name: "Game saved", id: `saved:${game.tickCount}` });
+		};
+		const leave = () => {
+			setMenuOpen(false);
+			game.leaveRoom();
+		};
+		return [
+			{ label: "Party", run: go("/game") },
+			{ label: "Bag", run: go("/game/bag") },
+			{ label: "Pokedex", run: go("/pokedex") },
+			{ label: "Trainer", run: go("/trainer") },
+			{ label: "Save", run: save },
+			...(game.puzzleActive ? [{ label: "Leave puzzle", run: leave }] : []),
+			{ label: "Close", run: () => setMenuOpen(false) },
+		];
+	}, [menuOpen, navigate]);
 
 	const advance = () => {
 		const d = dialogue;
@@ -211,13 +278,17 @@ const OverworldScreen = () => {
 							<DialogueBox key={`${dialogue.i}:${dialogue.pages[dialogue.i]}`} text={dialogue.pages[dialogue.i]} onAdvance={advance} charMs={TEXT_SPEEDS[speed]} />
 						</div>
 					)}
+					{menuOpen && <StartMenu items={menuItems} keys={menuKeys} onClose={closeMenu} />}
 					{debug && hud && (
 						<pre className="ow__hud" aria-hidden="true">{`${hud.tps} tps / ${hud.fps} fps  x${size.scale}  dropped ${hud.dropped}\n${hud.map} (${hud.x},${hud.y})${frame ? `\ntick ${frame.tick}  ${frame.facing}\n${frame.phase} ${frame.t}/${frame.dur} ${frame.pose}${frame.running ? " run" : ""}${frame.moving ? " MOVING" : ""}` : ""}`}</pre>
 					)}
 				</div>
 			</div>
 			<div className="ow__bar font-pixel">
-				<span>Arrows/WASD walk · X run · Z/Enter talk</span>
+				<span>Arrows/WASD walk · X run · Z/Enter talk · Esc menu</span>
+				<button type="button" className="pixel-btn" onClick={() => sessionRef.current?.game.mode === "explore" && setMenuOpen(true)}>
+					Menu
+				</button>
 				<button type="button" className="pixel-btn" onClick={() => setSpeed((s) => cycleTextSpeed(s))}>
 					Text: {speed}
 				</button>
@@ -225,7 +296,20 @@ const OverworldScreen = () => {
 			{input && <OverworldPad input={input} />}
 			{battle && (
 				<div className="ow__battle">
-					<BattleView key={battle} worldTrainer={battle} levelName="On the road" onContinue={endBattle} onLeave={endBattle} />
+					{battle.reward ? (
+						<RewardScreen onDone={() => endBattle()} />
+					) : (
+						<BattleView
+							key={battle.trainer || battle.wild}
+							worldTrainer={battle.trainer}
+							wild={battle.wild}
+							levelName={battle.wild ? "In the tall grass" : "On the road"}
+							onContinue={() => (battle.wild ? endBattle() : setBattle({ ...battle, reward: true }))}
+							onLeave={() => endBattle()}
+							onLost={() => endBattle(true)}
+							onRun={() => endBattle()}
+						/>
+					)}
 				</div>
 			)}
 		</div>
