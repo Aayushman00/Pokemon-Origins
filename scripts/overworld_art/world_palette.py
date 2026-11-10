@@ -3,12 +3,13 @@
 Ground ramps are pale and quiet so objects carry the contrast. Ramps run
 highlight -> shadow, leaning warm at the top and cool at the bottom.
 """
+import colorsys
 LINE = "#26223a"  # object outline, a cool plum, never pure black
 SHADOW = ("#2e4a4a", 0.35)  # contact shadow: colour, opacity
 
 WORLD = {
     "meadow": ["#c0e29e", "#aed68e", "#9cc97f"],
-    "lawn": ["#93c476", "#82b868", "#72a85c"],
+    "lawn": ["#a2cf84", "#92c476", "#82b66a"],  # one step under meadow: a patch, not a box
     "trail": ["#ecd9a8", "#e0c890", "#cbb07c", "#b6966c"],
     "leaf": ["#b4d878", "#7cb85c", "#4e9450", "#35704c", "#265244"],
     "bark": ["#b08858", "#84603f", "#5c4038", "#40303a"],
@@ -46,3 +47,26 @@ TALL = {
     "basalt": ["#e4b474", "#b8804c", "#885a40", "#5a3c38"],
     "marble": ["#ecf0d4", "#b4d4b4", "#84b09c", "#5e8c84"],
 }
+
+
+def outline_for(ramp):
+    """Hue-matched outline: the ramp's darkest step, 15% of the way round to
+    blue and down in value. Dark like LINE but tied to the material."""
+    r, g, b = (int(ramp[-1][i:i + 2], 16) / 255 for i in (1, 3, 5))
+    h, s, v = colorsys.rgb_to_hsv(r, g, b)
+    h += ((2 / 3 - h + .5) % 1 - .5) * .15
+    rgb = colorsys.hsv_to_rgb(h % 1, min(1, s * 1.15), v * .72)
+    return "#%02x%02x%02x" % tuple(round(c * 255) for c in rgb)
+
+
+def sel_out(ramp):
+    """Edge tone on the lit (top/left) side: the ramp's second-darkest step,
+    so the rim softens toward the light instead of a hard dark line."""
+    return ramp[-2]
+
+
+# colour -> the ramp it belongs to, so an outline pass can tell materials apart
+RAMP_OF = {}
+for _ramp in WORLD.values():
+    for _c in _ramp:
+        RAMP_OF.setdefault(_c, _ramp)

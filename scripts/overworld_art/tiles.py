@@ -647,6 +647,15 @@ def new_tiles():
     from .town_art import town_tiles
     for name, t in gym_tiles() + town_tiles():
         add(name, t)
+    # ---- elevation (M2): appended last so every older id stays put
+    add("ledge_e", nature.side_ledge("e"))
+    add("ledge_w", nature.side_ledge("w"))
+    add("mass_shadow", nature.mass_shadow())
+    from .town_art import CRAGGY, mass_face
+    for name in CRAGGY:  # extra cliff faces, so a long face doesn't repeat every tile
+        for v in (1, 2):
+            for mask in range(4):
+                add(f"m_{name}_f{mask}_{v}", mass_face(name, mask & 1, mask & 2, v))
     return out
 
 

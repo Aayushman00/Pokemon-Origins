@@ -380,6 +380,7 @@ BUILDS = {
     "child": ("youngster", "bug_catcher", "twin", "lass", "picnicker"),
     "heavy": ("hiker", "biker", "black_belt", "fisherman", "sailor", "mara_quill", "cinder_valko", "bastian_cairn", "engineer", "tamer", "rocker"),
     "elder": ("old_man", "old_woman"),
+    "teen": ("player", "player_f", "rival"),  # FRLG-height heroes: ~23 rows, head ~10
 }
 for _build_name, _ids in BUILDS.items():
     for _c in ROSTER:

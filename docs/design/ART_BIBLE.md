@@ -18,9 +18,9 @@ GBA-era top-down pixel art is the genre. `pret/pokefirered/graphics` and screens
 
 ## Outlines and shadows
 
-- Outlines belong to objects only, in `LINE` from `world_palette.py`. Ground has none. Trail and lawn may end in a one-pixel edge from their own ramp.
-- Props, fences, bushes and trees stand on a contact shadow: translucent `SHADOW` from `world_palette.py`, hard pixel edge. Flat decals such as flowers get none.
-- Buildings throw no strips onto the next cell, interior floors carry no shadow patches, and walkers have none. A hop does: it shows how high the character is.
+- Outlines belong to objects only and match their material: `outline_for(ramp)` from `world_palette.py`, softened to `sel_out(ramp)` on lit top/left edges (`slice_art._outline` does both). `LINE` is the fallback for colours from no ramp, and still outlines characters. Ground has none. Trail and lawn may end in a one-pixel edge from their own ramp; grass hangs over a trail's north edge and shades the dirt under it.
+- Props, fences, bushes, trees, ledges and cliff faces (`mass_shadow` on the cell below) stand on a contact shadow: translucent `SHADOW` from `world_palette.py`, hard pixel edge. Flat decals such as flowers get none.
+- Buildings throw no strips onto the next cell and interior floors carry no shadow patches. Every walker stands on a faint 12x4 hard-edged shadow (renderer `ACTOR_SHADOW`); during a hop it stays on the ground and darkens, showing how high the character is.
 - Slow cloud shadows drift over outdoor maps that set `clouds`.
 - Ground transitions wander and round off. No dither is needed.
 
@@ -38,7 +38,9 @@ GBA-era top-down pixel art is the genre. `pret/pokefirered/graphics` and screens
 ## Light at runtime
 
 - Time of day is fixed per map, never a clock. Dusk and night multiply the scene, then lamps and windows add light back.
-- Pale effects on grass: anything near the grass's own greens disappears against it.
+- Added light is pixel rings, never a soft disc: three hard steps (`ambient.glowMask`), each edge broken by a 4x4 Bayer dither. The pulse steps the rings out 2px and back; it never fades.
+- Pale effects on grass: anything near the grass's own greens disappears against it. A step into tall grass parts pixel blades (pale tip, light body, dark shaded side) that lean out, overshoot and settle.
+- Water: the north bank shades the water below it; elsewhere foam laps the shore over three frames (lip, lace, recede). Open water carries a few crests that rise, run and break in place, out of step, so the loop has no seam.
 
 ## Characters
 
@@ -49,6 +51,8 @@ GBA-era top-down pixel art is the genre. `pret/pokefirered/graphics` and screens
 - Nothing flares at the bottom: coats and skirts hang straight, at most 9 px from the side. Arms meet the torso with a shadow tone, not an outline, or the figure reads as toy blocks.
 - The silhouette must read in solid colour. Design shape first, colour second.
 - At most 15 colours per sprite.
+- The silhouette outline matches what it rings (`outline_for` of that material's ramp; the top of hair and hats softens to its own shadow tone). Where a sheet has no free palette slot, the least important outlines (feet before face) take the nearest dark colour already on the sheet (`sheets.edge_colours`). Eyes and drawn lines stay `OUTLINE`.
+- The heroes (`teen` build: player, player_f, rival) stand about 23 rows, head about 10: shorter than adults, taller than children.
 
 ## Buildings
 

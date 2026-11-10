@@ -14,11 +14,14 @@ from PIL import Image
 from .characters import ROSTER
 from .palette import OUTLINE, RAMPS, WHITE
 from .sheets import COLUMNS, ROWS
+from .world_palette import outline_for
 
 ROOT = Path(__file__).resolve().parents[2]
 SPRITES = ROOT / "frontend" / "public" / "sprites" / "overworld"
 MAPS = ROOT / "frontend" / "public" / "maps"
 MAX_COLOURS = 15  # + transparent = one 16-colour GBA palette
+# Line work: the shared OUTLINE (eyes, drawn lines) plus each ramp's hue-matched silhouette outline.
+LINEWORK = {OUTLINE} | {outline_for(ramp) for ramp in RAMPS.values()}
 
 
 def frames(img):
@@ -63,7 +66,7 @@ class SheetTests(unittest.TestCase):
             self.assertLessEqual(len(colours), MAX_COLOURS, f"{cid}: {len(colours)} colours")
 
     def test_colours_come_from_the_master_palette(self):
-        allowed = {OUTLINE, WHITE} | {c for ramp in RAMPS.values() for c in ramp}
+        allowed = LINEWORK | {WHITE} | {c for ramp in RAMPS.values() for c in ramp}
         for cid, img in self.sheets.items():
             used = {hexs(p) for p in img.get_flattened_data() if p[3]}
             self.assertFalse(used - allowed, f"{cid}: off-palette {used - allowed}")
@@ -108,8 +111,11 @@ class SheetTests(unittest.TestCase):
         """Every shading tone pixel touches another pixel of its colour; only
         line work (outline, eyes) and white glints may stand alone. The alert
         pose and hat brims may leave a few single pixels (at most 4 a frame)."""
-        free = {OUTLINE, WHITE}
+        from .characters import ROSTER
+        from .sheets import edge_colours
+        lines = {c["id"]: set(edge_colours(c).values()) for c in ROSTER}
         for cid, img in self.sheets.items():
+            free = LINEWORK | {WHITE} | lines.get(cid, set())  # an outline may borrow a dark shade
             for r, c, f in frames(img):
                 p = f.load()
                 lone = []

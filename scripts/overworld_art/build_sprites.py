@@ -13,9 +13,9 @@ import json
 from pathlib import Path
 
 from .characters import ROSTER
-from .compose import ramp_for
+from .compose import key_colour
 from .palette import OUTLINE, RAMPS, WHITE
-from .sheets import COLUMNS, ROWS, build_sheet, frame_keys
+from .sheets import COLUMNS, ROWS, build_sheet, edge_colours, frame_keys
 
 ROOT = Path(__file__).resolve().parents[2]
 SPRITES = ROOT / "frontend" / "public" / "sprites" / "overworld"
@@ -29,6 +29,7 @@ def ui_art(char):
     """Down-facing stand frame (trimmed to its top) as palette-indexed rows,
     plus which palette indices belong to the top so the UI can tint it."""
     keys = frame_keys(char, "down", "stand")
+    edges = edge_colours(char)
     pal, top, rows = [], {}, []
     lookup = {}
     top_row = next(y for y in range(32) if any(k is not None for k in keys[y]))
@@ -38,20 +39,13 @@ def ui_art(char):
             if key is None:
                 line += "."
                 continue
-            if key == "outline":
-                col, tone = OUTLINE, None
-            elif key == "white":
-                col, tone = WHITE, None
-            else:
-                m, tone = key
-                ramp = ramp_for(char["mats"], m)
-                col = {"hi": ramp[0], "base": ramp[-2] if len(ramp) > 1 else ramp[0], "shadow": ramp[-1]}[tone]
+            col = key_colour(key, char["mats"], edges)
             if col not in lookup:
                 lookup[col] = len(pal)
                 pal.append(col)
             i = lookup[col]
-            if key not in ("outline", "white") and key[0] == "t":
-                top[INDEX[i]] = tone
+            if isinstance(key, tuple) and key[0] == "t":  # the top's own tones, tintable in the UI
+                top[INDEX[i]] = key[1]
             line += INDEX[i]
         rows.append(line)
     return {"rows": rows, "pal": pal, "top": top}

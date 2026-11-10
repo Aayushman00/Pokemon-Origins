@@ -158,5 +158,25 @@ class Leaders(unittest.TestCase):
             self.assertLessEqual(len(colours), 15, cid)
 
 
+class Milestone3(unittest.TestCase):
+    """Hue-matched outlines inside the palette budget; FRLG-height heroes."""
+
+    def test_heroes_wear_outlines_matched_to_their_materials(self):
+        """The silhouette is drawn in several dark tones, not one plum line."""
+        for cid in ("player", "player_f", "rival"):  # crowded sheets (npc) may fall back to fewer
+            img = stand(cid)
+            a = img.getchannel("A").load()
+            ring = {img.getpixel((x, y))[:3] for y in range(32) for x in range(16) if a[x, y] and any(
+                not (0 <= x + dx < 16 and 0 <= y + dy < 32) or not a[x + dx, y + dy]
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))}
+            self.assertGreaterEqual(len(ring), 3, cid)
+
+    def test_heroes_stand_at_frlg_height(self):
+        for cid in ("player", "player_f"):
+            self.assertLessEqual(height(stand(cid)), 23, cid)
+        self.assertLess(height(stand("player")), height(stand("cooltrainer_m")), "heroes under the adults")
+        self.assertLess(height(stand("youngster")), height(stand("player")), "children under the heroes")
+
+
 if __name__ == "__main__":
     unittest.main()

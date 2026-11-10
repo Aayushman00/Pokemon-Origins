@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createFx, stepFx } from "./fieldfx.js";
-import { clouds, particles, smoke, tintFor } from "./ambient.js";
+import { clouds, glowMask, particles, smoke, tintFor } from "./ambient.js";
 import { parseTiledMap } from "../logic/mapModel.js";
 import { VIEW_H, VIEW_W } from "../constants.js";
 
@@ -84,6 +84,31 @@ describe("ambient", () => {
 		assert.equal(tintFor(undefined), null);
 		assert.ok(tintFor("dusk"));
 		assert.ok(tintFor("night"));
+	});
+
+	it("lamp light is hard rings, dithered only at their edges", () => {
+		const r = 20;
+		const n = 2 * r + 1;
+		const m = glowMask(r);
+		assert.equal(m.length, n * n);
+		const at = (x, y) => m[(y + r) * n + x + r];
+		assert.equal(at(0, 0), 3);
+		assert.equal(at(-r, -r), 0);
+		assert.ok([...m].every((v) => v <= 3));
+		const levels = new Set();
+		for (let y = -r; y <= r; y++) {
+			for (let x = -r; x <= r; x++) {
+				const d = Math.hypot(x, y);
+				const edge = [r, r * 0.66, r * 0.36].some((k) => Math.abs(d - k) <= 1);
+				if (!edge) assert.equal(at(x, y), [r, r * 0.66, r * 0.36].filter((k) => d < k).length, `${x},${y}`);
+				levels.add(at(x, y));
+			}
+		}
+		assert.deepEqual([...levels].sort(), [0, 1, 2, 3]);
+		// the outer edge mixes lit and dark pixels: a dither, not a clean circle
+		const rim = [];
+		for (let a = 0; a < 64; a++) rim.push(at(Math.round(r * Math.cos(a / 10)), Math.round(r * Math.sin(a / 10))));
+		assert.ok(rim.includes(0) && rim.includes(1));
 	});
 });
 

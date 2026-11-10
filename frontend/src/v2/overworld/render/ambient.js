@@ -92,3 +92,23 @@ const TINTS = { dusk: "#ffb98e", night: "#5a68b0" };
 export function tintFor(time) {
 	return TINTS[time] || null;
 }
+
+const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+const RINGS = [1, 0.66, 0.36];
+
+/**
+ * Lamp light as hard pixel rings: a (2r+1)^2 grid of levels 0-3 (3 at the
+ * centre). Each ring edge is broken by a 4x4 Bayer dither one pixel either
+ * side, never a smooth fade.
+ */
+export function glowMask(r) {
+	const n = 2 * r + 1;
+	const out = new Uint8Array(n * n);
+	for (let y = 0; y < n; y++) {
+		for (let x = 0; x < n; x++) {
+			const d = Math.hypot(x - r, y - r) + (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 8 - 1;
+			out[y * n + x] = RINGS.filter((k) => d < r * k).length;
+		}
+	}
+	return out;
+}

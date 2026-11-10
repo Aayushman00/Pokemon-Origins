@@ -13,7 +13,7 @@ from .buildings import HEART, STAR
 from .gym_art import disc, ring, speck
 from .slice_art import T, _outline
 from .tiles import Tile, rng
-from .world_palette import LINE, WORLD
+from .world_palette import LINE, WORLD, outline_for, outline_for
 
 LAYOUTS = {t["id"]: t for t in json.loads((Path(__file__).parent / "town_layouts.json").read_text(encoding="utf8"))}
 BUILT_TOWNS = ("hearthfield", "ironbrook", "saltmere", "dynamo", "gale", "starfall", "emberhold", "zenith")
@@ -75,44 +75,85 @@ def stairs(biome, ew):
     return t
 
 
+CRAGGY = ("rock", "mountain", "basalt")  # natural cliffs; field and plant keep their own faces
+
+
+def _sides(t, name, e, w, y0=0, y1=15):
+    """Plateau sides seen edge-on: the west catches the light, the east is in shade."""
+    top, face = MASSES[name]
+    if w:
+        t.rect(0, y0, 0, y1, outline_for(face))
+        t.rect(1, y0, 1, y1, face[0])
+        t.rect(2, y0, 2, y1, top[0])
+    if e:
+        t.rect(13, y0, 14, y1, face[2])
+        t.rect(15, y0, 15, y1, outline_for(face))
+
+
 def mass_top(name, n, e, w):
-    top, _ = MASSES[name]
+    """Plateau surface. Open sides show a rim: a hard edge with a lit lip
+    inside it on the north (back) side, side strips east and west."""
+    top, face = MASSES[name]
     t = Tile(fill=top[1])
     speck(t, 300 + len(name), 14, [top[0], top[2]])
+    if name in CRAGGY:
+        r = rng(310 + len(name))
+        for _ in range(2):  # loose stones: lit top-left, shaded bottom-right
+            x, y = 3 + r(9), 3 + r(9)
+            t.rect(x, y, x + 1, y + 1, top[1])
+            t.set(x, y, top[0])
+            t.rect(x + 1, y + 2, x + 2, y + 2, top[2])
+            t.set(x + 2, y + 1, top[2])
     if name == "field":
         for x in range(1, 16, 3):
             t.rect(x, 2 + x % 5, x, 8 + x % 5, top[0])
             t.set(x, 1 + x % 5, top[2])
     if name == "plant":
         ring(t, 1, 1, 14, 14, top[2])
+    _sides(t, name, e, w)
     if n:
-        t.rect(0, 0, 15, 1, top[0])
-    if e:
-        t.rect(14, 0, 15, 15, top[2])
-    if w:
-        t.rect(0, 0, 1, 15, top[0])
+        t.rect(0, 0, 15, 0, outline_for(face))
+        t.rect(3 if w else 0, 1, 12 if e else 15, 1, top[0])
     return t
 
 
-def mass_face(name, e, w):
-    _, face = MASSES[name]
+def mass_face(name, e, w, variant=0):
+    """The south face, one tile tall: the plateau's lit lip (rows 0-2), shade
+    under it, two courses of rock blocks, a dark base line. The ground below
+    gets mass_shadow. Joints between courses sit on fixed rows so strata run
+    on across tiles; `variant` reseeds where the blocks crack."""
+    top, face = MASSES[name]
     t = Tile(fill=face[1])
-    r = rng(500 + len(name))
-    for x in range(0, 16, 3):
-        h = 4 + r(7)
-        t.rect(x, 0, x, h, face[0])
-        t.rect(x + 1, h, x + 1, 15, face[2])
-    if name == "plant":
-        t = Tile(fill=face[1])
-        for x in range(0, 16, 8):
-            t.rect(x, 0, x + 3, 2, face[0])
-            t.rect(x + 4, 0, x + 7, 2, face[2])
-        t.rect(0, 6, 15, 7, face[2])
-    t.rect(0, 14, 15, 15, face[2])
-    if e:
-        t.rect(15, 0, 15, 15, face[2])
-    if w:
-        t.rect(0, 0, 0, 15, face[0])
+    r = rng(500 + len(name) + 97 * variant)
+    if name in CRAGGY:
+        t.rect(0, 0, 15, 1, top[1])
+        t.rect(0, 2, 15, 2, top[0])
+        t.rect(0, 3, 15, 3, face[2])
+        for y0, y1 in ((4, 8), (10, 12)):  # two courses of rock
+            x = -r(4)
+            while x < 16:
+                x1 = x + 3 + r(5)
+                bottom = y1 - r(2)  # each block ends at its own height: no ruled joint
+                t.rect(max(0, x), bottom + 1, min(15, x1), bottom + 1, face[2])
+                t.rect(max(0, x + 1), y0, min(15, x + 2), y0, face[0])  # lit top-left of the block
+                if x1 < 16:
+                    t.rect(x1, y0, x1, bottom, face[2])  # crack to the next block
+                x = x1
+        t.rect(0, 14, 15, 14, face[2])
+    else:
+        for x in range(0, 16, 3):
+            h = 4 + r(7)
+            t.rect(x, 0, x, h, face[0])
+            t.rect(x + 1, h, x + 1, 15, face[2])
+        if name == "plant":
+            t = Tile(fill=face[1])
+            for x in range(0, 16, 8):
+                t.rect(x, 0, x + 3, 2, face[0])
+                t.rect(x + 4, 0, x + 7, 2, face[2])
+            t.rect(0, 6, 15, 7, face[2])
+        t.rect(0, 14, 15, 14, face[2])
+    _sides(t, name, e, w)
+    t.rect(0, 15, 15, 15, outline_for(face))
     return t
 
 

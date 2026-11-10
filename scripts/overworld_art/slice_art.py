@@ -6,11 +6,11 @@ Rules live in docs/design/ART_BIBLE.md.
 import colorsys
 import random
 import zlib
-from math import hypot, pi, sin
+from math import atan2, hypot, pi, sin
 
 from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
-from .world_palette import LINE, WORLD
+from .world_palette import LINE, RAMP_OF, WORLD, outline_for, sel_out
 
 T = 16
 
@@ -119,18 +119,92 @@ def ground_layer(cells):
     return out
 
 
-def _outline(img, closed=True, line=LINE):
-    """Turn every opaque pixel touching transparency into LINE. With
-    closed=False the image border counts as open, for tiles that join up."""
+LIT_SIDES = {(-1, 0), (0, -1)}  # light comes from the top-left
+
+
+def edge_colour(colour, open_sides, line=None):
+    """Sel-out: an edge pixel takes its own material's outline, or the softer
+    sel_out tone where only the lit top/left side is open. Colours from no
+    ramp keep LINE."""
+    if line:
+        return line
+    ramp = RAMP_OF.get(colour)
+    if ramp is None:
+        return LINE
+    return sel_out(ramp) if open_sides <= LIT_SIDES else outline_for(ramp)
+
+
+def _outline(img, closed=True, line=None):
+    """Turn every opaque pixel touching transparency into an edge (see
+    edge_colour); `line` forces one colour. With closed=False the image
+    border counts as open, for tiles that join up."""
     src, out = img.load(), img.copy()
     dst = out.load()
     w, h = img.size
     for y in range(h):
         for x in range(w):
-            if src[x, y][3] and any(not src[x + dx, y + dy][3] if 0 <= x + dx < w and 0 <= y + dy < h else closed
-                                    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))):
-                dst[x, y] = (*rgb(line), 255)
+            if not src[x, y][3]:
+                continue
+            open_sides = {(dx, dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))
+                          if (not src[x + dx, y + dy][3] if 0 <= x + dx < w and 0 <= y + dy < h else closed)}
+            if open_sides:
+                dst[x, y] = (*rgb(edge_colour("#%02x%02x%02x" % src[x, y][:3], open_sides, line)), 255)
     return out
+
+
+def leaf_mass(img, clumps, ramps, wrap=False):
+    """Paint leaf clumps (cx, cy, r), back to front, into img. Each clump has a
+    bumpy rim, top-left light and a heavy bottom-right shade; leaf caps every
+    ~4px show as a lit crown over a dark cupped underside, so the mass reads
+    as bunches of leaves rather than flat discs. `ramps[i]` colours clump i.
+    With `wrap` the pattern tiles at the image size. Returns {pixel: clump}."""
+    w, h = img.size
+
+    def delta(a, b, size):
+        return (a - b + size / 2) % size - size / 2 if wrap else a - b
+
+    def at(x, y):
+        return (x % w, y % h) if wrap else (x, y)
+
+    owner = {}
+    for i, (cx, cy, r) in enumerate(clumps):
+        for y in range(h):
+            for x in range(w):
+                dx, dy = delta(x + .5, cx, w), delta(y + .5, cy, h) * 1.08
+                if hypot(dx, dy) < r + .9 * sin(atan2(dy, dx) * 7 + i * 1.7):
+                    owner[x, y] = i
+    tone = {}
+    for (x, y), i in owner.items():
+        cx, cy, r = clumps[i]
+        lit = -(delta(x + .5, cx, w) * .55 + delta(y + .5, cy, h) * .85) / r
+        tone[x, y] = 0 if lit > .55 else 1 if lit > .15 else 2 if lit > -.3 else 3
+
+    # Leaf caps on a jittered brick grid: lift the crown where lit, cup a shadow
+    # under it in the mid-tones. The shaded side stays solid, so each clump
+    # still reads as one crown with a heavy bottom-right.
+    # ~5px apart, spread evenly over the size so a wrapped pattern has no seam.
+    nx, ny = round(w / 5), round(h / 5)
+    shift = {}
+    for row in range(ny):
+        for col in range(nx):
+            gx, gy = round((col + row % 2 / 2) * w / nx), round(row * h / ny)
+            jit = zlib.crc32(f"{gx},{gy}".encode())
+            ux, uy = gx + jit % 2, gy + jit // 2 % 2
+            i = owner.get(at(ux, uy))
+            if i is None:
+                continue
+            for dx, dy, s in ((0, -1, -1), (1, -1, -1), (-1, 1, 1), (0, 2, 1), (1, 2, 1), (2, 1, 1)):
+                p = at(ux + dx, uy + dy)
+                if owner.get(p) == i and tone[p] <= (1 if s < 0 else 2):
+                    shift[p] = s
+    px = img.load()
+    for p, i in owner.items():
+        x, y = p
+        t = min(3, max(0, tone[p] + shift.get(p, 0)))
+        if owner.get(at(x, y + 1), i) > i or owner.get(at(x + 1, y), i) > i:
+            t = 4  # dark seam where a nearer clump overlaps this one
+        px[x, y] = (*rgb(ramps[i][t]), 255)
+    return owner
 
 
 TREE_CLUMPS = {  # (cx, cy, r), back to front: few large shapes, silhouette first
@@ -140,7 +214,7 @@ TREE_CLUMPS = {  # (cx, cy, r), back to front: few large shapes, silhouette firs
 
 
 def tree(variant):
-    """32x32 tree on a transparent ground: broad clumps over a short trunk."""
+    """32x32 tree on a transparent ground: broad leafy clumps over a short trunk."""
     leaf, bark = WORLD["leaf"], WORLD["bark"]
     img = Image.new("RGBA", (32, 32))
     d = ImageDraw.Draw(img)
@@ -149,20 +223,7 @@ def tree(variant):
     d.rectangle((17, 23, 18, 30), fill=bark[2])
     d.rectangle((13, 23, 18, 25), fill=bark[3])  # canopy shade on the trunk
     clumps = TREE_CLUMPS[variant]
-    owner = {}
-    for i, (cx, cy, r) in enumerate(clumps):
-        for y in range(32):
-            for x in range(32):
-                if hypot(x + .5 - cx, (y + .5 - cy) * 1.08) < r:
-                    owner[x, y] = i
-    px = img.load()
-    for (x, y), i in owner.items():
-        cx, cy, r = clumps[i]
-        lit = -((x + .5 - cx) * .5 + (y + .5 - cy) * .85) / r
-        tone = 0 if lit > .5 else 1 if lit > .08 else 2 if lit > -.45 else 3
-        if owner.get((x, y + 1), i) > i or owner.get((x + 1, y), i) > i:
-            tone = 4  # dark seam where a nearer clump overlaps this one
-        px[x, y] = (*rgb(leaf[tone]), 255)
+    leaf_mass(img, clumps, [leaf] * len(clumps))
     return _outline(img)
 
 

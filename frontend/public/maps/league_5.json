@@ -913,11 +913,11 @@
    "name": "overworld",
    "image": "tilesets/overworld.png",
    "imagewidth": 128,
-   "imageheight": 6032,
+   "imageheight": 6096,
    "tilewidth": 16,
    "tileheight": 16,
    "columns": 8,
-   "tilecount": 3016,
+   "tilecount": 3043,
    "margin": 0,
    "spacing": 0,
    "tiles": [

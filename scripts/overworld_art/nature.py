@@ -11,9 +11,9 @@ from math import hypot
 
 from PIL import Image, ImageDraw, ImageFilter
 
-from .slice_art import T, _lawn, _outline, _trail, _wave, meadow, rgb
+from .slice_art import T, _lawn, _outline, _trail, _wave, edge_colour, leaf_mass, meadow, rgb
 from .tiles_v2 import E, N, NE, NW, S, SE, SW, Wb
-from .world_palette import LINE, SHADOW, TALL, WORLD
+from .world_palette import SHADOW, TALL, WORLD, outline_for
 
 SIDES = {(0, -1): N, (1, 0): E, (0, 1): S, (-1, 0): Wb}
 CORNERS = {(1, -1): NE, (1, 1): SE, (-1, 1): SW, (-1, -1): NW}
@@ -47,7 +47,7 @@ def _shape(mask, phase, blur=4, salt=2.6, level=127, dy=0):
     """Inside flags for the tile plus a 1px margin, keyed by (x, y)."""
     px = _blurred(mask, blur).load()
     return {(x, y): px[T + x, T + y + dy] + _wave(x + T * phase[0], y + T * phase[1], salt) > level
-            for x in range(-1, T + 1) for y in range(-1, T + 1)}
+            for x in range(-3, T + 3) for y in range(-3, T + 3)}
 
 
 def _on_edge(shape, x, y):
@@ -58,16 +58,30 @@ def _variant(phase):
     return phase[0] + 2 * phase[1]
 
 
+# How far the grass hangs over the trail's north edge, per world x. Period 32
+# = two tiles, matching the phase cut, so the lip never repeats per tile.
+LIP = (1, 1, 2, 2, 1, 0, 1, 1, 2, 1, 1, 0, 0, 1, 2, 2, 1, 1, 0, 1, 1, 2, 1, 0, 1, 1, 2, 1, 0, 0, 1, 1)
+
+
 def trail_tile(mask, phase):
-    """Transparent outside the trail, so it lies over meadow or lawn alike."""
+    """Transparent outside the trail, so it lies over meadow or lawn alike.
+    Where grass lies north of the dirt, its lip hangs over the edge (left
+    see-through, so the ground's grass shows) and casts a two-step shadow."""
     shape = _shape(mask, phase)
-    surface, rim = _trail(_variant(phase)).load(), rgba(WORLD["trail"][3])
+    trail = WORLD["trail"]
+    surface, rim, soft = _trail(_variant(phase)).load(), rgba(trail[3]), rgba(trail[2])
     img = Image.new("RGBA", (T, T))
     out = img.load()
     for y in range(T):
         for x in range(T):
-            if shape[x, y]:
-                out[x, y] = rim if _on_edge(shape, x, y) else surface[x, y]
+            if not shape[x, y]:
+                continue
+            down = next((d for d in (1, 2, 3) if not shape[x, y - d]), 9)  # rows below the north edge
+            lip = LIP[(x + T * phase[0]) % 32]
+            if down <= lip:
+                continue
+            out[x, y] = (rim if down == lip + 1 or _on_edge(shape, x, y)
+                         else soft if down == lip + 2 else surface[x, y])
     return img
 
 
@@ -82,7 +96,10 @@ def lawn_tile(mask, phase):
     return img
 
 
-CANOPY_CLUMPS = [(8, 6, 10), (25, 4, 10), (16, 17, 11), (0, 20, 10), (31, 21, 9), (9, 29, 10), (24, 31, 10)]
+# Varied trees, sorted north to south so nearer (southern) crowns overlap the
+# ones behind them. Unequal sizes and spacing keep the wrap from reading as a grid.
+CANOPY_CLUMPS = [(20, 1, 8), (4, 2, 7), (29, 8, 7), (12, 9, 7), (22, 13, 6), (3, 17, 7),
+                 (14, 19, 7), (27, 21, 7), (7, 27, 7), (20, 28, 7), (31, 30, 6)]
 
 
 # Which clumps of a canopy block take another tone. Only clumps wholly inside
@@ -92,44 +109,51 @@ CANOPY_TONES = {"sun": ("leaf_sun", 0), "deep": ("leaf_deep", 1), "amber": ("lea
 
 @lru_cache(None)
 def _canopy(tone=None):
-    """32x32 leaf pattern that wraps, so a forest has no seams and no gaps."""
+    """32x32 leaf pattern that wraps, so a forest has no seams and no gaps:
+    shade fills between crowns, then leaf_mass paints the crowns over it."""
     ramp, pick = CANOPY_TONES.get(tone, ("leaf", None))
-    inside = [i for i, (cx, cy, r) in enumerate(CANOPY_CLUMPS) if r <= cx <= 32 - r and r <= cy <= 32 - r]
+    inside = [i for i, (cx, cy, r) in enumerate(CANOPY_CLUMPS) if r + 1 <= cx <= 31 - r and r + 1 <= cy <= 31 - r]
     chosen = set(inside[pick % len(inside)::2 if tone != "amber" else len(inside)]) if tone and inside else set()
-    owner, img = {}, Image.new("RGBA", (32, 32))
-    out = img.load()
-
-    def wrapped(a, b):
-        return (a - b + 16) % 32 - 16
-
-    for y in range(32):
-        for x in range(32):
-            for i, (cx, cy, r) in enumerate(CANOPY_CLUMPS):
-                if hypot(wrapped(x, cx), wrapped(y, cy)) < r:
-                    owner[x, y] = i
-    for (x, y), i in owner.items():
-        cx, cy, r = CANOPY_CLUMPS[i]
-        lit = -(wrapped(x, cx) * .5 + wrapped(y, cy) * .85) / r
-        tone = 1 if lit > .45 else 2 if lit > -.15 else 3
-        if owner.get((x, (y + 1) % 32), i) != i or owner.get(((x + 1) % 32, y), i) != i:
-            tone = 4
-        out[x, y] = rgba(WORLD[ramp if i in chosen else "leaf"][tone])
+    img = Image.new("RGBA", (32, 32), rgba(WORLD["leaf"][4]))
+    ramps = [WORLD[ramp if i in chosen else "leaf"] for i in range(len(CANOPY_CLUMPS))]
+    leaf_mass(img, CANOPY_CLUMPS, ramps, wrap=True)
     return img
 
 
+def _scallops():
+    """Depth carved off a forest's north rim per world x: arcs of 6-10px,
+    period 32, so the tops read as rounded crowns rather than a ruled line."""
+    out = []
+    for n in (7, 9, 6, 10):
+        out += [2 if k in (0, n - 1) else 1 if k in (1, n - 2) else 0 for k in range(n)]
+    return out
+
+
+SCALLOP = _scallops()
+
+
 def forest_tile(mask, phase, tone=None):
-    """Canopy mass. The south rim drops to shaded undergrowth with trunks."""
+    """Canopy mass with a scalloped north rim. The south rim drops to shaded
+    undergrowth with trunks. Edges are hue-matched (sel-out)."""
     body = _shape(mask, phase, blur=3, salt=1.1)
     top = _shape(mask, phase, blur=3, salt=1.1, dy=6)
     canopy = {k: body[k] and top[k] for k in body}
+    carved = {(x, y) for (x, y), on in canopy.items() if on and y >= -1
+              and next((d for d in (1, 2, 3) if not canopy.get((x, y - d), True)), 9) <= SCALLOP[(x + T * phase[0]) % 32]}
+    for k in carved:
+        canopy[k] = False
     pattern, bark = _canopy(tone).load(), WORLD["bark"]
     trunk = (4, 9) if phase[0] else (9, 14)
     img = Image.new("RGBA", (T, T))
     out = img.load()
     for y in range(T):
         for x in range(T):
+            if (x, y) in carved:
+                continue
             if canopy[x, y]:
-                out[x, y] = rgba(LINE) if _on_edge(canopy, x, y) else pattern[(x + T * phase[0]) % 32, (y + T * phase[1]) % 32]
+                leaf = pattern[(x + T * phase[0]) % 32, (y + T * phase[1]) % 32]
+                sides = {(dx, dy) for dx, dy in STEPS if not canopy[x + dx, y + dy]}
+                out[x, y] = rgba(edge_colour("#%02x%02x%02x" % leaf[:3], sides)) if sides else leaf
             elif body[x, y]:
                 if trunk[0] <= x <= trunk[1]:
                     edge = x in trunk
@@ -139,27 +163,47 @@ def forest_tile(mask, phase, tone=None):
     return img
 
 
+# Wave crests in open water: (x, y, phase). Each rises, runs a pixel and
+# breaks over the 3 frames; staggered phases make the loop seamless.
+CRESTS = ((2, 3, 0), (10, 7, 1), (5, 12, 2))
+CREST = (((0, 0, 0), (1, 0, 0)),                                   # rising: 2px
+         ((1, 0, 0), (2, 0, 0), (3, 0, 0), (2, 1, 3)),             # full: 3px over its trough
+         ((2, 0, 1), (4, 0, 1)))                                   # breaking: two flecks
+
+
 def pond_tile(mask, frame):
-    """Opaque: meadow, an earth bank, then water with drifting ripples."""
+    """Opaque: meadow, an earth bank, then water. The north bank shades the
+    water under it; elsewhere foam laps the shore (lip, lace, recede) and
+    crests rise and break out in the open."""
     phase = (0, 0)
     bank, water = _shape(mask, phase, salt=.5), _shape(mask, phase, salt=.5, level=165)
     deep = _shape(mask, phase, salt=.5, level=225)
     w, b = WORLD["water"], WORLD["bank"]
     img = meadow(0).copy()
     out = img.load()
+
+    def shore(x, y):
+        return water[x, y] and _on_edge(water, x, y)
+
     for y in range(T):
         for x in range(T):
             if water[x, y]:
-                out[x, y] = rgba(w[3] if _on_edge(water, x, y) else w[2] if deep[x, y] else w[1])
+                lace = (x + y) % 2 == 0
+                second = any(shore(x + dx, y + dy) for dx, dy in STEPS)
+                if shore(x, y) and not water[x, y - 1]:
+                    c = w[3]  # the bank's shadow on the water
+                elif shore(x, y) and (frame < 2 or lace) or not shore(x, y) and second and frame == 1 and lace:
+                    c = w[0]
+                else:
+                    c = w[2] if deep[x, y] else w[1]
+                out[x, y] = rgba(c)
             elif bank[x, y]:
                 out[x, y] = rgba(b[1] if y > 7 else b[0])
-    rng = random.Random(7)
-    for _ in range(4):
-        x, y = rng.randrange(T), rng.randrange(T)
-        for i in range(3):
-            px = (x + i + frame * 5) % T
-            if deep[px, y]:
-                out[px, y] = rgba(w[0])
+    for x0, y0, k in CRESTS:
+        part = CREST[(frame + k) % 3]
+        if all(deep.get((x0 + dx, y0 + dy)) and 0 <= x0 + dx < T and 0 <= y0 + dy < T for dx, dy, _ in part):
+            for dx, dy, tone in part:
+                out[x0 + dx, y0 + dy] = rgba(w[tone])
     return img
 
 
@@ -378,25 +422,71 @@ def crops(kind):
     return img
 
 
+def _shade():
+    colour, opacity = SHADOW
+    return (*rgb(colour), round(opacity * 255))
+
+
+STREAK = (1, 0, 1, 1, 2, 1, 0, 1, 1, 1, 2, 1, 0, 1, 2, 1)  # earth tone per column: vertical grain
+
+
 def ledge(part):
-    """South-facing drop, one tile: a lip of grass hanging over an earth face.
+    """South-facing drop, one tile: a grass lip (from row 2) hanging over an
+    earth face to row 13, then a 2px contact shadow on the ground below.
     `part` is l, m or r; the ends curl back into the ground."""
     earth, lawn = WORLD["ledge"], WORLD["lawn"]
     img, _ = _decal()
     px = img.load()
     for x in range(T):
         inset = {"l": max(0, 4 - x), "r": max(0, x - 11)}.get(part, 0)
-        hang = 8 + (0, 1, 2, 1, 0, 1)[x % 6]
-        for y in range(4 + inset, 15 - inset // 2):
-            if y <= hang:
-                tone = lawn[0] if y == 4 + inset else lawn[1]
+        top, base = 2 + inset, 13 - inset // 2
+        hang = 6 + (0, 1, 1, 0, 1, 0, 0, 1)[x % 8]  # lip's last row; period 8 joins across tiles
+        for y in range(top, base + 1):
+            if y == top:
+                tone = lawn[0]  # lit edge of the lip
+            elif y < hang:
+                tone = lawn[1]
+            elif y == hang:
+                tone = lawn[2]  # lip's underside
             elif y == hang + 1:
                 tone = earth[2]  # shade under the overhang
-            elif y >= 14 - inset // 2:
-                tone = earth[2]
+            elif y == base:
+                tone = outline_for(earth)  # where the face meets the ground
             else:
-                tone = earth[2] if (x * 3 + y) % 11 == 0 else earth[0] if x % 5 == 1 else earth[1]
+                tone = earth[STREAK[x]]
             px[x, y] = rgba(tone)
+        for y in (base + 1, base + 2):
+            if y < T:
+                px[x, y] = _shade()
+    return img
+
+
+def side_ledge(side):
+    """Drop facing east ("e") or west ("w") that runs down the map: grass lip,
+    a narrow earth face (lit facing west, shaded facing east), contact shadow
+    beyond. Period 8 down the tile, so a column of them joins up."""
+    earth, lawn = WORLD["ledge"], WORLD["lawn"]
+    img, _ = _decal()
+    px = img.load()
+    for y in range(T):
+        lip = 6 + (0, 1, 1, 0, 1, 0, 0, 1)[y % 8]
+        cols = [(2, lawn[0])] + [(x, lawn[1]) for x in range(3, lip)] + [(lip, lawn[2])]
+        cols += [(lip + 1, earth[2] if side == "e" else earth[0]), (lip + 2, earth[1]), (lip + 3, outline_for(earth))]
+        for x, c in cols:
+            px[x, y] = rgba(c)
+        for x in (lip + 4, lip + 5):
+            px[x, y] = _shade()
+    return img if side == "e" else img.transpose(Image.FLIP_LEFT_RIGHT)
+
+
+def mass_shadow():
+    """Contact shadow a cliff face drops on the ground cell below it: two
+    full rows, then a ragged third so it doesn't end in a ruled line."""
+    img, _ = _decal()
+    px = img.load()
+    for x in range(T):
+        for y in range(2 + (0, 1, 1, 0, 1, 1, 0, 1)[x % 8]):
+            px[x, y] = _shade()
     return img
 
 

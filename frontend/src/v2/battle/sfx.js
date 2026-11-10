@@ -106,4 +106,3 @@ export function play(name) {
 	}
 }
 
-export const CUE_NAMES = Object.keys(CUES);

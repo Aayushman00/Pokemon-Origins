@@ -129,11 +129,11 @@ class Shadows(unittest.TestCase):
         return {a for a in self.tiles[name].getchannel("A").getdata() if 0 < a < 255}
 
     def test_props_and_trees_stand_on_a_shadow(self):
-        for name in ("prop_mailbox", "prop_barrel", "bush", "treeA_0_1", "treeB_1_1"):
+        for name in ("prop_mailbox", "prop_barrel", "bush", "treeA_0_1", "treeB_1_1", "ledge_m", "ledge_e", "mass_shadow"):
             self.assertTrue(self.soft(name), name)
 
     def test_the_ground_itself_stays_clean(self):
-        for name in ("ledge_m", "pebbles", "doormat"):
+        for name in ("pebbles", "doormat"):
             self.assertFalse(self.soft(name), name)
 
 

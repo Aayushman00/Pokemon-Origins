@@ -3,7 +3,6 @@
 // localStorage["po.flag.<NAME>"] = "1" | "0". The server's own flags
 // (GET /api/flags) remain authoritative for anything it enforces.
 
-export const FLAG_NAMES = ["OVERWORLD"];
 
 const truthy = (v) => v === true || v === "1" || v === "true" || v === 1;
 

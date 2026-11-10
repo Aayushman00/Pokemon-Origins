@@ -11,7 +11,7 @@ from scripts import gen_overworld_placeholders as base
 
 from .gym_rooms import ROOMS
 from .tiles_v2 import blob_mask
-from .town_art import LAYOUTS, town_buildings
+from .town_art import CRAGGY, LAYOUTS, town_buildings
 from .world_maps import (BADGES, BORDER, GYMS, ID, NAMES, PEOPLE, PATH, ROUTES, SOLID, Town, autotile_paths, door, finish, fringe, grass_runs, hashed,
                          lone_tree, paint, say, trainer_script)
 
@@ -73,7 +73,10 @@ def terrain(m, grid, biome, legend, stairs="ns"):
         for x, y in g:
             e, w = open_at(g, x + 1, y), open_at(g, x - 1, y)
             if open_at(g, x, y + 1):
-                m.put("ground", x, y, ID[f"m_{name}_f{e | w << 1}"], SOLID)
+                v = hashed(x, y) % 3 if name in CRAGGY else 0
+                m.put("ground", x, y, ID[f"m_{name}_f{e | w << 1}" + (f"_{v}" if v else "")], SOLID)
+                if not m.decor[m.i(x, y + 1)]:  # the face shades the ground at its foot
+                    m.put("decor", x, y + 1, ID["mass_shadow"])
             else:
                 m.put("ground", x, y, ID[f"m_{name}_t{open_at(g, x, y - 1) | e << 1 | w << 2}"], SOLID)
     for x, y in void:

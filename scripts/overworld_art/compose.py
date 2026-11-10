@@ -25,6 +25,7 @@ Light comes from the top-left:
 from PIL import Image
 
 from .palette import OUTLINE, RAMPS, WHITE
+from .world_palette import outline_for
 
 W, H = 16, 32
 MATERIALS = set("shcxtuafblnpgm")
@@ -75,7 +76,7 @@ def outline(canvas):
                 continue
             for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
                 if 0 <= nx < W and 0 <= ny < H and canvas[ny][nx] not in ".k":
-                    out[y][x] = "k"
+                    out[y][x] = "o"  # silhouette: shade() colours it from the material it rings
                     break
     return out
 
@@ -120,6 +121,15 @@ def shade(canvas):
             if ch in "ke":
                 res[y][x] = "outline"
                 continue
+            if ch == "o":  # silhouette: take the material it rings, the one below first
+                near = [m for m in (m_at(x, y + 1), m_at(x, y - 1), m_at(x - 1, y), m_at(x + 1, y)) if m]
+                if not near:
+                    res[y][x] = "outline"
+                    continue
+                m = max(near, key=near.count)
+                # sel-out: the lit top of hair and hats softens to their own shadow tone
+                res[y][x] = f"lit:{m}" if m in GLOSSY and m_at(x, y + 1) == m else f"edge:{m}"
+                continue
             if ch == "w":
                 res[y][x] = "white"
                 continue
@@ -162,10 +172,13 @@ def despeckle(res):
     for y in range(H):
         for x in range(W):
             key = res[y][x]
-            if not isinstance(key, tuple):
-                continue
             near = [res[y + dy][x + dx] for dy in (-1, 0, 1) for dx in (-1, 0, 1)
                     if (dx or dy) and 0 <= x + dx < W and 0 <= y + dy < H]
+            if isinstance(key, str) and key.startswith("lit:") and key not in near:
+                out[y][x] = "edge:" + key[4:]  # a lone sel-out pixel reads as a speck: plain edge
+                continue
+            if not isinstance(key, tuple):
+                continue
             if key in near:
                 continue
             same = [k for k in near if isinstance(k, tuple) and k[0] == key[0]]
@@ -175,24 +188,32 @@ def despeckle(res):
     return out
 
 
-def resolve(shaded, mats):
+def key_colour(key, mats, edges=None):
+    """Hex colour of one shaded key. "edge:m" is m's hue-matched outline and
+    "lit:m" its shadow tone, unless `edges` (see sheets.edge_colours) says otherwise."""
+    if key == "outline":
+        return OUTLINE
+    if key == "white":
+        return WHITE
+    if isinstance(key, str):
+        if edges and key in edges:
+            return edges[key]
+        kind, m = key.split(":")
+        ramp = ramp_for(mats, m)
+        return ramp[-1] if kind == "lit" else outline_for(ramp)
+    m, tone = key
+    ramp = ramp_for(mats, m)
+    return {"hi": ramp[0], "base": ramp[-2] if len(ramp) > 1 else ramp[0], "shadow": ramp[-1]}[tone]
+
+
+def resolve(shaded, mats, edges=None):
     """Map shaded keys to hex colours using a character's material map."""
     img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     px = img.load()
     for y in range(H):
         for x in range(W):
-            key = shaded[y][x]
-            if key is None:
-                continue
-            if key == "outline":
-                col = OUTLINE
-            elif key == "white":
-                col = WHITE
-            else:
-                m, tone = key
-                ramp = ramp_for(mats, m)
-                col = {"hi": ramp[0], "base": ramp[-2] if len(ramp) > 1 else ramp[0], "shadow": ramp[-1]}[tone]
-            px[x, y] = hex_rgba(col)
+            if shaded[y][x] is not None:
+                px[x, y] = hex_rgba(key_colour(shaded[y][x], mats, edges))
     return img
 
 

@@ -150,6 +150,11 @@ def halo(grid):
                 reach, noise = max(abs(dx), abs(dy)), _wave((x + dx) * 5, (y + dy) * 5, 1.7)
                 if reach <= 1 or (reach == 2 and noise > 4) or (reach == 3 and noise > 22):
                     lawn.add((x + dx, y + dy))
+    # Fill pockets: a meadow cell walled by lawn on 3+ sides reads as a pale box.
+    cells = {(x, y) for y, row in enumerate(grid) for x in range(len(row))}
+    while pockets := {c for c in cells - lawn
+                      if sum((c[0] + dx, c[1] + dy) in lawn for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))) >= 3}:
+        lawn |= pockets
     return lawn
 
 

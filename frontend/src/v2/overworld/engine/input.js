@@ -35,10 +35,6 @@ export function setButton(state, button, down, source) {
 	if (now) state.edges.push({ button, source });
 }
 
-export function releaseAll(state, source) {
-	for (const b of BUTTONS) setButton(state, b, false, source);
-}
-
 /** Most recently pressed held direction wins (so reversing direction is instant). */
 export function snapshot(state) {
 	const dir = state.stack.length ? state.stack[state.stack.length - 1] : null;

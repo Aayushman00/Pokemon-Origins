@@ -8,10 +8,13 @@ Motion matches the engine's existing sheets: walk frames bob 1px (head and
 torso drop, feet stay planted); run frames lean, so the head dips 2px and
 the shoulders 1px, and in side view the head also leads by 1px.
 """
+from collections import Counter
+
 from PIL import Image, ImageOps
 
 from .bodies import BODIES
-from .compose import H, W, blink, despeckle, outline, resolve, shade, stack
+from .compose import H, W, blink, despeckle, key_colour, outline, resolve, shade, stack
+from .palette import OUTLINE
 
 COLUMNS = ["stand", "walkA", "walkB", "runStand", "runA", "runB", "blink", "alert"]
 ROWS = ["down", "up", "left", "right"]
@@ -72,6 +75,8 @@ def _build(canvas, build, direction):
     if build == "elder":
         canvas = _lead(canvas, CHIN_ROW + 1) if direction == "left" else canvas
         return _drop(canvas, {TORSO_ROW})
+    if build == "teen":  # the heroes: a second forehead row off, so the head stays near 10 rows
+        return _drop(canvas, {FOREHEAD_ROW + 1})
     return canvas
 
 
@@ -96,20 +101,65 @@ def frame_keys(char, direction, column):
         if direction == "left":
             canvas = _lead(canvas, CHIN_ROW + 1)
         canvas = _drop(canvas, {CHIN_ROW, TORSO_ROW})
-    if char.get("build") != "child":
-        canvas = _stretch(canvas, GROWN_ROWS[1:] if char.get("build") == "heavy" else GROWN_ROWS)
+    if char.get("build") != "child":  # teens grow by the shin only: FRLG-height heroes, ~23 rows
+        canvas = _stretch(canvas, GROWN_ROWS[1:] if char.get("build") in ("heavy", "teen") else GROWN_ROWS)
     return despeckle(shade(outline(canvas)))
 
 
+MAX_COLOURS = 15  # + transparent = one 16-colour GBA palette
+EDGE_PRIORITY = {"s": 2, "h": 2, "c": 2, "x": 2, "t": 1, "a": 1, "u": 1}  # the face and hair read first
+
+
+def _rgb(h):
+    return tuple(int(h[i:i + 2], 16) for i in (1, 3, 5))
+
+
+def edge_colours(char, keys=None):
+    """{"edge:m"/"lit:m": colour} for one sheet. Outlines match their material;
+    where that would pass MAX_COLOURS, the least important ones (feet before
+    face) take the nearest dark colour the sheet already has, OUTLINE included,
+    so they stay close in hue for free. Decided once per sheet: no frame differs."""
+    mats = char["mats"]
+    keys = keys if keys is not None else [frame_keys(char, d, c) for d in ROWS[:3] for c in COLUMNS]
+    flat = [k for g in keys for row in g for k in row if k is not None]
+    used = Counter(k for k in flat if isinstance(k, str) and ":" in k)
+    edges = {k: key_colour(k, mats) for k in used}
+    base = {key_colour(k, mats) for k in flat if k not in used}
+    dark = sorted(c for c in base | {OUTLINE} if sum(w * v for w, v in zip((.299, .587, .114), _rgb(c))) <= .25 * 255)
+    by_colour = {}
+    for k, c in edges.items():
+        by_colour.setdefault(c, []).append(k)
+
+    def rank(c):
+        ks = by_colour[c]
+        return max(EDGE_PRIORITY.get(k.split(":")[1], 0) for k in ks), sum(used[k] for k in ks), c
+
+    # only colours the outline alone adds can free a slot
+    for c in sorted((c for c in by_colour if c not in base), key=rank):
+        if len(base | set(edges.values())) <= MAX_COLOURS:
+            break
+        near = min(dark, key=lambda d: sum((a - b) ** 2 for a, b in zip(_rgb(c), _rgb(d))))
+        for k in by_colour[c]:
+            edges[k] = near
+    return edges
+
+
+_EDGES = {}  # character id -> edge_colours; the cast is fixed for a build
+
+
 def frame(char, direction, column):
-    return resolve(frame_keys(char, direction, column), char["mats"])
+    if char["id"] not in _EDGES:
+        _EDGES[char["id"]] = edge_colours(char)
+    return resolve(frame_keys(char, direction, column), char["mats"], _EDGES[char["id"]])
 
 
 def build_sheet(char):
     sheet = Image.new("RGBA", (SHEET_W, SHEET_H), (0, 0, 0, 0))
+    keys = {(d, c): frame_keys(char, d, c) for d in ROWS[:3] for c in COLUMNS}
+    edges = edge_colours(char, list(keys.values()))
     for c, column in enumerate(COLUMNS):
         for r, direction in enumerate(ROWS[:3]):
-            sheet.paste(frame(char, direction, column), (c * W, r * H))
+            sheet.paste(resolve(keys[direction, column], char["mats"], edges), (c * W, r * H))
         left = sheet.crop((c * W, 2 * H, (c + 1) * W, 3 * H))
         sheet.paste(ImageOps.mirror(left), (c * W, 3 * H))
     return sheet

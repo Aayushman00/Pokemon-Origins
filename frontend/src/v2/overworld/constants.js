@@ -25,8 +25,6 @@ export const DIRS = {
 	left: { dx: -1, dy: 0 },
 	right: { dx: 1, dy: 0 },
 };
-export const DIR_NAMES = Object.keys(DIRS);
-export const OPPOSITE = { up: "down", down: "up", left: "right", right: "left" };
 
 // Values of the collision layer after parsing (0 = free).
 export const COL = { FREE: 0, SOLID: 1, LEDGE_DOWN: 2, LEDGE_LEFT: 3, LEDGE_RIGHT: 4, LEDGE_UP: 5 };

@@ -5,14 +5,22 @@ import { computeCamera } from "../logic/camera.js";
 import { neighbourOrigin } from "../logic/world.js";
 import { coverage } from "../logic/transition.js";
 import { createFx, stepFx } from "./fieldfx.js";
-import { clouds, particles, smoke, tintFor } from "./ambient.js";
+import { clouds, glowMask, particles, smoke, tintFor } from "./ambient.js";
 
 const ROW = { down: 0, up: 1, left: 2, right: 3 };
 
-// Ground shadow under an actor in mid-air (ledge hop). Hand-drawn, 16x3.
-const HOP_SHADOW = ["....xxxxxxxx....", "..xxxxxxxxxxxx..", "....xxxxxxxx...."];
+// Ground shadow under every walker, 12x4, hard pixel edge. Stays on the ground
+// during a ledge hop (and darkens), so it shows how high the actor is.
+const ACTOR_SHADOW = ["..xxxxxxxx..", "xxxxxxxxxxxx", "xxxxxxxxxxxx", "..xxxxxxxx.."];
 // Ground shadow under a 32x32 legendary. Hand-drawn, 24x3.
 const LEGEND_SHADOW = ["......xxxxxxxxxxxx......", "..xxxxxxxxxxxxxxxxxxxx..", "......xxxxxxxxxxxx......"];
+// Tall-grass step: blades [x, height, side], tip lean per quarter of the effect.
+// Tip, body, shade: lighter than the grass's own greens, or the blades vanish into it.
+const RUSTLE_BLADES = [[1, 7, -1], [4, 6, -1], [10, 6, 1], [13, 7, 1]];
+const RUSTLE_LEAN = [1, 3, 2, -1];
+const RUSTLE_TONES = ["#f2fbc8", "#c8ec98", "#3e8458"];
+// Added light per glowMask level (0 = none, 3 = the core).
+const GLOW_ALPHA = [0, 26, 46, 68];
 
 function tileFrame(ts, localId, ms) {
 	const anim = ts.anim.get(localId);
@@ -53,18 +61,45 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 		return undefined;
 	}
 
-	// Blades kicked up by a step into tall grass, and the puff of a ledge landing.
+	// Blades parting round a step into tall grass: lean out, wider, back, overshoot.
+	function drawRustle(x, y, p) {
+		const lean = RUSTLE_LEAN[Math.min(3, Math.floor(p * 4))];
+		for (const [bx, h, side] of RUSTLE_BLADES) {
+			for (let k = 0; k < h; k++) {
+				const px = x + bx + side * Math.round(lean * (k / (h - 1)) ** 2);
+				const py = y + 15 - k;
+				g.fillStyle = k === h - 1 ? RUSTLE_TONES[0] : RUSTLE_TONES[1];
+				g.fillRect(px, py, 1, 1);
+				g.fillStyle = RUSTLE_TONES[2]; // shaded right side keeps the blade off the grass behind
+				g.fillRect(px + 1, py, 1, 1);
+			}
+		}
+	}
+
+	// Blades parting in tall grass, and the puff of a ledge landing.
 	function drawEffect(e, ox, oy, cam) {
 		const x = ox + e.x * TILE - cam.x;
 		const y = oy + e.y * TILE - cam.y;
 		const p = e.t / e.dur;
-		// Pale on purpose: anything near the grass's own greens vanishes against it.
-		g.fillStyle = e.kind === "rustle" ? "#f2fbc8" : "#e8dcc0";
-		for (const [dx, dy] of e.kind === "rustle" ? [[-6, -4], [6, -5], [0, -8]] : [[-6, 0], [6, 0]]) {
-			const px = Math.round(x + 7 + dx * p);
-			const py = Math.round(y + 12 + dy * p + (e.kind === "rustle" ? p * p * 7 : -p * 2));
-			g.fillRect(px, py, 2, 2);
+		if (e.kind === "rustle") return drawRustle(x, y, p);
+		g.fillStyle = "#e8dcc0";
+		for (const dx of [-6, 6]) g.fillRect(Math.round(x + 7 + dx * p), Math.round(y + 12 - p * 2), 2, 2);
+	}
+
+	// Lamp light as cached pixel rings (see glowMask), one canvas per radius.
+	const glows = new Map();
+	function glowImage(r) {
+		if (!glows.has(r)) {
+			const n = 2 * r + 1;
+			const c = document.createElement("canvas");
+			c.width = c.height = n;
+			const ctx = c.getContext("2d");
+			const img = ctx.createImageData(n, n);
+			glowMask(r).forEach((level, i) => img.data.set([255, 200, 120, GLOW_ALPHA[level]], i * 4));
+			ctx.putImageData(img, 0, 0);
+			glows.set(r, c);
 		}
+		return glows.get(r);
 	}
 
 	// Fixed time of day: multiply the scene, then add light back around lamps and windows.
@@ -75,21 +110,15 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 		g.fillStyle = tint;
 		g.fillRect(0, 0, VIEW_W, VIEW_H);
 		g.globalCompositeOperation = "lighter";
-		const pulse = 1 + Math.round(Math.sin(ms / 900));
+		const pulse = Math.sin(ms / 900) > 0 ? 2 : 0; // the rings step out and back, never fade
 		const x0 = Math.floor(cam.x / TILE);
 		const y0 = Math.floor(cam.y / TILE);
 		for (let ty = y0; ty <= y0 + VIEW_H / TILE + 1; ty++) {
 			for (let tx = x0; tx <= x0 + VIEW_W / TILE + 1; tx++) {
 				const r = tileFlag(map, tx, ty, "glow");
 				if (!r) continue;
-				const cx = tx * TILE + 8 - cam.x;
-				const cy = ty * TILE + 8 - cam.y;
-				for (const [k, a] of [[1, 0.1], [0.6, 0.14]]) {
-					g.fillStyle = `rgba(255, 200, 120, ${a})`;
-					g.beginPath();
-					g.arc(cx, cy, r * k + pulse, 0, Math.PI * 2);
-					g.fill();
-				}
+				const R = r + pulse;
+				g.drawImage(glowImage(R), tx * TILE + 8 - cam.x - R, ty * TILE + 8 - cam.y - R);
 			}
 		}
 		g.globalCompositeOperation = "source-over";
@@ -235,13 +264,11 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 		const { px, py, lift } = actorPixel(a);
 		const dx = Math.round(ox + px - camX);
 		const dy = Math.round(oy + py - camY) - TILE - lift;
-		// Only a hop gets a ground shadow: it shows how far off the ground they are.
-		if (lift > 0) {
-			g.fillStyle = "rgba(24, 32, 40, 0.45)";
-			HOP_SHADOW.forEach((row, y) => {
-				for (let x = 0; x < row.length; x++) if (row[x] === "x") g.fillRect(dx + x, dy + lift + TILE + 13 + y, 1, 1);
-			});
-		}
+		// Feet sit on the cell's bottom row; the shadow straddles it, on the ground even mid-hop.
+		g.fillStyle = lift > 0 ? "rgba(24, 32, 40, 0.45)" : "rgba(24, 32, 40, 0.25)";
+		ACTOR_SHADOW.forEach((row, y) => {
+			for (let x = 0; x < row.length; x++) if (row[x] === "x") g.fillRect(dx + 2 + x, dy + lift + 29 + y, 1, 1);
+		});
 		const sx = actorFrame(a, tick) * TILE;
 		const sy = ROW[a.facing] * 32;
 		g.drawImage(sheet, sx, sy, TILE, 32, dx, dy, TILE, 32);
