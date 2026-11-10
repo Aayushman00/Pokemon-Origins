@@ -1653,11 +1653,11 @@
    "name": "overworld",
    "image": "tilesets/overworld.png",
    "imagewidth": 128,
-   "imageheight": 6528,
+   "imageheight": 6560,
    "tilewidth": 16,
    "tileheight": 16,
    "columns": 8,
-   "tilecount": 3263,
+   "tilecount": 3279,
    "margin": 0,
    "spacing": 0,
    "tiles": [

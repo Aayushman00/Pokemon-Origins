@@ -13,7 +13,7 @@ from .gym_rooms import ROOMS
 from .tiles_v2 import blob_mask
 from .town_art import CRAGGY, LAYOUTS, town_buildings
 from .world_maps import (BADGES, BORDER, GYMS, ID, NAMES, NAMES_BY_ID, PEOPLE, PATH, ROUTES, SOLID, Town, autotile_paths, door, dress_grass, finish,
-                         fringe, grass_runs, hashed, lone_tree, paint, say, trainer_script)
+                         fringe, grass_runs, hashed, lone_tree, paint, prop, dress_pond, say, trainer_script, TRAILS, worn)
 
 COMMON = {".": "walk", ",": "road", "p": "plaza", "g": "grass", "=": "stairs", "k": "plank", "b": "plank", "B": "bld", "D": "bld",
           "A": "bld", "T": "tree", "~": "water", "l": "lava", "L": "lamp", "f": "fence", "h": "hedge", "n": "bench", "u": "well",
@@ -27,7 +27,8 @@ def block_of(name):
     return ",".join(str(ID[name]) for _ in range(4))
 
 
-BORDERS.update(concrete=block_of("m_plant_t0"), cliff=block_of("sky0"), marble=block_of("sky0"), slate=block_of("m_mountain_t0"),
+SKY_BORDER = ",".join(str(ID[f"sky_{x}{y}"]) for y in (0, 1) for x in (0, 1))
+BORDERS.update(concrete=block_of("m_plant_t0"), cliff=SKY_BORDER, marble=SKY_BORDER, slate=block_of("m_mountain_t0"),
                basalt=block_of("m_basalt_t0"))
 
 
@@ -83,7 +84,7 @@ def terrain(m, grid, biome, legend, stairs="ns"):
                 phase = f"_p{x % 2}{y % 2}" if name in CRAGGY and (x % 2 or y % 2) else ""
                 m.put("ground", x, y, ID[f"m_{name}_t{open_at(g, x, y - 1) | e << 1 | w << 2}{phase}"], SOLID)
     for x, y in void:
-        m.put("ground", x, y, ID[f"t_{biome}_drop"] if open_at(void, x, y - 1) else ID[f"sky{int(hashed(x, y) % 7 == 0)}"], SOLID)
+        m.put("ground", x, y, ID[f"t_{biome}_drop"] if open_at(void, x, y - 1) else ID[f"sky_{x % 4}{y % 4}"], SOLID)
     for x, y in lava:
         mask = open_at(lava, x, y - 1) | open_at(lava, x + 1, y) << 1 | open_at(lava, x, y + 1) << 2 | open_at(lava, x - 1, y) << 3
         m.put("ground", x, y, ID[f"lava_{mask}_0"], SOLID)
@@ -291,7 +292,10 @@ def route(rid):
         m.props.append(("time", "night"))
     if biome == "basalt":
         m.props.append(("time", "dusk"))
-    terrain(m, r["grid"], biome, legend, stairs)
+    grid = r["grid"]
+    for size, lines in TRAILS.get(rid, {}).items():
+        grid = worn(grid, lines, size)
+    terrain(m, grid, biome, legend, stairs)
     for i, (x, y, w) in enumerate(grass_runs(r["grid"])):
         m.obj("encounters", f"grass_{i + 1}", x, y, w, 1, table=rid)
     for t in r["trainers"]:
@@ -302,9 +306,60 @@ def route(rid):
     if biome == "meadow":
         autotile_paths(m)
         fringe(m, r["grid"])
-    else:
-        dress_grass(m, biome)
+    dress_grass(m, biome)
+    return finish(m.build(), m)
+
+
+# The Playground: a park where trainers meet and chat (pages/playground). Not
+# linked into the world. 40 x 28 must match the server room in
+# backend/src/playground/movement.js, whose spawn circle (2 tiles round the
+# centre, tile 20,14) is open plaza. Paths run to the woods on all four sides.
+PLAYGROUND = [
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "TTT...........T....,,....T...........TTT",
+    "TT..ffffffff.......,,........~~~~.....TT",
+    "TT..fFFFFFFf.......,,.......~~~~~~....TT",
+    "TT..fFFFFFFf...L...,,...L..~~~~~~~n...TT",
+    "TT..fFFFFFFf.......,,.......~~~~~~....TT",
+    "TT..fff,ffff.......,,.........~~......TT",
+    "TT.....,...........,,.................TT",
+    "TT.....,,,,,,.....pppp...........h....TT",
+    "TT..........,,..ppppuppp.........h....TT",
+    "TT...L.......,.pppppppppp..L.....h....TT",
+    "TT...........,pppppppppppp............TT",
+    "T,,,,,,,,,,,,,pppppppppppp,,,,,,,,,,,,,T",
+    "T,,,,,,,,,,,,,pppppppppppp,,,,,,,,,,,,,T",
+    "TT............pppppppppppp............TT",
+    "TT...n.n.......pppppppppp.....gggg....TT",
+    "TT..........L...pppppppp...L.gggggg...TT",
+    "TT...n.n..........pppp.......gggggg...TT",
+    "TT.................,,.........gggg....TT",
+    "TT.....hhh.........,,.................TT",
+    "TT.................,,......F.F.F......TT",
+    "TT...L.............,,.................TT",
+    "TT.................,,.........L.......TT",
+    "TTT................,,................TTT",
+    "TTTT...............,,...............TTTT",
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+]
+
+
+def playground():
+    m = Town(40, 28, base.GRASS)
+    m.props = [("ambient", "butterflies"), ("clouds", True), ("border", BORDER)]
+    terrain(m, PLAYGROUND, "meadow", {})
+    for kind, x, y in (("A", 9, 22), ("B", 33, 21), ("F", 23, 4), ("A", 2, 11), ("B", 35, 12), ("A", 13, 24)):
+        lone_tree(m, kind, x, y)
+    for name, x, y in (("rock", 25, 20), ("stump", 11, 3), ("rock", 3, 18), ("barrel", 32, 9), ("crate", 32, 10)):
+        prop(m, name, x, y)
+    dress_pond(m, PLAYGROUND)
+    autotile_paths(m)
+    fringe(m, PLAYGROUND)
+    dress_grass(m)
     return finish(m.build(), m)
 
 
 MAPS = {**{tid: (lambda tid=tid: town(tid)) for tid in TOWNS}, **{rid: (lambda rid=rid: route(rid)) for rid in ROUTE_LOOK}}
+MAPS["playground"] = playground

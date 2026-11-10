@@ -668,6 +668,10 @@ def new_tiles():
     for biome in nature.TALL:
         if biome != "meadow":
             add(f"tufts_{biome}", nature.tufts(0, biome))
+    from .town_art import sky_tile
+    for py in range(4):
+        for px in range(4):
+            add(f"sky_{px}{py}", sky_tile(px, py))
     return out
 
 

@@ -12,6 +12,7 @@ from PIL import Image, ImageDraw
 from .buildings import HEART, STAR
 from .gym_art import disc, ring, speck
 from functools import lru_cache
+from math import pi, sin
 
 from .slice_art import T, _outline, edge_colour, leaf_mass, rgb
 from .tiles import Tile, rng
@@ -53,14 +54,14 @@ def road(biome):
 
 
 def plaza(biome):
+    """One worn slab per tile: lit top-left lip, a seam on the shaded sides, a few scuffs."""
     ramp = BIOMES[biome][2]
     t = Tile(fill=ramp[0])
-    for x0, y0, x1, y1 in ((0, 0, 7, 7), (8, 8, 15, 15)):
-        t.rect(x0, y0, x1, y1, ramp[1])
+    speck(t, 640 + len(biome), 6, [ramp[1]])
     t.rect(0, 15, 15, 15, ramp[2])
     t.rect(15, 0, 15, 15, ramp[2])
-    t.rect(7, 0, 7, 15, ramp[2])
-    t.rect(0, 7, 15, 7, ramp[2])
+    t.rect(0, 14, 14, 14, ramp[1])
+    t.rect(14, 0, 14, 13, ramp[1])
     return t
 
 
@@ -182,6 +183,32 @@ def lava(frame, mask):
     for bit, box in ((1, (0, 3, 15, 3)), (2, (12, 0, 12, 15)), (4, (0, 12, 15, 12)), (8, (3, 0, 3, 15))):
         if mask & bit:
             t.rect(*box, "#a82c20")
+    return t
+
+
+SKY_TONES = ("#8cc4f0", "#b0d8f6", "#e4f2fc", "#ffffff")  # open sky, cloud underside, cloud edge, cloud
+
+
+def _cloudiness(x, y):
+    """Three slanted waves, period 64px both ways, wider than tall: drifting cloud banks."""
+    return (sin(2 * pi * (x + 2 * y) / 64) + sin(2 * pi * (2 * x - 3 * y) / 64 + 1.3)
+            + .6 * sin(2 * pi * (3 * x + y) / 64 + 2.1))
+
+
+def sky_tile(px, py):
+    """Phase (px, py) of a 4x4-tile cloud field: white tops, a pale rim, a blue
+    underside one or two rows beneath, open sky with a few glints."""
+    t = Tile(fill=SKY_TONES[0])
+    for y in range(T):
+        for x in range(T):
+            X, Y = px * T + x, py * T + y
+            v = _cloudiness(X, Y)
+            if v > 1.45:
+                t.set(x, y, SKY_TONES[3])
+            elif v > 1.15:
+                t.set(x, y, SKY_TONES[2])
+            elif max(_cloudiness(X, Y - 1), _cloudiness(X, Y - 2)) > 1.15:
+                t.set(x, y, SKY_TONES[1])
     return t
 
 
@@ -393,9 +420,15 @@ def p_column(t):
 
 
 def p_float(t):
-    disc(t, 8, 7, 5, "#c8d0dc")
-    t.rect(4, 11, 11, 12, "#7c8cb0")
-    t.rect(6, 13, 9, 13, "#7c8cb0")
+    """A scrap of hillside adrift: a turf cap over rock that tapers to a point."""
+    leaf, top, face = WORLD["leaf"], MASSES["rock"][0], MASSES["rock"][1]
+    for y, (a, b) in enumerate(((3, 12), (2, 13), (3, 12), (4, 11), (5, 10), (6, 9), (7, 8)), 6):
+        t.rect(a, y, b, y, face[1])
+        t.rect(a, y, a + 1, y, top[1])
+        t.rect(b - 1, y, b, y, face[2])
+    for y, (a, b) in enumerate(((5, 10), (3, 12), (2, 13), (2, 13)), 3):
+        t.rect(a, y, b, y, leaf[1] if y < 5 else leaf[2])
+    t.rect(5, 3, 8, 3, leaf[0])
 
 
 def p_wheatstack(t):

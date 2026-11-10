@@ -296,3 +296,58 @@ class RouteDressing(unittest.TestCase):
         for map_id in ("gale", "zenith"):
             props = {p["name"]: p["value"] for p in json.loads((MAPS / f"{map_id}.json").read_text())["properties"]}
             self.assertEqual(props.get("weather"), "snow", map_id)
+
+
+class PlaygroundMap(unittest.TestCase):
+    """The Playground: a 40x28 park whose spawn circle (2 tiles round the
+    centre, backend/src/playground/movement.js) is open plaza."""
+
+    def test_size_matches_the_server_room(self):
+        m = json.loads((MAPS / "playground.json").read_text())
+        self.assertEqual((m["width"], m["height"]), (40, 28))
+
+    def test_spawn_circle_is_walkable_and_nothing_fights(self):
+        m = json.loads((MAPS / "playground.json").read_text())
+        col = next(l["data"] for l in m["layers"] if l["name"] == "collision")
+        for y in range(12, 17):
+            for x in range(18, 23):
+                if (x - 20) ** 2 + (y - 14) ** 2 <= 4:
+                    self.assertEqual(col[y * 40 + x], 0, (x, y))
+        groups = {l["name"]: l.get("objects", []) for l in m["layers"] if l["type"] == "objectgroup"}
+        self.assertEqual(groups.get("encounters", []), [])
+        self.assertEqual(groups.get("warps", []), [])
+
+
+class SkyAndPlains(unittest.TestCase):
+    """Sky routes carry real clouds; plazas are slabs, not checkers; Route 2 has a worn road."""
+
+    def test_sky_is_a_cloud_field_that_wraps_over_four_tiles(self):
+        from .town_art import sky_tile
+        tiles = {(px, py): sky_tile(px, py).img for px in range(4) for py in range(4)}
+        self.assertEqual(len({t.tobytes() for t in tiles.values()}), 16)
+        white = sum(sum(c[:3] == (255, 255, 255) for c in t.get_flattened_data()) for t in tiles.values())
+        self.assertGreater(white, 16 * 256 * .08, "clouds cover a real share of the sky")
+        for py in range(4):  # the right edge of phase 3 runs on into the left edge of phase 0
+            a, b = tiles[3, py], tiles[0, py]
+            self.assertEqual(sum(a.getpixel((15, y)) != b.getpixel((0, y)) for y in range(16)) < 8, True)
+
+    def test_sky_routes_use_the_cloud_field(self):
+        from .tiles import tile_ids
+        ids = tile_ids()
+        sky = {ids[f"sky_{px}{py}"] + 1 for px in range(4) for py in range(4)}
+        for map_id in ("route_6", "route_9"):
+            ground = next(l["data"] for l in json.loads((MAPS / f"{map_id}.json").read_text())["layers"] if l["name"] == "ground")
+            self.assertGreater(sum(g in sky for g in ground), len(ground) * .3, map_id)
+
+    def test_plaza_is_one_slab_per_tile(self):
+        from .town_art import BIOMES, plaza
+        img = plaza("marble").img
+        self.assertEqual(img.getpixel((7, 4))[:3], img.getpixel((8, 4))[:3], "no seam down the middle")
+
+    def test_route_2_has_a_worn_road_end_to_end(self):
+        from .tiles import tile_ids
+        ids = tile_ids()
+        trail = {v + 1 for k, v in ids.items() if k.startswith("trail_")}
+        decor = next(l["data"] for l in json.loads((MAPS / "route_2.json").read_text())["layers"] if l["name"] == "decor")
+        self.assertIn(decor[9 * 40 + 0], trail)
+        self.assertIn(decor[9 * 40 + 39], trail)
