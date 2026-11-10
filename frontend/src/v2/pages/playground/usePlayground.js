@@ -5,6 +5,7 @@ import { API_URL } from "../../../config";
 const MAX_MESSAGES = 50;
 const GUEST_NAME_KEY = "playground_guest_name";
 const BUBBLE_MS = 4500;
+const EMOTE_MS = 2600;
 
 /** Kept for the tab session so a reload doesn't reroll the guest identity. */
 function guestName() {
@@ -21,7 +22,8 @@ function guestName() {
 
 /**
  * Socket.IO playground session (room:init, player:joined/moved/left,
- * chat:message, move, chat:send). `move` carries { x, y, facing, run }.
+ * chat:message, player:emote, move, chat:send, emote). `move` carries
+ * { x, y, facing, run }; `emote` is one of the ids in Emote.jsx.
  * Positions live in a ref (they change every frame); the roster — who is
  * here — is React state so lists re-render only on join/leave.
  */
@@ -31,6 +33,7 @@ export default function usePlayground() {
 	const [roster, setRoster] = useState([]);
 	const [messages, setMessages] = useState([]);
 	const [bubbles, setBubbles] = useState({}); // trainerId -> { text, ts }
+	const [emotes, setEmotes] = useState({}); // trainerId -> { emote, ts }
 	const [world, setWorld] = useState({ width: 640, height: 448, chatRadius: 96 });
 	const playersRef = useRef(new Map());
 	const socketRef = useRef(null);
@@ -78,6 +81,20 @@ export default function usePlayground() {
 			);
 		});
 
+		socket.on("player:emote", ({ trainerId, emote, ts }) => {
+			setEmotes((prev) => ({ ...prev, [trainerId]: { emote, ts } }));
+			setTimeout(
+				() =>
+					setEmotes((prev) => {
+						if (prev[trainerId]?.ts !== ts) return prev;
+						const next = { ...prev };
+						delete next[trainerId];
+						return next;
+					}),
+				EMOTE_MS
+			);
+		});
+
 		socket.on("player:joined", (p) => {
 			playersRef.current.set(p.trainerId, { ...p });
 			syncRoster();
@@ -97,14 +114,17 @@ export default function usePlayground() {
 		return () => socket.disconnect();
 	}, []);
 
-	const send = useCallback((text, { everyone = false } = {}) => {
-		const body = text.trim();
+	// Proximity only: a typed "/all" prefix is escaped so it can't reach the whole map.
+	const send = useCallback((text) => {
+		const body = text.trim().replace(/^\/all(\s)/i, "⁠/all$1");
 		if (!body) return false;
-		socketRef.current?.emit("chat:send", everyone ? `/all ${body}` : body);
+		socketRef.current?.emit("chat:send", body);
 		return true;
 	}, []);
 
+	const emote = useCallback((id) => socketRef.current?.emit("emote", id), []);
+
 	const emitMove = useCallback((step) => socketRef.current?.emit("move", step), []);
 
-	return { status, selfId, roster, messages, bubbles, world, playersRef, send, emitMove };
+	return { status, selfId, roster, messages, bubbles, emotes, world, playersRef, send, emote, emitMove };
 }

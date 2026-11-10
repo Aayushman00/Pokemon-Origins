@@ -191,6 +191,23 @@ describe("attachPlayground chat wiring", () => {
 		assert.equal(moved[1].run, false);
 	});
 
+	it("relays known emotes to the room, drops unknown ones and floods", () => {
+		const { io, broadcasts, connect } = createFakeIo();
+		attachPlayground(io, fakePool);
+		const { socket, handlers } = createFakeSocket({ trainerId: 14, name: "Waver" });
+		connect(socket);
+
+		handlers["emote"]("heart");
+		handlers["emote"]("heart"); // inside the flood window
+		handlers["emote"]("<script>");
+
+		const sent = broadcasts.filter((b) => b.event === "player:emote");
+		assert.equal(sent.length, 1);
+		assert.equal(sent[0].room, "main");
+		assert.equal(sent[0].payload.trainerId, 14);
+		assert.equal(sent[0].payload.emote, "heart");
+	});
+
 	it("delivers a \"/all\" message to every player via the room broadcast, stripped of the prefix", () => {
 		const { io, broadcasts, connect } = createFakeIo();
 		attachPlayground(io, fakePool);

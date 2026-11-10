@@ -73,3 +73,35 @@ test("trainers who leave disappear", () => {
 	game.tick(still);
 	assert.equal(game.npcs().length, 0);
 });
+
+test("a frozen tick keeps you standing while others still walk", () => {
+	const { game } = setup({ me: { x: 0, y: 0 }, them: { x: 0, y: 48 } });
+	game.tick(still);
+	run(game, { dir: "right", run: false }, 40);
+	assert.equal(game.player.x, 1); // sanity: unfrozen you walk
+	const { game: g2, ref } = setup({ me: { x: 0, y: 0 }, them: { x: 0, y: 48 } });
+	g2.tick(still);
+	ref.get("them").x = 16;
+	for (let i = 0; i < 40; i++) g2.tick({ dir: "right", run: false }, true);
+	assert.deepEqual([g2.player.x, g2.player.y], [0, 0]);
+	assert.equal(g2.npcs()[0].x, 1);
+});
+
+test("night mode swaps in the night-time map and back", () => {
+	const { game } = setup({ me: { x: 0, y: 0 } });
+	game.setNight(true);
+	assert.equal(game.map.properties.time, "night");
+	assert.equal(game.map.layers, MAP.layers);
+	game.setNight(false);
+	assert.equal(game.map, MAP);
+});
+
+test("facing a plaza spot finds it; every spot is solid on the real park map", async () => {
+	const { readFile } = await import("node:fs/promises");
+	const { SPOTS, spotAt } = await import("./playgroundGame.js");
+	const park = JSON.parse(await readFile(new URL("../../../../public/maps/playground.json", import.meta.url), "utf8"));
+	const col = park.layers.find((l) => l.name === "collision").data;
+	for (const s of SPOTS) for (let y = s.y; y < s.y + s.h; y++) for (let x = s.x; x < s.x + s.w; x++) assert.ok(col[y * park.width + x], `${s.kind} at ${x},${y} should block`);
+	assert.equal(spotAt(19, 13).kind, "fountain");
+	assert.equal(spotAt(0, 0), null);
+});

@@ -10,6 +10,19 @@ const TELEPORT_TILES = 6;
 
 const toTile = (px) => Math.round(px / TILE);
 
+// Things on the plaza you can walk up to and press A at. Same spots as
+// scripts/overworld_art/towns.py (FOUNTAIN_AT, BOARD_AT, BENCHES).
+export const SPOTS = [
+	{ kind: "fountain", x: 18, y: 12, w: 4, h: 4 },
+	{ kind: "board", x: 16, y: 10, w: 2, h: 2 },
+	{ kind: "bench", x: 17, y: 17, w: 2, h: 1 },
+	{ kind: "bench", x: 21, y: 17, w: 2, h: 1 },
+];
+
+export const spotAt = (x, y) => SPOTS.find((s) => x >= s.x && x < s.x + s.w && y >= s.y && y < s.y + s.h) || null;
+
+const STILL = { dir: null, run: false, aHeld: false };
+
 /** Nearest open tile to (x, y), searching outward ring by ring. */
 function nearestOpen(map, x, y) {
 	for (let r = 0; r < Math.max(map.width, map.height); r++) {
@@ -64,8 +77,21 @@ export function createPlaygroundGame({ map, selfId, players, emitMove }) {
 	const ctx = { world, canMove: true, canRun: true };
 	const send = (a, at = a) => emitMove({ x: at.x * TILE, y: at.y * TILE, facing: a.facing, run: !!a.running });
 
+	const day = map;
+	const night = { ...map, properties: { ...map.properties, time: "night" } }; // renderer tints and lights lamps
 	const game = {
 		map,
+		/** Night mode: the renderer's night tint, with lamp light added back. */
+		setNight(on) {
+			game.map = on ? night : day;
+		},
+		/** The plaza spot right in front of you, if you're standing still facing one. */
+		facingSpot() {
+			const p = game.player;
+			if (!p || p.phase === "walk" || p.phase === "hop") return null; // idle, turning or bumping into it all count
+			const d = DIRS[p.facing];
+			return d ? spotAt(p.x + d.dx, p.y + d.dy) : null;
+		},
 		player: null,
 		tickCount: 0,
 		doorOpening: false,
@@ -75,8 +101,10 @@ export function createPlaygroundGame({ map, selfId, players, emitMove }) {
 		neighbourMap: () => undefined,
 		puzzleTiles: () => [],
 		npcs: () => [...remotes.values()],
-		tick(input) {
+		/** `frozen`: a menu or message is open, so you stand still (others keep walking). */
+		tick(input, frozen = false) {
 			game.tickCount += 1;
+			if (frozen) input = STILL;
 			if (!game.player) {
 				const me = players.get(selfId);
 				if (!me) return;

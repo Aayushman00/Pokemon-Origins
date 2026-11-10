@@ -672,6 +672,13 @@ def new_tiles():
     for py in range(4):
         for px in range(4):
             add(f"sky_{px}{py}", sky_tile(px, py))
+    # ---- playground plaza: fountain (two frames) and notice board
+    from .town_art import cut, fountain, notice_board
+    for frame in (0, 1):
+        for name, t in cut(fountain(frame), f"fountain{frame}"):
+            add(name, t)
+    for name, t in cut(notice_board(), "board"):
+        add(name, t)
     return out
 
 

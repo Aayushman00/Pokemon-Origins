@@ -523,6 +523,7 @@ def finish(data, m):
     from .gym_art import ANIMATED
     tiles += [anim(ID[f"gym_{theme}_{name}0"], ID[f"gym_{theme}_{name}1"], ms) for theme, name, ms in ANIMATED]
     tiles += [anim(ID[f"lava_{mask}_0"], ID[f"lava_{mask}_1"], 420) for mask in range(16)]
+    tiles += [anim(ID[f"fountain0_{c}_{r}"], ID[f"fountain1_{c}_{r}"], 380) for r in range(4) for c in range(4)]
     for sides in ("n", "s", "w", "e", "nw", "ne", "sw", "se"):
         tiles.append(anim(ID[f"shore_{sides}A"], ID[f"shore_{sides}B"], 500))
     from .tiles_v2 import blob_masks

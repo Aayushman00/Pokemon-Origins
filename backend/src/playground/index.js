@@ -8,12 +8,16 @@ const { createChatRing, sanitizeMessage, isRateLimited, MIN_MESSAGE_INTERVAL_MS 
 
 const ROOM_ID = "main";
 const FACINGS = new Set(["up", "down", "left", "right"]);
+// Emote ids the client draws overhead; anything else is dropped.
+const EMOTES = new Set(["heart", "exclaim", "question", "music", "happy", "sad", "angry", "sleep"]);
+const EMOTE_INTERVAL_MS = 600;
 
 function attachPlayground(io, pool) {
 	const roomState = createRoomState();
 	const chatRing = createChatRing();
 	const lastMoveAt = new Map(); // trainerId -> timestamp (ms)
 	const lastMessageAt = new Map(); // trainerId -> timestamp (ms)
+	const lastEmoteAt = new Map(); // trainerId -> timestamp (ms)
 	const trainerSockets = new Map(); // trainerId -> socket, for proximity chat delivery
 
 	io.use(
@@ -78,6 +82,15 @@ function attachPlayground(io, pool) {
 			io.to(ROOM_ID).emit("player:moved", { trainerId, x: resolved.x, y: resolved.y, facing, run: target.run === true });
 		});
 
+		// A reaction bubble over the sender's head, seen by everyone on the map.
+		socket.on("emote", (emote) => {
+			if (!EMOTES.has(emote)) return;
+			const now = Date.now();
+			if (now - (lastEmoteAt.get(trainerId) ?? 0) < EMOTE_INTERVAL_MS) return;
+			lastEmoteAt.set(trainerId, now);
+			io.to(ROOM_ID).emit("player:emote", { trainerId, emote, ts: now });
+		});
+
 		socket.on("chat:send", (text) => {
 			const clean = sanitizeMessage(text);
 			if (!clean) return;
@@ -115,6 +128,7 @@ function attachPlayground(io, pool) {
 			if (trainerSockets.get(trainerId) !== socket) return;
 			roomState.removePlayer(trainerId);
 			lastMoveAt.delete(trainerId);
+			lastEmoteAt.delete(trainerId);
 			trainerSockets.delete(trainerId);
 			// lastMessageAt is deliberately NOT cleared here — see the sweep
 			// in the connection handler above.

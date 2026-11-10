@@ -1179,11 +1179,11 @@
    "name": "overworld",
    "image": "tilesets/overworld.png",
    "imagewidth": 128,
-   "imageheight": 6560,
+   "imageheight": 6640,
    "tilewidth": 16,
    "tileheight": 16,
    "columns": 8,
-   "tilecount": 3279,
+   "tilecount": 3315,
    "margin": 0,
    "spacing": 0,
    "tiles": [
@@ -1552,6 +1552,214 @@
       {
        "tileid": 2003,
        "duration": 420
+      }
+     ]
+    },
+    {
+     "id": 3279,
+     "animation": [
+      {
+       "tileid": 3279,
+       "duration": 380
+      },
+      {
+       "tileid": 3295,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3280,
+     "animation": [
+      {
+       "tileid": 3280,
+       "duration": 380
+      },
+      {
+       "tileid": 3296,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3281,
+     "animation": [
+      {
+       "tileid": 3281,
+       "duration": 380
+      },
+      {
+       "tileid": 3297,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3282,
+     "animation": [
+      {
+       "tileid": 3282,
+       "duration": 380
+      },
+      {
+       "tileid": 3298,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3283,
+     "animation": [
+      {
+       "tileid": 3283,
+       "duration": 380
+      },
+      {
+       "tileid": 3299,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3284,
+     "animation": [
+      {
+       "tileid": 3284,
+       "duration": 380
+      },
+      {
+       "tileid": 3300,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3285,
+     "animation": [
+      {
+       "tileid": 3285,
+       "duration": 380
+      },
+      {
+       "tileid": 3301,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3286,
+     "animation": [
+      {
+       "tileid": 3286,
+       "duration": 380
+      },
+      {
+       "tileid": 3302,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3287,
+     "animation": [
+      {
+       "tileid": 3287,
+       "duration": 380
+      },
+      {
+       "tileid": 3303,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3288,
+     "animation": [
+      {
+       "tileid": 3288,
+       "duration": 380
+      },
+      {
+       "tileid": 3304,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3289,
+     "animation": [
+      {
+       "tileid": 3289,
+       "duration": 380
+      },
+      {
+       "tileid": 3305,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3290,
+     "animation": [
+      {
+       "tileid": 3290,
+       "duration": 380
+      },
+      {
+       "tileid": 3306,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3291,
+     "animation": [
+      {
+       "tileid": 3291,
+       "duration": 380
+      },
+      {
+       "tileid": 3307,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3292,
+     "animation": [
+      {
+       "tileid": 3292,
+       "duration": 380
+      },
+      {
+       "tileid": 3308,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3293,
+     "animation": [
+      {
+       "tileid": 3293,
+       "duration": 380
+      },
+      {
+       "tileid": 3309,
+       "duration": 380
+      }
+     ]
+    },
+    {
+     "id": 3294,
+     "animation": [
+      {
+       "tileid": 3294,
+       "duration": 380
+      },
+      {
+       "tileid": 3310,
+       "duration": 380
       }
      ]
     },

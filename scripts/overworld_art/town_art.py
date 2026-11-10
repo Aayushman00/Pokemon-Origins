@@ -774,3 +774,98 @@ def town_tiles():
                 for c in range(img.width // T):
                     out.append((f"{name}_{c}_{r}", img.crop((c * T, r * T, (c + 1) * T, (r + 1) * T))))
     return out
+
+
+# ---- Playground plaza centrepieces: drawn whole, then cut into tiles.
+
+def _outline_big(img, colour=LINE):
+    """1px outline round every opaque shape on an image of any size."""
+    src, out = img.load(), img.copy()
+    dst = out.load()
+    w, h = img.size
+    for y in range(h):
+        for x in range(w):
+            if src[x, y][3]:
+                continue
+            if any(0 <= x + dx < w and 0 <= y + dy < h and src[x + dx, y + dy][3] == 255
+                   for dx, dy in ((0, -1), (-1, 0), (1, 0), (0, 1))):
+                dst[x, y] = (*rgb(colour), 255)
+    return out
+
+
+FOUNTAIN_STONE = ("#ece6da", "#d2c9b8", "#b2a894", "#8e8470")  # lit rim, rim, shade, wall seams
+FOUNTAIN_WATER = ("#eef8ff", "#86c8ee", "#58a2d6", "#3c7cb6")  # foam, light, water, deep
+
+
+def fountain(frame):
+    """4x4-tile plaza fountain in 3/4 view: a round basin with a stone wall
+    in front, a pillar and a small bowl spouting water. Two frames: the jet
+    and the ripples step, never tween."""
+    hi, rim, shade, seam = FOUNTAIN_STONE
+    foam, light, water, deep = FOUNTAIN_WATER
+    S = 4 * T
+    img = Image.new("RGBA", (S, S))
+    d = ImageDraw.Draw(img)
+    d.ellipse((4, 26, 59, 62), fill=(40, 32, 56, 70))          # contact shadow
+    d.ellipse((2, 22, 61, 58), fill=shade)                      # wall, lower half
+    d.rectangle((2, 33, 61, 40), fill=shade)
+    for x in range(6, 60, 8):                                   # block seams on the wall
+        d.line((x, 41, x, 55 - abs(x - 31) // 6), fill=seam)
+    d.line((4, 47, 59, 47), fill=seam)
+    d.ellipse((2, 14, 61, 50), fill=rim)                        # rim top
+    d.arc((2, 14, 61, 50), 180, 360, fill=hi)
+    d.ellipse((7, 18, 56, 46), fill=water)                      # pool
+    d.ellipse((7, 18, 56, 46), outline=shade)
+    d.ellipse((10, 24, 53, 45), fill=deep)
+    d.ellipse((12, 23, 51, 43), fill=water)
+    r = rng(77 + frame * 13)
+    for _ in range(9):                                          # ripples drift between frames
+        x, y = 13 + r(36), 24 + r(17)
+        d.line((x, y, x + 2 + r(3), y), fill=light)
+    d.ellipse((17 + frame, 33, 46 - frame, 41), outline=light)  # ring where the jet lands
+    d.rectangle((28, 20, 35, 38), fill=rim)                     # pillar
+    d.rectangle((33, 20, 35, 38), fill=shade)
+    d.rectangle((28, 20, 29, 38), fill=hi)
+    d.ellipse((20, 14, 43, 25), fill=rim)                       # upper bowl
+    d.arc((20, 14, 43, 25), 180, 360, fill=hi)
+    d.ellipse((23, 16, 40, 22), fill=water)
+    d.rectangle((30, 3 + frame, 33, 18), fill=light)            # jet
+    d.rectangle((31, 2 + frame, 32, 17), fill=foam)
+    img = _outline_big(img)
+    d = ImageDraw.Draw(img)                                     # spray goes on after the outline: loose drops, no rings
+    for k, (dx, dy) in enumerate(((-6, 6), (6, 6), (-10, 12), (10, 12), (-12, 19), (12, 19))):
+        if (k + frame) % 2 == 0:                                # falling drops alternate
+            d.rectangle((31 + dx, 4 + dy, 32 + dx, 5 + dy), fill=foam if k < 2 else light)
+    return img
+
+
+def notice_board():
+    """2x2-tile notice board: a little roof, cork panel with pinned notes, two posts."""
+    S = 2 * T
+    img = Image.new("RGBA", (S, S))
+    d = ImageDraw.Draw(img)
+    d.ellipse((5, 27, 26, 31), fill=(40, 32, 56, 70))
+    for x in (6, 24):
+        d.rectangle((x, 16, x + 2, 29), fill="#84603f")
+        d.line((x, 16, x, 29), fill="#a87a50")
+    d.rectangle((2, 4, 29, 21), fill="#84603f")                 # frame
+    d.rectangle((4, 6, 27, 19), fill="#c89a64")                 # cork
+    for x, y in ((7, 9), (15, 12), (21, 8), (11, 15)):
+        d.point((x, y), fill="#a87a50")
+    notes = ((5, 7, 12, 14, "#f6f0e0", "#d84848"), (14, 7, 21, 12, "#f4dc94", "#4878d8"),
+             (22, 9, 26, 17, "#d8eaf4", "#48a858"), (13, 14, 20, 18, "#f6f0e0", "#d84848"))
+    for x0, y0, x1, y1, paper, pin in notes:
+        d.rectangle((x0, y0, x1, y1), fill=paper)
+        for yy in range(y0 + 2, y1, 2):
+            d.line((x0 + 1, yy, x1 - 1 - (yy % 3), yy), fill="#9c9488")
+        d.point(((x0 + x1) // 2, y0), fill=pin)
+    d.polygon(((0, 4), (4, 0), (27, 0), (31, 4)), fill="#a8584a")  # roof
+    d.line((4, 0, 27, 0), fill="#c87462")
+    d.line((0, 4, 31, 4), fill="#7c3c34")
+    return _outline_big(img)
+
+
+def cut(img, name):
+    """[(name_c_r, tile)] row by row."""
+    return [(f"{name}_{c}_{r}", img.crop((c * T, r * T, (c + 1) * T, (r + 1) * T)))
+            for r in range(img.height // T) for c in range(img.width // T)]

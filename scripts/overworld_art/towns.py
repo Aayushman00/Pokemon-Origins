@@ -325,7 +325,7 @@ PLAYGROUND = [
     "TT..fff,ffff.......,,.........~~......TT",
     "TT.....,...........,,.................TT",
     "TT.....,,,,,,.....pppp...........h....TT",
-    "TT..........,,..ppppuppp.........h....TT",
+    "TT..........,,..pppppppp.........h....TT",
     "TT...L.......,.pppppppppp..L.....h....TT",
     "TT...........,pppppppppppp............TT",
     "T,,,,,,,,,,,,,pppppppppppp,,,,,,,,,,,,,T",
@@ -354,11 +354,32 @@ def playground():
         lone_tree(m, kind, x, y)
     for name, x, y in (("rock", 25, 20), ("stump", 11, 3), ("rock", 3, 18), ("barrel", 32, 9), ("crate", 32, 10)):
         prop(m, name, x, y)
+    plaza_pieces(m)
     dress_pond(m, PLAYGROUND)
     autotile_paths(m)
     fringe(m, PLAYGROUND)
     dress_grass(m)
     return finish(m.build(), m)
+
+
+# Things to walk up to on the plaza; the client reads the same spots (playgroundGame.js SPOTS).
+FOUNTAIN_AT = (18, 12)   # 4x4, centred on the plaza
+BOARD_AT = (16, 10)      # 2x2, north-west of the fountain
+BENCHES = ((17, 17), (21, 17))  # two-seat benches facing the fountain
+
+
+def plaza_pieces(m):
+    fx, fy = FOUNTAIN_AT
+    for r in range(4):
+        for c in range(4):
+            m.put("objects", fx + c, fy + r, ID[f"fountain0_{c}_{r}"], SOLID)
+    bx, by = BOARD_AT
+    for r in range(2):
+        for c in range(2):
+            m.put("objects", bx + c, by + r, ID[f"board_{c}_{r}"], SOLID)
+    for x, y in BENCHES:
+        m.put("objects", x, y, ID["prop_bench"], SOLID)
+        m.put("objects", x + 1, y, ID["prop_bench"], SOLID)
 
 
 MAPS = {**{tid: (lambda tid=tid: town(tid)) for tid in TOWNS}, **{rid: (lambda rid=rid: route(rid)) for rid in ROUTE_LOOK}}

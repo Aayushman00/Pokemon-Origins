@@ -2,14 +2,14 @@ import React, { useEffect, useRef, useState } from "react";
 import PixelAvatar from "../../ui/PixelAvatar";
 import TrainerTrigger from "../../ui/TrainerHoverCard";
 import Button from "../../ui/Button";
-import { fetchProfile, isGuestId } from "../../data/profiles";
+import { isGuestId } from "../../data/profiles";
 
 const MAX_LEN = 300;
 const SEND_COOLDOWN_MS = 1000; // matches the server's per-trainer flood guard
 
 const time = (ts) => new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
-/** Chat history as a trainer log: avatar, name (hover for profile), channel, time. */
+/** Chat history as a trainer log: avatar, name (click for profile), time. */
 export const ChatLog = ({ messages, selfId, onlineIds }) => {
 	const ref = useRef(null);
 	const stick = useRef(true);
@@ -23,7 +23,7 @@ export const ChatLog = ({ messages, selfId, onlineIds }) => {
 		return (
 			<div className="chatlog chatlog--empty">
 				<p className="read">
-					No one has said anything yet. Say hello — trainers within six steps hear you, or switch to Everyone to reach the whole map.
+					Quiet so far. Say hello — trainers inside your dotted ring (six steps) hear you.
 				</p>
 			</div>
 		);
@@ -41,7 +41,7 @@ export const ChatLog = ({ messages, selfId, onlineIds }) => {
 		>
 			{messages.map((m, i) => {
 				const prev = messages[i - 1];
-				const grouped = prev && prev.trainerId === m.trainerId && m.ts - prev.ts < 120000 && prev.broadcast === m.broadcast;
+				const grouped = prev && prev.trainerId === m.trainerId && m.ts - prev.ts < 120000;
 				const mine = m.trainerId === selfId;
 				const guest = isGuestId(m.trainerId);
 				return (
@@ -60,7 +60,6 @@ export const ChatLog = ({ messages, selfId, onlineIds }) => {
 									</TrainerTrigger>
 								)}
 								{guest && <span className="msg__tag">Guest</span>}
-								<span className={`msg__tag ${m.broadcast ? "msg__tag--all" : ""}`}>{m.broadcast ? "Everyone" : "Nearby"}</span>
 								<time className="msg__time" dateTime={new Date(m.ts).toISOString()}>
 									{time(m.ts)}
 								</time>
@@ -74,15 +73,14 @@ export const ChatLog = ({ messages, selfId, onlineIds }) => {
 	);
 };
 
-/** Message box with a Nearby / Everyone channel switch. */
+/** Message box. Proximity only: what you type reaches trainers in earshot. */
 export const Composer = ({ onSend, disabled }) => {
 	const [text, setText] = useState("");
-	const [everyone, setEveryone] = useState(false);
 	const [cooling, setCooling] = useState(false);
 
 	const submit = (e) => {
 		e.preventDefault();
-		if (cooling || !onSend(text, { everyone })) return;
+		if (cooling || !onSend(text)) return;
 		setText("");
 		setCooling(true);
 		setTimeout(() => setCooling(false), SEND_COOLDOWN_MS);
@@ -90,17 +88,6 @@ export const Composer = ({ onSend, disabled }) => {
 
 	return (
 		<form className="composer" onSubmit={submit}>
-			<div className="composer__channels" role="radiogroup" aria-label="Who hears you">
-				<button type="button" role="radio" aria-checked={!everyone} className="tab" onClick={() => setEveryone(false)}>
-					Nearby
-				</button>
-				<button type="button" role="radio" aria-checked={everyone} className="tab" onClick={() => setEveryone(true)}>
-					Everyone
-				</button>
-				<span className="composer__count muted" aria-live="polite">
-					{text.length > MAX_LEN - 40 ? `${MAX_LEN - text.length} left` : ""}
-				</span>
-			</div>
 			<div className="composer__row">
 				<label htmlFor="chat-input" className="sr-only">
 					Message
@@ -112,50 +99,33 @@ export const Composer = ({ onSend, disabled }) => {
 					onChange={(e) => setText(e.target.value)}
 					maxLength={MAX_LEN}
 					autoComplete="off"
-					placeholder={everyone ? "Message everyone on the map" : "Message trainers in earshot"}
+					placeholder="Say something nearby…"
 					disabled={disabled}
 				/>
 				<Button type="submit" variant="primary" disabled={disabled || cooling || !text.trim()}>
 					Send
 				</Button>
 			</div>
+			{text.length > MAX_LEN - 40 && (
+				<span className="composer__count" aria-live="polite">
+					{MAX_LEN - text.length} left
+				</span>
+			)}
 		</form>
 	);
 };
 
 const RosterRow = ({ p, self, near }) => {
 	const guest = isGuestId(p.trainerId);
-	const [info, setInfo] = useState(null);
-	useEffect(() => {
-		if (guest) return;
-		let alive = true;
-		fetchProfile(p.trainerId).then((r) => alive && setInfo(r));
-		return () => {
-			alive = false;
-		};
-	}, [p.trainerId, guest]);
-
-	const prof = info?.status === "ok" ? info.profile : null;
-	const sub = guest
-		? "Guest, no account"
-		: prof
-		? `${prof.campaign.champion ? "Champion" : `Stage ${prof.campaign.current_level}`}, ${prof.record.wins} win${prof.record.wins === 1 ? "" : "s"}`
-		: info
-		? "Unknown trainer"
-		: "…";
-
 	const body = (
 		<>
 			<span className="roster__avatar">
-				<PixelAvatar seed={p.trainerId} guest={guest} size={36} />
+				<PixelAvatar seed={p.trainerId} guest={guest} size={32} />
 				<span className={`presence ${guest ? "presence--guest" : "presence--online"} roster__dot`} aria-hidden="true" />
 			</span>
-			<span className="roster__text">
-				<span className="trainer-trigger__name roster__name">
-					{p.name}
-					{self && <span className="muted"> (you)</span>}
-				</span>
-				<span className="roster__sub">{sub}</span>
+			<span className="trainer-trigger__name roster__name">
+				{p.name}
+				{self && <span className="roster__you"> (you)</span>}
 			</span>
 		</>
 	);
@@ -163,7 +133,7 @@ const RosterRow = ({ p, self, near }) => {
 	return (
 		<li className={`roster__row ${near && !self ? "is-near" : ""}`}>
 			{self ? <span className="trainer-trigger">{body}</span> : <TrainerTrigger trainerId={p.trainerId} name={p.name} online>{body}</TrainerTrigger>}
-			{near && !self && <span className="roster__near">In earshot</span>}
+			{near && !self && <span className="roster__near">Near</span>}
 		</li>
 	);
 };

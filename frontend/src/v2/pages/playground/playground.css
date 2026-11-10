@@ -1,107 +1,50 @@
-/* Playground: the park map in a game bezel, chat and roster as game windows.
-   Colours follow the overworld chrome (overworld.css .ow__place): wall cream,
-   plum line. */
+/* Playground: the park map in a dark game bezel, roster and nearby chat as
+   dark game windows. Palette: night navy (#121629) with a bevelled indigo
+   edge, cream ink, the overworld's gold for "you". */
 .pg {
-	--pg-paper: #fbf2dc;
-	--pg-paper-rule: #d2c2aa;
-	--pg-line: #26223a;
-	--pg-night: #1d1a2e;
+	--pg-bg: #121629;
+	--pg-panel: #1a2040;
+	--pg-well: #0e1226;
+	--pg-line: #070914;
+	--pg-edge: #3a4478;
+	--pg-edge-hi: #5a66a8;
+	--pg-text: #eef0ff;
+	--pg-soft: #a8b0d8;
+	--pg-faint: #6c76a8;
+	--pg-gold: #f4d870;
+	--pg-ink: #26223a;
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-3);
 	min-height: calc(100vh - var(--topbar-h, 56px));
-	padding: var(--s-3);
-	background: var(--pg-night);
-	color: var(--pg-paper);
+	padding: var(--s-2);
+	background: var(--pg-bg);
+	color: var(--pg-text);
 }
 
-/* ---- Header: title plate, who you are, key legend ---- */
-.pg__head {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--s-2) var(--s-4);
-}
-.pg__plate {
-	display: flex;
-	align-items: center;
-	gap: var(--s-3);
-	padding: 6px 12px;
-	background: var(--pg-paper);
-	color: var(--pg-line);
-	border: 3px solid var(--pg-line);
-	box-shadow: inset 0 0 0 2px var(--pg-paper-rule), 3px 3px 0 #000;
-}
-.pg__title {
-	font-size: var(--fs-lg);
-	letter-spacing: 0.04em;
-	text-transform: uppercase;
-}
-.pg__count {
-	display: flex;
-	align-items: center;
-	gap: 6px;
-	font-size: var(--fs-xs);
-}
-.pg__who {
-	margin: 0;
-	font-size: var(--fs-sm);
-	color: #c8c0d8;
-}
-.pg__who b {
-	color: var(--pg-paper);
-}
-.pg__legend {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--s-2) var(--s-4);
-	margin-left: auto;
-	font-size: var(--fs-xs);
-	color: #c8c0d8;
-}
-.pg__legend-item {
-	display: inline-flex;
-	align-items: center;
-	gap: 3px;
-}
-.pg__legend-item > span {
-	margin-left: 4px;
-}
-.pg__key {
-	min-width: 1.6em;
-	padding: 1px 5px 2px;
-	font: inherit;
-	text-align: center;
-	color: var(--pg-line);
-	background: var(--pg-paper);
-	border: 2px solid var(--pg-line);
-	box-shadow: inset 0 -2px 0 var(--pg-paper-rule);
-}
-
-/* ---- Layout ---- */
+/* ---- Layout: the map takes everything the side column doesn't ---- */
 .pg__layout {
 	flex: 1 1 auto;
 	display: grid;
-	gap: var(--s-3);
+	gap: var(--s-2);
 	min-height: 0;
 }
 @media (min-width: 1000px) {
 	.pg__layout {
-		grid-template-columns: minmax(0, 1fr) 360px;
-		height: calc(100vh - var(--topbar-h, 56px) - 96px);
-		min-height: 480px;
+		grid-template-columns: minmax(0, 1fr) 300px;
+		height: calc(100vh - var(--topbar-h, 56px) - 2 * var(--s-2));
+		min-height: 420px;
 	}
 }
 
-/* The bezel the map sits in, like the overworld screen's letterbox. */
+/* The bezel the map sits in. */
 .pg__frame {
 	position: relative;
 	display: flex;
 	min-width: 0;
 	min-height: 0;
 	background: #000;
-	border: 4px solid var(--pg-line);
-	box-shadow: 0 0 0 3px #5e4c7a, 4px 4px 0 3px #000;
+	border: 3px solid var(--pg-line);
+	box-shadow: inset 0 0 0 2px var(--pg-edge), 0 0 0 1px var(--pg-edge-hi);
 }
 /* Stacked layout: the screen takes the map's own 3:2 (VIEW_W x VIEW_H), no tall letterbox. */
 @media (max-width: 999px) {
@@ -115,11 +58,11 @@
 }
 .pg__loading {
 	margin: auto;
-	color: var(--pg-paper);
+	color: var(--pg-soft);
 	font-size: var(--fs-sm);
 }
 
-/* ---- Stage: canvas, floating names and bubbles ---- */
+/* ---- Stage: canvas, floating names, bubbles, emotes, menus ---- */
 .pgs {
 	flex: 1 1 auto;
 	display: flex;
@@ -163,21 +106,33 @@
 	pointer-events: none;
 }
 .pgs__name {
+	position: relative;
 	padding: 0 4px 1px;
 	font-size: 11px;
 	line-height: 1.3;
 	white-space: nowrap;
-	color: var(--pg-line);
-	background: var(--pg-paper);
+	color: var(--pg-text);
+	background: rgba(18, 22, 41, 0.86);
 	border: 2px solid var(--pg-line);
 	pointer-events: auto;
 }
 .pgs__tag.is-self .pgs__name {
-	background: #f4d870;
+	color: var(--pg-ink);
+	background: var(--pg-gold);
 }
 .pgs__tag.is-near .pgs__name {
 	border-color: #3f7f37;
 	box-shadow: 0 0 0 1px #a6d86f;
+}
+/* Click the trainer, not just the name: a sprite-sized target under the tag. */
+.pgs__hit {
+	position: absolute;
+	top: calc(100% + 2px);
+	left: 50%;
+	width: calc(var(--k) * 16px);
+	height: calc(var(--k) * 24px);
+	transform: translateX(-50%);
+	cursor: pointer;
 }
 .pgs__bubble {
 	position: relative;
@@ -186,14 +141,15 @@
 	font-family: var(--font-read);
 	font-size: 12px;
 	line-height: 1.3;
-	color: var(--pg-line);
+	color: var(--pg-ink);
 	background: #fff;
 	border: 2px solid var(--pg-line);
 	box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
 	overflow-wrap: anywhere;
 	animation: pg-pop 0.18s steps(3) both;
 }
-.pgs__bubble::after {
+.pgs__bubble::after,
+.pgs__emote::after {
 	content: "";
 	position: absolute;
 	left: 50%;
@@ -205,12 +161,158 @@
 	border-bottom: 2px solid var(--pg-line);
 	transform: translateX(-50%) rotate(45deg);
 }
+.pgs__emote {
+	position: relative;
+	display: grid;
+	place-items: center;
+	padding: 5px 6px;
+	background: #fff;
+	border: 2px solid var(--pg-line);
+	box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+	animation: pg-hop 0.36s steps(4) both;
+}
+.emote-icon {
+	display: block;
+}
 @keyframes pg-pop {
 	from { transform: translateY(4px); opacity: 0; }
 	to { transform: none; opacity: 1; }
 }
+@keyframes pg-hop {
+	0% { transform: translateY(6px) scale(0.6); opacity: 0; }
+	50% { transform: translateY(-4px) scale(1.1); opacity: 1; }
+	100% { transform: none; }
+}
+
+/* Emote wheel: eight pixel buttons in a ring round the player. */
+.pgs__wheel {
+	--r: clamp(48px, calc(var(--k) * 30px), 96px);
+	position: absolute;
+	width: 0;
+	height: 0;
+}
+.pgs__wheel::before {
+	content: "";
+	position: absolute;
+	left: calc(var(--r) * -1 - 24px);
+	top: calc(var(--r) * -1 - 24px);
+	width: calc(var(--r) * 2 + 48px);
+	height: calc(var(--r) * 2 + 48px);
+	border-radius: 50%;
+	background: radial-gradient(rgba(18, 22, 41, 0.55) 55%, transparent 70%);
+	pointer-events: none;
+}
+.pgs__wheel-item {
+	position: absolute;
+	left: calc(var(--dx) * var(--r));
+	top: calc(var(--dy) * var(--r));
+	display: grid;
+	place-items: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	background: #fff;
+	border: 2px solid var(--pg-line);
+	box-shadow: inset 0 -3px 0 #d2d6ec, 2px 2px 0 rgba(0, 0, 0, 0.4);
+	transform: translate(-50%, -50%);
+	cursor: pointer;
+	animation: pg-pop 0.15s steps(3) both;
+}
+.pgs__wheel-item:hover,
+.pgs__wheel-item:focus-visible {
+	background: var(--pg-gold);
+	outline: none;
+}
+.pgs__wheel-key {
+	position: absolute;
+	right: -6px;
+	bottom: -6px;
+	min-width: 14px;
+	font-size: 9px;
+	line-height: 13px;
+	color: var(--pg-text);
+	background: var(--pg-panel);
+	border: 1px solid var(--pg-line);
+}
+
+/* A plaza message, in the overworld's text-box style. */
+.pgs__dialog {
+	position: absolute;
+	left: 3%;
+	right: 3%;
+	bottom: 4%;
+	display: grid;
+	gap: 4px;
+	padding: 10px 14px 14px;
+	text-align: left;
+	font-family: var(--font-read);
+	font-size: clamp(12px, calc(var(--k) * 4.5px), 17px);
+	line-height: 1.35;
+	color: var(--pg-ink);
+	background: #fbf6e8;
+	border: 3px solid var(--pg-line);
+	box-shadow: inset 0 0 0 2px #c8bca4, 3px 3px 0 rgba(0, 0, 0, 0.5);
+	cursor: pointer;
+	animation: pg-pop 0.15s steps(3) both;
+}
+.pgs__dialog-title {
+	font-size: 0.8em;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: #5e4c7a;
+}
+.pgs__dialog-more {
+	position: absolute;
+	right: 12px;
+	bottom: 4px;
+	font-size: 10px;
+	animation: pg-blink 0.8s steps(1) infinite;
+}
+@keyframes pg-blink {
+	50% { opacity: 0; }
+}
+
+/* The emote button, for mouse and touch; E does the same. */
+.pgs__emote-btn {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 6px;
+	color: var(--pg-text);
+	background: rgba(18, 22, 41, 0.86);
+	border: 2px solid var(--pg-line);
+	box-shadow: inset 0 0 0 1px var(--pg-edge);
+	cursor: pointer;
+}
+.pgs__emote-btn kbd {
+	font: inherit;
+	font-size: 10px;
+	padding: 0 3px;
+	color: var(--pg-ink);
+	background: var(--pg-text);
+}
+.pgs__emote-btn.is-open,
+.pgs__emote-btn:hover {
+	box-shadow: inset 0 0 0 1px var(--pg-gold);
+}
+@media (pointer: coarse) {
+	.pgs__emote-btn kbd {
+		display: none;
+	}
+}
 @media (prefers-reduced-motion: reduce) {
-	.pgs__bubble { animation: none; }
+	.pgs__bubble,
+	.pgs__emote,
+	.pgs__wheel-item,
+	.pgs__dialog {
+		animation: none;
+	}
+	.pgs__dialog-more {
+		animation: none;
+	}
 }
 .pgs .pad {
 	margin: 0;
@@ -218,40 +320,49 @@
 	border-top: 3px solid var(--pg-line);
 }
 
-/* ---- Side: game windows ---- */
+/* ---- Side: dark game windows ---- */
 .pg__side {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-3);
+	gap: var(--s-2);
 	min-height: 0;
 }
 .pg__window {
-	/* Readable ink on the cream paper, whatever the site theme. */
-	--c-ink: #26223a;
-	--c-ink-soft: #5e4c5a;
-	--c-ink-faint: #8a7662;
+	/* Light ink on the dark panel, whatever the site theme. */
+	--c-ink: var(--pg-text);
+	--c-ink-soft: var(--pg-soft);
+	--c-ink-faint: var(--pg-faint);
 	position: relative;
 	display: grid;
 	gap: var(--s-2);
 	min-height: 0;
-	padding: 26px var(--s-3) var(--s-3);
+	padding: 26px var(--s-2) var(--s-2);
 	color: var(--c-ink);
-	background: var(--pg-paper);
+	background: var(--pg-panel);
 	border: 3px solid var(--pg-line);
-	box-shadow: inset 0 0 0 2px var(--pg-paper-rule), 3px 3px 0 #000;
+	box-shadow: inset 0 0 0 2px var(--pg-edge), inset 0 2px 0 2px var(--pg-edge-hi);
 }
 .pg__window-title {
 	position: absolute;
-	top: -3px;
-	left: 10px;
+	top: 4px;
+	left: 8px;
+	display: flex;
+	align-items: center;
+	gap: 6px;
 	margin: 0;
-	padding: 2px 10px 3px;
 	font-size: var(--fs-xs);
 	font-weight: 400;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	color: var(--pg-paper);
-	background: var(--pg-line);
+	color: var(--pg-soft);
+}
+.pg__badge {
+	min-width: 18px;
+	padding: 0 4px;
+	text-align: center;
+	color: var(--pg-ink);
+	background: var(--pg-gold);
+	box-shadow: 0 0 0 1px var(--pg-line);
 }
 .pg__error {
 	max-width: 520px;
@@ -260,16 +371,16 @@
 .pg__retry {
 	justify-self: start;
 	padding: 6px 14px;
-	color: var(--pg-paper);
-	background: var(--pg-line);
+	color: var(--pg-ink);
+	background: var(--pg-gold);
 	border: 0;
-	box-shadow: inset 0 -3px 0 #000;
+	box-shadow: inset 0 -3px 0 #b89a40;
 	cursor: pointer;
 }
 
 .pg__roster {
 	grid-template-rows: minmax(0, 1fr);
-	max-height: 34%;
+	max-height: 32%;
 	flex: none;
 }
 .pg__roster .roster {
@@ -279,28 +390,16 @@
 .pg__chat {
 	flex: 1 1 auto;
 	grid-template-rows: minmax(0, 1fr) auto;
-	min-height: 320px;
-}
-
-/* Desktop shows both windows; phones switch with the tabs. */
-.pg__tabs {
-	display: none;
+	min-height: 280px;
 }
 @media (max-width: 999px) {
-	.pg__tabs {
-		display: flex;
-	}
-	.pg__window[data-tab-active="false"] {
-		display: none;
-	}
 	.pg__roster {
-		max-height: none;
+		max-height: 180px;
 	}
 }
 
-/* ---- Chat log, composer and roster, on paper ---- */
+/* ---- Chat log, composer and roster ---- */
 .chatlog {
-	border-bottom: 2px solid #d2c2aa;
 	display: grid;
 	align-content: start;
 	gap: 2px;
@@ -309,8 +408,8 @@
 	padding: 0 var(--s-1) 0 0;
 	overflow-y: auto;
 	list-style: none;
+	border-bottom: 2px solid var(--pg-edge);
 }
-
 .chatlog--empty {
 	display: grid;
 	place-items: center;
@@ -319,157 +418,113 @@
 	text-align: center;
 	font-size: var(--fs-sm);
 }
-
 .msg {
 	padding: var(--s-2) var(--s-2) var(--s-1);
 }
-
 .msg--grouped {
 	padding-top: 0;
 }
-
 .msg--mine {
-	background: rgba(244, 216, 112, 0.35);
+	background: rgba(244, 216, 112, 0.1);
+	box-shadow: inset 2px 0 0 var(--pg-gold);
 }
-
 .msg__head {
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
 	gap: var(--s-2);
 }
-
 .msg__name {
 	font-family: var(--font-pixel);
 	font-weight: 400;
 }
-
 .msg__tag {
 	padding: 0 4px;
 	font-size: var(--fs-xs);
 	color: var(--c-ink-soft);
 	box-shadow: 0 0 0 1px var(--c-ink-faint);
 }
-
-.msg__tag--all {
-	color: #fbf2dc;
-	background: #26223a;
-	box-shadow: none;
-}
-
 .msg__time {
 	margin-left: auto;
 	font-size: var(--fs-xs);
 	color: var(--c-ink-faint);
 }
-
 .msg__text {
 	margin: 2px 0 0 36px;
 	font-size: var(--fs-sm);
 	overflow-wrap: anywhere;
 }
 
-/* Composer */
 .composer {
 	display: grid;
-	gap: var(--s-2);
-}
-
-.composer__channels {
-	display: flex;
-	align-items: center;
 	gap: var(--s-1);
 }
-
-.composer__channels .tab {
-	min-height: 32px;
-	padding: 2px var(--s-3);
-}
-
-.composer__channels .tab[aria-checked="true"] {
-	background: #26223a;
-	color: #fbf2dc;
-}
-
-.composer__count {
-	margin-left: auto;
-	font-size: var(--fs-xs);
-}
-
 .composer__row {
 	display: flex;
-	gap: var(--s-3);
+	gap: var(--s-2);
 	align-items: center;
 }
-
 .composer__input {
 	flex: 1;
 	min-width: 0;
 }
+.pg .composer__input {
+	color: var(--pg-text);
+	background: var(--pg-well);
+	border-color: var(--pg-edge);
+}
+.pg .composer__input::placeholder {
+	color: var(--pg-faint);
+}
+.composer__count {
+	justify-self: end;
+	font-size: var(--fs-xs);
+	color: var(--c-ink-soft);
+}
 
-/* Roster */
 .roster {
 	display: grid;
 	align-content: start;
-	gap: var(--s-1);
+	gap: 2px;
 	margin: 0;
 	padding: 0;
 	list-style: none;
 }
-
 .roster__row {
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	padding: var(--s-1);
+	padding: 3px var(--s-1);
 }
-
 .roster__row.is-near {
-	background: rgba(98, 177, 79, 0.2);
-	box-shadow: inset 3px 0 0 #3f7f37;
+	background: rgba(98, 177, 79, 0.14);
+	box-shadow: inset 3px 0 0 #6fcf6a;
 }
-
 .roster__avatar {
 	position: relative;
 	flex: none;
 }
-
 .roster__dot {
 	position: absolute;
 	right: -4px;
 	bottom: -4px;
 }
-
-.roster__text {
-	display: grid;
-	min-width: 0;
-}
-
 .roster__name {
+	min-width: 0;
 	font-family: var(--font-pixel);
 	font-weight: 400;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
-
-.roster__sub {
-	font-size: var(--fs-xs);
-	color: var(--c-ink-soft);
+.roster__you {
+	color: var(--pg-gold);
 }
-
 .roster__near {
 	margin-left: auto;
 	padding: 0 4px;
 	font-size: var(--fs-xs);
-	color: #fff;
-	background: var(--c-grass-dark);
+	color: var(--pg-ink);
+	background: #6fcf6a;
 	white-space: nowrap;
-}
-
-/* Phones walk with the on-screen pad; the keyboard legend is noise there. */
-@media (pointer: coarse) {
-	.pg__legend {
-		display: none;
-	}
 }
