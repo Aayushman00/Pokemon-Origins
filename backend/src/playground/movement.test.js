@@ -1,7 +1,7 @@
 // backend/src/playground/movement.test.js
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
-const { resolveMove, ROOM_WIDTH, ROOM_HEIGHT, MAX_SPEED_PX_PER_SEC, clamp, spawnPoint, SPAWN_RADIUS_PX, CHAT_RADIUS_PX } = require("./movement");
+const { resolveMove, ROOM_WIDTH, ROOM_HEIGHT, MAX_SPEED_PX_PER_SEC, clamp, spawnPoint, SPAWN_RADIUS_PX, CHAT_RADIUS_PX, TILE_PX } = require("./movement");
 
 describe("clamp", () => {
 	it("passes values already in range through unchanged", () => {
@@ -73,6 +73,16 @@ describe("spawnPoint", () => {
 			const p = spawnPoint();
 			assert.ok(Math.hypot(p.x - ROOM_WIDTH / 2, p.y - ROOM_HEIGHT / 2) <= SPAWN_RADIUS_PX + 1);
 		}
+	});
+
+	it("lands on the 16px tile grid inside the room, so a trainer stands on a whole tile", () => {
+		for (let i = 0; i < 200; i++) {
+			const p = spawnPoint();
+			assert.equal(p.x % TILE_PX, 0);
+			assert.equal(p.y % TILE_PX, 0);
+		}
+		assert.equal(ROOM_WIDTH % TILE_PX, 0);
+		assert.equal(ROOM_HEIGHT % TILE_PX, 0);
 	});
 
 	it("spreads players out but keeps any two spawns within chat range", () => {

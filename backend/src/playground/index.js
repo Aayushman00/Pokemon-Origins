@@ -7,6 +7,7 @@ const { resolveMove, spawnPoint, CHAT_RADIUS_PX, ROOM_WIDTH, ROOM_HEIGHT } = req
 const { createChatRing, sanitizeMessage, isRateLimited, MIN_MESSAGE_INTERVAL_MS } = require("./chat");
 
 const ROOM_ID = "main";
+const FACINGS = new Set(["up", "down", "left", "right"]);
 
 function attachPlayground(io, pool) {
 	const roomState = createRoomState();
@@ -72,7 +73,9 @@ function attachPlayground(io, pool) {
 
 			const resolved = resolveMove(current, target, elapsedMs);
 			roomState.updatePosition(trainerId, resolved.x, resolved.y);
-			io.to(ROOM_ID).emit("player:moved", { trainerId, x: resolved.x, y: resolved.y });
+			// facing / run only steer the walk animation other players see.
+			const facing = FACINGS.has(target.facing) ? target.facing : undefined;
+			io.to(ROOM_ID).emit("player:moved", { trainerId, x: resolved.x, y: resolved.y, facing, run: target.run === true });
 		});
 
 		socket.on("chat:send", (text) => {

@@ -23,7 +23,7 @@ export const ChatLog = ({ messages, selfId, onlineIds }) => {
 		return (
 			<div className="chatlog chatlog--empty">
 				<p className="read">
-					No one has said anything yet. Say hello — trainers inside your earshot ring hear you, or switch to Everyone to reach the whole map.
+					No one has said anything yet. Say hello — trainers within six steps hear you, or switch to Everyone to reach the whole map.
 				</p>
 			</div>
 		);

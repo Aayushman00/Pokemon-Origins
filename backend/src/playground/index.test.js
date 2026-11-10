@@ -2,7 +2,7 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 const attachPlayground = require("./index");
-const { ROOM_WIDTH, ROOM_HEIGHT } = require("./movement");
+const { ROOM_WIDTH, ROOM_HEIGHT, CHAT_RADIUS_PX } = require("./movement");
 
 // Blocks synchronously so a subsequent Date.now()-based elapsedMs calculation
 // (in the real move handler, which doesn't accept an injectable clock) is
@@ -161,17 +161,34 @@ describe("attachPlayground chat wiring", () => {
 		});
 		connect(farSocket);
 
-		// Both spawn at the room center by default (dist 0); walk Far 400px
-		// away — outside the 250px chat radius — before Near speaks. The
+		// Both spawn near the room center; walk Far well past the chat
+		// radius before Near speaks. The
 		// move handler computes elapsedMs from a real Date.now() delta (no
 		// injectable clock), so wait long enough that MAX_SPEED_PX_PER_SEC
 		// comfortably covers the distance in one step.
-		busyWaitMs(300); // maxDist = 2000px/s * 0.3s = 600px > 400px needed
-		farHandlers["move"]({ x: ROOM_WIDTH / 2 + 400, y: ROOM_HEIGHT / 2 });
+		busyWaitMs(300); // maxDist = 2000px/s * 0.3s = 600px, more than the walk needs
+		farHandlers["move"]({ x: ROOM_WIDTH / 2 + CHAT_RADIUS_PX * 3, y: ROOM_HEIGHT / 2 });
 
 		nearHandlers["chat:send"]("hello");
 		assert.equal(chatEmits(nearEmits).length, 1);
 		assert.equal(chatEmits(farEmits).length, 0);
+	});
+
+	it("relays a step's facing and run flag, and drops anything else", () => {
+		const { io, broadcasts, connect } = createFakeIo();
+		attachPlayground(io, fakePool);
+		const { socket, handlers } = createFakeSocket({ trainerId: 13, name: "Walker" });
+		connect(socket);
+
+		handlers["move"]({ x: ROOM_WIDTH / 2 + 16, y: ROOM_HEIGHT / 2, facing: "right", run: true, evil: "<b>" });
+		handlers["move"]({ x: ROOM_WIDTH / 2 + 16, y: ROOM_HEIGHT / 2, facing: "sideways", run: "yes" });
+
+		const moved = broadcasts.filter((b) => b.event === "player:moved").map((b) => b.payload);
+		assert.equal(moved[0].facing, "right");
+		assert.equal(moved[0].run, true);
+		assert.equal("evil" in moved[0], false);
+		assert.equal(moved[1].facing, undefined);
+		assert.equal(moved[1].run, false);
 	});
 
 	it("delivers a \"/all\" message to every player via the room broadcast, stripped of the prefix", () => {

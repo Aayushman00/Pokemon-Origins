@@ -20,8 +20,8 @@ function guestName() {
 }
 
 /**
- * Socket.IO playground session (same protocol as V1: room:init,
- * player:joined/moved/left, chat:message, move, chat:send).
+ * Socket.IO playground session (room:init, player:joined/moved/left,
+ * chat:message, move, chat:send). `move` carries { x, y, facing, run }.
  * Positions live in a ref (they change every frame); the roster — who is
  * here — is React state so lists re-render only on join/leave.
  */
@@ -31,7 +31,7 @@ export default function usePlayground() {
 	const [roster, setRoster] = useState([]);
 	const [messages, setMessages] = useState([]);
 	const [bubbles, setBubbles] = useState({}); // trainerId -> { text, ts }
-	const [world, setWorld] = useState({ width: 3000, height: 2000, chatRadius: 250 });
+	const [world, setWorld] = useState({ width: 640, height: 448, chatRadius: 96 });
 	const playersRef = useRef(new Map());
 	const socketRef = useRef(null);
 
@@ -50,7 +50,7 @@ export default function usePlayground() {
 
 		socket.on("room:init", ({ self, players, messages: initial, roomWidth, roomHeight, chatRadius }) => {
 			const map = new Map();
-			players.forEach((p) => map.set(p.trainerId, { ...p, targetX: p.x, targetY: p.y }));
+			players.forEach((p) => map.set(p.trainerId, { ...p }));
 			playersRef.current = map;
 			setWorld((w) => ({
 				width: roomWidth || w.width,
@@ -79,16 +79,14 @@ export default function usePlayground() {
 		});
 
 		socket.on("player:joined", (p) => {
-			playersRef.current.set(p.trainerId, { ...p, targetX: p.x, targetY: p.y });
+			playersRef.current.set(p.trainerId, { ...p });
 			syncRoster();
 		});
 
-		socket.on("player:moved", ({ trainerId, x, y }) => {
+		// Positions are map pixels at the start of each step; the Playground game walks everyone there.
+		socket.on("player:moved", ({ trainerId, x, y, facing, run }) => {
 			const p = playersRef.current.get(trainerId);
-			if (p) {
-				p.targetX = x;
-				p.targetY = y;
-			}
+			if (p) Object.assign(p, { x, y, facing: facing || p.facing, run: !!run });
 		});
 
 		socket.on("player:left", ({ trainerId }) => {
@@ -106,7 +104,7 @@ export default function usePlayground() {
 		return true;
 	}, []);
 
-	const emitMove = useCallback((x, y) => socketRef.current?.emit("move", { x, y }), []);
+	const emitMove = useCallback((step) => socketRef.current?.emit("move", step), []);
 
 	return { status, selfId, roster, messages, bubbles, world, playersRef, send, emitMove };
 }

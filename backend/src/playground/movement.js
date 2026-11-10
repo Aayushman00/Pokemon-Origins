@@ -1,14 +1,17 @@
 // backend/src/playground/movement.js
 /**
- * Server-side resolution of one incoming "move" event from an in-progress
- * drag. Dragging is the client's UI interaction; this module resolves the
- * network representation of that drag into an authoritative position.
+ * Server-side resolution of one incoming "move" event. The room is the
+ * Playground map (frontend/public/maps/playground.json) in game pixels:
+ * a position is the top-left of the 16px tile a trainer stands on, sent at
+ * the start of each step. The client walks tile by tile on that map; this
+ * module only caps speed and keeps positions inside the room.
  */
 
-const ROOM_WIDTH = 3000;
-const ROOM_HEIGHT = 2000;
+const TILE_PX = 16;
+const ROOM_WIDTH = 40 * TILE_PX; // playground.json is 40 x 28 tiles
+const ROOM_HEIGHT = 28 * TILE_PX;
 const MAX_SPEED_PX_PER_SEC = 2000;
-const CHAT_RADIUS_PX = 250;
+const CHAT_RADIUS_PX = 6 * TILE_PX; // earshot: six tiles
 
 function clamp(value, min, max) {
 	return Math.min(Math.max(value, min), max);
@@ -37,20 +40,25 @@ function resolveMove(current, target, elapsedMs) {
 	};
 }
 
-const SPAWN_RADIUS_PX = 110;
+const SPAWN_RADIUS_PX = 2 * TILE_PX;
 
 /**
- * Random spawn inside the plaza, within SPAWN_RADIUS_PX of the room center.
- * Keeps new trainers from stacking on one pixel while staying close enough
- * (2 x 110 < CHAT_RADIUS_PX) that everyone who just joined can hear each other.
+ * Random tile on the plaza, within SPAWN_RADIUS_PX of the room center (the
+ * map keeps that circle open). Keeps new trainers from stacking on one tile
+ * while staying close enough (2 x 32 < CHAT_RADIUS_PX) that everyone who just
+ * joined can hear each other.
  */
 function spawnPoint(random = Math.random) {
 	const angle = random() * Math.PI * 2;
 	const dist = Math.sqrt(random()) * SPAWN_RADIUS_PX;
-	return {
-		x: Math.round(ROOM_WIDTH / 2 + Math.cos(angle) * dist),
-		y: Math.round(ROOM_HEIGHT / 2 + Math.sin(angle) * dist),
-	};
+	const snap = (v) => Math.round(v / TILE_PX) * TILE_PX;
+	const x = snap(ROOM_WIDTH / 2 + Math.cos(angle) * dist);
+	const y = snap(ROOM_HEIGHT / 2 + Math.sin(angle) * dist);
+	// Snapping can push a point just past the radius; pull it back a tile toward the center.
+	const back = (v, c) => (v > c ? v - TILE_PX : v < c ? v + TILE_PX : v);
+	return Math.hypot(x - ROOM_WIDTH / 2, y - ROOM_HEIGHT / 2) <= SPAWN_RADIUS_PX
+		? { x, y }
+		: { x: back(x, ROOM_WIDTH / 2), y: back(y, ROOM_HEIGHT / 2) };
 }
 
-module.exports = { resolveMove, clamp, spawnPoint, SPAWN_RADIUS_PX, ROOM_WIDTH, ROOM_HEIGHT, MAX_SPEED_PX_PER_SEC, CHAT_RADIUS_PX };
+module.exports = { resolveMove, clamp, spawnPoint, SPAWN_RADIUS_PX, TILE_PX, ROOM_WIDTH, ROOM_HEIGHT, MAX_SPEED_PX_PER_SEC, CHAT_RADIUS_PX };
