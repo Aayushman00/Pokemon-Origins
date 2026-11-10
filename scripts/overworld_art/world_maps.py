@@ -277,10 +277,13 @@ def fringe(m, grid):
                 m.put("decor", x, y, ID["tufts"])
 
 
-def dress_grass(m):
+def dress_grass(m, biome="meadow"):
     """Scatter decor in small clusters, one chance per 5x5 block, so grass keeps
-    empty space between them instead of an even speckle."""
+    empty space between them instead of an even speckle. Off the meadow: tufts
+    in the biome's own tones and pebbles."""
     decals = [ID["tufts"], ID["tufts"], ID["flowers0"], ID["flowers1"], ID["pebbles"], ID["mushrooms"]]
+    if biome != "meadow":
+        decals = [ID[f"tufts_{biome}"]] * 4 + [ID["pebbles"]] * 2
     bare = set(m.under.values())
 
     def free(x, y):
@@ -522,8 +525,9 @@ def finish(data, m):
         tiles.append(anim(ID[f"shore_{sides}A"], ID[f"shore_{sides}B"], 500))
     from .tiles_v2 import blob_masks
     for mask in blob_masks():  # pond: 3 frames, ripple drift + foam lap + sparkle
-        f = [ID[f"pond_{mask}_{k}"] for k in range(3)]
-        tiles.append({"id": f[0], "animation": [{"tileid": i, "duration": 420} for i in f]})
+        for kind in ("pond", "pondc"):
+            f = [ID[f"{kind}_{mask}_{k}"] for k in range(3)]
+            tiles.append({"id": f[0], "animation": [{"tileid": i, "duration": 420} for i in f]})
     decor = next(l for l in data["layers"] if l["name"] == "decor")["data"]
     grass = {g - 1 for g in decor if NAMES_BY_ID.get(g - 1, "").startswith("tall_")}  # only what this map shows
     tiles += [{**anim(i, i + 1, 900), "properties": [base.prop("cover", 9)]} for i in sorted(grass)]

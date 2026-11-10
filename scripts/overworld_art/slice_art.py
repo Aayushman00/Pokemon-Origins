@@ -152,12 +152,13 @@ def _outline(img, closed=True, line=None):
     return out
 
 
-def leaf_mass(img, clumps, ramps, wrap=False):
+def leaf_mass(img, clumps, ramps, wrap=False, bumps=.9, caps=True):
     """Paint leaf clumps (cx, cy, r), back to front, into img. Each clump has a
     bumpy rim, top-left light and a heavy bottom-right shade; leaf caps every
     ~4px show as a lit crown over a dark cupped underside, so the mass reads
     as bunches of leaves rather than flat discs. `ramps[i]` colours clump i.
-    With `wrap` the pattern tiles at the image size. Returns {pixel: clump}."""
+    With `wrap` the pattern tiles at the image size. Stones pass a low `bumps`
+    and no `caps`: smooth rims, no leaves. Returns {pixel: clump}."""
     w, h = img.size
 
     def delta(a, b, size):
@@ -171,7 +172,7 @@ def leaf_mass(img, clumps, ramps, wrap=False):
         for y in range(h):
             for x in range(w):
                 dx, dy = delta(x + .5, cx, w), delta(y + .5, cy, h) * 1.08
-                if hypot(dx, dy) < r + .9 * sin(atan2(dy, dx) * 7 + i * 1.7):
+                if hypot(dx, dy) < r + bumps * sin(atan2(dy, dx) * 7 + i * 1.7):
                     owner[x, y] = i
     tone = {}
     for (x, y), i in owner.items():
@@ -183,7 +184,7 @@ def leaf_mass(img, clumps, ramps, wrap=False):
     # under it in the mid-tones. The shaded side stays solid, so each clump
     # still reads as one crown with a heavy bottom-right.
     # ~5px apart, spread evenly over the size so a wrapped pattern has no seam.
-    nx, ny = round(w / 5), round(h / 5)
+    nx, ny = (round(w / 5), round(h / 5)) if caps else (0, 0)
     shift = {}
     for row in range(ny):
         for col in range(nx):

@@ -22,6 +22,8 @@ GBA-era top-down pixel art is the genre. `pret/pokefirered/graphics` and screens
 - Props, fences, bushes, trees, ledges and cliff faces (`mass_shadow` on the cell below) stand on a contact shadow: translucent `SHADOW` from `world_palette.py`, hard pixel edge. Flat decals such as flowers get none.
 - Buildings throw no strips onto the next cell and interior floors carry no shadow patches. Every walker stands on a faint 12x4 hard-edged shadow (renderer `ACTOR_SHADOW`); during a hop it stays on the ground and darkens, showing how high the character is.
 - Slow cloud shadows drift over outdoor maps that set `clouds`.
+- Small standing props (`town_art.STANDING`) take a 1px ring outline outside the shape (`ring_outline`), so posts and wires keep their fill, then a contact shadow. Sky props (`SKY`) get the ring but no shadow.
+- Plateau tops on natural cliffs carry half-buried rubble that wraps over 2x2 tiles; their props are outcrops in the plateau's own stone ramp. Water off the meadow uses `pondc_*`, which leaves the biome's ground under the bank.
 - Ground transitions wander and round off. No dither is needed.
 
 ## Ground

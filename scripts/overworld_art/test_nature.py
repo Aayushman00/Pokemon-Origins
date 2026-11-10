@@ -252,3 +252,47 @@ class BuiltMaps(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RouteDressing(unittest.TestCase):
+    """Routes 2-9 and the towns past Mossgate: props stand on the ground, water
+    sits in its own biome, plateau tops and bare ground carry texture."""
+
+    def test_standing_props_have_an_outline_and_a_contact_shadow(self):
+        from .town_art import PROPS, STANDING, prop
+        for name in STANDING:
+            img = prop(PROPS[name]).img
+            self.assertTrue(any(0 < a < 255 for a in alpha(img)), f"{name} casts no shadow")
+
+    def test_water_off_the_meadow_has_no_grass_rim(self):
+        from .render_map import render
+        grass = {tuple(int(c[i:i + 2], 16) for i in (1, 3, 5)) for c in WORLD["meadow"]}
+        for map_id in ("route_7", "route_4", "saltmere"):
+            m = json.loads((MAPS / f"{map_id}.json").read_text())
+            img = render(map_id).convert("RGB")
+            found = sum(img.getpixel((x, y)) in grass for x in range(img.width) for y in range(img.height))
+            self.assertEqual(found, 0, map_id)
+
+    def test_plateau_tops_are_textured_and_vary_by_phase(self):
+        from .town_art import CRAGGY, mass_top
+        for name in CRAGGY:
+            tops = [mass_top(name, 0, 0, 0, p).img for p in PHASES]
+            self.assertEqual(len({t.tobytes() for t in tops}), 4, name)
+            self.assertGreaterEqual(len(colours(tops[0])), 4, name)  # flat speckle had 3
+
+    def test_bare_route_ground_is_dressed(self):
+        from .tiles import tile_ids
+        ids = tile_ids()
+        for map_id in ("route_3", "route_4", "route_5", "route_6", "route_7", "route_8", "route_9"):
+            m = json.loads((MAPS / f"{map_id}.json").read_text())
+            l = {x["name"]: x["data"] for x in m["layers"] if "data" in x}
+            bare = {v + 1 for k, v in ids.items() if k.startswith("t_") and "_ground" in k}
+            cells = [i for i, g in enumerate(l["ground"]) if g in bare and not l["objects"][i] and not l["collision"][i]]
+            decals = {v + 1 for k, v in ids.items() if k.startswith(("tufts", "pebbles", "flowers"))}
+            dressed = sum(l["decor"][i] in decals for i in cells)
+            self.assertGreater(dressed, len(cells) * .04, map_id)
+
+    def test_high_towns_snow(self):
+        for map_id in ("gale", "zenith"):
+            props = {p["name"]: p["value"] for p in json.loads((MAPS / f"{map_id}.json").read_text())["properties"]}
+            self.assertEqual(props.get("weather"), "snow", map_id)

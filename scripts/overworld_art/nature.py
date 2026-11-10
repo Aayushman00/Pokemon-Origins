@@ -171,15 +171,16 @@ CREST = (((0, 0, 0), (1, 0, 0)),                                   # rising: 2px
          ((2, 0, 1), (4, 0, 1)))                                   # breaking: two flecks
 
 
-def pond_tile(mask, frame):
+def pond_tile(mask, frame, clear=False):
     """Opaque: meadow, an earth bank, then water. The north bank shades the
     water under it; elsewhere foam laps the shore (lip, lace, recede) and
-    crests rise and break out in the open."""
+    crests rise and break out in the open. `clear` leaves out the meadow, so
+    the bank sits on whatever ground the map has (sand, slate, concrete)."""
     phase = (0, 0)
     bank, water = _shape(mask, phase, salt=.5), _shape(mask, phase, salt=.5, level=165)
     deep = _shape(mask, phase, salt=.5, level=225)
     w, b = WORLD["water"], WORLD["bank"]
-    img = meadow(0).copy()
+    img = Image.new("RGBA", (T, T)) if clear else meadow(0).copy()
     out = img.load()
 
     def shore(x, y):
@@ -293,10 +294,11 @@ def tall_grass(biome, mask, phase, frame):
     return img
 
 
-def tufts(seed):
+def tufts(seed, biome=None):
+    """Three small tufts; off the meadow they take that biome's tall-grass tones."""
     rng = random.Random(f"tufts{seed}")
     img = Image.new("RGBA", (T, T))
-    dark, light = rgba(WORLD["lawn"][2]), rgba(WORLD["lawn"][0])
+    dark, light = (rgba(TALL[biome][2]), rgba(TALL[biome][0])) if biome else (rgba(WORLD["lawn"][2]), rgba(WORLD["lawn"][0]))
     for _ in range(3):
         x, y = rng.randint(2, 11), rng.randint(3, 12)
         for dx, c in ((0, dark), (2, dark), (1, light)):
@@ -510,6 +512,13 @@ def standing_tree(kind):
 
 
 def bush():
+    out = _outline(bush_body())
+    _cast(out)
+    return out
+
+
+def bush_body():
+    """The bush before its outline and shadow, for kits that add their own."""
     leaf = WORLD["leaf"]
     img = Image.new("RGBA", (T, T))
     px = img.load()
@@ -519,6 +528,4 @@ def bush():
             if r < 7.5:
                 lit = -((x - 7.5) * .5 + (y - 7) * .85) / 7.5
                 px[x, y] = rgba(leaf[1 if lit > .45 else 2 if lit > -.1 else 3])
-    out = _outline(img)
-    _cast(out)
-    return out
+    return img

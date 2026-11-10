@@ -656,6 +656,18 @@ def new_tiles():
         for v in (1, 2):
             for mask in range(4):
                 add(f"m_{name}_f{mask}_{v}", mass_face(name, mask & 1, mask & 2, v))
+    # ---- route dressing: rubble tops by 2x2 phase, ponds off the meadow, biome tufts
+    from .town_art import mass_top
+    for name in CRAGGY:
+        for mask in range(8):
+            for px, py in ((1, 0), (0, 1), (1, 1)):
+                add(f"m_{name}_t{mask}_p{px}{py}", mass_top(name, mask & 1, mask & 2, mask & 4, (px, py)))
+    for mask in v2.blob_masks():
+        for f in range(3):
+            add(f"pondc_{mask}_{f}", nature.pond_tile(mask, f, clear=True))
+    for biome in nature.TALL:
+        if biome != "meadow":
+            add(f"tufts_{biome}", nature.tufts(0, biome))
     return out
 
 

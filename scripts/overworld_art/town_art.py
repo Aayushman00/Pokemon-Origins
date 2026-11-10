@@ -11,7 +11,9 @@ from PIL import Image, ImageDraw
 
 from .buildings import HEART, STAR
 from .gym_art import disc, ring, speck
-from .slice_art import T, _outline
+from functools import lru_cache
+
+from .slice_art import T, _outline, edge_colour, leaf_mass, rgb
 from .tiles import Tile, rng
 from .world_palette import LINE, WORLD, outline_for, outline_for
 
@@ -90,20 +92,30 @@ def _sides(t, name, e, w, y0=0, y1=15):
         t.rect(15, y0, 15, y1, outline_for(face))
 
 
-def mass_top(name, n, e, w):
+# Half-buried stones on a plateau top, (cx, cy, r) in a 32px block that wraps.
+RUBBLE = [(5, 5, 3.5), (20, 3, 2.5), (27, 12, 3), (12, 15, 4), (3, 24, 2.5), (21, 24, 3.5), (30, 30, 2), (13, 29, 2)]
+
+
+@lru_cache(None)
+def _rubble(name):
+    """32x32 stone-strewn ground that tiles: stones share the ground's mid
+    tone, so only their lit tops and shaded feet show, as if half buried."""
+    top, face = MASSES[name]
+    img = Image.new("RGBA", (32, 32), (*rgb(top[1]), 255))
+    ramp = [top[0], top[1], top[2], face[1], face[2]]
+    leaf_mass(img, RUBBLE, [ramp] * len(RUBBLE), wrap=True, bumps=.35, caps=False)
+    return img
+
+
+def mass_top(name, n, e, w, phase=(0, 0)):
     """Plateau surface. Open sides show a rim: a hard edge with a lit lip
-    inside it on the north (back) side, side strips east and west."""
+    inside it on the north (back) side, side strips east and west. Natural
+    cliffs carry rubble that runs across a 2x2 block of tiles (`phase`)."""
     top, face = MASSES[name]
     t = Tile(fill=top[1])
-    speck(t, 300 + len(name), 14, [top[0], top[2]])
     if name in CRAGGY:
-        r = rng(310 + len(name))
-        for _ in range(2):  # loose stones: lit top-left, shaded bottom-right
-            x, y = 3 + r(9), 3 + r(9)
-            t.rect(x, y, x + 1, y + 1, top[1])
-            t.set(x, y, top[0])
-            t.rect(x + 1, y + 2, x + 2, y + 2, top[2])
-            t.set(x + 2, y + 1, top[2])
+        t.paste(_rubble(name).crop((phase[0] * T, phase[1] * T, phase[0] * T + T, phase[1] * T + T)))
+    speck(t, 300 + len(name) + 7 * (phase[0] + 2 * phase[1]), 10, [top[0], top[2]])
     if name == "field":
         for x in range(1, 16, 3):
             t.rect(x, 2 + x % 5, x, 8 + x % 5, top[0])
@@ -203,9 +215,42 @@ def plank(vertical):
     return t
 
 
-def prop(draw):
+# Props that stand on the ground: ringed by an outline, raised clear of the tile
+# foot and given a contact shadow. Sky props are ringed but cast nothing on the
+# sky. Rails and wire join tile to tile and stay as drawn.
+STANDING = ("scarecrow", "statue", "post", "net", "buoy", "container", "boulder", "brazier", "shrub", "palm", "pylon",
+            "crag", "spire")
+SKY = ("column", "float")
+
+
+def ring_outline(img):
+    """A 1px outline outside the shape, in each neighbour's material outline.
+    Unlike _outline it keeps the fill, so 1-2px posts and wires survive."""
+    src, out = img.load(), img.copy()
+    dst = out.load()
+    for y in range(T):
+        for x in range(T):
+            if src[x, y][3]:
+                continue
+            near = [src[x + dx, y + dy] for dx, dy in ((0, -1), (-1, 0), (1, 0), (0, 1))
+                    if 0 <= x + dx < T and 0 <= y + dy < T and src[x + dx, y + dy][3] == 255]
+            if near:
+                dst[x, y] = (*rgb(edge_colour("#%02x%02x%02x" % near[0][:3], {(1, 0), (0, 1)})), 255)
+    return out
+
+
+def prop(draw, stand=True, shadow=True):
     t = Tile()
     draw(t)
+    if stand:
+        from .nature import _cast
+        lift = max(0, t.img.getbbox()[3] - (T - 3)) if shadow else 0  # outline row + two shadow rows
+        img = Image.new("RGBA", (T, T))
+        img.alpha_composite(t.img.crop((0, lift, T, T)))
+        img = ring_outline(img)
+        if shadow:
+            _cast(img)
+        t.img, t.px = img, img.load()
     return t
 
 
@@ -282,42 +327,69 @@ def p_brazier(t):
 
 
 def p_shrub(t):
-    disc(t, 8, 9, 5, "#5ea060")
-    disc(t, 6, 8, 3, "#9cc860")
+    from .nature import bush_body
+    t.paste(bush_body())
 
 
 def p_palm(t):
-    t.rect(7, 6, 8, 15, "#84603f")
-    for dx, dy in ((-5, 2), (5, 2), (-4, -1), (4, -1)):
-        t.rect(8 + min(dx, 0), 5 + dy, 8 + max(dx, 0), 5 + dy, "#5ea060")
-    disc(t, 8, 5, 2, "#7cb85c")
+    """Ringed trunk leaning right as it rises, fronds drooping from the crown."""
+    leaf, bark = WORLD["leaf"], WORLD["bark"]
+    for y in range(7, 15):
+        x = 6 + (14 - y) // 4
+        t.rect(x, y, x + 2, y, bark[2] if y % 3 == 0 else bark[1])
+        t.set(x, y, bark[0])
+    d, cx, cy = ImageDraw.Draw(t.img), 9, 5
+    for dx, dy in ((-7, 3), (6, 4), (-5, -2), (5, -3), (-1, -5)):
+        tip = (cx + dx, cy + dy)
+        mid = (cx + dx * .6, cy + dy * .6 - 1)
+        d.line([(cx, cy + 1), mid, (tip[0], tip[1] + 1)], fill=rgb(leaf[3]), width=2)
+        d.line([(cx, cy), mid, tip], fill=rgb(leaf[1]), width=2)
+    disc(t, cx, cy, 1, leaf[0])
 
 
 def p_pylon(t):
-    t.rect(7, 0, 8, 15, "#a4acb8")
-    t.rect(3, 3, 12, 4, "#a4acb8")
-    t.rect(4, 8, 11, 9, "#7c8494")
-    t.set(3, 2, "#68dce0")
-    t.set(12, 2, "#68dce0")
+    """Lattice mast: two splayed legs, cross braces, an arm with glass insulators."""
+    steel = EXTRA_RAMPS["steel"]
+    d = ImageDraw.Draw(t.img)
+    for y0, y1 in ((5, 9), (9, 14)):
+        x0, x1 = 6 - (y0 - 2) // 4, 9 + (y0 - 2) // 4
+        d.line([(x0, y0), (x1 + 1, y1)], fill=rgb(steel[2]))
+        d.line([(x1, y0), (x0 - 1, y1)], fill=rgb(steel[2]))
+    d.line([(6, 2), (3, 14)], fill=rgb(steel[1]), width=2)
+    d.line([(9, 2), (12, 14)], fill=rgb(steel[2]), width=2)
+    t.rect(2, 4, 13, 5, steel[1])
+    t.rect(2, 4, 13, 4, steel[0])
+    for x in (2, 13):
+        t.rect(x, 6, x, 7, "#68dce0")
+
+
+def outcrop(t, name, stones, ramp=None):
+    """Stones (cx, cy, r) in a mass's own tones (or `ramp`), lit top-left, back to front."""
+    top, face = MASSES[name]
+    img = Image.new("RGBA", (T, T))
+    ramp = ramp or [top[0], top[1], top[2], face[1], face[2]]
+    leaf_mass(img, stones, [ramp] * len(stones), bumps=.35, caps=False)
+    t.paste(img)
 
 
 def p_crag(t):
-    for y, (a, b) in enumerate(((7, 8), (6, 9), (5, 10), (4, 11), (3, 12), (2, 13)), 5):
-        t.rect(a, y * 2 - 8, b, y * 2 - 7, "#a4b0d0")
-    t.rect(8, 2, 13, 13, "#5c6c94")
+    """A tall stone leaning on two low ones."""
+    outcrop(t, "mountain", [(8, 6, 3.5), (5, 10, 3.5), (11, 10, 3)])
 
 
 def p_spire(t):
-    for y, (a, b) in enumerate(((7, 8), (6, 9), (6, 10), (5, 10), (4, 11), (4, 12), (3, 12), (2, 13)), 0):
-        t.rect(a, y * 2, b, y * 2 + 1, "#403a42")
-        t.rect(a, y * 2, a + 1, y * 2 + 1, "#6c5c58")
+    """A cooled basalt stack standing out of the lava."""
+    outcrop(t, "basalt", [(8, 3, 2.5), (7, 7, 3.5), (9, 11, 4)], ["#8c7c78", "#6c5c58", "#4c4448", "#3e363c", "#241e28"])
+    for x, y in ((12, 12), (12, 13), (11, 14), (10, 14)):  # lava light on the shaded foot
+        if t.img.getpixel((x, y))[3]:
+            t.set(x, y, "#c8643c")
 
 
 def p_column(t):
-    t.rect(4, 1, 11, 15, "#f2eef2")
-    t.rect(9, 1, 11, 15, "#c8c0d0")
-    t.rect(3, 0, 12, 1, "#f4d870")
-    t.rect(3, 14, 12, 15, "#d8d2e0")
+    t.rect(5, 3, 10, 12, "#f2eef2")
+    t.rect(9, 3, 10, 12, "#c8c0d0")
+    t.rect(4, 2, 11, 2, "#f4d870")
+    t.rect(4, 13, 11, 13, "#d8d2e0")
 
 
 def p_float(t):
@@ -359,7 +431,7 @@ def two_tall(colors, glow):
     def stem(t):
         t.rect(7, 0, 8, 12, colors[1])
         t.rect(5, 13, 10, 15, colors[0])
-    return prop(top), prop(stem)
+    return prop(top, False), prop(stem, False)
 
 
 def p_pylon_top(t):
@@ -659,7 +731,7 @@ def town_tiles():
         for frame in (0, 1):
             out.append((f"lava_{mask}_{frame}", lava(frame, mask)))
     out += [("sky0", sky(0)), ("sky1", sky(1)), ("plank_h", plank(False)), ("plank_n", plank(True))]
-    out += [(f"o_{k}", prop(v)) for k, v in PROPS.items()]
+    out += [(f"o_{k}", prop(v, k in STANDING + SKY, k in STANDING)) for k, v in PROPS.items()]
     for name, cols, glow in (("star", ("#504888", "#6c64a4"), "#f4e8a0"), ("lantern", ("#88869c", "#aeacb8"), "#fff4c0")):
         top, stem = two_tall(cols, glow)
         out += [(f"o_{name}_top", top), (f"o_{name}_base", stem)]

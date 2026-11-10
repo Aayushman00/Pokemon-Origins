@@ -12,8 +12,8 @@ from scripts import gen_overworld_placeholders as base
 from .gym_rooms import ROOMS
 from .tiles_v2 import blob_mask
 from .town_art import CRAGGY, LAYOUTS, town_buildings
-from .world_maps import (BADGES, BORDER, GYMS, ID, NAMES, PEOPLE, PATH, ROUTES, SOLID, Town, autotile_paths, door, finish, fringe, grass_runs, hashed,
-                         lone_tree, paint, say, trainer_script)
+from .world_maps import (BADGES, BORDER, GYMS, ID, NAMES, NAMES_BY_ID, PEOPLE, PATH, ROUTES, SOLID, Town, autotile_paths, door, dress_grass, finish,
+                         fringe, grass_runs, hashed, lone_tree, paint, say, trainer_script)
 
 COMMON = {".": "walk", ",": "road", "p": "plaza", "g": "grass", "=": "stairs", "k": "plank", "b": "plank", "B": "bld", "D": "bld",
           "A": "bld", "T": "tree", "~": "water", "l": "lava", "L": "lamp", "f": "fence", "h": "hedge", "n": "bench", "u": "well",
@@ -43,7 +43,9 @@ def terrain(m, grid, biome, legend, stairs="ns"):
     void, lava = group("void"), group("lava")
     meadow = biome == "meadow"
     for (x, y), kind in cells.items():
-        if not meadow and kind not in ("water", "stone", "plank"):
+        if not meadow and kind == "water":  # the bank sits on this biome's ground, not on meadow
+            m.put("decor", x, y, ID[NAMES_BY_ID[m.ground[m.i(x, y)] - 1].replace("pond_", "pondc_")])
+        if not meadow and kind not in ("stone", "plank"):
             tile = ID[f"t_{biome}_ground{hashed(x, y) % 4}"]
             m.put("ground", x, y, tile)
             m.under[x, y] = tile
@@ -78,7 +80,8 @@ def terrain(m, grid, biome, legend, stairs="ns"):
                 if not m.decor[m.i(x, y + 1)]:  # the face shades the ground at its foot
                     m.put("decor", x, y + 1, ID["mass_shadow"])
             else:
-                m.put("ground", x, y, ID[f"m_{name}_t{open_at(g, x, y - 1) | e << 1 | w << 2}"], SOLID)
+                phase = f"_p{x % 2}{y % 2}" if name in CRAGGY and (x % 2 or y % 2) else ""
+                m.put("ground", x, y, ID[f"m_{name}_t{open_at(g, x, y - 1) | e << 1 | w << 2}{phase}"], SOLID)
     for x, y in void:
         m.put("ground", x, y, ID[f"t_{biome}_drop"] if open_at(void, x, y - 1) else ID[f"sky{int(hashed(x, y) % 7 == 0)}"], SOLID)
     for x, y in lava:
@@ -145,7 +148,7 @@ TOWNS = {
               ("apprentice", 6, 10, "youngster", "down", "Mr. Dray says the odds of me passing are ninety-one percent! He says that to everyone.")]),
     "gale": dict(
         biome="cliff", leader="skye_corvin", props=[("clouds", True), ("ambient", "leaves")], links={"south": "route_6", "west": "route_7"}, onward="west",
-        legend={"v": "void", "R": "obj:rail", "O": "obj:boulder", "o": "emblem"},
+        legend={"v": "void", "R": "obj:rail", "O": "obj:boulder", "o": "emblem"}, weather="snow",
         signs=[("town_sign", 12, 7, "GALE SPIRE - Hold on to your hat."),
                ("gym_sign", 15, 7, "GALE GYM - Leader: Skye Corvin. The wind does not stop."),
                ("route_sign", 2, 8, "ROUTE 7 - West into the Starfall range.")],
@@ -173,7 +176,7 @@ TOWNS = {
               ("widow", 25, 11, "old_woman", "down", "Eight badges is a lot of road, dear. Sit by the fire a minute.")]),
     "zenith": dict(
         biome="marble", leader=None, props=[("clouds", True)], links={"east": "route_9"}, onward=None,
-        legend={"v": "void", "X": "road"}, patch=[(0, 3, "v"), (0, 4, "v")],
+        legend={"v": "void", "X": "road"}, patch=[(0, 3, "v"), (0, 4, "v")], weather="snow",
         signs=[("town_sign", 19, 11, "ZENITH SUMMIT - Every road in Aurelia ends here."),
                ("league_sign", 15, 6, "POKEMON LEAGUE - Eight badges. No way back once you begin.")],
         npcs=[("veteran", 11, 7, "cooltrainer_m", "right", "I've stood at this door nine times. Stock up in the lobby. There's no second chance past it."),
@@ -213,6 +216,8 @@ def town(tid):
     m = Town(30, 20, base.GRASS)
     links = [p for side, other in spec["links"].items() for p in ((f"connect_{side}", other), (f"connect_{side}_offset", 0))]
     m.props = [("nameKey", tid), *spec["props"], ("border", BORDERS[spec["biome"]]), *links]
+    if spec.get("weather"):
+        m.props.append(("weather", spec["weather"]))
     terrain(m, grid, spec["biome"], spec["legend"], spec.get("stairs", "ns"))
     for _, x0, y0, img in town_buildings(tid):
         for r in range(img.height // 16):
@@ -253,6 +258,8 @@ def town(tid):
         hollow_lab_door(m)
     if spec["biome"] == "meadow":
         autotile_paths(m)
+    else:
+        dress_grass(m, spec["biome"])
     return finish(m.build(), m)
 
 
@@ -295,6 +302,8 @@ def route(rid):
     if biome == "meadow":
         autotile_paths(m)
         fringe(m, r["grid"])
+    else:
+        dress_grass(m, biome)
     return finish(m.build(), m)
 
 
