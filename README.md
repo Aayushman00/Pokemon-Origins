@@ -11,7 +11,7 @@ Pokemon-Origins/
 ├── battle-engine/         # FastAPI combat microservice
 ├── database/              # SQL seed / schema dumps + migrations
 ├── docs/design/           # STYLE_GUIDE + ANIMATION_GUIDE
-├── docs/superpowers/      # Working plans / specs for past feature phases
+├── docs/superpowers/      # Overworld architecture + art spec
 ├── scripts/               # Cross-platform start/setup helpers
 ├── package.json           # Root workspace + one-command `npm run dev`
 ├── docker-compose.yml     # MySQL (default) + optional full stack
