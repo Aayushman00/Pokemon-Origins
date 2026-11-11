@@ -104,9 +104,10 @@ function attachPlayground(io, pool) {
 			lastMessageAt.set(trainerId, now);
 
 			const msg = { trainerId, name, text: body, ts: now, broadcast: isAllBroadcast };
-			chatRing.push(msg);
-
 			if (isAllBroadcast) {
+				// Only room-wide messages are kept for room:init history: nearby chat
+				// must not be replayed to players who were out of earshot or join later.
+				chatRing.push(msg);
 				io.to(ROOM_ID).emit("chat:message", msg);
 				return;
 			}

@@ -224,14 +224,17 @@ describe("attachPlayground chat wiring", () => {
 		assert.equal(sent[0].payload.broadcast, true);
 	});
 
-	it("room:init includes a messages array from the chat ring", () => {
+	it("room:init replays everyone-chat history but never nearby messages", () => {
 		const { io, connect } = createFakeIo();
 		attachPlayground(io, fakePool);
 
 		const { socket, handlers, emits } = createFakeSocket({ trainerId: 4, name: "Gary" });
 		connect(socket);
+		const { socket: socket3, handlers: handlers3 } = createFakeSocket({ trainerId: 7, name: "Rose" });
+		connect(socket3);
 
-		handlers["chat:send"]("hi there");
+		handlers["chat:send"]("psst nearby only");
+		handlers3["chat:send"]("/all hi there");
 
 		const { socket: socket2, emits: emits2 } = createFakeSocket({ trainerId: 5, name: "May" });
 		connect(socket2);
@@ -240,6 +243,7 @@ describe("attachPlayground chat wiring", () => {
 		assert.ok(initEmit);
 		assert.ok(Array.isArray(initEmit.payload.messages));
 		assert.ok(initEmit.payload.messages.some((m) => m.text === "hi there"));
+		assert.ok(!initEmit.payload.messages.some((m) => m.text === "psst nearby only"));
 
 		// Sanity: the first socket's own room:init also carried a messages array.
 		const firstInit = emits.find((e) => e.event === "room:init");
