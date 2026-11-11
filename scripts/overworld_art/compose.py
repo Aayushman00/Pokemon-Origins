@@ -189,7 +189,7 @@ def despeckle(res):
             if isinstance(key, str) and key.startswith("lit:") and key not in near:
                 out[y][x] = "edge:" + key[4:]  # a lone sel-out pixel reads as a speck: plain edge
                 continue
-            if not isinstance(key, tuple):
+            if not isinstance(key, tuple) or key[0] == "i":  # an eye is single-pixel detail on purpose
                 continue
             if key in near:
                 continue

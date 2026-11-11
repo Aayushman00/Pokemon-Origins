@@ -13,7 +13,7 @@ from PIL import Image
 
 from .characters import ROSTER
 from .palette import OUTLINE, RAMPS, WHITE
-from .sheets import COLUMNS, ROWS, is_manual
+from .sheets import COLUMNS, ROWS
 from .world_palette import outline_for
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -78,30 +78,12 @@ class SheetTests(unittest.TestCase):
         self.assertTrue(b > r > g and max(r, g, b) < 80, "outline should be a dark cool plum")
 
     def test_right_row_mirrors_left(self):
-        """Hand-lit heroes mirror the shape only: their right row keeps the top-left light."""
-        manual = {c["id"] for c in ROSTER if is_manual(c)}
         for cid, img in self.sheets.items():
             left = img.crop((0, 64, 128, 96))
             right = img.crop((0, 96, 128, 128))
             for c in range(8):
                 lf = left.crop((c * 16, 0, c * 16 + 16, 32)).transpose(Image.FLIP_LEFT_RIGHT)
-                rf = right.crop((c * 16, 0, c * 16 + 16, 32))
-                if cid in manual:
-                    lf, rf = lf.getchannel("A"), rf.getchannel("A")
-                self.assertEqual(list(lf.get_flattened_data()), list(rf.get_flattened_data()), f"{cid} col {c}")
-
-    def test_hand_lit_right_row_is_lit_from_the_left(self):
-        """Mirroring would move the light to the right; drawn, it stays on the left:
-        the brightness-weighted centre sits left of the mirrored frame's."""
-        def light_x(img):
-            p = img.load()
-            px = [(sum(p[x, y][:3]), x) for y in range(32) for x in range(16) if p[x, y][3]]
-            return sum(v * x for v, x in px) / sum(v for v, _ in px)
-
-        for cid in (c["id"] for c in ROSTER if is_manual(c)):
-            right = self.sheets[cid].crop((0, 96, 16, 128))
-            mirrored = self.sheets[cid].crop((0, 64, 16, 96)).transpose(Image.FLIP_LEFT_RIGHT)
-            self.assertLess(light_x(right), light_x(mirrored), cid)
+                self.assertEqual(list(lf.get_flattened_data()), list(right.crop((c * 16, 0, c * 16 + 16, 32)).get_flattened_data()), f"{cid} col {c}")
 
     def test_feet_anchor_on_the_tile(self):
         """Every frame stands on the cell's last row: no floating or clipped feet."""

@@ -52,6 +52,67 @@ class Players(unittest.TestCase):
         for cid in ("player", "player_f"):
             self.assertNotIn("c", BY_ID[cid]["mats"], cid)
 
+    def test_hero_eyes_have_the_glint_above_the_iris(self):
+        """Despeckle once swapped the 1px glint and iris; every view must keep the glint on top."""
+        from .palette import RAMPS, WHITE
+        white = tuple(int(WHITE[i:i + 2], 16) for i in (1, 3, 5))
+        iris = tuple(int(RAMPS["iris_midnight"][-1][i:i + 2], 16) for i in (1, 3, 5))
+        for row in (0, 2, 3):  # down, left, right: the back view has no face
+            img = stand("player", row)
+            glints = [(x, y) for y in range(32) for x in range(16) if img.getpixel((x, y))[:3] == white]
+            self.assertTrue(glints, f"row {row}: no eye glint")
+            for x, y in glints:
+                self.assertEqual(img.getpixel((x, y + 1))[:3], iris, f"row {row}: no iris under the glint at {x},{y}")
+
+    def test_hero_side_strides_reach_past_the_stance(self):
+        """Profile walk frames split the feet wider than standing: front foot out, back heel up."""
+        sheet = build_sheet(BY_ID["player"])
+        for row in (2, 3):
+            def feet(col):
+                a = sheet.crop((col * 16, row * 32, col * 16 + 16, row * 32 + 32)).getchannel("A").load()
+                xs = [x for y in (29, 30) for x in range(16) if a[x, y]]
+                return max(xs) - min(xs) + 1
+            for col in (1, 2):
+                self.assertGreaterEqual(feet(col) - feet(0), 4, f"row {row} col {col}")
+
+    def test_hero_side_eye_is_on_every_open_eyed_frame(self):
+        """Glint over iris in every side frame but the blink, at the same spot on the face."""
+        from .palette import RAMPS, WHITE
+        white = tuple(int(WHITE[i:i + 2], 16) for i in (1, 3, 5))
+        iris = tuple(int(RAMPS["iris_midnight"][-1][i:i + 2], 16) for i in (1, 3, 5))
+        sheet = build_sheet(BY_ID["player"])
+        for row in (2, 3):
+            for col in range(8):
+                if col == 6:  # blink
+                    continue
+                f = sheet.crop((col * 16, row * 32, col * 16 + 16, row * 32 + 32))
+                glints = [(x, y) for y in range(32) for x in range(16) if f.getpixel((x, y))[:3] == white]
+                self.assertEqual(len(glints), 1, f"row {row} col {col}: {glints}")
+                x, y = glints[0]
+                self.assertEqual(f.getpixel((x, y + 1))[:3], iris, f"row {row} col {col}")
+
+    def test_hero_profile_face_is_not_pinched(self):
+        """Side views: 5+ px of skin across the eye row, 1+ px before the eye and
+        3+ px behind it, and skin on at least half the head's rows."""
+        from .palette import RAMPS, WHITE
+        hexs = lambda p: "#%02x%02x%02x" % p[:3]
+        skin = set(RAMPS["skin_hero"])
+        for row in (2, 3):
+            img = stand("player", row)
+            px = lambda x, y: hexs(img.getpixel((x, y)))
+            glint = next((x, y) for y in range(32) for x in range(16) if px(x, y) == WHITE)
+            gx, gy = glint
+            ahead = range(gx - 1, -1, -1) if row == 2 else range(gx + 1, 16)  # toward the facing
+            behind = range(gx + 1, 16) if row == 2 else range(gx - 1, -1, -1)
+            run = lambda xs: next((n for n, x in enumerate(xs) if px(x, gy) not in skin), len(xs))
+            self.assertGreaterEqual(run(ahead), 1, f"row {row}: no skin before the eye")
+            self.assertGreaterEqual(run(behind), 3, f"row {row}: under 3 px of cheek behind the eye")
+            self.assertGreaterEqual(run(ahead) + 1 + run(behind), 5, f"row {row}: face under 5 px wide")
+            a = img.getchannel("A").load()
+            head = [y for y in range(32) if y < 21 and any(a[x, y] for x in range(16))]
+            faced = [y for y in head if any(px(x, y) in skin for x in range(16))]
+            self.assertGreaterEqual(len(faced) * 2, len(head), f"row {row}: face under half the head")
+
     def test_players_are_not_clones(self):
         self.assertNotEqual(stand("player").tobytes(), stand("player_f").tobytes())
 
