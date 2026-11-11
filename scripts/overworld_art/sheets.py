@@ -34,8 +34,10 @@ def _drop(canvas, rows):
     return [["."] * W for _ in rows] + kept
 
 
-def _lead(canvas, below):
-    """Shift rows above `below` one pixel toward the facing (left)."""
+def _lead(canvas, below, direction="left"):
+    """Shift rows above `below` one pixel toward the facing."""
+    if direction == "right":
+        return [["."] + r[:-1] if i < below else r for i, r in enumerate(canvas)]
     return [r[1:] + ["."] if i < below else r for i, r in enumerate(canvas)]
 
 
@@ -93,17 +95,29 @@ def frame_keys(char, direction, column):
     canvas = stack(body, *under, *head, *over, arms_up)
     if column == "blink":
         canvas = blink(canvas)
-    canvas = _slim_head(canvas, direction)
-    canvas = _build(canvas, char.get("build"), direction)
+    manual = is_manual(char)
+    if not manual:  # hand-shaded heroes are drawn at their final size
+        canvas = _slim_head(canvas, direction)
+        canvas = _build(canvas, char.get("build"), direction)
     if column in ("walkA", "walkB"):
         canvas = _drop(canvas, {TORSO_ROW})
     elif column.startswith("run"):
-        if direction == "left":
-            canvas = _lead(canvas, CHIN_ROW + 1)
+        if direction in ("left", "right"):
+            canvas = _lead(canvas, CHIN_ROW + 1, direction)
         canvas = _drop(canvas, {CHIN_ROW, TORSO_ROW})
     if char.get("build") != "child":  # teens grow by the shin only: FRLG-height heroes, ~23 rows
         canvas = _stretch(canvas, GROWN_ROWS[1:] if char.get("build") in ("heavy", "teen") else GROWN_ROWS)
-    return despeckle(shade(outline(canvas)))
+    return despeckle(shade(outline(canvas), manual))
+
+
+def is_manual(char):
+    """Hand-shaded hero: its own tones, and a right row lit from the top-left
+    like the rest (a mirrored left row would be lit from the top-right)."""
+    return char.get("shade") == "manual"
+
+
+def drawn_rows(char):
+    return ROWS if is_manual(char) else ROWS[:3]
 
 
 MAX_COLOURS = 15  # + transparent = one 16-colour GBA palette
@@ -120,7 +134,7 @@ def edge_colours(char, keys=None):
     face) take the nearest dark colour the sheet already has, OUTLINE included,
     so they stay close in hue for free. Decided once per sheet: no frame differs."""
     mats = char["mats"]
-    keys = keys if keys is not None else [frame_keys(char, d, c) for d in ROWS[:3] for c in COLUMNS]
+    keys = keys if keys is not None else [frame_keys(char, d, c) for d in drawn_rows(char) for c in COLUMNS]
     flat = [k for g in keys for row in g for k in row if k is not None]
     used = Counter(k for k in flat if isinstance(k, str) and ":" in k)
     edges = {k: key_colour(k, mats) for k in used}
@@ -155,11 +169,13 @@ def frame(char, direction, column):
 
 def build_sheet(char):
     sheet = Image.new("RGBA", (SHEET_W, SHEET_H), (0, 0, 0, 0))
-    keys = {(d, c): frame_keys(char, d, c) for d in ROWS[:3] for c in COLUMNS}
+    rows = drawn_rows(char)
+    keys = {(d, c): frame_keys(char, d, c) for d in rows for c in COLUMNS}
     edges = edge_colours(char, list(keys.values()))
     for c, column in enumerate(COLUMNS):
-        for r, direction in enumerate(ROWS[:3]):
+        for r, direction in enumerate(rows):
             sheet.paste(resolve(keys[direction, column], char["mats"], edges), (c * W, r * H))
-        left = sheet.crop((c * W, 2 * H, (c + 1) * W, 3 * H))
-        sheet.paste(ImageOps.mirror(left), (c * W, 3 * H))
+        if len(rows) == 3:
+            left = sheet.crop((c * W, 2 * H, (c + 1) * W, 3 * H))
+            sheet.paste(ImageOps.mirror(left), (c * W, 3 * H))
     return sheet

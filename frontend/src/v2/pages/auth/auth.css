@@ -5,7 +5,7 @@
 	max-width: 980px;
 }
 
-@media (min-width: 860px) {
+@media (min-width: 820px) {
 	.auth {
 		grid-template-columns: minmax(0, 1fr) 420px;
 		min-height: calc(100vh - var(--topbar-h) - 96px);

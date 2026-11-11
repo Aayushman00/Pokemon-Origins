@@ -130,6 +130,40 @@ def mass_top(name, n, e, w, phase=(0, 0)):
     return t
 
 
+def _courses(t, r, face, rows):
+    """Courses of rock blocks between the given (top, bottom) rows."""
+    for y0, y1 in rows:
+        x = -r(4)
+        while x < 16:
+            x1 = x + 3 + r(5)
+            bottom = y1 - r(2)  # each block ends at its own height: no ruled joint
+            t.rect(max(0, x), bottom + 1, min(15, x1), bottom + 1, face[2])
+            t.rect(max(0, x + 1), y0, min(15, x + 2), y0, face[0])  # lit top-left of the block
+            if x1 < 16:
+                t.rect(x1, y0, x1, bottom, face[2])  # crack to the next block
+            x = x1
+
+
+def mass_face_tall(name, e, w, variant=0):
+    """A craggy south face two tiles tall, for plateaus deep enough to show one:
+    the lit lip, four courses of rock, the base line. Returns (upper, lower)."""
+    top, face = MASSES[name]
+    t = Tile(T, 2 * T, fill=face[1])
+    t.rect(0, 0, 15, 1, top[1])
+    t.rect(0, 2, 15, 2, top[0])
+    t.rect(0, 3, 15, 3, face[2])
+    _courses(t, rng(700 + len(name) + 97 * variant), face, ((4, 8), (10, 14), (16, 21), (23, 28)))
+    t.rect(0, 30, 15, 30, face[2])
+    _sides(t, name, e, w, 0, 31)
+    t.rect(0, 31, 15, 31, outline_for(face))
+    halves = []
+    for y in (0, T):
+        half = Tile()
+        half.paste(t.img.crop((0, y, T, y + T)))
+        halves.append(half)
+    return tuple(halves)
+
+
 def mass_face(name, e, w, variant=0):
     """The south face, one tile tall: the plateau's lit lip (rows 0-2), shade
     under it, two courses of rock blocks, a dark base line. The ground below
@@ -142,16 +176,7 @@ def mass_face(name, e, w, variant=0):
         t.rect(0, 0, 15, 1, top[1])
         t.rect(0, 2, 15, 2, top[0])
         t.rect(0, 3, 15, 3, face[2])
-        for y0, y1 in ((4, 8), (10, 12)):  # two courses of rock
-            x = -r(4)
-            while x < 16:
-                x1 = x + 3 + r(5)
-                bottom = y1 - r(2)  # each block ends at its own height: no ruled joint
-                t.rect(max(0, x), bottom + 1, min(15, x1), bottom + 1, face[2])
-                t.rect(max(0, x + 1), y0, min(15, x + 2), y0, face[0])  # lit top-left of the block
-                if x1 < 16:
-                    t.rect(x1, y0, x1, bottom, face[2])  # crack to the next block
-                x = x1
+        _courses(t, r, face, ((4, 8), (10, 12)))  # two courses of rock
         t.rect(0, 14, 15, 14, face[2])
     else:
         for x in range(0, 16, 3):
@@ -512,7 +537,13 @@ EXTRA_RAMPS = {
     "night": ["#a890f0", "#6c58c0", "#4c3c98", "#342878", "#201c50"], "night_wall": ["#8c84b4", "#6c64a4", "#504888", "#3a3478"],
     "forge": ["#6c5c58", "#4c4448", "#3e363c", "#302a30", "#241e28"], "forge_wall": ["#7c6c64", "#5a5258", "#403a42", "#302a30"],
     "gold": ["#fff4c0", "#f4d870", "#dcb048", "#b88c38", "#7c5e2c"], "marble": ["#ffffff", "#f2eef2", "#d8d2e0", "#b0a8bc"],
+    "timber_wall": ["#e4b880", "#cc9860", "#a87044", "#7e5038"], "stone_wall": ["#e0ded6", "#c2c0b8", "#9c9a94", "#787670"],
+    "whitewash": ["#ffffff", "#eef3f5", "#c6d4dc", "#94a8b8"],
 }
+# What a town's houses are built of. Towns with a themed Gym build in the same material;
+# Centers and Marts stay cream everywhere, so a player knows them on sight.
+HOME_WALLS = {**{town: look[1] for town, look in GYM_LOOK.items()},
+              "hearthfield": "timber_wall", "ironbrook": "stone_wall", "saltmere": "whitewash"}
 ramp_of = lambda name: EXTRA_RAMPS.get(name) or WORLD[name]
 
 
@@ -593,9 +624,9 @@ def service(kind, cols, rows, door):
     return _outline(img)
 
 
-def home(town_roof, cols, rows, door, seed):
+def home(town_roof, cols, rows, door, seed, wall="wall"):
     win = [c for c in range(1, cols - 1) if c != door][:2]
-    img, _, _ = shell(cols, rows, town_roof, "wall", door, win, chimney=(cols - 2 if seed % 2 else 1))
+    img, _, _ = shell(cols, rows, town_roof, wall, door, win, chimney=(cols - 2 if seed % 2 else 1))
     return _outline(img)
 
 
@@ -736,7 +767,7 @@ def town_buildings(town):
         elif label == "V":
             img = tutor(cols, rows, door)
         else:
-            img = home(roof, cols, rows, door, n)
+            img = home(roof, cols, rows, door, n, HOME_WALLS[town])
         out.append((f"bld_{town}_{n}", x0, y0, img))
     if town == "hearthfield":
         out.append(("bld_hearthfield_mill", 24, 1, windmill()))
@@ -773,6 +804,8 @@ def town_tiles():
             for r in range(img.height // T):
                 for c in range(img.width // T):
                     out.append((f"{name}_{c}_{r}", img.crop((c * T, r * T, (c + 1) * T, (r + 1) * T))))
+    from .nature import ledge  # the meadow ledge, in Gale's stone
+    out += [(f"ledge_cliff_{part}", ledge(part, BIOMES["cliff"][0], MASSES["mountain"][1])) for part in "lmr"]
     return out
 
 

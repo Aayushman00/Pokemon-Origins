@@ -19,9 +19,19 @@ Pokémon type colors are reserved for Pokémon data (dex accents, move badges) �
 
 ## Typography
 
-- `--font-pixel` (`Press Start 2P`, loaded in `index.html`): headings, menus, buttons, HUD. Small sizes (0.6–0.9rem); it is dense.
-- `--font-body`: longer copy, form input values.
-- `.font-pixel` utility applies the pixel font.
+Three faces, all tokens in `tokens.css`, loaded in `index.html`:
+
+- `--font-pixel` (`DotGothic16`): menus, buttons, HUD, labels. `.font-pixel` applies it.
+- `--font-display` (`Pixelify Sans`): big titles only. Its small sizes blur 5/S and C/O.
+- `--font-read` (`Atkinson Hyperlegible`): longer copy, chat, form values. `.read` applies it.
+
+Sizes come from the `--fs-*` scale. `--fs-xs` (13px) is the floor for anything a player has to read; text sized in `cqw` needs a `clamp()` floor of 11px or more, because on a phone the floor is the real size.
+
+## Layout tokens
+
+- Breakpoints: `640px`, `820px`, `1000px`. Nothing else, except the battle side rail at `1200px`.
+- `--tap`: smallest height of a compact control. 36px with a mouse, 44px on touch (`pointer: coarse`). Use it instead of a literal `min-height`.
+- `--z-*`: stacking order (`overlay` 20, `topbar` 60, `hovercard` 70, `modal` 80, `toast` 90, `drag` 95, `skip` 100). Values under 10 stay local to one screen.
 
 ## Primitives (`frontend/src/v2/ui/`)
 
@@ -30,9 +40,10 @@ Pokémon type colors are reserved for Pokémon data (dex accents, move badges) �
 - `MenuList` (`MenuList.jsx`): GBA-style ▶-cursor menu, used on the title screen and `AppShell` START menu.
 - `DialogueBox` (`DialogueBox.jsx`): typewriter dialogue/log box, shared by battle and playground chat.
 - `Modal` (`Modal.jsx`), `Tabs` (`Tabs.jsx`), `Toast` (`Toast.jsx`): overlay/nav/feedback primitives.
-- `Bars` (`Bars.jsx`), `Badges` (`Badges.jsx`), `PartyRow` (`PartyRow.jsx`), `PixelAvatar` / `PixelTrainer`, `TrainerStats` / `TrainerHoverCard`: game-data display primitives.
-- Layout chrome: `AppShell.jsx` — slim top bar with brand crest + the START menu (site-wide nav: Hub, Playground, Pokédex, Trainer card).
-- CSS classes: `.frame` / `.panel` (see `Panel` variants above), `.pixel-btn` / `.pixel-btn--primary`, `.menu-row` / `.menu-row--active` (▶ cursor), `.bg-scanlines`.
+- `MenuIcon` (`MenuIcon.jsx`): 8x8 one-colour glyphs for menu rows and item categories; pass as a `MenuList` item `icon`.
+- `Bars` (`Bars.jsx`), `Badges` (`Badges.jsx`), `PartyRow` (`PartyRow.jsx`), `PixelTrainer` (the overworld sprite as an SVG) / `PixelAvatar` (its head crop; no separate avatar art), `TrainerStats` / `TrainerHoverCard`: game-data display primitives.
+- Layout chrome: `AppShell.jsx` — slim top bar with brand crest, your avatar, day/night, and START. The START menu is the only site nav; do not add links to the top bar.
+- CSS classes: `.frame` / `.panel` (see `Panel` variants above), `.btn` (+ `--primary` / `--go` / `--danger` / `--navy`, `--sm` / `--lg`), `.menu__item` (▶ cursor).
 
 ## Rules
 

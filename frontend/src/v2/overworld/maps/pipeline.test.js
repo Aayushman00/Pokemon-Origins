@@ -153,7 +153,7 @@ describe("validateMaps", () => {
 	it("rejects someone nobody can walk up to", () => {
 		const raw = load();
 		const map = raw.dawnbrook;
-		for (const [x, y] of [[14, 6], [16, 6], [15, 5], [15, 7]]) paintCell(map, x, y, 1);
+		for (const [x, y] of [[14, 7], [16, 7], [15, 6], [15, 8]]) paintCell(map, x, y, 1);
 		expectError(raw, /dawnbrook.*old_woman.*cannot be talked to/);
 	});
 	it("rejects a trainer who can be walked around", () => {
@@ -175,6 +175,12 @@ describe("validateMaps", () => {
 		raw = load();
 		raw.route_1.properties = raw.route_1.properties.filter((p) => p.name !== "entry");
 		expectError(raw, /route_1.*entry/);
+	});
+	it("rejects a route whose road walks round all its tall grass", () => {
+		const raw = load();
+		const zones = layer(raw.route_1, "encounters");
+		zones.objects = zones.objects.filter((o) => o.y / 16 < 4 || o.y / 16 > 6); // the strip across the north road
+		expectError(raw, /route_1.*tall grass/);
 	});
 	it("rejects an encounter zone without a table", () => {
 		const raw = load();

@@ -823,12 +823,12 @@
       {
        "name": "targetX",
        "type": "int",
-       "value": 21
+       "value": 20
       },
       {
        "name": "targetY",
        "type": "int",
-       "value": 17
+       "value": 24
       },
       {
        "name": "facing",

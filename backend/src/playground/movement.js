@@ -44,7 +44,8 @@ const SPAWN_RADIUS_PX = 2 * TILE_PX;
 
 /**
  * Random tile on the plaza, within SPAWN_RADIUS_PX of the room center (the
- * map keeps that circle open). Keeps new trainers from stacking on one tile
+ * fountain covers most of it; the client steps a blocked spawn onto the
+ * nearest open tile, see playgroundGame.js nearestOpen). Keeps new trainers from stacking on one tile
  * while staying close enough (2 x 32 < CHAT_RADIUS_PX) that everyone who just
  * joined can hear each other.
  */

@@ -91,6 +91,24 @@
 
 	--maxw: 1200px;
 	--topbar-h: 56px;
+
+	/* Smallest height of a compact control; grows to a finger-sized 44px on touch (below). */
+	--tap: 36px;
+
+	/* Stacking order, lowest to highest. Anything under 10 is local to one screen. */
+	--z-overlay: 20; /* full-screen battle over the overworld */
+	--z-topbar: 60;
+	--z-hovercard: 70;
+	--z-modal: 80;
+	--z-toast: 90;
+	--z-drag: 95;
+	--z-skip: 100;
+}
+
+@media (pointer: coarse) {
+	:root {
+		--tap: 44px;
+	}
 }
 
 /* Night: the same world after sundown. Surfaces go deep slate, text goes

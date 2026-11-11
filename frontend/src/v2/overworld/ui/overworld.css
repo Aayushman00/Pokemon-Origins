@@ -5,7 +5,7 @@
 	align-items: stretch;
 	height: calc(100vh - var(--topbar-h, 56px));
 	min-height: 320px;
-	background: #000;
+	background: var(--c-navy-deep);
 }
 .ow__viewport {
 	flex: 1 1 auto;
@@ -31,13 +31,13 @@
 	display: grid;
 	place-items: center;
 	margin: 0;
-	color: #fff;
-	font-size: 0.7rem;
+	color: var(--c-on-navy);
+	font-size: var(--fs-sm);
 }
 .ow__battle {
 	position: fixed;
 	inset: 0;
-	z-index: 20;
+	z-index: var(--z-overlay);
 	overflow: auto;
 	background: var(--bg, #101418);
 }
@@ -49,9 +49,14 @@
 	flex-direction: column;
 	min-width: 38%;
 	padding: 6px;
+	/* Scales with the stage like the dialogue box, so it reads on a phone and never dwarfs the map. */
+	font-size: min(var(--fs-lg), 5.5cqw);
 }
 .ow__menu-item {
-	padding: 4px 8px 4px 18px;
+	display: flex;
+	align-items: center;
+	gap: 0.45em;
+	padding: 0.25em 0.5em;
 	border: 0;
 	background: none;
 	color: inherit;
@@ -59,10 +64,12 @@
 	text-align: left;
 	cursor: pointer;
 }
-.ow__menu-item[aria-current="true"]::before {
-	content: "\25B6";
-	position: absolute;
-	margin-left: -14px;
+.ow__menu-item[aria-current="true"] {
+	background: rgba(243, 198, 75, 0.25);
+}
+.ow__menu-item .menu-icon {
+	width: 1em;
+	height: 1em;
 }
 .ow__dialogue {
 	position: absolute;
@@ -87,9 +94,10 @@
 	left: 4px;
 	margin: 0;
 	padding: 2px 4px;
-	background: rgba(0, 0, 0, 0.6);
-	color: #9f9;
-	font-size: 10px;
+	background: var(--c-navy-deep);
+	color: var(--c-on-navy);
+	font-size: var(--fs-xs);
+	opacity: 0.85;
 	pointer-events: none;
 }
 .ow__bar {
@@ -98,10 +106,20 @@
 	gap: 12px;
 	align-items: center;
 	justify-content: space-between;
-	padding: 6px 10px;
-	background: #111;
-	color: #ccc;
-	font-size: 0.55rem;
+	padding: var(--s-2) var(--s-3);
+	background: var(--c-navy);
+	border-top: var(--px) solid var(--c-navy-deep);
+	color: var(--c-on-navy);
+	font-size: var(--fs-xs);
+}
+.ow__bar > span {
+	margin-right: auto;
+}
+@media (pointer: coarse) {
+	/* Keyboard hints mean nothing on a phone; the pad below does the job. */
+	.ow__bar > span {
+		visibility: hidden;
+	}
 }
 .ow .pad {
 	margin: 0;
@@ -117,9 +135,9 @@
 	font-size: min(3em, 8cqw);
 	line-height: 1.2;
 	white-space: nowrap;
-	background: #fbf2dc;
-	color: #26223a;
-	border: 3px solid #26223a;
+	background: var(--c-paper);
+	color: var(--c-ink);
+	border: var(--px) solid var(--c-line);
 	border-top: 0;
 	animation: ow-place 3s steps(12) forwards;
 	pointer-events: none;

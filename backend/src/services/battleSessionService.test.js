@@ -582,6 +582,18 @@ async function advanceToBoss(progress, trainerId) {
 }
 
 describe("battleSessionService", () => {
+	it("tells the move menu how each damaging move does against the foe that is out", async () => {
+		const chart = { "fire>grass": 2, "normal>ghost": 0 };
+		const { service } = makeService({
+			enemy: enemyMon({ types: ["Grass", "Ghost"] }),
+			ai: createBattleAi({ chart, random: () => 0 }),
+		});
+		const { state } = await service.startBattle(1, { level: 1, battleNumber: 1 });
+		const byName = Object.fromEntries(state.player.moves.map((m) => [m.name, m.effectiveness]));
+		assert.deepEqual(byName, { Tackle: 0, Ember: 2 });
+		assert.equal(state.typeChart, undefined); // the chart itself stays on the server
+	});
+
 	it("start rejects a non-current battle", async () => {
 		const { service } = makeService();
 		await assert.rejects(

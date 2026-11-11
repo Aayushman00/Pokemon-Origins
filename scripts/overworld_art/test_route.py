@@ -43,12 +43,16 @@ class Route1(unittest.TestCase):
     def test_trail_stays_on_open_ground(self):
         self.assertLessEqual(self.trail, self.open_cells())
 
-    def test_trail_alone_joins_west_to_east_by_the_north_fork(self):
+    def test_trail_joins_west_to_east_by_the_north_fork_through_one_grass_strip(self):
+        """The road fades under the tall grass at x 19-22 and picks up on the far side."""
+        strip = {(x, y) for y in (4, 5, 6) for x in range(19, 23) if self.r["grid"][y][x] == "g"}
+        self.assertFalse(strip & self.trail)
+        road = self.trail | strip
         seen, todo = {(0, 9)}, deque([(0, 9)])
         while todo:
             x, y = todo.popleft()
             for n in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
-                if n in self.trail and n not in seen:
+                if n in road and n not in seen:
                     seen.add(n)
                     todo.append(n)
         self.assertIn((39, 9), seen)
@@ -58,6 +62,7 @@ class Route1(unittest.TestCase):
         people = {(t["x"], t["y"]) for t in self.r["trainers"]}
         people |= {(x, y) for x, y, _ in W.DRESSING["route_1"]}
         people |= {(x, y) for x0, x1, y in W.LEDGES["route_1"] for x in range(x0, x1 + 1)}
+        people |= {(x, y) for x, y0, y1, _ in W.SIDE_LEDGES["route_1"] for y in range(y0, y1 + 1)}
         for y, row in enumerate(self.r["grid"]):
             for x, c in enumerate(row):
                 if (x, y) not in people:

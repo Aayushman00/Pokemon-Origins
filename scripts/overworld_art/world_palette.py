@@ -18,7 +18,9 @@ WORLD = {
     "roof_moss": ["#b8d88c", "#86b468", "#64945a", "#4a7450", "#365a48"],
     "roof_rose": ["#f8b0a8", "#e8786c", "#c8505a", "#9c3c50", "#782e48"],
     "roof_sky": ["#a8d4f4", "#6ca8e4", "#4c84c8", "#3a64a4", "#2e4c84"],
-    "wall": ["#fbf2dc", "#ecdfc4", "#d2c2aa", "#ab9c94"],
+    "wall": ["#fbf2dc", "#ecdfc4", "#d2c2aa", "#ab9c94"],  # Centers, Marts, the Lab: cream everywhere
+    "sage_wall": ["#e4ecd2", "#c8d6b0", "#a2b48c", "#7a8c6a"],  # Dawnbrook homes: painted boards
+    "log_wall": ["#c09468", "#9e7450", "#7a573c", "#583e2e"],  # Mossgate homes: log courses
     "glass": ["#dff0f4", "#a8d4e4", "#6ca4cc", "#4a78a8"],
     "stone": ["#d4d2d4", "#aeacb8", "#88869c", "#64627e"],
     "leaf_sun": ["#c4e080", "#9cc860", "#6ea858", "#4a8850", "#265244"],

@@ -6,7 +6,7 @@
 	grid-template-areas: "side" "list" "desc";
 }
 
-@media (min-width: 760px) {
+@media (min-width: 820px) {
 	.items {
 		grid-template-columns: 220px minmax(0, 1fr);
 		grid-template-areas: "side list" "desc desc";
@@ -84,6 +84,58 @@
 	font-weight: 700;
 	color: var(--c-on-navy);
 	background: var(--c-navy);
+}
+
+/* Pocket tabs sit on the list's top edge; the count is how many items, not kinds */
+.items__pockets {
+	margin-bottom: var(--s-3);
+}
+
+.items__none {
+	min-height: 88px;
+}
+
+.bag-row {
+	display: flex;
+	align-items: baseline;
+	gap: var(--s-3);
+}
+
+.bag-row__fx {
+	font-family: var(--font-read);
+	font-size: var(--fs-xs);
+	color: var(--c-ink-soft);
+}
+
+/* Who needs the Potion: the party's HP beside the list, so nobody opens the picker to find out */
+.items__party {
+	display: grid;
+	gap: var(--s-2);
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	font-size: var(--fs-sm);
+}
+
+.items__party li {
+	display: grid;
+	gap: 2px;
+}
+
+.items__party li.is-fainted {
+	color: var(--c-ink-faint);
+}
+
+/* Narrow: the satchel is decoration, the party strip is not. Drop the art, lay the party out in a row. */
+@media (max-width: 819px) {
+	.items__bag,
+	.items__pocket {
+		display: none;
+	}
+	.items__party {
+		grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+	}
 }
 
 .items__wallet {

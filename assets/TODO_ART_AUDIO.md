@@ -1,11 +1,11 @@
 # Art / audio needed from a human
 
 ## Mossgate placeholders
-- [ ] Gym interior: forest tiles for walls, `rock2` for seed pods, `veg` for soil patches, `bush` for the vine gate (`world_maps.mossgate_gym`).
-- [ ] Bridge: a plank deck with dark rails, but no ropes (`nature.plank`, grid char `k`).
+- [x] Gym interior: `grove` theme in `gym_art.py` (flagstones, living-wood walls, soil, seed pod, sprout, vine gate, honey runner under the Leader).
+- [x] Bridge: rope handrails (`nature.rope_rail`) on every plank side over water, void or lava, added for all maps in `world_maps.bridge_rails`.
 
 ## Still to draw
 - [x] Cliff tiles: the `mass` plateaus (`town_art.mass_top/mass_face`) have rims, rock faces in 3 variants and a base shadow.
-- [ ] Side-facing ledges are drawn (`ledge_e`, `ledge_w`; collision `L_RIGHT`/`L_LEFT`) but no map places them yet.
-- [ ] Taller cliffs: every mass face is one tile tall; a 2-row face needs a layout change in `towns.terrain`.
-- [ ] Bump / ledge / door sound effects are placeholder synth blips.
+- [x] Side-facing ledges: Route 1 has a hop-east drop at x=24, rows 4-6 (`world_maps.SIDE_LEDGES`, `ledge_col`).
+- [x] Taller cliffs: craggy plateaus three or more rows deep show a two-tile face (`town_art.mass_face_tall`, `towns.terrain`); a shrub on that rim steps back onto the plateau.
+- [~] Bump / ledge / door / push sounds: redesigned synth cues with pitch slides and low-passed noise (`battle/sfx.js`). Still synthesized; recorded sounds would need a human.

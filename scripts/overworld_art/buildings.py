@@ -33,8 +33,8 @@ def _finish(img):
     return _outline(img)
 
 
-def home(roof, door_col=2, windows=(1, 3)):
-    return lambda: _finish(building(5, roof, door_col, windows, chimney=3))
+def home(roof, wall, door_col=2, windows=(1, 3)):
+    return lambda: _finish(building(5, roof, door_col, windows, chimney=3, wall_name=wall))
 
 
 def lab():
@@ -97,10 +97,11 @@ def trunk_gym():
     return _finish(img)
 
 
-BUILDINGS = {  # name: (draw, door column)
-    "home_clay": (home("roof_clay"), 2),
-    "home_slate": (home("roof_slate"), 2),
-    "home_moss": (home("roof_moss"), 2),
+BUILDINGS = {  # name: (draw, door column). Homes are built of their town's material.
+    "home_clay": (home("roof_clay", "sage_wall"), 2),  # Dawnbrook
+    "home_slate": (home("roof_slate", "sage_wall"), 2),  # Dawnbrook
+    "home_moss": (home("roof_moss", "log_wall"), 2),  # Mossgate
+    "cabin_slate": (home("roof_slate", "log_wall"), 2),  # Mossgate
     "lab": (lab, 3),
     "care_center": (center, 3),
     "corner_shop": (mart, 3),
@@ -108,7 +109,7 @@ BUILDINGS = {  # name: (draw, door column)
 }
 
 
-WINDOWS = {"home_clay": (1, 3), "home_slate": (1, 3), "home_moss": (1, 3), "lab": (1, 2, 4, 5),
+WINDOWS = {"home_clay": (1, 3), "home_slate": (1, 3), "home_moss": (1, 3), "cabin_slate": (1, 3), "lab": (1, 2, 4, 5),
            "care_center": (1, 4), "corner_shop": (1, 4)}
 
 

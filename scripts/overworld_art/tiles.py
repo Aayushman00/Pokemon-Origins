@@ -611,6 +611,8 @@ def new_tiles():
     for links in range(16):
         add(f"fence_{links}", nature.fence_tile(links))
     add("plank_v", nature.plank(False))
+    for sides in nature.RAIL_SIDES:
+        add(f"rail_{sides}", nature.rope_rail(sides))
     for biome in nature.TALL:
         for mask in range(16):
             for phase in (0, 1):
@@ -679,6 +681,14 @@ def new_tiles():
             add(name, t)
     for name, t in cut(notice_board(), "board"):
         add(name, t)
+    # ---- two-tile cliff faces on deep craggy plateaus: upper (u) and lower (l) halves
+    from .town_art import mass_face_tall
+    for name in CRAGGY:
+        for v in range(3):
+            for mask in range(4):
+                upper, lower = mass_face_tall(name, mask & 1, mask & 2, v)
+                add(f"m_{name}_u{mask}_{v}", upper)
+                add(f"m_{name}_l{mask}_{v}", lower)
     return out
 
 

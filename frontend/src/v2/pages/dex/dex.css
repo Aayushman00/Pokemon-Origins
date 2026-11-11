@@ -200,7 +200,7 @@
 	gap: var(--s-6);
 }
 
-@media (min-width: 760px) {
+@media (min-width: 820px) {
 	.entry__grid {
 		grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
 		align-items: start;

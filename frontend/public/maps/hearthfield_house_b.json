@@ -773,12 +773,12 @@
       {
        "name": "targetX",
        "type": "int",
-       "value": 20
+       "value": 26
       },
       {
        "name": "targetY",
        "type": "int",
-       "value": 17
+       "value": 23
       },
       {
        "name": "facing",

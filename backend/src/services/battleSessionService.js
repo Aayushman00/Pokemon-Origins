@@ -21,7 +21,7 @@ const {
 	volatileAppliedLine,
 	volatileEndLine,
 } = require("./battleStatus");
-const { createBattleAi } = require("./battleAi");
+const { createBattleAi, effectiveness } = require("./battleAi");
 const { xpNeededForLevel, xpGainForWin } = require("./xpService");
 const { rollGenderForSpecies } = require("./genderService");
 
@@ -218,6 +218,11 @@ function outOfPp(mon) {
 }
 
 function toPublicState(session) {
+	// Move menu hint: each damaging move's type multiplier against the foe that is out.
+	const player = clonePokemon(session.player);
+	for (const move of player.moves) {
+		move.effectiveness = move.power > 0 ? effectiveness(session.typeChart || {}, move.move_type, session.enemy.types) : null;
+	}
 	return {
 		sessionId: session.sessionId,
 		level: session.level,
@@ -227,7 +232,7 @@ function toPublicState(session) {
 		trainerName: session.trainerName,
 		trainerSprite: session.trainerSprite || null,
 		trainerIntro: session.voiceId && session.battleType !== "trainer" ? introLine(session.voiceId, session.playerName) : null,
-		player: clonePokemon(session.player),
+		player,
 		enemy: clonePokemon(session.enemy),
 		party: session.party.map(clonePokemon),
 		activePosition: session.activePosition,
@@ -603,6 +608,8 @@ function createBattleSessionService(deps = {}) {
 			progressAwarded: false,
 			createdAt: now,
 			updatedAt: now,
+			// Same chart the enemy AI reads; a stub AI or an unreachable DB means no hints.
+			typeChart: (await ai.getChart?.()) || {},
 		};
 		sessions.set(session.sessionId, session);
 		sessionByTrainer.set(session.trainerId, session.sessionId);

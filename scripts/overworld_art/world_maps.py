@@ -7,6 +7,7 @@ Display names come from backend/data/world/names.json.
 """
 import json
 from itertools import groupby
+from math import sin
 from pathlib import Path
 
 from scripts import gen_overworld_placeholders as base
@@ -161,8 +162,13 @@ def halo(grid):
 def forest_name(mask, x, y, deep):
     """Deep forest shifts tone per 32px block, with a rare amber tree. Only blocks
     `deep` inside the forest change: a rim would cut their clumps into scraps."""
-    tones = (None, None, "sun", "deep", None, "sun", "deep", None, "deep", None, "sun", None, "deep", None, None, None, "amber")
-    tone = tones[hashed(x // 2, y // 2) % len(tones)] if deep else None
+    if not deep:
+        return f"forest_{mask}_{x % 2}{y % 2}"
+    # One slow wave over the whole map: neighbouring blocks agree, so the canopy
+    # reads as dark hollows and sunlit rises several trees across.
+    bx, by = x // 2, y // 2
+    lay = sin(bx * 0.55 + by * 0.9) + sin(bx * 0.23 - by * 0.6 + 1.3)
+    tone = "amber" if hashed(bx, by) % 13 == 0 else "deep" if lay > 0.35 else "sun" if lay < -0.75 else None
     return f"forest_{tone}_{x % 2}{y % 2}" if tone else f"forest_{mask}_{x % 2}{y % 2}"
 
 
@@ -243,6 +249,15 @@ DRESSING = {k: [(x, y, n) for n, x, y in v] for k, v in DRESSING.items()}
 # x0, x1, y. A ledge is a wall from below: leave a way round it, or it splits the
 # route. Row 6 has to stay open at x 10-13, the only way past lass_annie.
 LEDGES = {"route_1": [(7, 9, 6), (29, 32, 11)]}
+# x, y0, y1, side: a drop down the map you hop off heading east ("e") or west ("w").
+# Route 1's leads east out of the north meadow, so the way back is the south fork.
+SIDE_LEDGES = {"route_1": [(24, 4, 6, "e")]}
+
+
+def ledge_col(m, x, y0, y1, side):
+    """A one-way drop: walk off it heading `side`, never back."""
+    for y in range(y0, y1 + 1):
+        m.put("objects", x, y, ID[f"ledge_{side}"], base.L_RIGHT if side == "e" else base.L_LEFT)
 
 
 def worn(grid, lines, size=2):
@@ -314,11 +329,11 @@ def prop(m, name, x, y):
     m.put("objects", x, y, ID[name if name.startswith("crops") else f"prop_{name}"], None if name.startswith("crops") else SOLID)
 
 
-def ledge_row(m, x0, x1, y):
+def ledge_row(m, x0, x1, y, look="ledge"):
     """A one-way drop: walk off it heading south, never back up."""
     for x in range(x0, x1 + 1):
         part = "l" if x == x0 else "r" if x == x1 else "m"
-        m.put("objects", x, y, ID[f"ledge_{part}"], base.L_DOWN)
+        m.put("objects", x, y, ID[f"{look}_{part}"], base.L_DOWN)
 
 
 def dress_pond(m, grid):
@@ -369,7 +384,7 @@ def dawnbrook():
     door(m, "dawnbrook_house", 7, 16)
     m.sign("town_sign", 12, 8, f"{NAMES['dawnbrook'].upper()} - Where every journey begins.")
     m.sign("route_sign", 28, 8, f"{NAMES['route_1'].upper()} - East to {NAMES['mossgate']}.")
-    m.npc("old_woman", 15, 6, "old_woman", "up", "This old well has never run dry. Nobody remembers who dug it.")
+    m.npc("old_woman", 15, 7, "old_woman", "up", "This old well has never run dry. Nobody remembers who dug it.")
     m.npc("rival", 21, 8, "rival", "left", "Late again? The Professor's been waiting. I got here first, as usual.")
     lone_tree(m, "F", 17, 3)
     lone_tree(m, "A", 26, 4)
@@ -416,7 +431,7 @@ def mossgate():
     place(m, "trunk_gym", 12, 2)
     place(m, "home_moss", 22, 2)
     place(m, "care_center", 3, 11)
-    place(m, "home_slate", 22, 11)
+    place(m, "cabin_slate", 22, 11)
     m.block(15, 6, 0)
     m.obj("warps", "door_mossgate_gym", 15, 6, kind="door", targetMap="mossgate_gym", targetX=1, targetY=5,
           facing="right", transition="iris", enterDir="up")
@@ -454,18 +469,27 @@ def mossgate_gym():
     rows[5] = "." + rows[5][1:10] + "...#"  # col 0 is the exit, one step west of the start
     rows[6] = rows[6][:9] + "....#"
     m = Town(14, 8, base.GRASS)
-    m.props = [("puzzle", "willow_thornby"), ("puzzle_pod", ID["rock2"] + 1), ("puzzle_socket-full", ID["rock2"] + 1),
-               ("puzzle_gate", ID["bush"] + 1)]
-    paint(m, ["".join("T" if c == "#" else "." for c in r) for r in rows], "path")
+    tile = lambda name: ID[f"gym_grove_{name}"]
+    m.props = [("puzzle", "willow_thornby"), ("puzzle_pod", tile("pod") + 1), ("puzzle_socket-full", tile("sprout") + 1),
+               ("puzzle_gate", tile("gate") + 1)]
+    wall = lambda x, y: not (0 <= x < 14 and 0 <= y < 8) or rows[y][x] == "#"
     for y, r in enumerate(rows):
         for x, c in enumerate(r):
-            if c == "_":
-                m.put("ground", x, y, ID["veg"])
+            if c == "#":  # same wall faces and caps as the other gyms (gym_rooms.build)
+                side = ("l" if not wall(x - 1, y) else "") + ("r" if not wall(x + 1, y) else "")
+                m.put("ground", x, y, tile("face" if not wall(x, y + 1) else f"cap_{side}" if side else "cap"), SOLID)
+            elif x >= 10:  # the Leader's chamber: a honey runner the Leader's green stands out on
+                m.put("ground", x, y, tile({10: "rug_l", 11: "rug", 12: "rug_r"}[x]))
+            else:
+                m.put("ground", x, y, tile("soil" if c == "_" else f"floor{(x + y) % 2}"))
+            if c == "G":
+                m.put("decor", x, y, tile("goal"))
+    m.put("ground", 0, 5, tile("exit"))
+    m.put("ground", 0, 4, tile("plaque"))
     m.obj("warps", "exit", 0, 5, kind="door", targetMap="mossgate", targetX=15, targetY=7, facing="down",
           transition="iris", enterDir="left")
     m.sign("hint", 0, 4, gym["hint"] + " Stuck? Leave the room and the seeds roll back.")
     leader_story(m, "willow_thornby", 12, 5, "left")
-    autotile_paths(m)
     return finish(m.build(), m)
 
 
@@ -492,6 +516,8 @@ def route(route_id):
         prop(m, name, x, y)
     for row in LEDGES[route_id]:
         ledge_row(m, *row)
+    for col in SIDE_LEDGES.get(route_id, ()):
+        ledge_col(m, *col)
     fringe(m, grid)
     dress_grass(m)
     return finish(m.build(), m)
@@ -504,14 +530,29 @@ def light_tiles():
     """Tiles with a runtime light or effect: lamps, windows, chimneys."""
     from .buildings import BUILDINGS, WINDOWS
     lit = [{"id": ID["prop_lamp_top"], "properties": [base.prop("glow", 20)]}]
-    lit += [{"id": ID[f"home_{roof}_3_0"], "properties": [base.prop("smoke", True)]} for roof in ("clay", "slate", "moss")]
+    lit += [{"id": ID[f"{name}_3_0"], "properties": [base.prop("smoke", True)]} for name in ("home_clay", "home_slate", "home_moss", "cabin_slate")]
     for name in BUILDINGS:
         lit += [{"id": ID[f"{name}_{c}_3"], "properties": [base.prop("glow", 9)]} for c in WINDOWS.get(name, ())]
     return lit
 
 
+def bridge_rails(m, decor):
+    """Rope rails along every bridge side that drops into something you can't
+    walk on (water, void, lava), drawn into the map's decor layer."""
+    deck = {base.OW_FIRST + ID["plank"], base.OW_FIRST + ID["plank_v"]}
+    drop = lambda x, y: 0 <= x < m.w and 0 <= y < m.h and m.ground[m.i(x, y)] not in deck and m.collision[m.i(x, y)] == SOLID
+    for y in range(m.h):
+        for x in range(m.w):
+            i = m.i(x, y)
+            if m.ground[i] in deck and not decor[i]:
+                sides = "".join(s for s, dx, dy in (("n", 0, -1), ("s", 0, 1), ("w", -1, 0), ("e", 1, 0)) if drop(x + dx, y + dy))
+                if sides:
+                    decor[i] = base.OW_FIRST + ID[f"rail_{sides}"]
+
+
 def finish(data, m):
     """Point the map at the extended tileset and move collision gids to 1000+."""
+    bridge_rails(m, next(l for l in data["layers"] if l["name"] == "decor")["data"])
     total = FIRST_NEW + len(new_tiles())
     rows = (total + 7) // 8
     ts = data["tilesets"][0]

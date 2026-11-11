@@ -48,6 +48,11 @@ RAMPS = {
     "brown": ["#cc925a", "#8c5634", "#553044"],
     "straw": ["#fff0a6", "#e8c868", "#a88848"],
     "denim": ["#9cc0f0", "#5a80c8", "#34407e"],
+    # ---- the player boy (hand-shaded): peach light, rose-violet shade;
+    # midnight-blue hair with a silver streak, shared by his trousers and eyes
+    "skin_hero": ["#ffdcb4", "#eaa878", "#b0686e"],
+    "hair_midnight": ["#b0bae6", "#44529c", "#262a60"],
+    "iris_midnight": [WHITE, "#44529c", "#262a60"],
     # ---- single colours
     "mouth": ["#8a3442"],
     "blush": ["#f69a9a"],

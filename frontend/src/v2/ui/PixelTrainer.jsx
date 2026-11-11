@@ -21,8 +21,11 @@ function tinted(art, tint) {
 	return art.pal.map((c, i) => (art.top[INDEX[i]] ? tone[art.top[INDEX[i]]] : c));
 }
 
-/** `tint` recolours the top (Playground uses the server-assigned colour); `sprite` picks any cast member. */
-const PixelTrainer = ({ gender = "Male", sprite, tint, size = 48, className = "", title }) => {
+// Avatar crop: every cast sheet is 16 wide with the head in the top rows.
+const HEAD_BOX = "1 0 14 14";
+
+/** `tint` recolours the top (Playground uses the server-assigned colour); `sprite` picks any cast member; `head` crops to the face and fills its box. */
+const PixelTrainer = ({ gender = "Male", sprite, tint, size = 48, className = "", title, head = false }) => {
 	const art = TRAINER_ART[sprite] || TRAINER_ART[BY_GENDER[gender] || "npc"];
 	const pal = tinted(art, tint);
 	const w = art.rows[0].length;
@@ -37,9 +40,9 @@ const PixelTrainer = ({ gender = "Male", sprite, tint, size = 48, className = ""
 	return (
 		<svg
 			className={className}
-			viewBox={`0 0 ${w} ${h}`}
-			width={(size * w) / h}
-			height={size}
+			viewBox={head ? HEAD_BOX : `0 0 ${w} ${h}`}
+			width={head ? "100%" : (size * w) / h}
+			height={head ? "100%" : size}
 			shapeRendering="crispEdges"
 			role={title ? "img" : undefined}
 			aria-label={title}

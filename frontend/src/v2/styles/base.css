@@ -108,7 +108,7 @@ img.sprite {
 	padding: var(--s-5) var(--s-4) var(--s-8);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 820px) {
 	.page {
 		padding: var(--s-6) var(--s-5) var(--s-8);
 	}

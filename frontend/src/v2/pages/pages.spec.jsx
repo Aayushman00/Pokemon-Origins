@@ -10,13 +10,13 @@ const wrap = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe("Playground chat", () => {
 	it("tags guests, links names to profiles, and invites the first message when empty", () => {
-		const { rerender } = wrap(<ChatLog messages={[]} selfId="guest-me" onlineIds={new Set()} />);
+		const { rerender } = wrap(<ChatLog messages={[]} selfId="guest-me" roster={[]} />);
 		expect(screen.getByText(/Quiet so far/)).toBeTruthy();
 		rerender(
 			<MemoryRouter>
 				<ChatLog
 					selfId="guest-me"
-					onlineIds={new Set([7])}
+					roster={[{ trainerId: 7, name: "Red", gender: "Male" }]}
 					messages={[
 						{ trainerId: 7, name: "Red", text: "Anyone up for a battle?", ts: 1, broadcast: false },
 						{ trainerId: "guest-x", name: "Guest1", text: "hi all", ts: 2, broadcast: true },

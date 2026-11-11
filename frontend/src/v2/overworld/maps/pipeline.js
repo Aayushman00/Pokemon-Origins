@@ -166,6 +166,17 @@ function checkTrainers(map, err, maps) {
 	});
 }
 
+/** A road with tall grass leads through some of it: no walk from `entry` to another edge stays dry. */
+function checkEncounters(map, err) {
+	const entry = map.properties.entry;
+	if (!map.encounters.length || !(entry in SIDE_STEP)) return;
+	const grass = new Set();
+	for (const e of map.encounters) for (let y = e.y; y < e.y + e.h; y++) for (let x = e.x; x < e.x + e.w; x++) grass.add(`${x},${y}`);
+	const seen = flood(map, edgeCells(map, entry), grass);
+	const exits = Object.keys(SIDE_STEP).filter((s) => s !== entry).flatMap((s) => edgeCells(map, s));
+	if (exits.some(([x, y]) => seen.has(`${x},${y}`))) err("can be crossed without stepping in tall grass");
+}
+
 function checkConnections(map, err, maps, world) {
 	for (const [side, link] of Object.entries(map.connections)) {
 		const other = maps[link.map];
@@ -214,6 +225,7 @@ export function validateMaps(raw, { imageExists, names }) {
 		checkConnections(map, err, maps, world);
 		checkReachable(map, err, maps);
 		checkTrainers(map, err, maps);
+		checkEncounters(map, err);
 		const { nameKey } = map.properties;
 		if (nameKey !== undefined && !names.places[nameKey]) err(`nameKey "${nameKey}" is not in names.json`);
 	}

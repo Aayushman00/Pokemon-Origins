@@ -3,6 +3,7 @@ import { api, getErrorMessage } from "../../../api";
 import Panel from "../../ui/Panel";
 import Button from "../../ui/Button";
 import MenuList from "../../ui/MenuList";
+import MenuIcon from "../../ui/MenuIcon";
 import Modal from "../../ui/Modal";
 import DialogueBox from "../../ui/DialogueBox";
 import { useToast } from "../../ui/toastContext";
@@ -101,6 +102,7 @@ const MartScreen = () => {
 						onActiveChange={(it) => setFocus(it)}
 						items={mart.stock.map((row) => ({
 							id: row.itemId,
+							icon: <MenuIcon name={row.category} />,
 							label: (
 								<span className="mart-line">
 									<span>{row.name}</span>

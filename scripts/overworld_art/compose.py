@@ -7,6 +7,8 @@ Grid alphabet (one char = one pixel):
   lowercase material letter  auto-shaded from its ramp
   UPPERCASE material letter  forced to that ramp's shadow tone
   j / q                      forced highlight of hair / hat (gloss marks)
+  y v z r d W                forced highlight of skin / top / u / bottom / leg / iris
+  i                          iris (hand-shaded heroes: W glint over I iris)
 
 Materials (mapped to palette ramps per character):
   s skin  h hair  c hat  x hat/hair accent  t top  u inner shirt/collar
@@ -28,7 +30,7 @@ from .palette import OUTLINE, RAMPS, WHITE
 from .world_palette import outline_for
 
 W, H = 16, 32
-MATERIALS = set("shcxtuafblnpgm")
+MATERIALS = set("shcxtuafblnpgmi")
 
 
 def grid(top, text):
@@ -82,16 +84,18 @@ def outline(canvas):
 
 
 def blink(canvas):
-    """Close the eyes: the upper pixel of each 2-tall eye becomes skin."""
+    """Close the eyes: the upper pixel of each 2-tall eye becomes skin and a
+    coloured iris (glint W over iris I) leaves a dark lid line below."""
     out = [row[:] for row in canvas]
     for y in range(H - 1):
         for x in range(W):
-            if canvas[y][x] == "e" and canvas[y + 1][x] == "e":
+            if canvas[y][x] in "eiIW" and canvas[y + 1][x] in "eiI":
                 out[y][x] = "s"
+                out[y + 1][x] = "e"
     return out
 
 
-GLOSS = {"j": "h", "q": "c"}
+GLOSS = {"j": "h", "q": "c", "y": "s", "v": "t", "z": "u", "r": "b", "d": "l", "W": "i"}
 GLOSSY = {"h", "c"}
 
 
@@ -104,8 +108,13 @@ def _mat(ch):
     return low if low in MATERIALS else None
 
 
-def shade(canvas):
-    """Return a grid of (material, tone) / literal colour keys."""
+def shade(canvas, manual=False):
+    """Return a grid of (material, tone) / literal colour keys.
+
+    `manual` (hand-shaded heroes): the grid's own tones are kept, lowercase
+    base, UPPERCASE shadow, gloss letters highlight. The silhouette is
+    sel-out for every material: its own shadow tone on the lit top/left
+    edges, a dark hue-matched line on the undersides."""
     res = [[None] * W for _ in range(H)]
 
     def m_at(x, y):
@@ -127,8 +136,11 @@ def shade(canvas):
                     res[y][x] = "outline"
                     continue
                 m = max(near, key=near.count)
-                # sel-out: the lit top of hair and hats softens to their own shadow tone
-                res[y][x] = f"lit:{m}" if m in GLOSSY and m_at(x, y + 1) == m else f"edge:{m}"
+                if manual:
+                    lit = m in (m_at(x, y + 1), m_at(x + 1, y))
+                else:  # sel-out: the lit top of hair and hats softens to their own shadow tone
+                    lit = m in GLOSSY and m_at(x, y + 1) == m
+                res[y][x] = f"lit:{m}" if lit else f"edge:{m}"
                 continue
             if ch == "w":
                 res[y][x] = "white"
@@ -137,8 +149,8 @@ def shade(canvas):
                 res[y][x] = (GLOSS[ch], "hi")
                 continue
             m = ch.lower()
-            if ch.isupper():
-                res[y][x] = (m, "shadow")
+            if manual or ch.isupper():
+                res[y][x] = (m, "shadow" if ch.isupper() else "base")
                 continue
             if m_at(x + 1, y) != m or m_at(x, y + 1) != m:
                 res[y][x] = (m, "shadow")

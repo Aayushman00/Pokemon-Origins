@@ -25,11 +25,11 @@ const Presence = ({ online, guest }) => (
 	</div>
 );
 
-function CardBody({ state, name, trainerId, online }) {
+function CardBody({ state, name, online }) {
 	if (!state || state.status === "loading") {
 		return (
 			<div className="hovercard__head">
-				<PixelAvatar seed={trainerId ?? name} size={48} />
+				<PixelAvatar size={48} />
 				<div>
 					<p className="hovercard__name">{name}</p>
 					<p className="hovercard__sub loading-dots">Checking trainer records</p>
@@ -69,7 +69,7 @@ function CardBody({ state, name, trainerId, online }) {
 	return (
 		<>
 			<div className="hovercard__head">
-				<PixelAvatar seed={p.trainer_id} size={48} />
+				<PixelAvatar gender={p.gender} size={48} />
 				<div>
 					<p className="hovercard__name">{p.name}</p>
 					<p className="hovercard__sub">

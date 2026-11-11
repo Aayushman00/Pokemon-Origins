@@ -241,13 +241,13 @@ const OverworldScreen = () => {
 			game.leaveRoom();
 		};
 		return [
-			{ label: "Party", run: go("/game") },
-			{ label: "Bag", run: go("/game/bag") },
-			{ label: "Pokedex", run: go("/pokedex") },
-			{ label: "Trainer", run: go("/trainer") },
-			{ label: "Save", run: save },
-			...(game.puzzleActive ? [{ label: "Leave puzzle", run: leave }] : []),
-			{ label: "Close", run: () => setMenuOpen(false) },
+			{ label: "Party", icon: "party", run: go("/game") },
+			{ label: "Bag", icon: "bag", run: go("/game/bag") },
+			{ label: "Pokedex", icon: "dex", run: go("/pokedex") },
+			{ label: "Trainer", icon: "card", run: go("/trainer") },
+			{ label: "Save", icon: "save", run: save },
+			...(game.puzzleActive ? [{ label: "Leave puzzle", icon: "out", run: leave }] : []),
+			{ label: "Close", icon: "exit", run: () => setMenuOpen(false) },
 		];
 	}, [menuOpen, navigate]);
 
@@ -286,10 +286,10 @@ const OverworldScreen = () => {
 			</div>
 			<div className="ow__bar font-pixel">
 				<span>Arrows/WASD walk · X run · Z/Enter talk · Esc menu</span>
-				<button type="button" className="pixel-btn" onClick={() => sessionRef.current?.game.mode === "explore" && setMenuOpen(true)}>
+				<button type="button" className="frame btn btn--navy btn--sm" onClick={() => sessionRef.current?.game.mode === "explore" && setMenuOpen(true)}>
 					Menu
 				</button>
-				<button type="button" className="pixel-btn" onClick={() => setSpeed((s) => cycleTextSpeed(s))}>
+				<button type="button" className="frame btn btn--navy btn--sm" onClick={() => setSpeed((s) => cycleTextSpeed(s))}>
 					Text: {speed}
 				</button>
 			</div>

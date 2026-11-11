@@ -5,6 +5,7 @@ import Button from "../../ui/Button";
 import Panel from "../../ui/Panel";
 import { TypeBadge } from "../../ui/Badges";
 import PartyRow from "../../ui/PartyRow";
+import MenuIcon from "../../ui/MenuIcon";
 import { STRUGGLE_MOVE } from "../../battle/useBattle";
 import { typeColor } from "../../../utils/typeColors";
 
@@ -27,6 +28,35 @@ export const CommandMenu = ({ battle }) => (
 		/>
 	</div>
 );
+
+/** Words for the server's type multiplier; neutral hits say nothing. */
+const effectLabel = (x) => (x === 0 ? "No effect" : x > 1 ? "Super effective" : x < 1 ? "Not very effective" : null);
+const effectTone = (x) => (x > 1 ? "is-good" : "is-low");
+
+/** The multiplier itself, for the move tile: x2, x1/2, x0. */
+const multLabel = (x) => (x === 0.5 ? "×½" : x === 0.25 ? "×¼" : `×${x}`);
+/** Accuracy arrives as a fraction in battle and as a percent from the learnset. */
+const accLabel = (a) => (a == null ? "—" : `${Math.round(a > 1 ? a : a * 100)}%`);
+const lowPp = (m) => typeof m.current_pp === "number" && m.current_pp <= Math.ceil((m.max_pp || 0) / 4);
+
+/** One move in a 2x2 grid: name, then type. In a fight (`live`) also PP, and the type multiplier when it is not x1. */
+const MoveTile = ({ move, live = true }) => {
+	const x = live ? move.effectiveness : null;
+	return (
+		<span className="move-tile">
+			<span className="move-tile__name caps">{move.name}</span>
+			<span className="move-tile__meta">
+				<span>{move.move_type}</span>
+				{live && <span className={lowPp(move) ? "is-low" : ""}>PP {ppLabel(move)}</span>}
+				{x != null && x !== 1 && (
+					<span className={`move-tile__mult ${effectTone(x)}`} aria-hidden="true">
+						{multLabel(x)}
+					</span>
+				)}
+			</span>
+		</span>
+	);
+};
 
 const ppLabel = (m) => (typeof m.current_pp === "number" && typeof m.max_pp === "number" ? `${m.current_pp}/${m.max_pp}` : "—");
 
@@ -60,18 +90,20 @@ export const MoveMenu = ({ battle }) => {
 
 	const items = moves.map((m) => {
 		const empty = typeof m.current_pp === "number" && m.current_pp <= 0;
+		const effect = m.effectiveness == null ? null : effectLabel(m.effectiveness);
 		return {
 			id: m.move_id,
 			disabled: empty,
 			className: "move-item",
-			ariaLabel: `${m.name}, ${m.move_type}, PP ${ppLabel(m)}${empty ? ", no PP left" : ""}`,
+			ariaLabel: `${m.name}, ${m.move_type}, PP ${ppLabel(m)}${effect ? `, ${effect}` : ""}${empty ? ", no PP left" : ""}`,
 			icon: <span className="move-item__swatch" style={{ "--type": typeColor(m.move_type) }} aria-hidden="true" />,
-			label: <span className="caps">{m.name}</span>,
+			label: <MoveTile move={m} />,
 			move: m,
 			onSelect: () => battle.chooseMove(m),
 		};
 	});
 	const m = focus?.move || moves[0];
+	const stab = m && m.power > 0 && (battle.player?.types || []).some((t) => String(t).toLowerCase() === String(m.move_type).toLowerCase());
 
 	return (
 		<div className="hud__split">
@@ -84,7 +116,7 @@ export const MoveMenu = ({ battle }) => {
 					<>
 						<div className="move-info__row">
 							<span>PP</span>
-							<strong className={typeof m.current_pp === "number" && m.current_pp <= Math.ceil((m.max_pp || 0) / 4) ? "is-low" : ""}>{ppLabel(m)}</strong>
+							<strong className={lowPp(m) ? "is-low" : ""}>{ppLabel(m)}</strong>
 						</div>
 						<div className="move-info__row">
 							<span>Type</span>
@@ -96,8 +128,13 @@ export const MoveMenu = ({ battle }) => {
 						</div>
 						<div className="move-info__row">
 							<span>Accuracy</span>
-							<strong>{m.accuracy == null ? "—" : `${Math.round(m.accuracy * 100)}%`}</strong>
+							<strong>{accLabel(m.accuracy)}</strong>
 						</div>
+						{stab && <p className="move-info__note">Same type as {battle.player.nickname}: hits harder.</p>}
+						{m.status_effect && <p className="move-info__note">May inflict {String(m.status_effect).toLowerCase()}.</p>}
+						{m.effectiveness != null && effectLabel(m.effectiveness) && (
+							<p className={`move-info__effect ${effectTone(m.effectiveness)}`}>{effectLabel(m.effectiveness)}</p>
+						)}
 					</>
 				)}
 				<Button size="sm" className="move-info__back" onClick={back}>
@@ -148,6 +185,7 @@ export const BagMenu = ({ battle }) => (
 			onBack={() => battle.setPhase("command")}
 			items={battle.bagItems.map((item) => ({
 				id: item.itemId,
+				icon: <MenuIcon name={item.category} />,
 				label: (
 					<span className="bag-line">
 						<span>{item.name}</span>
@@ -183,6 +221,7 @@ export const RestartMenu = ({ battle }) => (
 /** "Wants to learn" after a win: yes or no, then which move to forget. */
 export const LearnMenu = ({ battle, charMs }) => {
 	const [step, setStep] = useState("ask"); // ask | stop | pick
+	const [forget, setForget] = useState(null);
 	const offer = battle.learnOffer;
 	const name = offer.move.name.toUpperCase();
 	const full = offer.currentMoves.length >= 4;
@@ -193,24 +232,43 @@ export const LearnMenu = ({ battle, charMs }) => {
 			className: "move-item",
 			ariaLabel: `Forget ${m.name}, ${m.move_type}`,
 			icon: <span className="move-item__swatch" style={{ "--type": typeColor(m.move_type) }} aria-hidden="true" />,
-			label: <span className="caps">{m.name}</span>,
+			label: <MoveTile move={m} live={false} />,
+			move: m,
 			onSelect: () => battle.resolveLearn("learn", m.move_id),
 		}));
+		const old = forget?.move || offer.currentMoves[0];
+		const rows = [
+			["Type", (mv) => <TypeBadge type={mv.move_type} />],
+			["Power", (mv) => mv.power || "Status"],
+			["Accuracy", (mv) => accLabel(mv.accuracy)],
+			["PP", (mv) => mv.max_pp ?? mv.pp ?? "—"],
+		];
 		return (
 			<div className="hud__split">
 				<div className="frame panel move-box">
-					<MenuList label="Move to forget" columns={2} globalKeys sound onBack={() => setStep("ask")} items={items} />
+					<MenuList label="Move to forget" columns={2} globalKeys sound onBack={() => setStep("ask")} items={items} onActiveChange={setForget} />
 				</div>
-				<div className="frame panel move-info">
+				<div className="frame panel move-info" aria-live="polite">
 					<p className="move-info__note">Forget which move for {name}?</p>
-					<div className="move-info__row">
-						<span>Type</span>
-						<TypeBadge type={offer.move.move_type} />
-					</div>
-					<div className="move-info__row">
-						<span>Power</span>
-						<strong>{offer.move.power || "Status"}</strong>
-					</div>
+					{/* What you give up beside what you get: the choice is the comparison. */}
+					<table className="move-compare">
+						<thead>
+							<tr>
+								<td />
+								<th scope="col" className="caps">{old.name}</th>
+								<th scope="col" className="caps move-compare__new">{offer.move.name}</th>
+							</tr>
+						</thead>
+						<tbody>
+							{rows.map(([label, cell]) => (
+								<tr key={label}>
+									<th scope="row">{label}</th>
+									<td>{cell(old)}</td>
+									<td className="move-compare__new">{cell(offer.move)}</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
 					<Button size="sm" className="move-info__back" onClick={() => setStep("ask")}>
 						Back
 					</Button>

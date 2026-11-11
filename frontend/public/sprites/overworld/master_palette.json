@@ -150,6 +150,21 @@
       "#5a80c8",
       "#34407e"
     ],
+    "skin_hero": [
+      "#ffdcb4",
+      "#eaa878",
+      "#b0686e"
+    ],
+    "hair_midnight": [
+      "#b0bae6",
+      "#44529c",
+      "#262a60"
+    ],
+    "iris_midnight": [
+      "#fffcf0",
+      "#44529c",
+      "#262a60"
+    ],
     "mouth": [
       "#8a3442"
     ],
@@ -159,16 +174,13 @@
   },
   "characters": {
     "player": {
-      "s": "skin_light",
-      "h": "hair_black",
+      "s": "skin_hero",
+      "h": "hair_midnight",
+      "i": "iris_midnight",
       "t": "teal",
-      "u": "yellow:2",
-      "a": "teal",
-      "f": "teal",
-      "b": "charcoal:2",
-      "l": "charcoal:2",
-      "n": "brown:2",
-      "m": "skin_light"
+      "u": "yellow",
+      "l": "hair_midnight",
+      "n": "yellow"
     },
     "player_f": {
       "s": "skin_light",

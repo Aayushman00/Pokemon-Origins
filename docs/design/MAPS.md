@@ -90,10 +90,12 @@ Connections must be reciprocal with opposite offsets. Every tile a player can st
 
 Every door, arrival tile and connected edge must be reachable on foot from the others. Each trainer's sight must cut the road: walking from `entry` to any other open edge without crossing it fails validation, and so does reaching a trainer's sight before the previous trainer's.
 
+A map with an `entry` and tall grass must lead through some of it: walking from `entry` to another open edge without stepping on an `encounters` tile fails validation.
+
 ## Conventions
 
 - Map ids are lowercase with underscores: `<town>`, `<town>_gym`, `<town>_center`, `<town>_mart`, `route_<n>`.
-- Towns are 30x20 tiles, as drawn in the Aurelia Town Layouts artifact. Routes follow `scripts/overworld_art/route_layouts.json`, the approved Aurelia Route Layouts.
+- Towns are 30x20 tiles, as drawn in the Aurelia Town Layouts artifact, except three with their own skeleton: Saltmere (40x20, strung along the shore), Hearthfield (30x30, a ring round the square) and Gale (30x30, three terraces up a hillside). A town takes its size from its grid in `town_layouts.json`. Keep edge roads at y 9-10 (east/west) and x 14-15 (north/south) so connections stay at offset 0. Routes follow `scripts/overworld_art/route_layouts.json`, the approved Aurelia Route Layouts.
 - `scripts/overworld_art/world_maps.py` paints both from text grids. A new town is a grid plus its doors.
 - Display names live in `backend/data/world/names.json`, not in map files.
 - New art is original or CC0 and is recorded in `assets/LICENSES.md`.

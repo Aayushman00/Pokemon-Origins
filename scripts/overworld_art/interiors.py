@@ -193,6 +193,13 @@ def mat(r, cx):
     r.box(x0 - 2, y0 - 3, x0 + T + 1, y0 + T - 2, "#f08870")
     r.rect(x0 + 1, y0, x0 + T - 2, y0 + T - 5, "#c85840")
     r.rect(x0 + 1, y0, x0 + T - 2, y0, "#a8402c")
+    r.rect(x0 + 3, y0 + 2, x0 + T - 4, y0 + T - 7, "#e0b060")       # straw border...
+    r.rect(x0 + 4, y0 + 3, x0 + T - 5, y0 + T - 8, "#c85840")       # ...round a plain middle
+    for x in range(x0 + 5, x0 + T - 5, 2):                           # weave
+        r.set(x, y0 + 5, "#a8402c")
+        r.set(x + 1, y0 + 7, "#a8402c")
+    for x in range(x0, x0 + T, 2):                                   # fringe along the door edge
+        r.set(x, y0 + T - 3, "#f8d8a0")
     r.solid.discard((cx, r.h - 1))
 
 

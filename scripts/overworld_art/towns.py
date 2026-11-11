@@ -13,7 +13,7 @@ from .gym_rooms import ROOMS
 from .tiles_v2 import blob_mask
 from .town_art import CRAGGY, LAYOUTS, town_buildings
 from .world_maps import (BADGES, BORDER, GYMS, ID, NAMES, NAMES_BY_ID, PEOPLE, PATH, ROUTES, SOLID, Town, autotile_paths, door, dress_grass, finish,
-                         fringe, grass_runs, hashed, lone_tree, paint, prop, dress_pond, say, trainer_script, TRAILS, worn)
+                         ledge_row, fringe, grass_runs, hashed, lone_tree, paint, prop, dress_pond, say, trainer_script, TRAILS, worn)
 
 COMMON = {".": "walk", ",": "road", "p": "plaza", "g": "grass", "=": "stairs", "k": "plank", "b": "plank", "B": "bld", "D": "bld",
           "A": "bld", "T": "tree", "~": "water", "l": "lava", "L": "lamp", "f": "fence", "h": "hedge", "n": "bench", "u": "well",
@@ -32,21 +32,47 @@ BORDERS.update(concrete=block_of("m_plant_t0"), cliff=SKY_BORDER, marble=SKY_BOR
                basalt=block_of("m_basalt_t0"))
 
 
+def afloat(cells):
+    """What lies under props and buildings that stand in open water (buoys, the
+    pier Gym, a crate on the pier): blocks touching only water and planks. They
+    used to count as land, which drew a ring of shore round each one."""
+    solid = {k for k, v in cells.items() if v == "bld" or v.startswith("obj:")}
+    under, seen = {}, set()
+    near = lambda c: [(c[0] + dx, c[1] + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))]
+    for start in solid - seen:
+        if start in seen:
+            continue
+        block, todo, edge = set(), [start], set()
+        while todo:
+            c = todo.pop()
+            if c not in block:
+                block.add(c)
+                todo += [n for n in near(c) if n in solid]
+                edge |= {cells[n] for n in near(c) if n in cells and n not in solid}
+        seen |= block
+        if "water" in edge and edge <= {"water", "plank"}:
+            for c in block:  # boards run under anything standing between two of them
+                under[c] = "plank" if sum(cells.get(n) == "plank" for n in near(c)) >= 2 else "water"
+    return under
+
+
 def terrain(m, grid, biome, legend, stairs="ns"):
     """Lay `grid` onto m. The grass-world painter does trees, water and street
     furniture; everything else is laid over it from the legend."""
     kind_of = lambda c: legend.get(c) or COMMON[c]
-    paint(m, ["".join(PAINTED.get(kind_of(c), ".") for c in row) for row in grid], "grass", biome)
     cells = {(x, y): kind_of(c) for y, row in enumerate(grid) for x, c in enumerate(row)}
+    wet = afloat(cells)
+    paint(m, ["".join(PAINTED.get(wet.get((x, y), cells[x, y]), ".") for x in range(len(row))) for y, row in enumerate(grid)], "grass", biome)
     group = lambda name: {k for k, v in cells.items() if v == name or v.startswith(f"{name}:") or v.startswith(f"over:{name.split(':')[-1]}:")}
     open_at = lambda g, x, y: (x, y) in cells and (x, y) not in g
     masses = {k: group(f"mass:{k.split(':')[1]}") for k in set(cells.values()) if k.startswith("mass:")}
     void, lava = group("void"), group("lava")
     meadow = biome == "meadow"
     for (x, y), kind in cells.items():
-        if not meadow and kind == "water":  # the bank sits on this biome's ground, not on meadow
+        below = wet.get((x, y), kind)
+        if not meadow and below == "water":  # the bank sits on this biome's ground, not on meadow
             m.put("decor", x, y, ID[NAMES_BY_ID[m.ground[m.i(x, y)] - 1].replace("pond_", "pondc_")])
-        if not meadow and kind not in ("stone", "plank"):
+        if not meadow and below not in ("stone", "plank"):
             tile = ID[f"t_{biome}_ground{hashed(x, y) % 4}"]
             m.put("ground", x, y, tile)
             m.under[x, y] = tile
@@ -71,13 +97,23 @@ def terrain(m, grid, biome, legend, stairs="ns"):
             m.put("objects", x, y, ID[f"o_{kind[5:]}_base"], SOLID)
         elif kind == "emblem":
             m.put("ground", x, y, ID["o_emblem"])
+    uppers = set()  # cells that became the top half of a tall face
     for key, g in masses.items():
         name = key.split(":")[1]
+        faces ={(x, y) for x, y in g if open_at(g, x, y + 1)}
+        # A craggy plateau with rock above its face and more above that shows a face two tiles tall.
+        tall = {(x, y) for x, y in faces if name in CRAGGY and (x, y - 2) in g and (x, y - 1) in g and (x, y - 1) not in faces}
+        uppers |= {(x, y - 1) for x, y in tall}
         for x, y in g:
             e, w = open_at(g, x + 1, y), open_at(g, x - 1, y)
-            if open_at(g, x, y + 1):
+            if (x, y + 1) in tall:  # upper half, cut from the same face as the cell below it
+                m.put("ground", x, y, ID[f"m_{name}_u{e | w << 1}_{hashed(x, y + 1) % 3}"], SOLID)
+            elif (x, y) in faces:
                 v = hashed(x, y) % 3 if name in CRAGGY else 0
-                m.put("ground", x, y, ID[f"m_{name}_f{e | w << 1}" + (f"_{v}" if v else "")], SOLID)
+                if (x, y) in tall:
+                    m.put("ground", x, y, ID[f"m_{name}_l{e | w << 1}_{v}"], SOLID)
+                else:
+                    m.put("ground", x, y, ID[f"m_{name}_f{e | w << 1}" + (f"_{v}" if v else "")], SOLID)
                 if not m.decor[m.i(x, y + 1)]:  # the face shades the ground at its foot
                     m.put("decor", x, y + 1, ID["mass_shadow"])
             else:
@@ -90,6 +126,10 @@ def terrain(m, grid, biome, legend, stairs="ns"):
         m.put("ground", x, y, ID[f"lava_{mask}_0"], SOLID)
     for (x, y), kind in cells.items():
         if kind.startswith("over:"):
+            if (x, y) in uppers:  # a shrub on the rim of a tall face steps back onto the plateau, or goes
+                if cells.get((x, y - 1), "").startswith("over:") or (x, y - 1) in uppers:
+                    continue
+                y -= 1
             m.put("objects", x, y, ID[f"o_{kind.split(':')[2]}"], SOLID)
 
 
@@ -114,7 +154,7 @@ TOWNS = {
                ("route_sign", 27, 8, "ROUTE 3 - East over the Ironback hills to Ironbrook.")],
         npcs=[("baker_boy", 12, 8, "youngster", "down", "Mara's rolls sell out by noon. The belts in her Gym never stop, though."),
               ("farmer", 7, 8, "old_man", "right", "Good wheat this year. Something's been at the north field, mind. Tidy footprints, and no animal I know."),
-              ("mother", 25, 8, "picnicker", "left", "The old fellow in the house by the mill can teach your Pokemon moves they've forgotten."),
+              ("mother", 26, 8, "picnicker", "left", "The old fellow in the house by the mill can teach your Pokemon moves they've forgotten."),
               ("kid", 22, 12, "twin", "up", "If you stand on a belt you don't get a say any more. That's the whole trick!")]),
     "ironbrook": dict(
         biome="meadow", leader="tavish_rook", props=[("ambient", "leaves"), ("clouds", True)],
@@ -132,9 +172,9 @@ TOWNS = {
         biome="sand", leader="coral_marlowe", props=[("clouds", True)], links={"west": "route_4", "north": "route_5"}, onward="north",
         legend={"r": "obj:prop_rock", "W": "water", "N": "obj:net", "c": "obj:prop_crate", "q": "obj:buoy", "X": "obj:prop_crate"},
         signs=[("town_sign", 12, 8, "SALTMERE HARBOR - Tide tables at the Mart."),
-               ("gym_sign", 18, 13, "SALTMERE GYM - Out on the pier. Leader: Coral Marlowe."),
+               ("gym_sign", 29, 13, "SALTMERE GYM - Out on the pier. Leader: Coral Marlowe."),
                ("route_sign", 13, 1, "ROUTE 5 - North to Dynamo Station.")],
-        npcs=[("deckhand", 17, 9, "sailor", "left", "Captain Marlowe once sailed a storm in a soup pot. She tells it better."),
+        npcs=[("deckhand", 25, 11, "sailor", "left", "Captain Marlowe once sailed a storm in a soup pot. She tells it better."),
               ("netmender", 14, 12, "fisherman", "up", "Team Hollow, they call themselves. Chartered three boats and paid in coins nobody's minted in a century."),
               ("tourist", 9, 7, "beauty", "right", "The sand here squeaks when you walk on it. Nobody warned me about the squeak.")]),
     "dynamo": dict(
@@ -149,13 +189,14 @@ TOWNS = {
               ("apprentice", 6, 10, "youngster", "down", "Mr. Dray says the odds of me passing are ninety-one percent! He says that to everyone.")]),
     "gale": dict(
         biome="cliff", leader="skye_corvin", props=[("clouds", True), ("ambient", "leaves")], links={"south": "route_6", "west": "route_7"}, onward="west",
-        legend={"v": "void", "R": "obj:rail", "O": "obj:boulder", "o": "emblem"}, weather="snow",
-        signs=[("town_sign", 12, 7, "GALE SPIRE - Hold on to your hat."),
+        legend={"v": "void", "R": "obj:rail", "O": "obj:boulder", "o": "emblem", "M": "mass:mountain"}, weather="snow",
+        ledges=[(10, 12, 11), (14, 16, 19)],  # hop down a terrace; the stairs are the way back up
+        signs=[("town_sign", 7, 8, "GALE SPIRE - Hold on to your hat."),
                ("gym_sign", 15, 7, "GALE GYM - Leader: Skye Corvin. The wind does not stop."),
                ("route_sign", 2, 8, "ROUTE 7 - West into the Starfall range.")],
-        npcs=[("keeper", 22, 10, "old_woman", "left", "The birds fly low when grey coats pass. They flew low all last month."),
+        npcs=[("keeper", 24, 6, "old_woman", "left", "The birds fly low when grey coats pass. They flew low all last month."),
               ("climber", 22, 7, "camper", "down", "From the top of the spire you can see Zenith Summit. And a door in its side nobody remembers building."),
-              ("sketcher", 7, 11, "lass", "right", "I've been drawing the same cloud for an hour. It keeps leaving.")]),
+              ("sketcher", 9, 14, "lass", "right", "I've been drawing the same cloud for an hour. It keeps leaving.")]),
     "starfall": dict(
         biome="slate", leader="sage_ilmara", props=[("time", "night"), ("ambient", "fireflies")], links={"east": "route_7", "west": "route_8"}, onward="west",
         legend={"W": "bld"},
@@ -214,7 +255,7 @@ def town(tid):
     for x, y, c in spec.get("patch", ()):
         grid[y][x] = c
     grid = ["".join(r) for r in grid]
-    m = Town(30, 20, base.GRASS)
+    m = Town(len(grid[0]), len(grid), base.GRASS)  # 30x20 unless the layout says otherwise
     links = [p for side, other in spec["links"].items() for p in ((f"connect_{side}", other), (f"connect_{side}_offset", 0))]
     m.props = [("nameKey", tid), *spec["props"], ("border", BORDERS[spec["biome"]]), *links]
     if spec.get("weather"):
@@ -249,6 +290,8 @@ def town(tid):
         else:
             door(m, target_of(tid, label, houses), x, y)
             houses += label == "h"
+    for row in spec.get("ledges", ()):
+        ledge_row(m, *row, look="ledge" if spec["biome"] == "meadow" else "ledge_" + spec["biome"])
     for name, x, y, text in spec["signs"]:
         m.sign(name, x, y, text)
     for name, x, y, sprite, facing, *lines in spec["npcs"]:
@@ -312,8 +355,9 @@ def route(rid):
 
 # The Playground: a park where trainers meet and chat (pages/playground). Not
 # linked into the world. 40 x 28 must match the server room in
-# backend/src/playground/movement.js, whose spawn circle (2 tiles round the
-# centre, tile 20,14) is open plaza. Paths run to the woods on all four sides.
+# backend/src/playground/movement.js. Its spawn circle (2 tiles round tile
+# 20,14) sits on the fountain; the client nudges spawns to the open rim
+# (playgroundGame.js nearestOpen). Paths run to the woods on all four sides.
 PLAYGROUND = [
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",

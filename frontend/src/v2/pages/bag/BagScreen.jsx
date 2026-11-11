@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useUser } from "../../data/user";
 import { api, getErrorMessage } from "../../../api";
 import PokemonSprite from "../../../components/PokemonSprite/PokemonSprite";
@@ -9,14 +10,28 @@ import Modal from "../../ui/Modal";
 import DialogueBox from "../../ui/DialogueBox";
 import { useToast } from "../../ui/toastContext";
 import PartyRow from "../../ui/PartyRow";
+import Tabs from "../../ui/Tabs";
+import MenuIcon from "../../ui/MenuIcon";
+import { HpBar } from "../../ui/Bars";
 import "./items.css";
 
 const NEEDS_TARGET = new Set(["healing", "evolution_stone", "pp_restore"]);
+// Two pockets, as on a handheld: stones in one, everything you drink or spray in the other.
+const POCKETS = [
+	{ id: "medicine", label: "Medicine" },
+	{ id: "stones", label: "Stones" },
+];
+const pocketOf = (item) => (item.category === "evolution_stone" ? "stones" : "medicine");
+/** What the item does, in a few words, for the list row. */
+const effectOf = (item) =>
+	item.healAmount ? `+${item.healAmount} HP` : item.category === "pp_restore" ? "Full PP" : item.category === "evolution_stone" ? "Evolves" : "";
 
 /** Overworld bag: heal, restore PP, evolution stones (server-validated). */
 const BagScreen = () => {
 	const { user } = useUser();
 	const toast = useToast();
+	const navigate = useNavigate();
+	const [pocket, setPocket] = useState("medicine");
 	const [items, setItems] = useState(null);
 	const [party, setParty] = useState([]);
 	const [focus, setFocus] = useState(null);
@@ -90,7 +105,9 @@ const BagScreen = () => {
 			</div>
 		);
 
-	const current = focus?.item || items?.[0];
+	const shown = (items || []).filter((it) => pocketOf(it) === pocket);
+	const current = shown.find((it) => it.itemId === focus?.item?.itemId) || shown[0];
+	const count = (id) => (items || []).filter((it) => pocketOf(it) === id).reduce((n, it) => n + it.quantity, 0);
 
 	return (
 		<div className="page items">
@@ -98,7 +115,17 @@ const BagScreen = () => {
 				<div className="items__bag" aria-hidden="true">
 					<span className="items__bag-flap" />
 				</div>
-				<p className="items__pocket">Items</p>
+				<p className="items__pocket">{POCKETS.find((p) => p.id === pocket).label}</p>
+				{party.length > 0 && (
+					<ul className="items__party" aria-label="Your party's HP">
+						{party.map((m) => (
+							<li key={m.position} className={m.current_hp <= 0 ? "is-fainted" : ""}>
+								<span className="caps">{m.nickname}</span>
+								<HpBar current={m.current_hp} max={m.max_hp} showValue />
+							</li>
+						))}
+					</ul>
+				)}
 			</div>
 
 			<Panel className="items__list" plate="Bag">
@@ -112,26 +139,48 @@ const BagScreen = () => {
 						</Button>
 					</div>
 				) : (
-					<MenuList
-						label="Items"
-						autoFocus
-						onActiveChange={(it) => setFocus(it)}
-						items={items.map((it) => ({
-							id: it.itemId,
-							label: it.name,
-							hint: `×${it.quantity}`,
-							item: it,
-							disabled: busy,
-							onSelect: () => (NEEDS_TARGET.has(it.category) ? setTarget(it) : applyItem(it)),
-						}))}
-					/>
+					<>
+						<Tabs
+							label="Bag pockets"
+							className="items__pockets"
+							value={pocket}
+							onChange={setPocket}
+							tabs={POCKETS.map((p) => ({ id: p.id, label: `${p.label} ${count(p.id)}` }))}
+						/>
+						{shown.length === 0 ? (
+							<p className="read muted items__none">Nothing in this pocket.</p>
+						) : (
+							<MenuList
+								key={pocket}
+								label={`${pocket} pocket`}
+								autoFocus
+								onBack={() => navigate("/game")}
+								onActiveChange={(it) => setFocus(it)}
+								items={shown.map((it) => ({
+									id: it.itemId,
+									icon: <MenuIcon name={it.category} />,
+									label: (
+										<span className="bag-row">
+											<span>{it.name}</span>
+											<span className="bag-row__fx">{effectOf(it)}</span>
+										</span>
+									),
+									ariaLabel: `${it.name}, ${effectOf(it)}, ${it.quantity} left`,
+									hint: `×${it.quantity}`,
+									item: it,
+									disabled: busy,
+									onSelect: () => (NEEDS_TARGET.has(it.category) ? setTarget(it) : applyItem(it)),
+								}))}
+							/>
+						)}
+					</>
 				)}
 				<Button to="/game" className="items__back">
 					Close bag
 				</Button>
 			</Panel>
 
-			<DialogueBox className="items__desc" keys={false} text={current ? current.description || current.name : "Pick an item to see what it does."} />
+			<DialogueBox className="items__desc" keys={false} text={current ? `${current.name}: ${current.description || effectOf(current)}` : "Pick an item to see what it does."} />
 
 			<Modal open={!!target} onClose={() => !busy && setTarget(null)} title={target ? `Use ${target.name} on…` : ""}>
 				<div className="hud__rows items__targets">

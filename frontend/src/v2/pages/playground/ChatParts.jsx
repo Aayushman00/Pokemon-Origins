@@ -10,7 +10,8 @@ const SEND_COOLDOWN_MS = 1000; // matches the server's per-trainer flood guard
 const time = (ts) => new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
 /** Chat history as a trainer log: avatar, name (click for profile), time. */
-export const ChatLog = ({ messages, selfId, onlineIds }) => {
+export const ChatLog = ({ messages, selfId, roster }) => {
+	const online = new Map(roster.map((r) => [r.trainerId, r]));
 	const ref = useRef(null);
 	const stick = useRef(true);
 
@@ -44,18 +45,20 @@ export const ChatLog = ({ messages, selfId, onlineIds }) => {
 				const grouped = prev && prev.trainerId === m.trainerId && m.ts - prev.ts < 120000;
 				const mine = m.trainerId === selfId;
 				const guest = isGuestId(m.trainerId);
+				const who = online.get(m.trainerId); // offline senders fall back to the neutral avatar
+				const avatar = <PixelAvatar gender={who?.gender} tint={who?.color} guest={guest} size={28} />;
 				return (
 					<li key={`${m.trainerId}-${m.ts}`} className={`msg ${mine ? "msg--mine" : ""} ${grouped ? "msg--grouped" : ""}`}>
 						{!grouped && (
 							<div className="msg__head">
 								{mine ? (
 									<span className="trainer-trigger">
-										<PixelAvatar seed={m.trainerId} guest={guest} size={28} />
+										{avatar}
 										<span className="trainer-trigger__name msg__name">{m.name}</span>
 									</span>
 								) : (
-									<TrainerTrigger trainerId={m.trainerId} name={m.name} online={onlineIds.has(m.trainerId)}>
-										<PixelAvatar seed={m.trainerId} guest={guest} size={28} />
+									<TrainerTrigger trainerId={m.trainerId} name={m.name} online={online.has(m.trainerId)}>
+										{avatar}
 										<span className="trainer-trigger__name msg__name">{m.name}</span>
 									</TrainerTrigger>
 								)}
@@ -120,7 +123,7 @@ const RosterRow = ({ p, self, near }) => {
 	const body = (
 		<>
 			<span className="roster__avatar">
-				<PixelAvatar seed={p.trainerId} guest={guest} size={32} />
+				<PixelAvatar gender={p.gender} tint={p.color} guest={guest} size={32} />
 				<span className={`presence ${guest ? "presence--guest" : "presence--online"} roster__dot`} aria-hidden="true" />
 			</span>
 			<span className="trainer-trigger__name roster__name">

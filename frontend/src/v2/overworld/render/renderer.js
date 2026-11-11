@@ -194,12 +194,19 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 		}
 	}
 
-	// Tall grass: draw the lower rows of a "cover" tile again over an actor standing in it.
+	// Tall grass: draw the lower rows of a "cover" tile again over an actor standing in it,
+	// clipped to the actor's feet. Unclipped, stepping north into grass drew the next
+	// tile's blades across the body until the step ended.
 	function drawCover(a, d, cam, ms) {
 		if (a.phase === "hop") return;
 		const map = d.map;
+		const { px, py } = actorPixel(a);
 		const cells = [{ x: a.x, y: a.y }];
 		if (a.to && a.to.mapId === a.mapId) cells.push({ x: a.to.x, y: a.to.y });
+		g.save();
+		g.beginPath();
+		g.rect(d.ox + px - cam.x, d.oy + py - cam.y, TILE, TILE);
+		g.clip();
 		for (const c of cells) {
 			if (c.x < 0 || c.y < 0 || c.x >= map.width || c.y >= map.height) continue;
 			for (const name of ["ground", "decor", "objects"]) {
@@ -211,6 +218,7 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 				drawGid(map, gid, d.ox + c.x * TILE - cam.x, d.oy + c.y * TILE - cam.y, ms, row);
 			}
 		}
+		g.restore();
 	}
 
 	function drawLayer(map, name, ox, oy, ms) {
@@ -329,12 +337,13 @@ export function createRenderer({ canvas, assets, playerSprite = "player" }) {
 				.map((a) => ({ a, d: originOf(a.mapId) }))
 				.filter((e) => e.d)
 				.sort((p, q) => actorPixel(p.a).py + p.d.oy - (actorPixel(q.a).py + q.d.oy));
+			// Grass parting and landing dust sit on the ground: under the actors, so they never cross a body.
+			stepFx(fx, { tick: game.tickCount, player: { ...game.player, mapId: map.id }, isGrass: (x, y) => Boolean(coverAt(map, x, y)) });
+			if (!calm) for (const e of fx.effects) drawEffect(e, 0, 0, cam);
 			for (const { a, d } of actors) {
 				drawActor(a, d.ox, d.oy, cam.x, cam.y, game.tickCount);
 				drawCover(a, d, cam, ms);
 			}
-			stepFx(fx, { tick: game.tickCount, player: { ...game.player, mapId: map.id }, isGrass: (x, y) => Boolean(coverAt(map, x, y)) });
-			if (!calm) for (const e of fx.effects) drawEffect(e, 0, 0, cam);
 
 			for (const d of drawn) drawLayer(d.map, "above", d.ox - cam.x, d.oy - cam.y, ms);
 			drawSky(map, cam, game.tickCount);

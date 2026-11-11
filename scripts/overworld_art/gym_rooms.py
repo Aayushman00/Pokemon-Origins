@@ -15,7 +15,7 @@ from .world_maps import COL_FIRST, GYMS, ID, SOLID, Town, finish, leader_story
 ROOMS = {
     "mara_quill": ("hearthfield", "bakery", (3, 0, "up"), (15, 7)),
     "tavish_rook": ("ironbrook", "dojo", (4, 3, "left"), (22, 7)),
-    "coral_marlowe": ("saltmere", "harbor", (4, 0, "up"), (19, 15)),
+    "coral_marlowe": ("saltmere", "harbor", (4, 0, "up"), (28, 15)),
     "volt_dray": ("dynamo", "generator", (0, 1, "left"), (22, 7)),
     "skye_corvin": ("gale", "spire", (7, 7, "left"), (14, 7)),
     "sage_ilmara": ("starfall", "dome", (0, 2, "left"), (5, 7)),

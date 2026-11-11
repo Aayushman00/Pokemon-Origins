@@ -878,7 +878,7 @@
       {
        "name": "targetY",
        "type": "int",
-       "value": 16
+       "value": 17
       },
       {
        "name": "facing",

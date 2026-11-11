@@ -1,4 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
+import Cursor from "../../ui/Cursor";
+import MenuIcon from "../../ui/MenuIcon";
 
 /**
  * The Start menu. Buttons reach it through `keys`, which the game loop calls with each
@@ -28,6 +30,8 @@ const StartMenu = ({ items, keys, onClose }) => {
 		<nav className="ow__menu frame panel font-pixel" aria-label="Start menu">
 			{items.map((item, n) => (
 				<button key={item.label} type="button" className="ow__menu-item" aria-current={n === i} onClick={item.run} onMouseEnter={() => point(n)}>
+					<Cursor hidden={n !== i} />
+					<MenuIcon name={item.icon} />
 					{item.label}
 				</button>
 			))}

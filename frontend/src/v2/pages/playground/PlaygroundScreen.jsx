@@ -55,7 +55,6 @@ const PlaygroundScreen = () => {
 		return () => window.removeEventListener("keydown", onKey, true);
 	}, []);
 
-	const onlineIds = new Set(play.roster.map((r) => r.trainerId));
 	const ready = play.status === "ready";
 
 	if (play.status === "error") {
@@ -82,7 +81,7 @@ const PlaygroundScreen = () => {
 						<Roster roster={play.roster} selfId={play.selfId} nearIds={nearIds} />
 					</Window>
 					<Window title="Nearby chat" className="pg__chat">
-						<ChatLog messages={play.messages} selfId={play.selfId} onlineIds={onlineIds} />
+						<ChatLog messages={play.messages} selfId={play.selfId} roster={play.roster} />
 						<Composer onSend={play.send} disabled={!ready} />
 					</Window>
 				</aside>

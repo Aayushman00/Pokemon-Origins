@@ -124,7 +124,7 @@ function createBattleAi({ chart = null, loadChart = defaultLoadChart, random = M
 		return usable[0];
 	}
 
-	return { pickMove };
+	return { pickMove, getChart };
 }
 
 module.exports = {

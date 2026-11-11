@@ -79,13 +79,14 @@ class Route(unittest.TestCase):
     def setUpClass(cls):
         cls.data = W.route("route_1")
 
-    def test_ledges_drop_south_only(self):
+    def test_ledges_drop_the_way_they_face(self):
         col = layer(self.data, "collision")
         w = self.data["width"]
+        side = {(x, y): s for x, y0, y1, s in W.SIDE_LEDGES["route_1"] for y in range(y0, y1 + 1)}
         ledges = cells(self.data, "objects", "ledge_")
-        self.assertGreaterEqual(len(ledges), 6)
-        for x, y in ledges:
-            self.assertEqual(col[y * w + x] - W.COL_FIRST + 1, 2, (x, y))
+        self.assertGreaterEqual(len(ledges), 6 + len(side))
+        for x, y in ledges:  # COL: 2 down, 3 left, 4 right
+            self.assertEqual(col[y * w + x] - W.COL_FIRST + 1, {"e": 4, "w": 3}.get(side.get((x, y)), 2), (x, y))
 
     def test_dressing_stays_off_the_trail(self):
         decor = layer(self.data, "decor")

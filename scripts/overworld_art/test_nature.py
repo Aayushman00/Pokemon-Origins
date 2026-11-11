@@ -299,20 +299,32 @@ class RouteDressing(unittest.TestCase):
 
 
 class PlaygroundMap(unittest.TestCase):
-    """The Playground: a 40x28 park whose spawn circle (2 tiles round the
-    centre, backend/src/playground/movement.js) is open plaza."""
+    """The Playground: a 40x28 park. The server spawns within 2 tiles of the
+    centre (backend/src/playground/movement.js), which the fountain mostly
+    covers; the client nudges a blocked spawn to the nearest open tile
+    (playgroundGame.js nearestOpen)."""
 
     def test_size_matches_the_server_room(self):
         m = json.loads((MAPS / "playground.json").read_text())
         self.assertEqual((m["width"], m["height"]), (40, 28))
 
-    def test_spawn_circle_is_walkable_and_nothing_fights(self):
+    def test_every_spawn_lands_on_open_ground_within_earshot(self):
         m = json.loads((MAPS / "playground.json").read_text())
         col = next(l["data"] for l in m["layers"] if l["name"] == "collision")
-        for y in range(12, 17):
-            for x in range(18, 23):
-                if (x - 20) ** 2 + (y - 14) ** 2 <= 4:
-                    self.assertEqual(col[y * 40 + x], 0, (x, y))
+
+        def nearest_open(x, y):  # same ring search as playgroundGame.js nearestOpen
+            for r in range(40):
+                for dy in range(-r, r + 1):
+                    for dx in range(-r, r + 1):
+                        if max(abs(dx), abs(dy)) == r and col[(y + dy) * 40 + x + dx] == 0:
+                            return x + dx, y + dy
+
+        spots = [nearest_open(x, y) for y in range(12, 17) for x in range(18, 23) if (x - 20) ** 2 + (y - 14) ** 2 <= 4]
+        for x, y in spots:
+            self.assertLessEqual(max(abs(x - 20), abs(y - 14)), 3, "spawn stays by the fountain")
+        for a in spots:  # chat radius is 6 tiles
+            for b in spots:
+                self.assertLess(((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** .5, 6, (a, b))
         groups = {l["name"]: l.get("objects", []) for l in m["layers"] if l["type"] == "objectgroup"}
         self.assertEqual(groups.get("encounters", []), [])
         self.assertEqual(groups.get("warps", []), [])

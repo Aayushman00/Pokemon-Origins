@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useUser } from "../data/user";
 import MenuList from "../ui/MenuList";
 import PixelAvatar from "../ui/PixelAvatar";
+import MenuIcon from "../ui/MenuIcon";
 import useTheme from "../data/theme";
 import "./shell.css";
 
@@ -21,14 +22,7 @@ const Crest = () => (
 	</svg>
 );
 
-const LINKS = [
-	{ to: "/game", label: "Hub", auth: true },
-	{ to: "/playground", label: "Playground" },
-	{ to: "/pokedex", label: "Pokédex" },
-	{ to: "/trainer", label: "Trainer card", auth: true },
-];
-
-/** Global chrome: slim top bar + the START menu (the app's full nav). */
+/** Global chrome: brand, your avatar, day/night, and the START menu, which is the app's only nav. */
 const AppShell = ({ children }) => {
 	const { user, setUser } = useUser();
 	const navigate = useNavigate();
@@ -70,17 +64,23 @@ const AppShell = ({ children }) => {
 				{ id: "mart", label: "Mart", to: "/game/mart" },
 				{ id: "dex", label: "Pokédex", to: "/pokedex" },
 				{ id: "play", label: "Playground", to: "/playground" },
-				{ id: "card", label: user.name || "Trainer", to: "/trainer" },
-				{ id: "out", label: "Log out", onSelect: logOut },
+				{ id: "card", label: "Trainer card", to: "/trainer" },
+				{ id: "out", label: "Log out", onSelect: logOut, className: "menu__item--sep" },
 				{ id: "exit", label: "Exit", onSelect: close },
 		]
 		: [
-				{ id: "title", label: "Title screen", to: "/" },
-				{ id: "auth", label: "Log in / Sign up", to: "/auth" },
+				{ id: "hub", label: "Title screen", to: "/" },
+				{ id: "card", label: "Log in / Sign up", to: "/auth" },
 				{ id: "dex", label: "Pokédex", to: "/pokedex" },
 				{ id: "play", label: "Playground", to: "/playground" },
-				{ id: "exit", label: "Exit", onSelect: close },
+				{ id: "exit", label: "Exit", onSelect: close, className: "menu__item--sep" },
 		];
+	const here = location.pathname + location.hash;
+	const rows = menuItems.map((item) => ({
+		...item,
+		icon: <MenuIcon name={item.id} />,
+		hint: item.to === here ? "here" : undefined,
+	}));
 
 	return (
 		<>
@@ -95,18 +95,10 @@ const AppShell = ({ children }) => {
 					</span>
 				</NavLink>
 
-				<nav className="topbar__nav" aria-label="Main">
-					{LINKS.filter((l) => !l.auth || user).map((l) => (
-						<NavLink key={l.to} to={l.to} end className="topbar__link">
-							{l.label}
-						</NavLink>
-					))}
-				</nav>
-
 				<div className="topbar__right">
 					{user && (
 						<NavLink to="/trainer" className="topbar__me" aria-label="Your trainer card">
-							<PixelAvatar seed={user.trainer_id} size={28} />
+							<PixelAvatar gender={user.gender} size={28} />
 							<span>{user.name}</span>
 						</NavLink>
 					)}
@@ -135,7 +127,19 @@ const AppShell = ({ children }) => {
 
 				{menuOpen && (
 					<div ref={menuRef} id="start-menu" className="frame panel start-menu frame--lift">
-						<MenuList items={menuItems} label="Start menu" autoFocus onBack={close} />
+						{user && (
+							<div className="start-menu__me">
+								<PixelAvatar gender={user.gender} size={40} />
+								<span>
+									<strong className="caps">{user.name}</strong>
+									<span className="start-menu__sub">Trainer</span>
+								</span>
+							</div>
+						)}
+						<MenuList items={rows} label="Start menu" autoFocus onBack={close} />
+						<p className="start-menu__keys" aria-hidden="true">
+							↑↓ move · Enter · Esc
+						</p>
 					</div>
 				)}
 			</header>

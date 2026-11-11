@@ -168,7 +168,7 @@
 }
 
 .btn--sm {
-	min-height: 36px;
+	min-height: var(--tap);
 	padding: var(--s-1) var(--s-3);
 	font-size: var(--fs-sm);
 }
@@ -290,6 +290,32 @@
 
 .menu__label {
 	flex: 1;
+	min-width: 0;
+}
+
+/* First row of a new group (Log out, Exit): a ruled gap above it. */
+.menu__item--sep {
+	margin-top: var(--s-2);
+	box-shadow: 0 -2px 0 var(--c-sand);
+}
+
+/* 8x8 glyph from ui/MenuIcon, drawn at x2 in the row's own colour */
+.menu-icon {
+	width: 16px;
+	height: 16px;
+	flex: none;
+}
+
+.menu-icon--healing {
+	color: var(--c-red);
+}
+
+.menu-icon--pp_restore {
+	color: var(--c-xp);
+}
+
+.menu-icon--evolution_stone {
+	color: var(--c-sun-dark);
 }
 
 .menu__hint {
@@ -565,7 +591,7 @@
 .modal-backdrop {
 	position: fixed;
 	inset: 0;
-	z-index: 80;
+	z-index: var(--z-modal);
 	display: grid;
 	place-items: center;
 	padding: var(--s-4);
@@ -598,11 +624,22 @@
 	position: fixed;
 	top: calc(var(--topbar-h) + 12px);
 	right: 12px;
-	z-index: 90;
+	z-index: var(--z-toast);
 	display: grid;
 	gap: var(--s-2);
 	width: min(360px, calc(100vw - 24px));
 	pointer-events: none;
+}
+
+/* On a phone the top-right corner is the START button: toasts go to the bottom. */
+@media (max-width: 640px) {
+	.toasts {
+		top: auto;
+		right: auto;
+		bottom: 12px;
+		left: 50%;
+		translate: -50% 0;
+	}
 }
 
 .toast {
@@ -638,7 +675,7 @@
    ========================================================= */
 .hovercard {
 	position: fixed;
-	z-index: 70;
+	z-index: var(--z-hovercard);
 	width: 300px;
 	padding: var(--s-4);
 	animation: hovercard-in 160ms steps(3, end);

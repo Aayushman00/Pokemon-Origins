@@ -245,10 +245,10 @@ def _window(d, col):
         d.point((x, 62 + i % 2), fill=("#f4a0a8", "#fff2b0", "#f7d060")[i % 3])
 
 
-def building(cols, roof_name, door_col, windows, chimney=None, glass_door=False):
+def building(cols, roof_name, door_col, windows, chimney=None, glass_door=False, wall_name="wall"):
     """Unoutlined building `cols` tiles wide, 5 tall: three rows of roof with
     a lit left plane and shaded right plane, two rows of wall."""
-    roof, wall, stone, wood = WORLD[roof_name], WORLD["wall"], WORLD["stone"], WORLD["wood"]
+    roof, wall, stone, wood = WORLD[roof_name], WORLD[wall_name], WORLD["stone"], WORLD["wood"]
     W = cols * T
     img = Image.new("RGBA", (W, 80))
     d = ImageDraw.Draw(img)

@@ -532,7 +532,78 @@ def forge():
     return out
 
 
-THEMES = {"bakery": bakery, "dojo": dojo, "harbor": harbor, "generator": generator, "spire": spire, "dome": dome, "forge": forge}
+# ------------------------------------------------------------------ grove (Mossgate)
+def grove():
+    """Inside the hollow trunk: pale flagstones so the green Leader and the pods
+    read against the floor, living-wood walls, tilled soil for the seeds."""
+    def floor(flip):
+        t = Tile(fill="#ddd2ac")
+        t.rect(0, 15, 15, 15, "#b8ab84")
+        t.rect(15, 0, 15, 15, "#b8ab84")
+        x = 4 if flip else 11
+        t.rect(x, 0, x, 7, "#b8ab84")
+        t.rect(0, 7, 15, 7, "#b8ab84")
+        t.rect(15 - x, 8, 15 - x, 15, "#b8ab84")
+        speck(t, 31 + flip, 4, ["#9cbc6c"])  # moss in the joints
+        return t
+
+    def face():
+        t = Tile(fill="#6c4a38")
+        for x in (1, 6, 11):
+            t.rect(x, 0, x + 1, 15, "#8a6446")
+        t.rect(0, 0, 15, 2, "#4e8a50")
+        for x in (2, 7, 13):  # moss hanging over the lip
+            t.rect(x, 3, x, 4, "#4e8a50")
+        t.rect(0, 14, 15, 15, "#40303a")
+        return t
+
+    def soil(t):
+        t.rect(2, 3, 13, 12, "#7e5c42")
+        ring(t, 2, 3, 13, 12, "#604634")
+        for y in (6, 9):
+            t.rect(4, y, 11, y, "#604634")
+
+    def pod(t):
+        disc(t, 8, 9, 5, "#40303a")
+        disc(t, 8, 9, 4, "#a8703c")
+        disc(t, 7, 8, 2, "#d8a060")
+        t.rect(6, 3, 10, 4, "#4e8a50")
+        t.rect(8, 1, 8, 3, "#40303a")
+
+    def sprout(t):
+        t.rect(7, 6, 8, 12, "#3f8458")
+        disc(t, 5, 6, 2, "#6ea858")
+        disc(t, 11, 5, 2, "#6ea858")
+        t.rect(5, 12, 10, 13, "#a8703c")
+
+    def vines(t):  # a woven wall of stems: it has to read as "shut" at a glance
+        t.rect(0, 1, 15, 14, "#2c6450")
+        for x in (1, 6, 11):
+            t.rect(x, 0, x + 2, 15, "#3f8458")
+            t.rect(x, 0, x, 15, "#5ea060")
+        for y in (4, 10):
+            t.rect(0, y, 15, y + 1, "#3f8458")
+        for x, y in ((4, 2), (9, 7), (4, 12), (14, 4), (13, 12), (8, 1)):
+            disc(t, x, y, 1, "#7cb85c")
+        t.rect(0, 15, 15, 15, "#40303a")
+
+    def leaf_ring(t):
+        ring(t, 3, 3, 12, 12, "#c8843c")
+        disc(t, 8, 8, 2, "#4e8a50")
+
+    base = floor(0)
+    out = {"floor0": base, "floor1": floor(1), "face": face(), **cap("#2f5a3a", "#4a7a48", 23)}
+    out["rug"] = Tile(fill="#c8843c")  # honey runner: the Leader's green stands out on it
+    out["soil"] = over(base, soil)
+    out["pod"] = over(Tile(), pod)
+    out["sprout"] = over(Tile(), sprout)
+    out["gate"] = over(base, vines)
+    out["goal"] = over(Tile(), leaf_ring)
+    return out
+
+
+THEMES = {"bakery": bakery, "dojo": dojo, "harbor": harbor, "generator": generator, "spire": spire, "dome": dome, "forge": forge,
+          "grove": grove}
 ANIMATED = [("bakery", f"belt{d}", 180) for d in BELT.values()] + [("harbor", "water", 500), ("forge", "lava", 420)]
 
 

@@ -13,7 +13,7 @@ from PIL import Image, ImageDraw, ImageFilter
 
 from .slice_art import T, _lawn, _outline, _trail, _wave, edge_colour, leaf_mass, meadow, rgb
 from .tiles_v2 import E, N, NE, NW, S, SE, SW, Wb
-from .world_palette import SHADOW, TALL, WORLD, outline_for
+from .world_palette import LINE, SHADOW, TALL, WORLD, outline_for
 
 SIDES = {(0, -1): N, (1, 0): E, (0, 1): S, (-1, 0): Wb}
 CORNERS = {(1, -1): NE, (1, 1): SE, (-1, 1): SW, (-1, -1): NW}
@@ -113,7 +113,7 @@ def _canopy(tone=None):
     shade fills between crowns, then leaf_mass paints the crowns over it."""
     ramp, pick = CANOPY_TONES.get(tone, ("leaf", None))
     inside = [i for i, (cx, cy, r) in enumerate(CANOPY_CLUMPS) if r + 1 <= cx <= 31 - r and r + 1 <= cy <= 31 - r]
-    chosen = set(inside[pick % len(inside)::2 if tone != "amber" else len(inside)]) if tone and inside else set()
+    chosen = set(inside[pick % len(inside)::len(inside)] if tone == "amber" else inside) if tone and inside else set()
     img = Image.new("RGBA", (32, 32), rgba(WORLD["leaf"][4]))
     ramps = [WORLD[ramp if i in chosen else "leaf"] for i in range(len(CANOPY_CLUMPS))]
     leaf_mass(img, CANOPY_CLUMPS, ramps, wrap=True)
@@ -343,6 +343,29 @@ def plank(across=True):
     return img if across else img.transpose(Image.TRANSPOSE)
 
 
+def rope_rail(sides):
+    """Rope handrail laid over a bridge deck along each side in `sides` ("n", "s",
+    "w", "e"): one post per tile, the rope sagging on to the next tile's post."""
+    wood, rope = WORLD["wood"], ("#e8cc94", "#b48c5c")
+    img = Image.new("RGBA", (T, T))
+    for side in sides:
+        layer = Image.new("RGBA", (T, T))
+        d = ImageDraw.Draw(layer)
+        d.rectangle((1, 0, 2, 3), fill=wood[0])  # the post, drawn for the north edge then turned
+        d.line((3, 0, 3, 3), fill=wood[3])
+        d.line((1, 4, 3, 4), fill=LINE)  # its foot, where it meets the deck
+        for x in range(4, 16):
+            y = 1 + (x in range(6, 14)) + (x in range(8, 12))
+            d.point((x, y), fill=rope[0])
+            d.point((x, y + 1), fill=rope[1])
+        turn = {"n": None, "s": Image.FLIP_TOP_BOTTOM, "w": Image.TRANSPOSE, "e": Image.TRANSVERSE}[side]
+        img.alpha_composite(layer if turn is None else layer.transpose(turn))
+    return img
+
+
+RAIL_SIDES = ["".join(s for s, on in zip("nswe", (k & 1, k & 2, k & 4, k & 8)) if on) for k in range(1, 16)]
+
+
 def _decal():
     img = Image.new("RGBA", (T, T))
     return img, ImageDraw.Draw(img)
@@ -432,11 +455,12 @@ def _shade():
 STREAK = (1, 0, 1, 1, 2, 1, 0, 1, 1, 1, 2, 1, 0, 1, 2, 1)  # earth tone per column: vertical grain
 
 
-def ledge(part):
+def ledge(part, lip=None, face=None):
     """South-facing drop, one tile: a grass lip (from row 2) hanging over an
     earth face to row 13, then a 2px contact shadow on the ground below.
-    `part` is l, m or r; the ends curl back into the ground."""
-    earth, lawn = WORLD["ledge"], WORLD["lawn"]
+    `part` is l, m or r; the ends curl back into the ground. `lip` and `face`
+    are 3-tone ramps for ground that is not meadow (stone towns)."""
+    earth, lawn = face or WORLD["ledge"], lip or WORLD["lawn"]
     img, _ = _decal()
     px = img.load()
     for x in range(T):

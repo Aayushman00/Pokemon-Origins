@@ -108,7 +108,7 @@
 .pgs__name {
 	position: relative;
 	padding: 0 4px 1px;
-	font-size: 11px;
+	font-size: var(--fs-xs);
 	line-height: 1.3;
 	white-space: nowrap;
 	color: var(--pg-text);
@@ -228,7 +228,7 @@
 	right: -6px;
 	bottom: -6px;
 	min-width: 14px;
-	font-size: 9px;
+	font-size: 11px;
 	line-height: 13px;
 	color: var(--pg-text);
 	background: var(--pg-panel);
@@ -265,7 +265,7 @@
 	position: absolute;
 	right: 12px;
 	bottom: 4px;
-	font-size: 10px;
+	font-size: 11px;
 	animation: pg-blink 0.8s steps(1) infinite;
 }
 @keyframes pg-blink {
@@ -280,7 +280,8 @@
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	padding: 4px 6px;
+	min-height: var(--tap);
+	padding: 4px 8px;
 	color: var(--pg-text);
 	background: rgba(18, 22, 41, 0.86);
 	border: 2px solid var(--pg-line);
@@ -289,7 +290,7 @@
 }
 .pgs__emote-btn kbd {
 	font: inherit;
-	font-size: 10px;
+	font-size: 11px;
 	padding: 0 3px;
 	color: var(--pg-ink);
 	background: var(--pg-text);

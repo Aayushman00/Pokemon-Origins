@@ -40,7 +40,7 @@ export default function usePlayground() {
 
 	const syncRoster = () =>
 		setRoster(
-			Array.from(playersRef.current.values()).map(({ trainerId, name, color }) => ({ trainerId, name, color }))
+			Array.from(playersRef.current.values()).map(({ trainerId, name, color, gender }) => ({ trainerId, name, color, gender }))
 		);
 
 	useEffect(() => {
