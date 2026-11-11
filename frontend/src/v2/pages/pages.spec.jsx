@@ -9,9 +9,9 @@ import { ToastProvider } from "../ui/Toast";
 const wrap = (ui) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe("Playground chat", () => {
-	it("tags guests and channels, and invites the first message when empty", () => {
+	it("tags guests, links names to profiles, and invites the first message when empty", () => {
 		const { rerender } = wrap(<ChatLog messages={[]} selfId="guest-me" onlineIds={new Set()} />);
-		expect(screen.getByText(/No one has said anything yet/)).toBeTruthy();
+		expect(screen.getByText(/Quiet so far/)).toBeTruthy();
 		rerender(
 			<MemoryRouter>
 				<ChatLog
@@ -24,20 +24,19 @@ describe("Playground chat", () => {
 				/>
 			</MemoryRouter>
 		);
-		expect(screen.getByText("Nearby")).toBeTruthy();
-		expect(screen.getByText("Everyone")).toBeTruthy();
+		expect(screen.queryByText("Everyone")).toBeNull(); // proximity only: no channel tags
 		expect(screen.getByText("Guest")).toBeTruthy();
 		expect(screen.getByRole("button", { name: /Red: trainer profile/ })).toBeTruthy();
 	});
 
-	it("sends to Everyone when that channel is picked and clears the box", () => {
+	it("sends to trainers nearby, with no Everyone channel, and clears the box", () => {
 		const onSend = vi.fn(() => true);
 		wrap(<Composer onSend={onSend} />);
-		fireEvent.click(screen.getByRole("radio", { name: "Everyone" }));
+		expect(screen.queryByRole("radio", { name: "Everyone" })).toBeNull();
 		const input = screen.getByLabelText("Message");
 		fireEvent.change(input, { target: { value: "hello map" } });
 		fireEvent.submit(input.closest("form"));
-		expect(onSend).toHaveBeenCalledWith("hello map", { everyone: true });
+		expect(onSend).toHaveBeenCalledWith("hello map");
 		expect(input.value).toBe("");
 	});
 });
