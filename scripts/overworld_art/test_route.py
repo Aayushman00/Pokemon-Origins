@@ -111,5 +111,42 @@ class Bridge(unittest.TestCase):
         self.assertEqual(m.ground[m.i(1, 2)] - 1, W.ID["plank_v"])
 
 
+class DawnbrookStarterGate(unittest.TestCase):
+    def test_route_1_stays_shut_until_a_starter_is_picked(self):
+        data = W.dawnbrook()
+        gate = next(o for l in data["layers"] if l["name"] == "triggers" for o in l["objects"] if o["name"] == "starter_gate")
+        self.assertEqual((gate["x"] // 16, gate["y"] // 16, gate["width"] // 16, gate["height"] // 16), (29, 9, 1, 2))
+        props = {p["name"]: p["value"] for p in gate["properties"]}
+        ops = json.loads(props["script"])
+        self.assertEqual((props["when"], ops[0]["op"], ops[0]["flag"]), ("step", "requireFlag", "story:starter"))
+        self.assertNotIn("not", ops[0])
+        self.assertEqual(ops[0]["else"][-1], {"op": "cutsceneMove", "actor": "player", "path": ["left"]})
+
+
+class ShoreZones(unittest.TestCase):
+    """Reeds (`q`) beside water carry the route's water table (wild encounters design)."""
+
+    def test_reeds_hold_the_water_table_beside_water_and_no_trainer(self):
+        from . import towns
+        for rid in ("route_2", "route_4", "route_7"):
+            with self.subTest(rid):
+                r, table = W.ROUTES[rid], towns.WATER_TABLES[rid]
+                grid = r["grid"]
+                group = next(l for l in towns.route(rid)["layers"] if l["name"] == "encounters")["objects"]
+                tiles = set()
+                for o in group:
+                    if {"name": "table", "type": "string", "value": table} in o.get("properties", []):
+                        x0, y0 = o["x"] // 16, o["y"] // 16
+                        tiles |= {(x0 + dx, y0 + dy) for dx in range(o["width"] // 16) for dy in range(o["height"] // 16)}
+                reeds = {(x, y) for y, row in enumerate(grid) for x, c in enumerate(row) if c == "q"}
+                self.assertTrue(reeds)
+                self.assertEqual(tiles, reeds)
+                at = lambda x, y: grid[y][x] if 0 <= y < len(grid) and 0 <= x < len(grid[y]) else ""
+                for x, y in reeds:
+                    near = {at(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))}
+                    self.assertTrue(near & {"~", "q"}, (rid, x, y))
+                self.assertFalse({(t["x"], t["y"]) for t in r["trainers"]} & reeds)
+
+
 if __name__ == "__main__":
     unittest.main()

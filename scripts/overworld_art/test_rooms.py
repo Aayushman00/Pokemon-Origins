@@ -52,6 +52,17 @@ class Lab(unittest.TestCase):
         self.assertIn((7, 3), self.room.solid)
         self.assertIn((7, 4), self.open)
 
+    def test_the_professor_and_the_bench_offer_the_starter_until_one_is_picked(self):
+        import json
+        data = I.MAPS["dawnbrook_lab"]()
+        objs = {o["name"]: o for l in data["layers"] if l.get("objects") for o in l["objects"]}
+        for name in ("professor", "counter_professor"):
+            ops = json.loads(next(p["value"] for p in objs[name]["properties"] if p["name"] == "script"))
+            self.assertEqual(ops[0]["op"], "requireFlag")
+            self.assertEqual((ops[0]["flag"], ops[0]["not"]), ("story:starter", True))
+            self.assertEqual(ops[0]["else"][0]["op"], "say")
+            self.assertEqual(ops[-1], {"op": "starter"})
+
     def test_the_bookcase_can_be_read(self):
         self.assertIn((1, 2), self.open)
 

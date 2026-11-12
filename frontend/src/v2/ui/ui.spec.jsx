@@ -23,6 +23,16 @@ describe("CommandMenu", () => {
 });
 
 describe("DialogueBox", () => {
+	it("the overworld's talk variant swaps the navy frame for the talk panel; other screens keep navy", () => {
+		const talk = render(<DialogueBox text="Hello!" variant="talk" />).container.firstChild;
+		expect(talk.classList.contains("panel--talk")).toBe(true);
+		expect(talk.classList.contains("dialogue--talk")).toBe(true);
+		expect(talk.classList.contains("panel--navy")).toBe(false);
+		expect(talk.classList.contains("frame")).toBe(false);
+		const plain = render(<DialogueBox text="Hello!" />).container.firstChild;
+		expect(plain.classList.contains("panel--navy")).toBe(true);
+		expect(plain.classList.contains("panel--talk")).toBe(false);
+	});
 
 	it("exposes the whole line to screen readers and advances on click once shown", () => {
 		const onAdvance = vi.fn();

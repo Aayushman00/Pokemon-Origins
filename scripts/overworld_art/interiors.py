@@ -1112,8 +1112,11 @@ def house(map_id, who, sprite, line, tv):
 
 def lab():
     def extras(m):
-        talk = [say("Ah, you made it! Every journey starts with a first partner."),
-                say("Yours chose you well. Take care of each other, and Mossgate is east along Route 1.")]
+        talk = [{"op": "requireFlag", "flag": "story:starter", "not": True,
+                 "else": [say("Yours chose you well. Take care of each other, and Mossgate is east along Route 1.")]},
+                say("Ah, you made it! Every journey starts with a first partner."),
+                say("Three Pokemon are waiting on the bench. Take your time, and choose the one for you."),
+                {"op": "starter"}]
         m.npc("professor", 7, 2, "professor", "down", *talk)
         m.sign("counter_professor", 7, 3, ops=talk)
         m.sign("books", 1, 1, text="Field notes on Pokemon of the Greenwood.")

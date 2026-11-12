@@ -6,9 +6,13 @@ import DialogueBox from "../../ui/DialogueBox";
 import Button from "../../ui/Button";
 import { TypeBadge } from "../../ui/Badges";
 import Cursor from "../../ui/Cursor";
+import "./hub.css";
 
-/** First-run lab scene: pick a partner, confirm in the text box. */
-const StarterPick = ({ user, setUser }) => {
+/**
+ * The lab scene: pick a partner, confirm in the text box. With `onDone` it is the overworld's
+ * overlay (the Professor's bench) and hands back the updated trainer once the server takes the pick.
+ */
+const StarterPick = ({ user, setUser, onDone }) => {
 	const reduce = useReducedMotion();
 	const [cursor, setCursor] = useState(1);
 	const [picked, setPicked] = useState(null);
@@ -52,7 +56,10 @@ const StarterPick = ({ user, setUser }) => {
 			const updated = { ...user, starterChosen: true, starter: picked.id };
 			localStorage.setItem("trainer", JSON.stringify(updated));
 			setJoined(picked);
-			setTimeout(() => setUser(updated), reduce ? 0 : 1600);
+			setTimeout(() => {
+				setUser(updated);
+				onDone?.(updated);
+			}, reduce ? 0 : 1600);
 		} catch (err) {
 			setError(getErrorMessage(err, "Could not register your partner. Try again."));
 			setSaving(false);
@@ -70,7 +77,7 @@ const StarterPick = ({ user, setUser }) => {
 		: `${user.name}, ${STARTERS.length} Pokémon are waiting on the table. Which one will be your partner?`;
 
 	return (
-		<div className="page starter">
+		<div className={onDone ? "starter starter--overlay" : "page starter"}>
 			<h1 className="starter__title">Choose your partner</h1>
 			<div className="starter__table" role="radiogroup" aria-label="Starter Pokémon" onKeyDown={onKey}>
 				{STARTERS.map((s, i) => {

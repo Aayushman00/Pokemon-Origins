@@ -24,6 +24,7 @@ services:
       - ./database/migrations/009_trainer_card.sql:/docker-entrypoint-initdb.d/10_trainer_card.sql
       - ./database/migrations/012_trainer_flags.sql:/docker-entrypoint-initdb.d/11_trainer_flags.sql
       - ./database/migrations/013_world_state.sql:/docker-entrypoint-initdb.d/12_world_state.sql
+      - ./database/migrations/014_trade_evolutions_by_level.sql:/docker-entrypoint-initdb.d/13_trade_evolutions_by_level.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u root", "-p${MYSQL_ROOT_PASSWORD:-rootpassword}"]
       interval: 10s

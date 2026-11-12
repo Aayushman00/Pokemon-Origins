@@ -31,10 +31,21 @@ function createMysqlFlagStore(pool) {
 	};
 }
 
+async function mysqlHasStarter(trainerId) {
+	const [rows] = await require("../config/trainerdb").query("SELECT 1 FROM trainer_pokemon WHERE trainer_id = ? LIMIT 1", [trainerId]);
+	return rows.length > 0;
+}
+
 function createFlagService(deps = {}) {
 	const store = () => deps.store || createMysqlFlagStore(require("../config/trainerdb"));
+	// story:starter is derived, not stored: anyone who owns a Pokemon has picked one, so accounts
+	// from before the lab pick get it and a reset (which empties the party) takes it away.
+	const hasStarter = deps.hasStarter || (deps.store ? async () => false : mysqlHasStarter);
 	return {
-		listFlags: (trainerId) => store().list(trainerId),
+		async listFlags(trainerId) {
+			const [stored, owns] = await Promise.all([store().list(trainerId), hasStarter(trainerId)]);
+			return owns && !stored.includes("story:starter") ? [...stored, "story:starter"].sort() : stored;
+		},
 		async setFlag(trainerId, flag) {
 			if (typeof flag !== "string" || !FLAG_RE.test(flag)) {
 				const err = new Error("Invalid flag name");

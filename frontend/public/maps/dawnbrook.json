@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 8,
+ "nextobjectid": 9,
  "layers": [
   {
    "id": 1,
@@ -3254,7 +3254,31 @@
    "y": 0,
    "opacity": 1,
    "visible": true,
-   "objects": []
+   "objects": [
+    {
+     "id": 8,
+     "name": "starter_gate",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 464,
+     "y": 144,
+     "width": 16,
+     "height": 32,
+     "properties": [
+      {
+       "name": "when",
+       "type": "string",
+       "value": "step"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"story:starter\", \"else\": [{\"op\": \"say\", \"text\": \"Wild Pokemon live in the tall grass ahead. Don't go without a partner. The Professor is in the lab.\"}, {\"op\": \"cutsceneMove\", \"actor\": \"player\", \"path\": [\"left\"]}]}]"
+      }
+     ]
+    }
+   ]
   },
   {
    "id": 9,

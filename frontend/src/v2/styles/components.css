@@ -851,6 +851,36 @@
 	color: var(--c-sun);
 }
 
+/* The overworld talk box (DialogueBox variant="talk"): a light rounded panel with a two-tone
+   rim, dark text with a soft drop, and a red bobbing arrow. Sized in em by its host.
+   Hub, auth, bag and battle boxes keep the navy frame. */
+.panel--talk {
+	background: #f8f8f2;
+	color: #3a3a46;
+	border: 0.16em solid #4a6080;
+	border-radius: 0.4em;
+	box-shadow: inset 0 0 0 0.14em #b4c8dc;
+}
+
+.dialogue--talk .dialogue__text {
+	max-width: none;
+	white-space: pre-line; /* keep paginate()'s line breaks: the page is already laid out */
+	letter-spacing: 0;
+	text-shadow: 0.07em 0.07em 0 #d4d4cc;
+}
+
+.dialogue--talk .dialogue__next {
+	right: 0.6em;
+	bottom: 0.4em;
+	color: #d8443a;
+	line-height: 0;
+}
+
+.dialogue--talk .cursor--down {
+	width: 0.62em;
+	height: 0.44em;
+}
+
 /* Links inside cards */
 .hovercard__link,
 .record__link {

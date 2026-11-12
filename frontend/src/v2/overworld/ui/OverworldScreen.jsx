@@ -4,6 +4,7 @@ import { api } from "../../../api";
 import DialogueBox from "../../ui/DialogueBox";
 import BattleView from "../../pages/battle/BattleView";
 import RewardScreen from "../../pages/battle/RewardScreen";
+import StarterPick from "../../pages/hub/StarterPick";
 import { play } from "../../battle/sfx";
 import { attachInput, drainEdges, snapshot } from "../engine/input";
 import { createLoop } from "../engine/loop";
@@ -16,6 +17,7 @@ import { createAssets, playerSpriteFor } from "../render/assets";
 import { UserContext } from "../../data/user";
 import { VIEW_H, VIEW_W } from "../constants";
 import { actorPose } from "../logic/movement";
+import { PAGE } from "../logic/dialogue";
 import OverworldPad from "./OverworldPad";
 import StartMenu from "./StartMenu";
 import { TEXT_SPEEDS, cycleTextSpeed, getTextSpeed } from "./textSpeed";
@@ -48,7 +50,7 @@ const savePosition = async (game) => {
 
 /** The overworld: tile movement, dialogue, warps, streaming, and trainer battles over the top of it. */
 const OverworldScreen = () => {
-	const { user } = useContext(UserContext) || {};
+	const { user, setUser } = useContext(UserContext) || {};
 	const playerSprite = playerSpriteFor(user?.gender);
 	const wrapRef = useRef(null);
 	const canvasRef = useRef(null);
@@ -60,6 +62,8 @@ const OverworldScreen = () => {
 	const [dialogue, setDialogue] = useState(null); // { pages, i }
 	const [battle, setBattle] = useState(null); // { trainer } | { wild }, then reward: true while claiming a boss's prize
 	const [menuOpen, setMenuOpen] = useState(false);
+	const [starterOpen, setStarterOpen] = useState(false);
+	const paused = useRef(false); // an overlay (the starter pick) holds the world still
 	const menuKeys = useRef(null); // the open Start menu's button handler
 	const healSpot = useRef(null); // where a whiteout returns to
 	const navigate = useNavigate();
@@ -118,6 +122,9 @@ const OverworldScreen = () => {
 							const { mapId, x, y } = game.player;
 							healSpot.current = { mapId, x, y };
 							api.post("/api/world/heal", { mapId, x, y }).catch(logFailure("heal the party"));
+						} else if (e.type === "effect" && e.effect.type === "starter") {
+							paused.current = true;
+							setStarterOpen(true);
 						} else if (e.type === "effect" && e.effect.type === "shop") {
 							savePosition(game).finally(() => navigate("/game/mart"));
 						} else if (e.type === "effect" && e.effect.type === "solve") {
@@ -138,6 +145,7 @@ const OverworldScreen = () => {
 						inputApi.poll();
 						const snap = snapshot(inputApi.state);
 						const edges = drainEdges(inputApi.state);
+						if (paused.current) return;
 						if (menuKeys.current) {
 							for (const e of edges) menuKeys.current?.(e.button);
 							return;
@@ -225,6 +233,13 @@ const OverworldScreen = () => {
 		else game.endBattle();
 	};
 
+	// The server took the pick: story:starter opens Route 1 now, and GET /api/world/flags derives it from here on.
+	const starterDone = () => {
+		sessionRef.current?.game.flags.add("story:starter");
+		setStarterOpen(false);
+		paused.current = false;
+	};
+
 	const closeMenu = useCallback(() => setMenuOpen(false), []);
 	const menuItems = useMemo(() => {
 		if (!menuOpen) return [];
@@ -273,8 +288,8 @@ const OverworldScreen = () => {
 						</div>
 					)}
 					{dialogue && (
-						<div className="ow__dialogue">
-							<DialogueBox key={`${dialogue.i}:${dialogue.pages[dialogue.i]}`} text={dialogue.pages[dialogue.i]} onAdvance={advance} charMs={TEXT_SPEEDS[speed]} />
+						<div className="ow__dialogue" style={{ "--talk-lines": PAGE.lines, "--talk-chars": PAGE.lineChars }}>
+							<DialogueBox key={`${dialogue.i}:${dialogue.pages[dialogue.i]}`} variant="talk" text={dialogue.pages[dialogue.i]} onAdvance={advance} charMs={TEXT_SPEEDS[speed]} />
 						</div>
 					)}
 					{menuOpen && <StartMenu items={menuItems} keys={menuKeys} onClose={closeMenu} />}
@@ -293,6 +308,11 @@ const OverworldScreen = () => {
 				</button>
 			</div>
 			{input && <OverworldPad input={input} />}
+			{starterOpen && (
+				<div className="ow__battle ow__starter" data-native-keys>
+					<StarterPick user={user} setUser={setUser} onDone={starterDone} />
+				</div>
+			)}
 			{battle && (
 				<div className="ow__battle" data-native-keys>
 					{battle.reward ? (

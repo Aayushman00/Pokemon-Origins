@@ -28,6 +28,7 @@ async function start() {
 	const played = [];
 	let cursor = 0;
 	let due = null;
+	let offered = 0; // starter picks the Professor opened
 	const game = createOverworld({
 		store,
 		flags,
@@ -36,6 +37,10 @@ async function start() {
 			if (e.type !== "effect") return;
 			if (e.effect.type === "solve") flags.add(`gym:${e.effect.leaderId}:solved`);
 			if (e.effect.type === "battle") due = e.effect.trainer;
+			if (e.effect.type === "starter") {
+				offered += 1;
+				flags.add("story:starter"); // the host does this once the server takes the pick
+			}
 		},
 	});
 	game.enter();
@@ -134,6 +139,18 @@ async function start() {
 		assert.ok(flags.has(`gym:${leaderId}:solved`), `${leaderId}'s puzzle was not solved`);
 	};
 
+	/** Walk beside tile (x, y) of mapId, face it and press A: an NPC, or a sign such as a counter. */
+	function interact(mapId, x, y) {
+		const beside = (c) => c.mapId === mapId && Math.abs(c.x - x) + Math.abs(c.y - y) === 1;
+		travel(beside, `${mapId} ${x},${y}`);
+		const facing = Object.keys(DIRS).find((d) => game.player.x + DIRS[d].dx === x && game.player.y + DIRS[d].dy === y);
+		for (let i = 0; i < 12; i++) game.tick({ dir: facing }, []);
+		game.tick({ dir: null }, []);
+		game.tick({ dir: null, aHeld: true }, [{ button: "a", source: "keyboard" }]);
+		game.tick({ dir: null, aHeld: false }, []);
+		settle();
+	}
+
 	function meet(id) {
 		const map = maps.find((m) => m.npcs.some((n) => n.trainer === id || n.name === id));
 		assert.ok(map, `${id} is nowhere in the world`);
@@ -160,13 +177,19 @@ async function start() {
 		assert.ok(beaten(), `could not beat ${id}, stopped at ${pos()}`);
 	}
 
-	return { game, flags, played, meet, settle };
+	return { game, flags, played, meet, settle, interact, route, offered: () => offered };
 }
 
 describe("the whole game on foot", () => {
 	it("walks Dawnbrook to the Champion to Mewtwo, every battle in order", async () => {
 		const run = await start();
 		run.settle();
+		assert.equal(run.route((c) => c.mapId === "route_1"), null, "Route 1 is shut until a starter is picked");
+		run.interact("dawnbrook_lab", 7, 3); // across the bench from the Professor
+		assert.equal(run.offered(), 1);
+		assert.ok(run.flags.has("story:starter"));
+		run.interact("dawnbrook_lab", 7, 3);
+		assert.equal(run.offered(), 1, "after the pick the Professor only talks");
 		for (const id of GAUNTLET) if (!run.flags.has(`trainer:${id}`)) run.meet(id);
 		assert.deepEqual(run.played, GAUNTLET);
 		assert.ok(run.flags.has("story:champion"));

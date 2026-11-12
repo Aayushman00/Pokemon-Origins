@@ -71,22 +71,27 @@
 	width: 1em;
 	height: 1em;
 }
+/* The talk box: pinned to the bottom of the stage, full width less a margin, exactly
+   --talk-lines lines of --talk-chars characters (dialogue.js PAGE). The font is sized so a
+   full line fits: half-width pixel glyphs (0.5em, 0.55 leaves room for the fallback face)
+   plus 1.5em of side padding. Sizes are in cqw, so the box scales with the stage, never the window. */
 .ow__dialogue {
 	position: absolute;
-	left: 0;
-	right: 0;
-	bottom: 0;
+	left: 1.5cqw;
+	right: 1.5cqw;
+	bottom: 1.5cqw;
+	font-size: calc(97cqw / (var(--talk-chars, 30) * 0.55 + 1.5));
 }
 .ow__dialogue .dialogue {
 	margin: 0;
 	min-height: 0;
-	padding: 0.5em 0.8em 0.7em;
-	font-size: min(calc(var(--fs-lg) * 2), 6cqw);
+	padding: 0.45em 0.75em 0.55em;
 }
 .ow__dialogue .dialogue__text {
-	max-width: none;
+	height: calc(var(--talk-lines, 2) * 1.4em);
+	overflow: hidden;
 	font-size: 1em;
-	line-height: 1.25;
+	line-height: 1.4;
 }
 .ow__hud {
 	position: absolute;
@@ -149,4 +154,10 @@
 }
 @media (prefers-reduced-motion: reduce) {
 	.ow__place { animation: none; opacity: 0.95; transform: translateX(-50%); }
+}
+/* The Professor's bench: the lab scene over the world, centred. */
+.ow__starter {
+	display: grid;
+	place-items: center;
+	padding: var(--s-4, 16px);
 }

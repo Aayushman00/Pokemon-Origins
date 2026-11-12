@@ -14,8 +14,8 @@
  *   (inventoryService) resolves the mapping below; a stone with no row for
  *   the target species is rejected with NO_EVOLUTION_EFFECT and NOT
  *   consumed. Stones stay unusable in battle.
- * Anything else (trade, …) is skipped: those rows are never offered and
- * never applied.
+ * Trade rows were turned into `Level 37` level-ups by migration 014 (there
+ * is no trading). Any other method is skipped: never offered, never applied.
  *
  * Applying an evolution (single mapping module for the field math):
  * - `pokemon_id` flips to the evolved species; level and experience buffer

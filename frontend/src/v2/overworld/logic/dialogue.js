@@ -1,5 +1,8 @@
+// One page of the overworld talk box. OverworldScreen hands these to the CSS, which sizes the box from them.
+export const PAGE = { lineChars: 30, lines: 2 };
+
 // Word-wrap text into GBA-style pages (lines x chars). Pure.
-export function paginate(text, { lineChars = 30, lines = 2 } = {}) {
+export function paginate(text, { lineChars = PAGE.lineChars, lines = PAGE.lines } = {}) {
 	const words = String(text).trim().split(/\s+/).filter(Boolean);
 	const rows = [];
 	let row = "";

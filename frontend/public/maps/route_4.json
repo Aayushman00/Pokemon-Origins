@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 9,
+ "nextobjectid": 10,
  "layers": [
   {
    "id": 1,
@@ -1597,16 +1597,16 @@
     3192,
     3240,
     3201,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
+    1149,
+    1119,
+    1117,
+    1119,
+    1117,
+    1119,
+    1117,
+    1119,
+    1117,
+    1127,
     3219,
     3294,
     3192,
@@ -4959,6 +4959,24 @@
        "value": "route_4"
       }
      ]
+    },
+    {
+     "id": 5,
+     "name": "shore_1",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 384,
+     "y": 192,
+     "width": 160,
+     "height": 16,
+     "properties": [
+      {
+       "name": "table",
+       "type": "string",
+       "value": "route_4_shore"
+      }
+     ]
     }
    ]
   },
@@ -4995,7 +5013,7 @@
    "visible": true,
    "objects": [
     {
-     "id": 5,
+     "id": 6,
      "name": "lass_kaylee",
      "type": "",
      "rotation": 0,
@@ -5039,7 +5057,7 @@
      "point": true
     },
     {
-     "id": 6,
+     "id": 7,
      "name": "beauty_grace",
      "type": "",
      "rotation": 0,
@@ -5083,7 +5101,7 @@
      "point": true
     },
     {
-     "id": 7,
+     "id": 8,
      "name": "hollow_grunt_marco",
      "type": "",
      "rotation": 0,
@@ -5127,7 +5145,7 @@
      "point": true
     },
     {
-     "id": 8,
+     "id": 9,
      "name": "juggler_dalton",
      "type": "",
      "rotation": 0,
@@ -7657,6 +7675,46 @@
      ]
     },
     {
+     "id": 1116,
+     "animation": [
+      {
+       "tileid": 1116,
+       "duration": 900
+      },
+      {
+       "tileid": 1117,
+       "duration": 900
+      }
+     ],
+     "properties": [
+      {
+       "name": "cover",
+       "type": "int",
+       "value": 9
+      }
+     ]
+    },
+    {
+     "id": 1118,
+     "animation": [
+      {
+       "tileid": 1118,
+       "duration": 900
+      },
+      {
+       "tileid": 1119,
+       "duration": 900
+      }
+     ],
+     "properties": [
+      {
+       "name": "cover",
+       "type": "int",
+       "value": 9
+      }
+     ]
+    },
+    {
      "id": 1122,
      "animation": [
       {
@@ -7665,6 +7723,26 @@
       },
       {
        "tileid": 1123,
+       "duration": 900
+      }
+     ],
+     "properties": [
+      {
+       "name": "cover",
+       "type": "int",
+       "value": 9
+      }
+     ]
+    },
+    {
+     "id": 1126,
+     "animation": [
+      {
+       "tileid": 1126,
+       "duration": 900
+      },
+      {
+       "tileid": 1127,
        "duration": 900
       }
      ],
@@ -7745,6 +7823,26 @@
       },
       {
        "tileid": 1145,
+       "duration": 900
+      }
+     ],
+     "properties": [
+      {
+       "name": "cover",
+       "type": "int",
+       "value": 9
+      }
+     ]
+    },
+    {
+     "id": 1148,
+     "animation": [
+      {
+       "tileid": 1148,
+       "duration": 900
+      },
+      {
+       "tileid": 1149,
        "duration": 900
       }
      ],

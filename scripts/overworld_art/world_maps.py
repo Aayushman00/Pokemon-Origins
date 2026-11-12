@@ -273,13 +273,13 @@ def worn(grid, lines, size=2):
     return ["".join(r) for r in rows]
 
 
-def grass_runs(grid):
-    """Tall grass as (x, y, w) strips, so wild battles happen only where it is drawn."""
+def grass_runs(grid, char="g"):
+    """Tall grass (or shore reeds, `q`) as (x, y, w) strips, so wild battles happen only where it is drawn."""
     for y, row in enumerate(grid):
         x = 0
         for c, run in groupby(row):
             w = len(list(run))
-            if c == "g":
+            if c == char:
                 yield x, y, w
             x += w
 
@@ -387,6 +387,11 @@ def dawnbrook():
     m.sign("route_sign", 28, 8, f"{NAMES['route_1'].upper()} - East to {NAMES['mossgate']}.")
     m.npc("old_woman", 15, 7, "old_woman", "up", "This old well has never run dry. Nobody remembers who dug it.")
     m.npc("rival", 21, 8, "rival", "left", "Late again? The Professor's been waiting. I got here first, as usual.")
+    # No partner, no tall grass: Route 1 opens once the Professor's starter is picked.
+    m.obj("triggers", "starter_gate", 29, 9, 1, 2, when="step", script=json.dumps(
+        [{"op": "requireFlag", "flag": "story:starter",
+          "else": [{"op": "say", "text": "Wild Pokemon live in the tall grass ahead. Don't go without a partner. The Professor is in the lab."},
+                   {"op": "cutsceneMove", "actor": "player", "path": ["left"]}]}]))
     lone_tree(m, "F", 17, 3)
     lone_tree(m, "A", 26, 4)
     lone_tree(m, "B", 2, 14)

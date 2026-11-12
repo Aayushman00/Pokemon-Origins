@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
+import { isEnabled } from "../../../flags";
 import { useUser } from "../../data/user";
 import useHubData from "./useHubData";
 import JourneyRoad from "./JourneyRoad";
@@ -29,7 +30,8 @@ const HubScreen = () => {
 		document.getElementById("party")?.scrollIntoView({ block: "start" });
 	}, [hash, hub.party]);
 
-	if (!user.starterChosen) return <StarterPick user={user} setUser={setUser} />;
+	// New trainers start in Dawnbrook and get their partner from the Professor; the hub lab is the fallback without the overworld.
+	if (!user.starterChosen) return isEnabled("OVERWORLD") ? <Navigate to="/overworld" replace /> : <StarterPick user={user} setUser={setUser} />;
 
 	return (
 		<div className="hub">

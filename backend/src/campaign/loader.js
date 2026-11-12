@@ -215,9 +215,10 @@ function listBattles(levelNumber, dataDir = DATA_DIR) {
 	});
 }
 
-/** A route's wild table ({ minLevel, levels, species }), or null. */
+/** A wild table ({ minLevel, levels, slots: [{ id, weight, levels? }] }), or null. */
 function getWildTable(id, dataDir = DATA_DIR) {
-	return readJson(path.join(dataDir, "encounters", "wild.json"))[id] || null;
+	const tables = readJson(path.join(dataDir, "encounters", "wild.json"));
+	return Object.hasOwn(tables, id) ? tables[id] : null; // "__proto__" is a valid-looking id, not a table
 }
 
 /** Where a campaign trainer sits in the gauntlet: { level, battleNumber, type }, or null. */

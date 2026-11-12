@@ -4,6 +4,7 @@ const {
 	createBattleSessionService,
 	createMemoryHistoryStore,
 	snapshotPokemon,
+	rollWild,
 } = require("./battleSessionService");
 const {
 	createProgressService,
@@ -341,6 +342,11 @@ describe("wild battles", () => {
 	};
 	const code = (status) => (err) => err.status === status;
 	const hit = (damage) => stubEngine([{ result: "hit", damage }]);
+
+	it("a trainer with no Pokemon cannot start a wild battle", async () => {
+		const { service } = setup({ party: [] });
+		await assert.rejects(() => service.startBattle(7, { wild: "route_1" }), (err) => err.status === 400 && /No Pokémon found/.test(err.message));
+	});
 
 	it("a win pays XP but no coins, leaves the campaign where it was and records nothing", async () => {
 		const { service, flags, progress, wallet, history } = setup({ engine: hit(30) });
@@ -2588,5 +2594,23 @@ describe("battleSessionService", () => {
 		assert.equal(enemyBeat.status, "flinch");
 		assert.equal(engine.calls.length, 1);
 		assert.equal(result.state.enemy.flinched, false);
+	});
+});
+
+describe("rollWild", () => {
+	const seq = (...xs) => () => xs.shift();
+	const table = { levels: [10, 12], slots: [{ id: 1, weight: 70 }, { id: 2, weight: 30, levels: [5, 5] }] };
+
+	it("picks by weight: the first 70% is slot 1, the rest slot 2", () => {
+		assert.equal(rollWild(table, seq(0, 0)).pokemonId, 1);
+		assert.equal(rollWild(table, seq(0.6999, 0)).pokemonId, 1);
+		assert.equal(rollWild(table, seq(0.7, 0)).pokemonId, 2);
+		assert.equal(rollWild(table, seq(0.99999, 0)).pokemonId, 2);
+	});
+
+	it("uses the slot's own levels, else the table's, inclusive", () => {
+		assert.deepEqual(rollWild(table, seq(0.9, 0.99)), { pokemonId: 2, level: 5 });
+		assert.equal(rollWild(table, seq(0, 0)).level, 10);
+		assert.equal(rollWild(table, seq(0, 0.99999)).level, 12);
 	});
 });

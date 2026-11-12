@@ -6,9 +6,10 @@ import useTypewriter from "./useTypewriter";
  * Classic RPG text box: typewriter reveal, ▼ continuation cursor, and
  * click / Enter / Space / Z to fast-forward (then advance, when `onAdvance`
  * is given). The full line sits in an aria-live region so screen readers
- * get it at once instead of character by character.
+ * get it at once instead of character by character. `variant="talk"` is the
+ * overworld's text box; every other screen keeps the navy frame.
  */
-const DialogueBox = ({ text = "", onAdvance, onSkip, showNext = false, keys = true, charMs, className = "", children }) => {
+const DialogueBox = ({ text = "", onAdvance, onSkip, showNext = false, keys = true, charMs, variant = "navy", className = "", children }) => {
 	const { shown, done, skip } = useTypewriter(text, charMs ? { charMs } : undefined);
 	const stateRef = useRef();
 	stateRef.current = { done, skip, onAdvance, onSkip };
@@ -37,7 +38,7 @@ const DialogueBox = ({ text = "", onAdvance, onSkip, showNext = false, keys = tr
 	}, [keys]);
 
 	return (
-		<div className={`frame panel panel--navy dialogue ${className}`} onClick={press}>
+		<div className={`${variant === "talk" ? "panel panel--talk dialogue dialogue--talk" : "frame panel panel--navy dialogue"} ${className}`} onClick={press}>
 			<p className="dialogue__text" aria-hidden="true">
 				{shown}
 				<span className="dialogue__ghost">{text.slice(shown.length)}</span>

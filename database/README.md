@@ -48,7 +48,7 @@ Align `backend/.env`:
 
 ## Migrations
 
-Apply after the dump (trainer schema must exist). Do **not** rewrite `pokedex` tables.
+Apply after the dump (trainer schema must exist). Do **not** rewrite `pokedex` tables. The one exception is 014, which turns the four trade evolutions into Lv 37 level-ups because the game has no trading.
 
 | File | Purpose |
 |------|---------|
@@ -61,6 +61,7 @@ Apply after the dump (trainer schema must exist). Do **not** rewrite `pokedex` t
 
 | [`migrations/012_trainer_flags.sql`](migrations/012_trainer_flags.sql) | `trainer.trainer_flags` — server-owned per-trainer world flags (overworld events, one-shot triggers). Additive; rollback = `DROP TABLE trainer_flags`. Read through `GET /api/world/flags` (404 unless `FLAG_OVERWORLD`). 010/011 are reserved for the avatar and world-position tables in later phases. |
 | [`migrations/013_world_state.sql`](migrations/013_world_state.sql) | `trainer.trainer_world_state`: saved overworld position and last healing spot |
+| [`migrations/014_trade_evolutions_by_level.sql`](migrations/014_trade_evolutions_by_level.sql) | `pokedex.Evolution`: Kadabra, Machoke, Graveler and Haunter evolve at Lv 37 instead of by trade. Existing volumes must apply it (`docker compose exec -T mysql mysql -u root -prootpassword < database/migrations/014_trade_evolutions_by_level.sql`), or those four never evolve. Re-runnable. |
 
 ### Existing volume / local MySQL
 

@@ -944,7 +944,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"say\", \"text\": \"Ah, you made it! Every journey starts with a first partner.\"}, {\"op\": \"say\", \"text\": \"Yours chose you well. Take care of each other, and Mossgate is east along Route 1.\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"story:starter\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Yours chose you well. Take care of each other, and Mossgate is east along Route 1.\"}]}, {\"op\": \"say\", \"text\": \"Ah, you made it! Every journey starts with a first partner.\"}, {\"op\": \"say\", \"text\": \"Three Pokemon are waiting on the bench. Take your time, and choose the one for you.\"}, {\"op\": \"starter\"}]"
       }
      ],
      "point": true
@@ -1004,7 +1004,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"say\", \"text\": \"Ah, you made it! Every journey starts with a first partner.\"}, {\"op\": \"say\", \"text\": \"Yours chose you well. Take care of each other, and Mossgate is east along Route 1.\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"story:starter\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Yours chose you well. Take care of each other, and Mossgate is east along Route 1.\"}]}, {\"op\": \"say\", \"text\": \"Ah, you made it! Every journey starts with a first partner.\"}, {\"op\": \"say\", \"text\": \"Three Pokemon are waiting on the bench. Take your time, and choose the one for you.\"}, {\"op\": \"starter\"}]"
       }
      ]
     },

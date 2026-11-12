@@ -162,8 +162,17 @@ describe("Dawnbrook interiors and Route 1 (headless)", () => {
 			assert.deepEqual(d.pos(), ["dawnbrook", door[0], door[1] + 1]);
 		});
 	}
-	it("walks east out of Dawnbrook onto Route 1 with no fade, and back", async () => {
+	it("without a starter, the way east out of Dawnbrook turns you back toward the lab", async () => {
 		const d = await boot({ mapId: "dawnbrook", x: 27, y: 9, facing: "right" });
+		d.hold("right", 60);
+		assert.match(d.dialogues()[0].pages.join(" "), /Professor is in\s+the lab/);
+		d.close();
+		d.idle(60);
+		assert.equal(d.game.player.mapId, "dawnbrook");
+		assert.ok(d.game.player.x < 29, "pushed back off the exit");
+	});
+	it("walks east out of Dawnbrook onto Route 1 with no fade, and back", async () => {
+		const d = await boot({ mapId: "dawnbrook", x: 27, y: 9, facing: "right" }, { flags: createMemoryFlags(["story:starter"]) });
 		d.hold("right", 60);
 		assert.equal(d.game.player.mapId, "route_1");
 		assert.equal(d.game.transition, null);

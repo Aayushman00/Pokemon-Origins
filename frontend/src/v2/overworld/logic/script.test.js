@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { paginate } from "./dialogue.js";
+import { PAGE, paginate } from "./dialogue.js";
 import { ScriptError, parseScript, resolveScript } from "./script.js";
 
 const flags = (...f) => ({ has: (x) => f.includes(x) });
@@ -17,6 +17,15 @@ describe("scripts", () => {
 			{ op: "cutsceneMove", actor: "player", path: ["up", "left"] },
 		]);
 		assert.deepEqual(resolveScript(s, flags()).effects.map((e) => e.type), ["say", "give", "heal", "battle", "warp", "shop", "cutsceneMove"]);
+	});
+	it("the professor's starter op: offered before the pick, a post-pick line after", () => {
+		const s = parseScript([
+			{ op: "requireFlag", flag: "story:starter", not: true, else: [{ op: "say", text: "How is your partner?" }] },
+			{ op: "say", text: "Choose one." },
+			{ op: "starter" },
+		]);
+		assert.deepEqual(resolveScript(s, flags()).effects, [{ type: "say", pages: ["Choose one."] }, { type: "starter" }]);
+		assert.deepEqual(resolveScript(s, flags("story:starter")).effects, [{ type: "say", pages: ["How is your partner?"] }]);
 	});
 	it("requireFlag stops the script and runs its else branch", () => {
 		const s = parseScript([{ op: "requireFlag", flag: "a", else: [{ op: "say", text: "no" }] }, { op: "say", text: "yes" }]);
@@ -51,6 +60,11 @@ describe("paginate", () => {
 		}
 	});
 	it("never returns zero pages", () => assert.deepEqual(paginate("   "), [""]));
+	it("pages default to PAGE, the size the talk box is drawn for", () => {
+		assert.deepEqual(PAGE, { lineChars: 30, lines: 2 });
+		const text = "Three Pokemon are waiting on the bench. Take your time, and choose the one for you.";
+		assert.deepEqual(paginate(text), paginate(text, PAGE));
+	});
 });
 
 describe("legendary script steps", () => {

@@ -15,7 +15,7 @@ from .town_art import CRAGGY, LAYOUTS, town_buildings
 from .world_maps import (BADGES, BORDER, GYMS, ID, NAMES, NAMES_BY_ID, PEOPLE, PATH, ROUTES, SOLID, Town, autotile_paths, door, dress_grass, finish, halo,
                          ledge_row, fringe, grass_runs, hashed, lone_tree, paint, prop, dress_pond, say, trainer_script, TRAILS, worn)
 
-COMMON = {".": "walk", ",": "road", "p": "plaza", "g": "grass", "=": "stairs", "k": "plank", "b": "plank", "B": "bld", "D": "bld",
+COMMON = {".": "walk", ",": "road", "p": "plaza", "g": "grass", "q": "grass", "=": "stairs", "k": "plank", "b": "plank", "B": "bld", "D": "bld",
           "A": "bld", "T": "tree", "~": "water", "l": "lava", "L": "lamp", "f": "fence", "h": "hedge", "n": "bench", "u": "well",
           "F": "flowers", "j": "tall:lantern", "*": "tall:star", "i": "obj:brazier"}
 PAINTED = {"walk": ".", "road": ",", "grass": "g", "tree": "T", "water": "~", "plank": "k", "lamp": "L", "fence": "f",
@@ -292,6 +292,8 @@ ROUTE_LOOK = {  # biome, ambient, legend, stairs direction
     "route_8": ("basalt", "embers", {"#": "over:lava:spire", "B": "plank"}, "ns"),
     "route_9": ("marble", None, {"v": "void", "c": "over:void:column"}, "ew"),
 }
+# Shore reeds (`q`) draw as tall grass and roll the route's water table; fishing can take these over later.
+WATER_TABLES = {"route_2": "route_2_pond", "route_4": "route_4_shore", "route_7": "route_7_marsh"}
 TOWN_IDS = {name: tid for tid, name in NAMES.items()}
 ROUTE_SIGNS = {"route_2": (9, 3, 8), "route_3": (2, 2, 8), "route_4": (1, 20, 8), "route_5": (14, 13, 40),
                "route_6": (14, 14, 40), "route_7": (53, 53, 8), "route_8": (52, 52, 10), "route_9": (60, 60, 9)}
@@ -397,6 +399,8 @@ def route(rid):
     terrain(m, grid, biome, legend, stairs)
     for i, (x, y, w) in enumerate(grass_runs(r["grid"])):
         m.obj("encounters", f"grass_{i + 1}", x, y, w, 1, table=rid)
+    for i, (x, y, w) in enumerate(grass_runs(r["grid"], "q") if rid in WATER_TABLES else ()):
+        m.obj("encounters", f"shore_{i + 1}", x, y, w, 1, table=WATER_TABLES[rid])
     for t in r["trainers"]:
         sprite = ROAD_SPRITES.get(t["id"]) or t["id"].rsplit("_", 1)[0]
         m.obj("npcs", t["id"], t["x"], t["y"], point=True, sprite=sprite, facing=t["facing"],

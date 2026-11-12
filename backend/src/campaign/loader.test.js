@@ -67,9 +67,10 @@ describe("campaign loader", () => {
 		for (let n = 1; n <= 9; n++) {
 			const table = getWildTable(`route_${n}`);
 			assert.equal(table.minLevel, n);
-			assert.ok(table.species.length >= 2 && table.levels[0] <= table.levels[1], `route_${n}`);
+			assert.ok(table.slots.length >= 2 && table.levels[0] <= table.levels[1], `route_${n}`);
 		}
 		assert.equal(getWildTable("nowhere"), null);
+		for (const key of ["__proto__", "constructor", "toString"]) assert.equal(getWildTable(key), null, key);
 	});
 
 	it("fails clearly for a missing level", () => {

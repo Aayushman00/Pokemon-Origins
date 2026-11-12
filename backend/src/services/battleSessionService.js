@@ -292,12 +292,19 @@ function defaultGetEnemyBattle() {
 	};
 }
 
+/** One wild Pokémon from a table: a slot by weight, then a level in the slot's range (or the table's). */
+function rollWild({ levels, slots }, random) {
+	let roll = random() * slots.reduce((sum, s) => sum + s.weight, 0);
+	const slot = slots.find((s) => (roll -= s.weight) < 0) || slots[slots.length - 1];
+	const [low, high] = slot.levels || levels;
+	return { pokemonId: slot.id, level: low + Math.floor(random() * (high - low + 1)) };
+}
+
 /** One wild Pokémon from a route's table, with trainer battles' stat and move math. */
 function defaultGetWildBattle(random) {
-	return async ({ species, levels: [low, high] }) => {
+	return async (table) => {
 		const { hydrateParty } = require("../campaign/hydrate");
-		const pokemonId = species[Math.floor(random() * species.length)];
-		const level = low + Math.floor(random() * (high - low + 1));
+		const { pokemonId, level } = rollWild(table, random);
 		const party = await hydrateParty([{ pokemonId, level }]);
 		return { trainerName: `Wild ${party[0].nickname}`, party, battleType: "wild" };
 	};
@@ -1887,6 +1894,7 @@ module.exports = {
 	hasWonBattle: defaultService.hasWonBattle,
 	createBattleSessionService,
 	createMemoryPpStore,
+	rollWild,
 	createMemoryHpStore,
 	createMemoryHistoryStore,
 	snapshotPokemon,

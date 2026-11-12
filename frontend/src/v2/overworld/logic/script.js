@@ -25,6 +25,7 @@ const VALIDATORS = {
 	cry: (o) => need(Number.isInteger(o.dex) && o.dex > 0, "cry needs dex"),
 	warp: (o) => need(isStr(o.map) && Number.isInteger(o.x) && Number.isInteger(o.y), "warp needs map,x,y"),
 	shop: (o) => need(isStr(o.shop), "shop needs shop"),
+	starter: () => {}, // opens the starter pick; the server's choose-starter decides
 	cutsceneMove: (o) =>
 		need(isStr(o.actor) && Array.isArray(o.path) && o.path.length > 0 && o.path.every((d) => DIRS.has(d)), "cutsceneMove needs actor,path[dirs]"),
 };
