@@ -165,6 +165,40 @@
       "#44529c",
       "#262a60"
     ],
+    "hair_cocoa": [
+      "#b08a92",
+      "#62404a",
+      "#36222f"
+    ],
+    "teal_hero": [
+      "#8cecd8",
+      "#34aea6",
+      "#34407e"
+    ],
+    "iris_dusk": [
+      "#fffcf0",
+      "#34aea6",
+      "#34407e"
+    ],
+    "iris_ember": [
+      "#fffcf0",
+      "#da563c",
+      "#8e2e44"
+    ],
+    "iris_brown": [
+      "#fffcf0",
+      "#8c5634",
+      "#553044"
+    ],
+    "iris_umber": [
+      "#fffcf0",
+      "#9a5a32",
+      "#5e3434"
+    ],
+    "iris_ink": [
+      "#fffcf0",
+      "#26223a"
+    ],
     "mouth": [
       "#8a3442"
     ],
@@ -183,16 +217,14 @@
       "n": "yellow"
     },
     "player_f": {
-      "s": "skin_light",
-      "h": "hair_dark",
+      "s": "skin_hero",
+      "h": "hair_cocoa",
+      "i": "iris_dusk",
       "t": "orange",
-      "u": "teal:2",
-      "a": "orange",
-      "f": "orange",
+      "u": "teal_hero",
       "b": "denim:2",
-      "l": "denim:2",
-      "n": "brown:2",
-      "m": "skin_light"
+      "l": "skin_hero",
+      "n": "hair_cocoa"
     },
     "youngster": {
       "s": "skin_tan",
@@ -209,16 +241,13 @@
       "m": "brown"
     },
     "rival": {
-      "f": "charcoal",
-      "m": "skin_light",
-      "l": "denim",
-      "u": "orange:2",
-      "a": "charcoal",
       "s": "skin_light",
       "h": "hair_red",
+      "i": "iris_ember",
       "t": "charcoal",
-      "b": "denim",
-      "n": "charcoal"
+      "u": "gray",
+      "l": "charcoal",
+      "n": "hair_red"
     },
     "bug_catcher": {
       "f": "skin_light",
@@ -415,15 +444,12 @@
       "p": "white:2"
     },
     "professor": {
-      "f": "khaki",
-      "m": "skin_light",
-      "l": "brown",
-      "u": "red:2",
-      "a": "khaki",
       "s": "skin_light",
       "h": "hair_gray",
+      "i": "iris_brown",
       "t": "khaki",
-      "b": "brown",
+      "u": "red:2",
+      "l": "brown",
       "n": "brown"
     },
     "lass": {
@@ -547,17 +573,13 @@
       "n": "red:2"
     },
     "mom": {
-      "f": "skin_light",
-      "m": "skin_light",
-      "l": "skin_light",
-      "u": "purple",
-      "a": "purple",
       "s": "skin_light",
-      "h": "hair_dark",
+      "h": "hair_brown",
+      "i": "iris_umber",
       "t": "purple",
       "b": "purple",
-      "n": "purple",
-      "p": "white"
+      "p": "white:2",
+      "n": "hair_brown"
     },
     "willow_thornby": {
       "f": "khaki:2",
@@ -566,12 +588,13 @@
       "u": "khaki:2",
       "a": "khaki:2",
       "s": "skin_light",
-      "h": "hair_moss:2",
+      "h": "hair_moss",
       "c": "green:2",
-      "x": "pink:2",
+      "x": "pink:1",
       "t": "khaki:2",
       "b": "olive:2",
-      "n": "olive:2"
+      "n": "olive:2",
+      "i": "eye/green"
     },
     "mara_quill": {
       "f": "skin_light",
@@ -586,7 +609,8 @@
       "t": "orange",
       "b": "orange",
       "n": "brown:2",
-      "p": "white"
+      "p": "white",
+      "i": "eye/hair_red"
     },
     "tavish_rook": {
       "f": "white",
@@ -600,7 +624,8 @@
       "t": "white",
       "b": "charcoal",
       "n": "charcoal",
-      "p": "red:2"
+      "p": "red:2",
+      "i": "eye/charcoal"
     },
     "coral_marlowe": {
       "f": "navy",
@@ -612,10 +637,11 @@
       "h": "hair_pink",
       "c": "white",
       "x": "navy",
-      "g": "yellow",
+      "g": "yellow:1",
       "t": "navy",
       "b": "navy",
-      "n": "charcoal"
+      "n": "charcoal",
+      "i": "eye/navy"
     },
     "volt_dray": {
       "f": "skin_light",
@@ -624,12 +650,13 @@
       "u": "gray:2",
       "a": "gray:2",
       "s": "skin_light",
-      "h": "hair_blond:2",
+      "h": "hair_blond",
       "g": "yellow:2",
       "t": "gray:2",
       "b": "charcoal",
       "n": "charcoal",
-      "p": "yellow"
+      "p": "yellow:2",
+      "i": "eye/charcoal"
     },
     "skye_corvin": {
       "f": "brown:2",
@@ -638,14 +665,15 @@
       "u": "sky:2",
       "a": "sky:2",
       "s": "skin_light",
-      "h": "brown:2",
-      "c": "brown:2",
-      "g": "gray:2",
+      "h": "brown",
+      "c": "brown",
+      "g": "gray:1",
       "x": "red:2",
       "t": "sky:2",
       "b": "khaki:2",
       "n": "brown:2",
-      "p": "khaki:2"
+      "p": "khaki:2",
+      "i": "eye/sky"
     },
     "sage_ilmara": {
       "f": "navy",
@@ -660,7 +688,8 @@
       "g": "yellow",
       "t": "navy",
       "b": "navy",
-      "n": "purple:2"
+      "n": "purple:2",
+      "i": "eye/purple"
     },
     "cinder_valko": {
       "f": "charcoal",
@@ -673,7 +702,8 @@
       "g": "yellow",
       "t": "charcoal",
       "b": "charcoal",
-      "n": "red:2"
+      "n": "red:2",
+      "i": "eye/red"
     },
     "hollis_rime": {
       "f": "white",
@@ -686,7 +716,8 @@
       "t": "white",
       "b": "white",
       "n": "sky:2",
-      "p": "sky"
+      "p": "sky",
+      "i": "eye/sky"
     },
     "bastian_cairn": {
       "f": "skin_tan",
@@ -695,14 +726,15 @@
       "u": "khaki:2",
       "a": "khaki:2",
       "s": "skin_tan",
-      "h": "brown:2",
+      "h": "brown",
       "c": "yellow:2",
       "x": "orange:2",
-      "g": "white:2",
+      "g": "white:1",
       "t": "khaki:2",
       "b": "brown:2",
       "n": "brown:2",
-      "p": "orange:2"
+      "p": "orange:2",
+      "i": "eye/brown"
     },
     "morwen_hallow": {
       "f": "purple",
@@ -716,7 +748,8 @@
       "g": "hair_pink",
       "t": "purple",
       "b": "purple",
-      "n": "charcoal"
+      "n": "charcoal",
+      "i": "eye/purple"
     },
     "drake_zephyrin": {
       "f": "red",
@@ -730,21 +763,23 @@
       "x": "yellow",
       "t": "red",
       "b": "charcoal",
-      "n": "charcoal"
+      "n": "charcoal",
+      "i": "eye/yellow"
     },
     "kestrel_vane": {
       "f": "white",
       "m": "skin_light",
-      "l": "navy",
-      "u": "navy",
+      "l": "navy:2",
+      "u": "navy:2",
       "a": "white",
       "s": "skin_light",
       "h": "hair_blond",
-      "x": "red",
-      "g": "yellow",
+      "x": "red:2",
+      "g": "hair_blond:2",
       "t": "white",
-      "b": "navy",
-      "n": "red:2"
+      "b": "navy:2",
+      "n": "red:2",
+      "i": "eye/navy"
     },
     "swimmer": {
       "f": "skin_tan",

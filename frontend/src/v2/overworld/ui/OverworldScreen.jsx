@@ -12,7 +12,7 @@ import { createMapStore } from "../maps/mapStore";
 import { createOverworld } from "../game/overworld";
 import { createMemoryFlags } from "../game/flags";
 import { createRenderer } from "../render/renderer";
-import { loadAssets, playerSpriteFor } from "../render/assets";
+import { createAssets, playerSpriteFor } from "../render/assets";
 import { UserContext } from "../../data/user";
 import { VIEW_H, VIEW_W } from "../constants";
 import { actorPose } from "../logic/movement";
@@ -89,16 +89,14 @@ const OverworldScreen = () => {
 		let hudTimer;
 		(async () => {
 			try {
-				const store = createMapStore({ fetchJson });
+				// Only the area around the player is ever loaded: each map brings its own
+				// images as it streams in, and the store forgets maps left behind.
+				const assets = createAssets();
+				const store = createMapStore({ fetchJson, onLoad: assets.want });
 				const [flagList, save] = await Promise.all([fetchFlags(), fetchWorld()]);
 				const start = DEV_START || save.position || DEFAULT_START;
 				healSpot.current = save.heal || DEFAULT_START;
-				await Promise.all([store.loadAround(start.mapId), store.loadAround(DEFAULT_START.mapId)]);
-				// the start map, Dawnbrook (its doors reach the interior tileset wherever the save
-				// starts), every map their doors / edges lead to, and the test maps
-				const home = DEFAULT_START.mapId;
-				const reachable = [start.mapId, ...store.neighbours(store.get(start.mapId)), home, ...store.neighbours(store.get(home)), "test_town", "test_route", "test_house"];
-				const assets = await loadAssets([...new Set(reachable)].map((id) => store.get(id)).filter(Boolean));
+				await Promise.all([store.loadAround(start.mapId), assets.wantSheets([playerSprite])]);
 				if (disposed) return;
 				const game = createOverworld({
 					store,
@@ -112,6 +110,7 @@ const OverworldScreen = () => {
 						else if (e.type === "flag") {
 							if (/^(done|story):/.test(e.flag)) api.post("/api/world/flags", { flag: e.flag }).catch(logFailure("save a story flag"));
 						} else if (e.type === "mapChange") {
+							store.prune(e.mapId);
 							if (e.reason !== "start") savePosition(game);
 						} else if (e.type === "effect" && e.effect.type === "battle" && e.effect.trainer) setBattle({ trainer: e.effect.trainer });
 						else if (e.type === "effect" && e.effect.type === "battle" && e.effect.table) setBattle({ wild: e.effect.table });
@@ -295,7 +294,7 @@ const OverworldScreen = () => {
 			</div>
 			{input && <OverworldPad input={input} />}
 			{battle && (
-				<div className="ow__battle">
+				<div className="ow__battle" data-native-keys>
 					{battle.reward ? (
 						<RewardScreen onDone={() => endBattle()} />
 					) : (

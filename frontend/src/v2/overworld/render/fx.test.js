@@ -48,7 +48,7 @@ describe("field effects", () => {
 });
 
 describe("ambient", () => {
-	for (const kind of ["butterflies", "leaves", "fireflies", "rain", "snow"]) {
+	for (const kind of ["butterflies", "leaves", "fireflies", "rain", "snow", "embers", "dust"]) {
 		it(`${kind} stay on screen and move`, () => {
 			const a = particles(kind, 100);
 			const b = particles(kind, 160);
@@ -63,7 +63,7 @@ describe("ambient", () => {
 		assert.deepEqual(particles(undefined, 50), []);
 	});
 	it("stay put in the world when the camera moves", () => {
-		for (const kind of ["butterflies", "leaves", "fireflies", "rain", "snow"]) {
+		for (const kind of ["butterflies", "leaves", "fireflies", "rain", "snow", "embers", "dust"]) {
 			const still = particles(kind, 100, { x: 0, y: 0 });
 			const panned = particles(kind, 100, { x: 30, y: 20 });
 			still.forEach((p, i) => {

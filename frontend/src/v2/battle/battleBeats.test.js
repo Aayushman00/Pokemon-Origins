@@ -106,4 +106,8 @@ describe("planEvent: other events", () => {
 		const { steps } = planEvent({ type: "confusion_self_hit", actor: "player", nickname: "Charmander", targetHpAfter: 5, targetFainted: false }, view, ctx);
 		assert.deepEqual(says(steps), ["Charmander hurt itself in its confusion!"]);
 	});
+	it("bookkeeping events like party_full_heal are not read out as a move", () => {
+		const { steps } = planEvent({ actor: "player", type: "party_full_heal" }, view, ctx);
+		assert.deepEqual(says(steps), []);
+	});
 });

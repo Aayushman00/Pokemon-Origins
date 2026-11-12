@@ -111,9 +111,11 @@ const BattleView = ({ levelNumber, battleNumber, worldTrainer, wild, levelName, 
 					>
 						Sound: {soundOn ? "On" : "Off"}
 					</button>
-					<button type="button" className="chip-btn" onClick={() => navigate("/game")} title="Your battle is saved on the server; you can resume it">
-						Leave
-					</button>
+					{!worldTrainer && !wild && (
+						<button type="button" className="chip-btn" onClick={() => navigate("/game")} title="Your battle is saved on the server; you can resume it">
+							Leave
+						</button>
+					)}
 				</div>
 			</div>
 

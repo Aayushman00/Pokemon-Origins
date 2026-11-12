@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import { TICK_MS } from "../constants.js";
 import { coverage, startTransition, tickTransition } from "../logic/transition.js";
-import { createInputState, drainEdges, padButtons, pollGamepad, setButton, snapshot } from "./input.js";
+import { attachInput, createInputState, drainEdges, padButtons, pollGamepad, setButton, snapshot } from "./input.js";
 import { createLoop } from "./loop.js";
 import { computeScale } from "./scale.js";
 
@@ -131,6 +131,24 @@ describe("input", () => {
 		assert.equal(snapshot(s).dir, "right");
 		pollGamepad(s, prev, pad([]));
 		assert.equal(snapshot(s).dir, null);
+	});
+	it("Enter/Space inside a data-native-keys overlay keep their native click; elsewhere they are the A button", () => {
+		const handlers = {};
+		const win = { addEventListener: (t, f) => (handlers[t] = f), removeEventListener() {} };
+		const input = attachInput(win);
+		const key = (k, inOverlay) => {
+			let prevented = false;
+			const target = { closest: (sel) => (inOverlay && sel.includes("data-native-keys") ? {} : null) };
+			handlers.keydown({ key: k, target, preventDefault: () => (prevented = true) });
+			handlers.keyup({ key: k, target });
+			return prevented;
+		};
+		assert.equal(key("Enter", true), false, "focused button still activates");
+		assert.equal(key(" ", true), false);
+		assert.deepEqual(drainEdges(input.state), [], "and the world does not also see an A press");
+		assert.equal(key("ArrowUp", true), true, "directions still drive the player");
+		assert.equal(key("Enter", false), true, "on the canvas Enter is A");
+		assert.deepEqual(drainEdges(input.state).map((e) => e.button), ["up", "a"]);
 	});
 });
 

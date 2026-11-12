@@ -53,6 +53,19 @@ RAMPS = {
     "skin_hero": ["#ffdcb4", "#eaa878", "#b0686e"],
     "hair_midnight": ["#b0bae6", "#44529c", "#262a60"],
     "iris_midnight": [WHITE, "#44529c", "#262a60"],
+    # ---- the player girl: cocoa hair with a cool mauve sheen (stays apart
+    # from the coral jacket); a teal neckerchief shading into her skirt's
+    # navy, which her eyes share, so the lit scarf fits the 15-colour budget
+    "hair_cocoa": ["#b08a92", "#62404a", "#36222f"],
+    "teal_hero": ["#8cecd8", "#34aea6", "#34407e"],
+    "iris_dusk": [WHITE, "#34aea6", "#34407e"],
+    # ---- the rival: eyes share his red hair's darkest tone
+    "iris_ember": [WHITE, "#da563c", "#8e2e44"],
+    # ---- the professor and mom: eyes share their trousers' / hair's darkest brown
+    "iris_brown": [WHITE, "#8c5634", "#553044"],
+    "iris_umber": [WHITE, "#9a5a32", "#5e3434"],
+    # ---- polished majors: the heroes' eye on the cast's line colour
+    "iris_ink": [WHITE, OUTLINE],
     # ---- single colours
     "mouth": ["#8a3442"],
     "blush": ["#f69a9a"],

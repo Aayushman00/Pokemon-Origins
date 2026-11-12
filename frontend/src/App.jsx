@@ -1,22 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 import AppShell from "./v2/layout/AppShell";
 import { ToastProvider } from "./v2/ui/Toast";
-import TitleScreen from "./v2/pages/title/TitleScreen";
-import AuthScreen from "./v2/pages/auth/AuthScreen";
-import HubScreen from "./v2/pages/hub/HubScreen";
-import JourneyScreen from "./v2/pages/battle/JourneyScreen";
-import PlaygroundScreen from "./v2/pages/playground/PlaygroundScreen";
-import TrainerScreen from "./v2/pages/trainer/TrainerScreen";
-import HistoryScreen from "./v2/pages/trainer/HistoryScreen";
-import BagScreen from "./v2/pages/bag/BagScreen";
-import MartScreen from "./v2/pages/mart/MartScreen";
-import DexScreen from "./v2/pages/dex/DexScreen";
-import DexEntryScreen from "./v2/pages/dex/DexEntryScreen";
-import MoveLabScreen from "./v2/pages/movelab/MoveLabScreen";
-import OverworldScreen from "./v2/overworld/ui/OverworldScreen";
 import { isEnabled } from "./flags";
+
+// One chunk per screen: a page's code downloads only when it is visited.
+const TitleScreen = lazy(() => import("./v2/pages/title/TitleScreen"));
+const AuthScreen = lazy(() => import("./v2/pages/auth/AuthScreen"));
+const HubScreen = lazy(() => import("./v2/pages/hub/HubScreen"));
+const JourneyScreen = lazy(() => import("./v2/pages/battle/JourneyScreen"));
+const PlaygroundScreen = lazy(() => import("./v2/pages/playground/PlaygroundScreen"));
+const TrainerScreen = lazy(() => import("./v2/pages/trainer/TrainerScreen"));
+const HistoryScreen = lazy(() => import("./v2/pages/trainer/HistoryScreen"));
+const BagScreen = lazy(() => import("./v2/pages/bag/BagScreen"));
+const MartScreen = lazy(() => import("./v2/pages/mart/MartScreen"));
+const DexScreen = lazy(() => import("./v2/pages/dex/DexScreen"));
+const DexEntryScreen = lazy(() => import("./v2/pages/dex/DexEntryScreen"));
+const MoveLabScreen = lazy(() => import("./v2/pages/movelab/MoveLabScreen"));
+const OverworldScreen = lazy(() => import("./v2/overworld/ui/OverworldScreen"));
 import { api } from "./api";
 import { UserContext } from "./v2/data/user";
 
@@ -64,6 +66,13 @@ function App() {
 			<ToastProvider>
 				<Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
 					<AppShell>
+						<Suspense
+							fallback={
+								<div className="page-center">
+									<p className="loading-dots">Loading</p>
+								</div>
+							}
+						>
 						<Routes>
 							<Route path="/" element={<TitleScreen />} />
 							<Route path="/auth" element={<AuthScreen />} />
@@ -81,6 +90,7 @@ function App() {
 							{isEnabled("OVERWORLD") && <Route path="/overworld" element={<Protected user={user}><OverworldScreen /></Protected>} />}
 							<Route path="*" element={<Navigate to={user ? "/game" : "/"} replace />} />
 						</Routes>
+						</Suspense>
 					</AppShell>
 				</Router>
 			</ToastProvider>

@@ -166,4 +166,14 @@ describe("map store", () => {
 		await Promise.all([store.load("test_house"), store.load("test_house")]);
 		assert.equal(calls, 1);
 	});
+	it("awaits onLoad before a map is visible, and prune keeps only one area", async () => {
+		const seen = [];
+		const store = createMapStore({ fetchJson: fetchFromDisk, onLoad: async (m) => seen.push(m.id) });
+		await store.loadAround("dawnbrook");
+		await store.load("league_5"); // far away: not a dawnbrook neighbour
+		assert.ok(seen.includes("dawnbrook") && seen.includes("league_5"));
+		store.prune("dawnbrook");
+		for (const id of ["dawnbrook", "route_1", "dawnbrook_home", "dawnbrook_lab", "dawnbrook_house"]) assert.ok(store.get(id), `kept ${id}`);
+		assert.equal(store.get("league_5"), undefined);
+	});
 });

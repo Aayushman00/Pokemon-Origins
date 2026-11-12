@@ -288,7 +288,7 @@ class RouteDressing(unittest.TestCase):
             l = {x["name"]: x["data"] for x in m["layers"] if "data" in x}
             bare = {v + 1 for k, v in ids.items() if k.startswith("t_") and "_ground" in k}
             cells = [i for i, g in enumerate(l["ground"]) if g in bare and not l["objects"][i] and not l["collision"][i]]
-            decals = {v + 1 for k, v in ids.items() if k.startswith(("tufts", "pebbles", "flowers"))}
+            decals = {v + 1 for k, v in ids.items() if k.startswith(("tufts", "pebbles", "flowers", "scatter"))}
             dressed = sum(l["decor"][i] in decals for i in cells)
             self.assertGreater(dressed, len(cells) * .04, map_id)
 

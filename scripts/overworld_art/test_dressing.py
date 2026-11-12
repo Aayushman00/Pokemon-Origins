@@ -138,5 +138,30 @@ class Shadows(unittest.TestCase):
             self.assertFalse(self.soft(name), name)
 
 
+class OffTheMeadow(unittest.TestCase):
+    """Dynamo stands for every biome town: zoned ground, edged roads, strung wire."""
+
+    @classmethod
+    def setUpClass(cls):
+        from .towns import MAPS
+        cls.town = MAPS["dynamo"]()
+
+    def test_bare_ground_is_zoned_and_roads_are_edged(self):
+        for prefix in ("turf_", "verge_", "kerb_"):
+            self.assertGreater(len(cells(self.town, "decor", prefix)), 10, prefix)
+
+    def test_every_span_of_wire_ends_on_a_pylon_arm(self):
+        wire, tops = cells(self.town, "above", "o_wire"), cells(self.town, "above", "o_pylon_top_")
+        self.assertTrue(wire)
+        for x, y in wire:
+            for side in (-1, 1):
+                self.assertIn((x + side, y), wire | tops, (x, y))
+
+    def test_buildings_stand_on_a_shadow_inside_their_own_tiles(self):
+        tiles = dict(new_tiles())
+        for name in ("home_clay_1_4", "bld_dynamo_0_1_5"):  # bottom rows
+            self.assertTrue({a for a in tiles[name].getchannel("A").tobytes() if 0 < a < 255}, name)
+
+
 if __name__ == "__main__":
     unittest.main()

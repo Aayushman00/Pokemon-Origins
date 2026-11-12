@@ -81,6 +81,8 @@ export function pollGamepad(state, prev, pads) {
 }
 
 const isTyping = (e) => !!e.target?.closest?.("input, textarea, select, [contenteditable=true]");
+// Overlays with their own buttons (battle, rewards) opt out with data-native-keys so Enter/Space still click.
+const isActivating = (e) => (e.key === "Enter" || e.key === " ") && !!e.target?.closest?.("[data-native-keys]");
 
 /** Wire keyboard + gamepad polling. Returns { state, poll(), virtual(button, down), dispose() }. */
 export function attachInput(win = window) {
@@ -88,7 +90,7 @@ export function attachInput(win = window) {
 	let pad = new Set();
 	const onDown = (e) => {
 		const b = KEY_MAP[e.key];
-		if (!b || isTyping(e) || e.ctrlKey || e.metaKey || e.altKey) return;
+		if (!b || isTyping(e) || isActivating(e) || e.ctrlKey || e.metaKey || e.altKey) return;
 		e.preventDefault();
 		setButton(state, b, true, "keyboard");
 	};

@@ -42,6 +42,22 @@ const KINDS = {
 			h: 4,
 			c: "rgba(190, 220, 245, 0.7)",
 		})),
+	embers: (t) =>
+		list(9, (i, a, b) => ({
+			x: wrap(a * VIEW_W + Math.sin(t / 29 + i) * 6, VIEW_W),
+			y: wrap(b * VIEW_H - t * (0.3 + a * 0.3), VIEW_H),
+			w: 1,
+			h: 1,
+			c: Math.sin(t / 11 + i * 3) > 0 ? "#ffd070" : "#f07030",
+		})),
+	dust: (t) =>
+		list(8, (i, a, b) => ({
+			x: wrap(a * VIEW_W + t * (0.5 + b * 0.3), VIEW_W),
+			y: wrap(b * VIEW_H + Math.sin(t / 43 + i) * 6, VIEW_H),
+			w: 2,
+			h: 1,
+			c: "rgba(255, 244, 214, 0.55)",
+		})),
 	snow: (t) =>
 		list(36, (i, a, b) => ({
 			x: wrap(a * VIEW_W + Math.sin(t / 31 + i) * 8, VIEW_W),

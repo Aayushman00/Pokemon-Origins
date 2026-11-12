@@ -5,7 +5,7 @@ highlight -> shadow, leaning warm at the top and cool at the bottom.
 """
 import colorsys
 LINE = "#26223a"  # object outline, a cool plum, never pure black
-SHADOW = ("#2e4a4a", 0.35)  # contact shadow: colour, opacity
+SHADOW = ("#2c3466", 0.38)  # contact shadow: colour, opacity. Slate-blue, so shade leans cool on every ground
 
 WORLD = {
     "meadow": ["#c0e29e", "#aed68e", "#9cc97f"],

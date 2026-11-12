@@ -424,6 +424,9 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, wil
 		error,
 		chooseMove,
 		run,
+		// Road trainers can't be fled or restarted: the overworld keeps the party's HP between fights.
+		noEscape: !!worldTrainer,
+		refuseRun: () => say("No! There's no running from a trainer battle!"),
 		switchTo,
 		chooseItem,
 		openBag,

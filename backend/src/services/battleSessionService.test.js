@@ -856,6 +856,9 @@ describe("battleSessionService", () => {
 		const savedRow = await xpStore.getMon(7, 101);
 		assert.equal(savedRow.experience, 24);
 		assert.equal(savedRow.level, 5);
+		// ...and the final snapshot the client renders shows it (EXP bar)
+		assert.equal(result.state.player.experience, 24);
+		assert.equal(result.state.player.xp_to_next, 60);
 
 		// Acting on the finished session is rejected, progress unchanged
 		await assert.rejects(

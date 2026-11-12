@@ -20,7 +20,7 @@ GBA-era top-down pixel art is the genre. `pret/pokefirered/graphics` and screens
 
 - Outlines belong to objects only and match their material: `outline_for(ramp)` from `world_palette.py`, softened to `sel_out(ramp)` on lit top/left edges (`slice_art._outline` does both). `LINE` is the fallback for colours from no ramp, and still outlines characters. Ground has none. Trail and lawn may end in a one-pixel edge from their own ramp; grass hangs over a trail's north edge and shades the dirt under it.
 - Props, fences, bushes, trees, ledges and cliff faces (`mass_shadow` on the cell below) stand on a contact shadow: translucent `SHADOW` from `world_palette.py`, hard pixel edge. Flat decals such as flowers get none.
-- Buildings throw no strips onto the next cell and interior floors carry no shadow patches. Every walker stands on a faint 12x4 hard-edged shadow (renderer `ACTOR_SHADOW`); during a hop it stays on the ground and darkens, showing how high the character is.
+- Buildings stand on a contact shadow drawn inside their own tiles: under the foot and down the right of the wall (`nature.base_shadow`). They still throw no strips onto the next cell, and interior floors carry no shadow patches. Every walker stands on a faint 12x4 hard-edged shadow (renderer `ACTOR_SHADOW`); during a hop it stays on the ground and darkens, showing how high the character is.
 - Slow cloud shadows drift over outdoor maps that set `clouds`.
 - Small standing props (`town_art.STANDING`) take a 1px ring outline outside the shape (`ring_outline`), so posts and wires keep their fill, then a contact shadow. Sky props (`SKY`) get the ring but no shadow.
 - Plateau tops on natural cliffs carry half-buried rubble that wraps over 2x2 tiles; their props are outcrops in the plateau's own stone ramp. Water off the meadow uses `pondc_*`, which leaves the biome's ground under the bank.
@@ -36,6 +36,8 @@ GBA-era top-down pixel art is the genre. `pret/pokefirered/graphics` and screens
 - Lawn edges wander up to three cells out from what stands on them. A straight lawn edge reads as a box.
 - Deep forest varies by clump, not by tile, and never at a rim: sun, deep, and a rare amber accent.
 - Ledges are grass hanging over an earth face. Thin brown strips read as fences.
+- Off the meadow, bare ground is zoned the way lawn zones meadow (`towns.zones`): turf creeps out from a tree line, a cool worn tone (`verge_*`) hugs buildings, fences and town cliffs, and every road or plaza edge carries a kerb (paving) or a broken shoulder (dirt), lit up-left and shaded down-right. All of it is decor and never changes collision.
+- Wire hangs from pylon arms: it leaves an insulator, sags, and ends on the next arm. Never a line in mid-air.
 
 ## Light at runtime
 

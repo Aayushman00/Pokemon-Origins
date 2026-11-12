@@ -12,7 +12,7 @@ from scripts import gen_overworld_placeholders as base
 from .gym_rooms import ROOMS
 from .tiles_v2 import blob_mask
 from .town_art import CRAGGY, LAYOUTS, town_buildings
-from .world_maps import (BADGES, BORDER, GYMS, ID, NAMES, NAMES_BY_ID, PEOPLE, PATH, ROUTES, SOLID, Town, autotile_paths, door, dress_grass, finish,
+from .world_maps import (BADGES, BORDER, GYMS, ID, NAMES, NAMES_BY_ID, PEOPLE, PATH, ROUTES, SOLID, Town, autotile_paths, door, dress_grass, finish, halo,
                          ledge_row, fringe, grass_runs, hashed, lone_tree, paint, prop, dress_pond, say, trainer_script, TRAILS, worn)
 
 COMMON = {".": "walk", ",": "road", "p": "plaza", "g": "grass", "=": "stairs", "k": "plank", "b": "plank", "B": "bld", "D": "bld",
@@ -56,7 +56,7 @@ def afloat(cells):
     return under
 
 
-def terrain(m, grid, biome, legend, stairs="ns"):
+def terrain(m, grid, biome, legend, stairs="ns", town=False):
     """Lay `grid` onto m. The grass-world painter does trees, water and street
     furniture; everything else is laid over it from the legend."""
     kind_of = lambda c: legend.get(c) or COMMON[c]
@@ -87,13 +87,15 @@ def terrain(m, grid, biome, legend, stairs="ns"):
             m.put("decor", x, y, ID["o_stone"])
         elif kind == "crop":
             m.put("decor", x, y, ID[f"crops{(x + y) % 2}"])
-        elif kind == "wire":
-            m.put("above", x, y, ID["o_wire"])
+        elif kind == "wire":  # strung a row up, at the height of the pylon arms it hangs from
+            w, e = (cells.get((x + d, y)) == "wire" for d in (-1, 1))
+            m.put("above", x, y - 1, ID["o_wire" if w and e else "o_wire_w" if e else "o_wire_e" if w else "o_wire_v"])
         elif kind.startswith("obj:"):
             name = kind[4:]
             m.put("objects", x, y, ID[name if name.startswith("prop_") else f"o_{name}"], SOLID)
         elif kind.startswith("tall:"):
-            m.put("above", x, y - 1, ID[f"o_{kind[5:]}_top"])
+            sides = "".join(s for s, d in (("e", 1), ("w", -1)) if cells.get((x + d, y)) == "wire")
+            m.put("above", x, y - 1, ID[f"o_{kind[5:]}_top" + (f"_{sides}" if sides else "")])
             m.put("objects", x, y, ID[f"o_{kind[5:]}_base"], SOLID)
         elif kind == "emblem":
             m.put("ground", x, y, ID["o_emblem"])
@@ -131,6 +133,58 @@ def terrain(m, grid, biome, legend, stairs="ns"):
                     continue
                 y -= 1
             m.put("objects", x, y, ID[f"o_{kind.split(':')[2]}"], SOLID)
+    if not meadow:
+        zones(m, cells, biome, town)
+
+
+TURF = ("concrete", "sand", "hills", "slate")  # biomes where grass creeps out from a tree line
+DIRT = ("sand", "hills", "basalt")  # unpaved roads: a broken shoulder, not a kerb
+PAVED = ("road", "plaza", "stairs", "plank", "emblem")
+
+
+def zones(m, cells, biome, town):
+    """Off the meadow, what lawn does on it: turf creeping out from the trees,
+    a cool worn tone hugging buildings and fences, and an edge where a road or
+    plaza meets open ground. All of it is decor: nothing here touches collision.
+    Cliffs count as walls only in a town: a route is a corridor between them, and
+    shading out from both sides would cover it whole."""
+    near = lambda test: halo(["".join("B" if test(cells[x, y]) else "." for x in range(m.w)) for y in range(m.h)])
+    wall = lambda kind: kind in ("bld", "fence", "hedge") or town and (kind.startswith("mass:") or (
+        kind.startswith("over:") and kind.split(":")[1] not in ("void", "lava")))
+
+    def patch(source):
+        """Halo of the cells `source` matches, minus spurs and islands: a lone
+        cell of grass out on the concrete reads as a green bubble."""
+        group = near(source)
+        for _ in range(2):
+            group = {(x, y) for x, y in group if source(cells.get((x, y), ""))
+                     or sum((x + dx, y + dy) in group for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))) >= 2}
+        return group
+
+    turf = patch(lambda kind: kind == "tree") if biome in TURF else set()
+    worn = patch(wall) - turf
+    out = lambda group, x, y: (x, y) in cells and (x, y) not in group
+    is_ground = lambda x, y: NAMES_BY_ID[m.ground[m.i(x, y)] - 1].startswith(f"t_{biome}_ground")
+    foot = base.OW_FIRST + ID["mass_shadow"]
+    for (x, y) in cells:
+        i = m.i(x, y)
+        if not is_ground(x, y):
+            continue
+        if m.decor[i]:  # under a cliff's shadow the tone still carries on, one layer up, or the cell reads as a pale box
+            if m.decor[i] == foot and (x, y) in worn and not m.objects[i]:
+                m.put("objects", x, y, ID[f"verge_{blob_mask(lambda dx, dy: out(worn, x + dx, y + dy))}"])
+        elif (x, y) in turf:
+            mask = blob_mask(lambda dx, dy: out(turf, x + dx, y + dy))
+            m.put("decor", x, y, ID[f"turf_{mask}_{x % 2}{y % 2}"])
+        elif (x, y) in worn:
+            m.put("decor", x, y, ID[f"verge_{blob_mask(lambda dx, dy: out(worn, x + dx, y + dy))}"])
+    edge = "shoulder" if biome in DIRT else "kerb"
+    open_ground = lambda x, y: (x, y) in cells and cells[x, y] not in PAVED and cells[x, y] != "bld"
+    for (x, y), kind in cells.items():
+        if kind in PAVED and not m.decor[m.i(x, y)]:
+            mask = sum(bit for bit, (dx, dy) in ((1, (0, -1)), (2, (1, 0)), (4, (0, 1)), (8, (-1, 0))) if open_ground(x + dx, y + dy))
+            if mask:
+                m.put("decor", x, y, ID[f"{edge}_{mask}"])
 
 
 def gate(m, side, leader, route):
@@ -169,7 +223,7 @@ TOWNS = {
               ("hiker", 25, 8, "hiker", "down", "Strangers in grey came through asking about old maps. Bought nothing. Thanked nobody."),
               ("trainee", 18, 13, "battle_girl", "right", "Those posts have been kicked every day for forty years. They're winning.")]),
     "saltmere": dict(
-        biome="sand", leader="coral_marlowe", props=[("clouds", True)], links={"west": "route_4", "north": "route_5"}, onward="north",
+        biome="sand", leader="coral_marlowe", props=[("clouds", True), ("ambient", "dust")], links={"west": "route_4", "north": "route_5"}, onward="north",
         legend={"r": "obj:prop_rock", "W": "water", "N": "obj:net", "c": "obj:prop_crate", "q": "obj:buoy", "X": "obj:prop_crate"},
         signs=[("town_sign", 12, 8, "SALTMERE HARBOR - Tide tables at the Mart."),
                ("gym_sign", 29, 13, "SALTMERE GYM - Out on the pier. Leader: Coral Marlowe."),
@@ -178,7 +232,7 @@ TOWNS = {
               ("netmender", 14, 12, "fisherman", "up", "Team Hollow, they call themselves. Chartered three boats and paid in coins nobody's minted in a century."),
               ("tourist", 9, 7, "beauty", "right", "The sand here squeaks when you walk on it. Nobody warned me about the squeak.")]),
     "dynamo": dict(
-        biome="concrete", leader="volt_dray", props=[("clouds", True)], links={"south": "route_5", "north": "route_6"}, onward="north",
+        biome="concrete", leader="volt_dray", props=[("clouds", True), ("ambient", "dust")], links={"south": "route_5", "north": "route_6"}, onward="north",
         legend={"P": "tall:pylon", "-": "wire", "z": "obj:steel_rail", "K": "obj:container", "X": "obj:container"},
         patch=[(29, 8, "K"), (29, 9, "K")],
         signs=[("town_sign", 10, 7, "DYNAMO STATION - Output today: 91 percent."),
@@ -207,7 +261,7 @@ TOWNS = {
               ("stargazer", 8, 8, "old_woman", "down", "Every eighty years one star over Zenith goes dark. It's due."),
               ("student", 15, 12, "twin", "up", "Your reflection in the Gym moves the wrong way. I checked. Twice.")]),
     "emberhold": dict(
-        biome="basalt", leader="cinder_valko", props=[("time", "dusk")], links={"east": "route_8", "west": "route_9"}, onward="west",
+        biome="basalt", leader="cinder_valko", props=[("time", "dusk"), ("ambient", "embers")], links={"east": "route_8", "west": "route_9"}, onward="west",
         legend={"#": "mass:basalt", "W": "bld", "X": "mass:basalt"},
         patch=[(22, 0, "#"), (23, 0, "#")],
         signs=[("town_sign", 7, 11, "EMBERHOLD - Forged, not grown."),
@@ -231,11 +285,11 @@ ROAD_SPRITES = {"hollow_grunt_marco": "grunt_m", "hollow_grunt_silas": "grunt_m"
 ROUTE_LOOK = {  # biome, ambient, legend, stairs direction
     "route_2": ("meadow", "butterflies", {"f": "mass:field", "w": "over:field:wheatstack", "B": "plank"}, "ns"),
     "route_3": ("hills", "leaves", {"r": "mass:rock", "T": "over:rock:shrub"}, "ns"),
-    "route_4": ("sand", None, {"a": "walk", "r": "mass:rock", "s": "over:rock:palm"}, "ns"),
-    "route_5": ("concrete", None, {"K": "mass:plant", "P": "over:plant:pylon"}, "ns"),
+    "route_4": ("sand", "dust", {"a": "walk", "r": "mass:rock", "s": "over:rock:palm"}, "ns"),
+    "route_5": ("concrete", "dust", {"K": "mass:plant", "P": "over:plant:pylon"}, "ns"),
     "route_6": ("cliff", "leaves", {"v": "void", "r": "over:void:float", "B": "plank"}, "ns"),
     "route_7": ("slate", "fireflies", {"m": "mass:mountain", "r": "over:mountain:crag"}, "ns"),
-    "route_8": ("basalt", None, {"#": "over:lava:spire", "B": "plank"}, "ns"),
+    "route_8": ("basalt", "embers", {"#": "over:lava:spire", "B": "plank"}, "ns"),
     "route_9": ("marble", None, {"v": "void", "c": "over:void:column"}, "ew"),
 }
 TOWN_IDS = {name: tid for tid, name in NAMES.items()}
@@ -260,7 +314,7 @@ def town(tid):
     m.props = [("nameKey", tid), *spec["props"], ("border", BORDERS[spec["biome"]]), *links]
     if spec.get("weather"):
         m.props.append(("weather", spec["weather"]))
-    terrain(m, grid, spec["biome"], spec["legend"], spec.get("stairs", "ns"))
+    terrain(m, grid, spec["biome"], spec["legend"], spec.get("stairs", "ns"), town=True)
     for _, x0, y0, img in town_buildings(tid):
         for r in range(img.height // 16):
             for c in range(img.width // 16):
@@ -335,6 +389,8 @@ def route(rid):
         m.props.append(("time", "night"))
     if biome == "basalt":
         m.props.append(("time", "dusk"))
+    if biome == "marble":  # the climb to Zenith, which is under snow
+        m.props.append(("weather", "snow"))
     grid = r["grid"]
     for size, lines in TRAILS.get(rid, {}).items():
         grid = worn(grid, lines, size)

@@ -199,6 +199,8 @@ export function planEvent(event, view, { trainerName = "The trainer", nextId = (
 				]);
 
 		default:
+			// Typed events with no beat (party_full_heal, ...) stay silent; only moves get "X used Y!".
+			if (event.type && event.type !== "move") return done([]);
 			return planMove(event, view, patch, done, nextId);
 	}
 }

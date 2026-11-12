@@ -473,9 +473,33 @@ def p_stone(t):
     disc(t, 7, 7, 3, "#d4d2d4")
 
 
+WIRE = "#3c4252"
+WIRE_Y, WIRE_SAG = 5, 3  # the insulator row on a pylon top, and how far a span hangs below it
+
+
 def p_wire(t):
-    t.rect(0, 5, 15, 5, "#3c4252")
-    t.rect(0, 9, 15, 9, "#3c4252")
+    """Mid-span: the low, level part of the line."""
+    t.rect(0, WIRE_Y + WIRE_SAG, 15, WIRE_Y + WIRE_SAG, WIRE)
+
+
+def wire_end(side):
+    """The first or last cell of a span: the line leaves a pylon's insulator
+    (side "w" or "e") and sinks to mid-span height. "v" is a one-cell span."""
+    def draw(t):
+        for x in range(T):
+            k = {"w": x, "e": 15 - x, "v": min(x, 15 - x) * 2}[side] / 15
+            t.set(x, WIRE_Y + round(WIRE_SAG * sin(pi / 2 * min(k, 1))), WIRE)
+    return draw
+
+
+def pylon_top(sides):
+    """A pylon top, ringed so its pale arm reads on pale concrete. With `sides`
+    ("e", "w") the wire runs on from that insulator to the tile edge; the wire
+    goes on after the ring, so it stays one pixel thin."""
+    t = prop(p_pylon_top, True, False)
+    for x in (14, 15) * ("e" in sides) + (0, 1) * ("w" in sides):
+        t.px[x, WIRE_Y] = (*rgb(WIRE), 255)
+    return t
 
 
 def two_tall(colors, glow):
@@ -775,7 +799,8 @@ def town_buildings(town):
         out.append(("bld_starfall_dome", 11, 1, great_dome(8, 5)))
     if town == "emberhold":
         out.append(("bld_emberhold_forge", 2, 12, forge_pit(6, 5)))
-    return out
+    from .nature import base_shadow
+    return [(name, x0, y0, base_shadow(img)) for name, x0, y0, img in out]
 
 
 def town_tiles():
@@ -795,7 +820,7 @@ def town_tiles():
         for frame in (0, 1):
             out.append((f"lava_{mask}_{frame}", lava(frame, mask)))
     out += [("sky0", sky(0)), ("sky1", sky(1)), ("plank_h", plank(False)), ("plank_n", plank(True))]
-    out += [(f"o_{k}", prop(v, k in STANDING + SKY, k in STANDING)) for k, v in PROPS.items()]
+    out += [(f"o_{k}", pylon_top("") if k == "pylon_top" else prop(v, k in STANDING + SKY, k in STANDING)) for k, v in PROPS.items()]
     for name, cols, glow in (("star", ("#504888", "#6c64a4"), "#f4e8a0"), ("lantern", ("#88869c", "#aeacb8"), "#fff4c0")):
         top, stem = two_tall(cols, glow)
         out += [(f"o_{name}_top", top), (f"o_{name}_base", stem)]

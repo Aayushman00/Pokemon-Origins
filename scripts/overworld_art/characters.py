@@ -7,6 +7,7 @@ blink frame can close them automatically.
 """
 from .compose import grid
 from .parts import EXTRAS, FACE, FEATURES, HAIR, HATS
+from .leader_heads import HEADS as LEADER_HEADS
 
 # ------------------------------------------------------------ player boy
 # Original design: no cap. An asymmetric side-swept fringe and a gold scarf
@@ -52,81 +53,254 @@ PLAYER_BOY = {
             ...hhHhhhhHhH...
             ....hhHhhhhHH...
             ....hhhHhhhHH...
-            ....hH.hhH.H....
+            ....hH....hH....
             .....zuuuUU.....
         """),
         "left": grid(11, """
-            ......jh........
+            ......j.........
             .....jjjhH......
             .....jjjjhhH....
             .....hjjhhhhH...
             .....hhHyshhH...
-            .....yyysshhH...
+            .....hyysshhH...
             .....ssWssShH...
             .....ssIssShH...
             .....ssssSSH....
-            ......ssSSH.....
+            ......ssSSHU....
             ......zzuuUU....
         """),
     },
 }
 
 # ----------------------------------------------------------- player girl
-# Same family, own shape: a high ponytail instead of the tuft, coral jacket.
+# Same family, own shape: a high ponytail tied in teal, bangs swept the other
+# way, face-framing locks, coral jacket, denim skirt. Hand-shaded to the same
+# rules as the boy (see PLAYER_BOY); front lashes are 1px outline flicks.
 PLAYER_GIRL = {
     "id": "player_f",
     "label": "Player (girl)",
     "gender": "female",
-    "body": "female",
+    "body": "heroine",
+    "shade": "manual",
     "mats": {
-        "s": "skin_light", "h": "hair_dark", "t": "orange", "u": "teal:2", "a": "orange", "f": "orange",
-        "b": "denim:2", "l": "denim:2", "n": "brown:2", "m": "skin_light",
+        "s": "skin_hero", "h": "hair_cocoa", "i": "iris_dusk", "t": "orange", "u": "teal_hero",
+        "b": "denim:2", "l": "skin_hero", "n": "hair_cocoa",
     },
     "heads": {
-        "down": grid(9, """
-            ................
-            .....hhhhhh.....
-            ....hhhhhhhh....
-            ...hhhhhhhhhh...
-            ..hhhhhhhhhhhh..
-            ..hhhhhhhhhhhh..
-            ..hhsssshssshh..
-            .hhssssssssshhh.
-            .hhsseSsseSsshh.
-            .hhsseSsseSsshh.
-            .h.ssssMMssss.h.
-            ....ssssssss....
-            .....uuuuuu.....
+        "down": grid(11, """
+            .........hhH....
+            .....hjjjhhH....
+            ....hjjjjhhhH...
+            ...hjjhhhhhhhH..
+            ...hhhhhhhhHhH..
+            ...hhyyyhhhhhH..
+            ...hyyyyysshhH..
+            ...hseWssWesSH..
+            ...hssIssIsSHH..
+            ...H.ysssSS.H...
+            .....zuuuUU.....
         """),
-        "up": grid(9, """
-            ................
-            .....hhhhhh.....
-            ....hhhhhhhh....
-            ...hhhhhhhhhh...
-            ..hhhhhhhhhhhh..
-            ..hhhhhhhhhhhh..
-            ..hhhhhhhhhhhh..
-            .hhhhhhhhhhhhhh.
-            .hhhhhhhhhhhhhh.
-            .hhhhhhhhhhhhhh.
-            .h.hhhhhhhhhh.h.
-            ....hhhhhhhh....
-            .....uuhhuu.....
+        "up": grid(11, """
+            .......jhh......
+            .....hjjuuhH....
+            ....hjjhjhhhH...
+            ...hjjhHjhHhhH..
+            ...hhhhHjhHhhH..
+            ...hhhhHjhHhhH..
+            ...hhHhHjhHhHH..
+            ...hhhhHjhHhHH..
+            ....hhhHjhHHH...
+            ....hH.HjhH.H...
+            .....zuHjhHU....
+            ......HjhH......
+            .......jH.......
+            .......H........
         """),
-        "left": grid(9, """
-            ...........hh...
-            .....hhhhhhhhh..
-            ....hhhhhhhhhhh.
-            ...hhhhhhhhhhhh.
-            ...hhhhhhhhhhhh.
-            ...hhhhhhhhhhhhh
-            ...sshhhhhhhhhhh
-            ..ssssshhhhhhhhh
-            ..sessssshhhhh.h
-            ..sessssshhhhh.h
-            ..sssMsssshhh...
-            ...sssssss......
-            ....uuuuuuuu....
+        "left": grid(11, """
+            ......jjh.......
+            .....jjjhhHuuj..
+            .....jjjjhhhHjh.
+            .....hjjhhhhHjH.
+            .....hhHyshhHhH.
+            .....yyyshhhH.H.
+            .....ssWssShH.H.
+            .....ssIssShH...
+            .....ssssSSH....
+            ......ssSSH.....
+            ......zuuUU.....
+        """),
+    },
+}
+
+# ----------------------------------------------------------------- rival
+# The player's counterpart: red hair flaring up and back in three spikes, an
+# open forehead under hard brows (hair-shadow pixels), popped grey collar,
+# open charcoal jacket over a pale grey tee, charcoal trousers, dark red belt
+# and boots. Wears the hero body (its scarf strip reads as the tee) and follows the
+# hero face rules; his eyes share the hair's dark red.
+RIVAL = {
+    "id": "rival",
+    "label": "Rival",
+    "gender": "male",
+    "body": "hero",
+    "shade": "manual",
+    "mats": {
+        "s": "skin_light", "h": "hair_red", "i": "iris_ember", "t": "charcoal", "u": "gray",
+        "l": "charcoal", "n": "hair_red",
+    },
+    "heads": {
+        "down": grid(11, """
+            .....h..jh......
+            ....jH.jhH..h...
+            ...jjhHjhhHhH...
+            ..hjjhhhhhhHhH..
+            ..hjhhhhhhhhHH..
+            ..hhhhHhhhHhhH..
+            ...hyHHssHHsSH..
+            ...HsyWssWsS....
+            ....ssIssIsS....
+            .....ysssSS.....
+            ....zuuuuUUU....
+        """),
+        "up": grid(11, """
+            .....h..jh......
+            ....jH.jhH..h...
+            ...jjhHjhhHhH...
+            ..hjjhhhhhhHhH..
+            ..hjhhhhhhhhHH..
+            ..hhhhHhhhhhHH..
+            ..hhhhhHhhhHHH..
+            ...hhhhHhhhHH...
+            ...hhhhhHhhHH...
+            ....hH.hH.hH....
+            ....zuuuuUUU....
+        """),
+        "left": grid(11, """
+            .......h..h.....
+            ......jH.jhH....
+            .....jjhjhhhHh..
+            .....jhhhhhhhH..
+            .....hyyshhhhH..
+            .....yHHsshhHH..
+            .....ssWssShH...
+            .....ssIssShH...
+            .....ssssSShH...
+            ......ssSSH.....
+            .....zuuuUUU....
+        """),
+    },
+}
+
+# ------------------------------------------------------------- professor
+# Silver hair combed back off a high forehead, grey brows, khaki coat to the
+# knee over a red tie, brown trousers; eyes share the trousers' dark brown.
+# Hero face rules; the coat body is bodies.PROF_*.
+PROFESSOR = {
+    "id": "professor",
+    "label": "Professor",
+    "gender": "male",
+    "body": "professor",
+    "shade": "manual",
+    "mats": {
+        "s": "skin_light", "h": "hair_gray", "i": "iris_brown", "t": "khaki", "u": "red:2",
+        "l": "brown", "n": "brown",
+    },
+    "heads": {
+        "down": grid(11, """
+            .....jjhhH......
+            ....jjhhhhhH....
+            ...jjHhhHhhhH...
+            ...jhHhhHhhhHH..
+            ...hhHhhHhhhHH..
+            ...hyyyyyssshH..
+            ...hyHHssHHsSH..
+            ...HsyWssWsSH...
+            ....ssIssIsS....
+            .....ysssSS.....
+            .....vtuUtT.....
+        """),
+        "up": grid(11, """
+            .....jjhhH......
+            ....jjhhhhhH....
+            ...jjhhhhhhhH...
+            ...jhhhhhhhhHH..
+            ...hhhhhhhhhHH..
+            ...hhhhhhhhhHH..
+            ...hhhhhhhhHHH..
+            ...HhhhhhhhHH...
+            ....HhhhhhHH....
+            .....sssSSS.....
+            .....vttttT.....
+        """),
+        "left": grid(11, """
+            ......jjhH......
+            .....jjhhhhH....
+            .....jHHHhhhH...
+            .....yhhhHHHH...
+            .....yyyshhhHH..
+            .....yHHsshhHH..
+            .....ssWssShH...
+            .....ssIssShH...
+            .....ssssSSH....
+            ......ssSSH.....
+            ......uvtTT.....
+        """),
+    },
+}
+
+# ------------------------------------------------------------------- mom
+# Warm brown bob with a side part framing the face, lashes, a purple dress
+# under a pale apron; eyes share the hair's darkest brown. Hero face rules;
+# the apron-and-skirt body is bodies.MOM_*.
+MOM = {
+    "id": "mom",
+    "label": "Mom",
+    "gender": "female",
+    "body": "mom",
+    "shade": "manual",
+    "mats": {
+        "s": "skin_light", "h": "hair_brown", "i": "iris_umber", "t": "purple", "b": "purple",
+        "p": "white:2", "n": "hair_brown",
+    },
+    "heads": {
+        "down": grid(11, """
+            ......jjhH......
+            ....jjjhhhhH....
+            ...jjjhhhhhhH...
+            ..hjjhhhhhhhHH..
+            ..hjhhhhHhhhhH..
+            ..hhhyyyyhhhhH..
+            ..hhyyyyysshhH..
+            ..hhseWssWesSH..
+            ..hhssIssIsSHH..
+            ..hH.ysssSS.HH..
+            .....vtttTT.....
+        """),
+        "up": grid(11, """
+            ......jjhH......
+            ....jjjhhhhH....
+            ...jjjhhhhhhH...
+            ..hjjhhhhhhhHH..
+            ..hjhhhhhhhhhH..
+            ..hhhhhhhhhhhH..
+            ..hhhhhhhhhhHH..
+            ..hhhhhhhhhHHH..
+            ..hhhhhhhhHHHH..
+            ..hHhHHhHHhHHH..
+            .....vtttTT.....
+        """),
+        "left": grid(11, """
+            ......jjhH......
+            .....jjjhhhH....
+            .....jjhhhhhH...
+            .....hjhhhhhhH..
+            .....hhyyhhhhH..
+            .....yyyshhhhH..
+            .....ssWssShhH..
+            .....ssIssShhH..
+            .....ssssSShHH..
+            ......ssSShHH...
+            ......vttTT.....
         """),
     },
 }
@@ -239,8 +413,7 @@ def make(id, label, gender, mats, hair, hat=None, features=(), extras=(), body=N
 M, F = "male", "female"
 CAST = [
     # ------------------------------------------------------------ boys
-    make("rival", "Rival", M, {"s": "skin_light", "h": "hair_red", "t": "charcoal", "u": "orange:2",
-         "f": "charcoal", "b": "denim", "n": "charcoal"}, "spiky", features=["brows"]),
+    RIVAL,
     make("bug_catcher", "Bug Catcher", M, {"s": "skin_light", "h": "hair_dark", "c": "straw", "x": "green",
          "t": "green", "b": "khaki:2", "l": "skin_light", "n": "khaki:2"}, "short", hat="straw"),
     make("camper", "Camper", M, {"s": "skin_tan", "h": "hair_dark", "c": "red:2", "x": "red:2",
@@ -277,8 +450,7 @@ CAST = [
     make("clerk", "Mart Clerk", M, {"s": "skin_light", "h": "hair_brown", "c": "sky", "x": "sky",
          "t": "sky", "u": "white:2", "b": "navy", "n": "navy", "p": "white:2"}, "short", hat="cap",
          extras=["apron"]),
-    make("professor", "Professor", M, {"s": "skin_light", "h": "hair_gray", "t": "khaki", "u": "red:2",
-         "f": "khaki", "b": "brown", "n": "brown"}, "slick", features=["brows"], extras=["coat"]),
+    PROFESSOR,
     # ----------------------------------------------------------- girls
     make("lass", "Lass", F, {"s": "skin_light", "h": "hair_brown", "x": "red:2", "t": "white", "u": "red:2",
          "b": "navy", "l": "skin_light", "n": "navy"}, "long", hat="bow"),
@@ -302,8 +474,7 @@ CAST = [
          hat="headband", features=["brows"], extras=["shorts_f"]),
     make("twin", "Twin", F, {"s": "skin_light", "h": "hair_brown", "x": "red:2", "t": "sky", "u": "white",
          "b": "sky", "l": "skin_light", "n": "red:2"}, "twintails", features=["grin"]),
-    make("mom", "Mom", F, {"s": "skin_light", "h": "hair_dark", "t": "purple", "b": "purple",
-         "l": "skin_light", "n": "purple", "p": "white"}, "bob", extras=["apron", "longskirt"]),
+    MOM,
     # ------------------------------------------------- Gym Leaders and League
     make("willow_thornby", "Willow Thornby", F, {"s": "skin_light", "h": "hair_moss:2", "c": "green:2", "x": "pink:2",
          "t": "khaki:2", "u": "khaki:2", "f": "khaki:2", "b": "olive:2", "l": "olive:2", "n": "olive:2"}, "braid",
@@ -315,7 +486,7 @@ CAST = [
          "u": "skin_tan", "f": "white", "b": "charcoal", "l": "charcoal", "n": "charcoal", "p": "red:2"}, "topknot",
          features=["brows", "closed"], extras=["sash", "hakama"]),
     make("coral_marlowe", "Coral Marlowe", F, {"s": "skin_tan", "h": "hair_pink", "c": "white", "x": "navy",
-         "g": "yellow", "t": "navy", "u": "white:2", "f": "navy", "b": "navy", "l": "navy", "n": "charcoal"}, "long",
+         "g": "yellow:1", "t": "navy", "u": "white:2", "f": "navy", "b": "navy", "l": "navy", "n": "charcoal"}, "long",
          hat="captain", features=["grin"], extras=["peacoat"]),
     make("volt_dray", "Volt Dray", M, {"s": "skin_light", "h": "hair_blond:2", "g": "yellow:2", "t": "gray:2",
          "u": "gray:2", "f": "skin_light", "a": "gray:2", "b": "charcoal", "n": "charcoal", "p": "yellow"}, "bolt",
@@ -341,8 +512,8 @@ CAST = [
     make("drake_zephyrin", "Drake Zephyrin", M, {"s": "skin_tan", "h": "hair_dark", "c": "red", "x": "yellow",
          "t": "red", "u": "yellow", "f": "red", "b": "charcoal", "l": "charcoal", "n": "charcoal"}, "slick",
          hat="horns", features=["brows"], extras=["longcoat"]),
-    make("kestrel_vane", "Kestrel Vane", F, {"s": "skin_light", "h": "hair_blond", "x": "red", "g": "yellow",
-         "t": "white", "u": "navy", "f": "white", "b": "navy", "l": "navy", "n": "red:2"}, "crest", hat="feather",
+    make("kestrel_vane", "Kestrel Vane", F, {"s": "skin_light", "h": "hair_blond", "x": "red:2", "g": "hair_blond:2",
+         "t": "white", "u": "navy:2", "f": "white", "b": "navy:2", "l": "navy:2", "n": "red:2"}, "crest", hat="feather",
          features=["grin"], extras=["longcoat", "trim"]),
     # ------------------------------------------------- road trainers, routes 2-8
     make("swimmer", "Swimmer", M, {"s": "skin_tan", "h": "hair_dark", "c": "sky:2", "x": "sky:2", "t": "skin_tan",
@@ -376,6 +547,22 @@ CAST = [
 ]
 
 ROSTER = [PLAYER_BOY, PLAYER_GIRL, YOUNGSTER] + CAST
+
+# Gym Leaders and League: parts-built, polished toward the hand-shaded heroes
+# (sheets.frame_keys): glint-over-iris eyes, the heroes' head trim, cleaner shading.
+POLISHED = ("willow_thornby", "mara_quill", "tavish_rook", "coral_marlowe", "volt_dray", "skye_corvin",
+            "sage_ilmara", "cinder_valko", "hollis_rime", "bastian_cairn", "morwen_hallow", "drake_zephyrin",
+            "kestrel_vane")
+for _c in ROSTER:
+    if _c["id"] in POLISHED:
+        _c["polish"] = True
+        _c["mats"]["i"] = "iris_ink"
+    if _c["id"] in LEADER_HEADS:  # hand-shaded head on the parts body (leader_heads.py)
+        _h = LEADER_HEADS[_c["id"]]
+        _c["shade"] = "manual"
+        _c["heads"] = {d: _h[d] for d in DIRS}
+        _c.pop("alert_heads", None)
+        _c["mats"].update(_h["mats"], i=_h["iris"])
 
 # Body builds on top of the adult templates (sheets._build).
 BUILDS = {

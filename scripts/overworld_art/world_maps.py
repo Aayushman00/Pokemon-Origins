@@ -297,10 +297,11 @@ def fringe(m, grid):
 def dress_grass(m, biome="meadow"):
     """Scatter decor in small clusters, one chance per 5x5 block, so grass keeps
     empty space between them instead of an even speckle. Off the meadow: tufts
-    in the biome's own tones and pebbles."""
+    in the biome's own tones, pebbles and that biome's scatter (shells, cracks, drifts)."""
     decals = [ID["tufts"], ID["tufts"], ID["flowers0"], ID["flowers1"], ID["pebbles"], ID["mushrooms"]]
     if biome != "meadow":
-        decals = [ID[f"tufts_{biome}"]] * 4 + [ID["pebbles"]] * 2
+        own = [v for k, v in sorted(ID.items()) if k.startswith(f"scatter_{biome}_")] or [ID[f"tufts_{biome}"], ID["pebbles"]]
+        decals = [ID[f"tufts_{biome}"]] * 2 + [ID["pebbles"]] + own
     bare = set(m.under.values())
 
     def free(x, y):
@@ -315,7 +316,7 @@ def dress_grass(m, biome="meadow"):
             x, y = bx + h % 4, by + (h >> 3) % 4
             for dx, dy in ((0, 0), (1, 0), (0, 1))[:2 + h % 2]:
                 if free(x + dx, y + dy):
-                    m.put("decor", x + dx, y + dy, decals[(h >> 5) % 6])
+                    m.put("decor", x + dx, y + dy, decals[(h >> 5) % len(decals)])
 
 
 def lone_tree(m, kind, x, y):

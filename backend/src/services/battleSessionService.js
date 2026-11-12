@@ -1545,6 +1545,9 @@ function createBattleSessionService(deps = {}) {
 			mon.special_atk = award.after.special_atk;
 			mon.special_def = award.after.special_def;
 		}
+		// The client re-syncs from this snapshot after the round, so the EXP bar needs the new buffer.
+		mon.experience = award.after.experience;
+		mon.xp_to_next = award.xpToNext;
 		return events;
 	}
 

@@ -636,7 +636,7 @@ def new_tiles():
             add(f"tree{kind}_{i % 2}_{i // 2}", tile)
     from .buildings import BUILDINGS, PROPS
     for name, (make, _) in BUILDINGS.items():
-        art = make()
+        art = nature.base_shadow(make())
         cols = art.width // T
         for i, part in enumerate(slice_into(art, cols, 5)):
             add(f"{name}_{i % cols}_{i // cols}", part)
@@ -689,6 +689,26 @@ def new_tiles():
                 upper, lower = mass_face_tall(name, mask & 1, mask & 2, v)
                 add(f"m_{name}_u{mask}_{v}", upper)
                 add(f"m_{name}_l{mask}_{v}", lower)
+    # ---- per-biome ground scatter (shells, cracks, drifts). Keep new tiles below this line: ids are positions.
+    for biome, decals in nature.SCATTER.items():
+        for i in range(len(decals)):
+            add(f"scatter_{biome}_{i}", nature.scatter(biome, i))
+    # ---- environment pass: ground zoning overlays, kerbs, strung wire, more scatter
+    for mask in v2.blob_masks():
+        add(f"verge_{mask}", nature.verge_tile(mask))
+        for px, py in ((0, 0), (1, 0), (0, 1), (1, 1)):
+            add(f"turf_{mask}_{px}{py}", nature.turf_tile(mask, (px, py)))
+    for mask in range(1, 16):
+        add(f"kerb_{mask}", nature.kerb(mask))
+        add(f"shoulder_{mask}", nature.kerb(mask, ragged=True))
+    from .town_art import prop, pylon_top, wire_end
+    for side in "wev":
+        add(f"o_wire_{side}", prop(wire_end(side), False))
+    for sides in ("e", "w", "ew"):
+        add(f"o_pylon_top_{sides}", pylon_top(sides))
+    for biome, decals in nature.SCATTER_MORE.items():
+        for i in range(len(nature.SCATTER.get(biome, ())), len(nature.SCATTER.get(biome, ())) + len(decals)):
+            add(f"scatter_{biome}_{i}", nature.scatter(biome, i))
     return out
 
 

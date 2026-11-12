@@ -45,15 +45,22 @@ def _widen(canvas, rows):
 
 
 def _slim_head(canvas, direction):
-    """Take two columns and a forehead row off the head, so heads stop dwarfing
+    """Take four columns and two forehead rows off the head, so heads stop dwarfing
     bodies. Front and back trim each side, keeping columns 4-11 where the eyes
     are. Side views trim the back of the head: the face stays whole."""
     def trim(r):
         if direction == "left":
-            return r[0:9] + r[10:12] + r[13:16] + [".", "."]
-        return ["."] + r[0:3] + r[4:12] + r[13:16] + ["."]
+            return r[0:9] + r[11:12] + r[14:16] + ["."] * 4
+        return [".", "."] + r[0:2] + r[4:12] + r[14:16] + [".", "."]
 
-    return _drop([trim(r) if y <= CHIN_ROW else r for y, r in enumerate(canvas)], {FOREHEAD_ROW})
+    out = [trim(r) if y <= CHIN_ROW else list(r) for y, r in enumerate(canvas)]
+    # hair that drapes below the chin must not hang wider than the head it grows from
+    xs = [x for r in out[:CHIN_ROW + 1] for x, c in enumerate(r) if c != "."]
+    for r in out[CHIN_ROW + 1:]:
+        for x, c in enumerate(r):
+            if xs and c in "hHj" and not min(xs) <= x <= max(xs):
+                r[x] = "."
+    return _drop(out, {FOREHEAD_ROW, FOREHEAD_ROW + 1})
 
 
 def _stretch(canvas, rows):
@@ -89,14 +96,46 @@ def frame_keys(char, direction, column):
     head = head if isinstance(head, list) else [head]
     under = char.get("under", {}).get(direction, [])
     over = char.get("over", {}).get(direction, [])
-    # body, things behind the head, head, things in front, raised arms last
-    canvas = stack(body, *under, *head, *over, arms_up)
+    manual, polish = is_manual(char), char.get("polish", False)
+    hand = None  # hand-shaded head on a parts body: which pixels keep their drawn tones
+    if manual and char["body"] in PARTS_BODIES:
+        back = _fit_parts(stack(body, *under), char, direction)
+        front = _fit_parts(stack(*over, arms_up), char, direction)
+        face = stack(*head)
+        # parts body and the things behind it, the head at final size, things in front
+        canvas = stack(_as_layer(back), *head, _as_layer(front))
+        hand = [["M" if face[y][x] != "." and front[y][x] == "." else "." for x in range(W)] for y in range(H)]
+    else:  # body, things behind the head, head, things in front, raised arms last
+        canvas = stack(body, *under, *head, *over, arms_up)
     if column == "blink":
         canvas = blink(canvas)
-    manual = is_manual(char)
+    if polish and hand is None:
+        canvas = _hero_eyes(canvas)
     if not manual:  # hand-shaded heroes are drawn at their final size
-        canvas = _slim_head(canvas, direction)
-        canvas = _build(canvas, char.get("build"), direction)
+        canvas = _fit_parts(canvas, char, direction)
+    for grid_ in ([canvas, hand] if hand else [canvas]):
+        grid_[:] = _motion(grid_, char, direction, column)
+    tones = shade(outline(canvas), manual and hand is None, polish,
+                  hand={(x, y) for y in range(H) for x in range(W) if hand[y][x] == "M"} if hand else None)
+    return despeckle(tones, settle=polish)
+
+
+PARTS_BODIES = ("male", "female")
+
+
+def _fit_parts(canvas, char, direction):
+    """Fit parts-built art to the cast's proportions (slimmer head, build)."""
+    canvas = _slim_head(canvas, direction)
+    canvas = _build(canvas, char.get("build"), direction)
+    return canvas
+
+
+def _as_layer(canvas):
+    return (0, ["".join(r) for r in canvas])
+
+
+def _motion(canvas, char, direction, column):
+    """Walk bob, run lean and the build's height: rows only, so any grid follows."""
     if column in ("walkA", "walkB"):
         canvas = _drop(canvas, {TORSO_ROW})
     elif column.startswith("run"):
@@ -105,7 +144,18 @@ def frame_keys(char, direction, column):
         canvas = _drop(canvas, {CHIN_ROW, TORSO_ROW})
     if char.get("build") != "child":  # teens grow by the shin only: FRLG-height heroes, ~23 rows
         canvas = _stretch(canvas, GROWN_ROWS[1:] if char.get("build") in ("heavy", "teen") else GROWN_ROWS)
-    return despeckle(shade(outline(canvas), manual))
+    return canvas
+
+
+def _hero_eyes(canvas):
+    """2px outline eyes become the heroes' eye: a white glint over a dark iris.
+    Lashes and closed eyes (no 2-tall pair) stay line work."""
+    out = [r[:] for r in canvas]
+    for y in range(H - 1):
+        for x in range(W):
+            if canvas[y][x] == "e" and canvas[y + 1][x] == "e" and (y == 0 or canvas[y - 1][x] != "e"):
+                out[y][x], out[y + 1][x] = "W", "I"
+    return out
 
 
 def is_manual(char):

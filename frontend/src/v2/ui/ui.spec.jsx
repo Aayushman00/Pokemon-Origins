@@ -5,9 +5,25 @@ import { MemoryRouter } from "react-router-dom";
 import DialogueBox from "./DialogueBox";
 import MenuList from "./MenuList";
 import TrainerTrigger from "./TrainerHoverCard";
+import { CommandMenu } from "../pages/battle/BattleMenus";
 import { api } from "../../api";
 
+describe("CommandMenu", () => {
+	it("on the road a trainer battle offers Run, which refuses, instead of Restart", () => {
+		const refuseRun = vi.fn();
+		render(<CommandMenu battle={{ session: { battleType: "trainer" }, noEscape: true, refuseRun }} />);
+		expect(screen.queryByRole("button", { name: /Restart/ })).toBeNull();
+		fireEvent.click(screen.getByRole("button", { name: /Run/ }));
+		expect(refuseRun).toHaveBeenCalledTimes(1);
+	});
+	it("a journey battle keeps Restart", () => {
+		render(<CommandMenu battle={{ session: { battleType: "trainer" }, setPhase: vi.fn() }} />);
+		expect(screen.getByRole("button", { name: /Restart/ })).toBeTruthy();
+	});
+});
+
 describe("DialogueBox", () => {
+
 	it("exposes the whole line to screen readers and advances on click once shown", () => {
 		const onAdvance = vi.fn();
 		render(<DialogueBox text="Charmander used EMBER!" onAdvance={onAdvance} />);

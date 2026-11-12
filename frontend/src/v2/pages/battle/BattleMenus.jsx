@@ -23,7 +23,9 @@ export const CommandMenu = ({ battle }) => (
 				{ id: "mon", label: "Pokémon", onSelect: battle.openParty },
 				battle.session?.battleType === "wild"
 					? { id: "run", label: "Run", onSelect: battle.run }
-					: { id: "restart", label: "Restart", onSelect: () => battle.setPhase("restartConfirm") },
+					: battle.noEscape
+						? { id: "run", label: "Run", onSelect: battle.refuseRun }
+						: { id: "restart", label: "Restart", onSelect: () => battle.setPhase("restartConfirm") },
 			]}
 		/>
 	</div>

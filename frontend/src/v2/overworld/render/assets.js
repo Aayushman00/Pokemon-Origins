@@ -63,24 +63,36 @@ async function loadLegendaries(sprites, base) {
 }
 
 /**
- * Loads every tileset image used by `maps` plus the actor sprite sheets
- * (the whole cast by default: sheets are tiny and NPCs on streamed-in
- * neighbour maps can use any of them).
+ * On-demand image cache. `want(map)` fetches only what that map draws (its
+ * tilesets, its NPCs' sheets, legendaries if it has one); each file is
+ * fetched once. The map store awaits it, so a map is never shown half-drawn.
  */
-export async function loadAssets(maps, { mapsBase = "/maps/", spriteBase = "/sprites/overworld/", sheets = SHEET_NAMES } = {}) {
+export function createAssets({ mapsBase = "/maps/", spriteBase = "/sprites/overworld/" } = {}) {
 	const tilesets = new Map();
-	const jobs = [];
-	for (const map of maps) {
-		for (const ts of map.tilesets) {
-			if (!tilesets.has(ts.image)) {
-				tilesets.set(ts.image, null);
-				jobs.push(loadImage(`${mapsBase}${ts.image}`).then((img) => tilesets.set(ts.image, img)));
-			}
-		}
-	}
 	const sprites = {};
-	for (const name of sheets) jobs.push(loadImage(`${spriteBase}${name}.png`).then((img) => (sprites[name] = img)));
-	jobs.push(loadLegendaries(sprites, `${spriteBase}legendary/`));
-	await Promise.all(jobs);
-	return { tilesets, sprites };
+	const jobs = new Map(); // key -> promise, so each file is fetched once
+	const once = (key, job) => {
+		if (!jobs.has(key)) jobs.set(key, job().catch((e) => (jobs.delete(key), console.warn(e.message))));
+		return jobs.get(key);
+	};
+
+	const wantSheets = (names) =>
+		Promise.all(names.filter((n) => SHEET_NAMES.includes(n)).map((n) => once(`s:${n}`, () => loadImage(`${spriteBase}${n}.png`).then((img) => (sprites[n] = img)))));
+
+	function want(map) {
+		const work = map.tilesets.map((ts) => once(`t:${ts.image}`, () => loadImage(`${mapsBase}${ts.image}`).then((img) => tilesets.set(ts.image, img))));
+		const npcs = map.npcs || [];
+		work.push(wantSheets(npcs.filter((n) => !n.kind).map((n) => n.sprite || "npc")));
+		if (npcs.some((n) => n.kind)) work.push(once("legendaries", () => loadLegendaries(sprites, `${spriteBase}legendary/`)));
+		return Promise.all(work);
+	}
+
+	return { tilesets, sprites, want, wantSheets };
+}
+
+/** Eager form for a fixed set of maps + sheets (the playground). */
+export async function loadAssets(maps, { sheets = SHEET_NAMES, ...opts } = {}) {
+	const assets = createAssets(opts);
+	await Promise.all([...maps.map(assets.want), assets.wantSheets(sheets)]);
+	return assets;
 }

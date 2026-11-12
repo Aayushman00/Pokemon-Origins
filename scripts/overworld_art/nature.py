@@ -7,7 +7,7 @@ parity (`phase`), and each mask has four variants.
 """
 import random
 from functools import lru_cache
-from math import hypot
+from math import hypot, pi, sin
 
 from PIL import Image, ImageDraw, ImageFilter
 
@@ -381,6 +381,33 @@ def pebbles():
     return img
 
 
+_CRACK = ("a.........", ".bb.......", "...b..a...", "....bb....", "....a.....", ".....bb...", ".......a..")
+_POOL = ("..bbbbb..", ".bbabbbb.", "bbbbbbcbb", ".ccccccc.")
+# Small things lying on each biome's bare ground: rows, then a colour per letter.
+SCATTER = {
+    "sand": (((".aaaaa.", "abababa", "abababa", ".cbcbc.", "..ccc.."), dict(a="#fbf2dc", b="#f8b0a8", c="#c89a8c")),  # shell
+            (("...a...", "...a...", "aaabaaa", ".aabaa.", "..aaa..", ".aa.aa.", ".a...a."), dict(a="#f0a878", b="#d97c54"))),  # starfish
+    "concrete": ((_CRACK, dict(a="#88869c", b="#64627e")), (_POOL, dict(a="#e4f6f6", b="#a4dcea", c="#74bce2"))),
+    "cliff": (((".w....w..", "wyw..wyw.", ".w.g..w..", ".g..w.g..", "...wyw...", "....w....", "....g...."),
+               dict(w="#f8fbff", y="#f7c850", g=TALL["cliff"][2])),),  # alpine blooms
+    "slate": ((("..a...", ".ab...", ".ab.a.", "abbcab", "abbcab", "abccbc", ".cc.c."), dict(a="#dff0f4", b="#a4dcea", c="#4e92c8")),),  # crystal
+    "basalt": ((_CRACK, dict(a="#d8502c", b="#f0a030")),),  # a crack still glowing
+    "marble": ((("...wwww...", ".wwwwwwww.", "wwwwwwwwww", "swwwwwwwss", ".ssssssss."), dict(w="#ffffff", s="#c4d4ec")),  # snow drift
+               (_POOL, dict(a="#ffffff", b="#dff0f4", c="#a8d4e4"))),  # ice
+}
+
+
+def scatter(biome, i):
+    rows, colours = (SCATTER.get(biome, ()) + SCATTER_MORE.get(biome, ()))[i]
+    img = Image.new("RGBA", (T, T))
+    ox, oy = (T - len(rows[0])) // 2, (T - len(rows)) // 2 + 1
+    for y, row in enumerate(rows):
+        for x, c in enumerate(row):
+            if c != ".":
+                img.putpixel((ox + x, oy + y), rgba(colours[c]))
+    return img
+
+
 def mushrooms():
     img, d = _decal()
     cap = WORLD["cap"]
@@ -553,3 +580,119 @@ def bush_body():
                 lit = -((x - 7.5) * .5 + (y - 7) * .85) / 7.5
                 px[x, y] = rgba(leaf[1 if lit > .45 else 2 if lit > -.1 else 3])
     return img
+
+
+# ---- ground zoning off the meadow -------------------------------------------
+# Overlays that lie on any biome's ground, so one set serves concrete, sand,
+# snow, slate and basalt alike. Light is top-left; shade leans violet-blue.
+SHADE = "#34407c"
+
+
+def _tint(colour, opacity):
+    return (*rgb(colour), round(opacity * 255))
+
+
+def verge_tile(mask):
+    """Worn, shaded ground hugging walls and fences: what lawn is to meadow.
+    Two hard steps of cool tint, never a soft fade. Its edge noise repeats
+    every tile (the tint is too faint for that to show), so one tile per mask
+    does and the set costs 47 ids, not 188."""
+    blurred = _blurred(mask, 4).load()
+    wave = lambda x, y: (sin(2 * pi * (x + 2 * y) / T + 1.3) + sin(2 * pi * (3 * x - y) / T + 2.6)) * 7
+    shape = {(x, y): blurred[T + x, T + y] + wave(x, y) > 127 for x in range(-3, T + 3) for y in range(-3, T + 3)}
+    img = Image.new("RGBA", (T, T))
+    out = img.load()
+    for y in range(T):
+        for x in range(T):
+            if not shape[x, y]:
+                continue
+            rim = any(not shape[x + dx * k, y + dy * k] for dx, dy in STEPS for k in (1, 2))
+            out[x, y] = _tint(SHADE, .07 if rim else .14)
+    return img
+
+
+def turf_tile(mask, phase):
+    """Grass creeping out from a tree line onto bare ground. See-through outside
+    the patch; lit rim up and left, a darker lip and a shade pixel down and right."""
+    shape = _shape(mask, phase, salt=1.9)
+    lawn = WORLD["lawn"]
+    surface, lit, lip = _lawn(_variant(phase)).load(), rgba(lawn[0]), rgba("#689c64")
+    img = Image.new("RGBA", (T, T))
+    out = img.load()
+    for y in range(T):
+        for x in range(T):
+            if shape[x, y]:
+                low = not shape[x, y + 1] or not shape[x + 1, y]
+                out[x, y] = lip if low else lit if _on_edge(shape, x, y) else surface[x, y]
+            elif shape[x, y - 1]:
+                out[x, y] = _tint(SHADE, .22)
+    return img
+
+
+BROKEN = (1, 1, 0, 1, 1, 1, 2, 1, 0, 1, 1, 2, 1, 1, 0, 1)  # 0 gap, 1 line, 2 line and a deeper pixel
+
+
+def kerb(mask, ragged=False):
+    """Edge of a road or plaza where it meets open ground. Bits N=1 E=2 S=4 W=8.
+    A lit lip up and left, a shaded one down and right. `ragged` breaks the
+    line for dirt roads; paving keeps it whole."""
+    img = Image.new("RGBA", (T, T))
+    px = img.load()
+    for i in range(T):
+        step = BROKEN[i] if ragged else 1
+        if not step:
+            continue
+        if mask & 1:
+            px[i, 0] = (255, 255, 255, 96)
+        if mask & 8:
+            px[0, i] = (255, 255, 255, 72)
+        if mask & 4:
+            px[i, 15] = _tint(SHADE, .5)
+            if step == 2 or not ragged:
+                px[i, 14] = _tint(SHADE, .2)
+        if mask & 2:
+            px[15, i] = _tint(SHADE, .42)
+    return img
+
+
+def base_shadow(img):
+    """Stand a building on the ground: a contact shadow under its foot and down
+    the right of its wall, kept inside its own tiles (nothing is thrown onto
+    the next cell). Only see-through pixels change, so it is safe to run twice."""
+    colour, opacity = SHADOW
+    tone = _tint(colour, opacity)
+    px, (w, h) = img.load(), img.size
+    solid = lambda x, y: px[x, y][3] == 255
+    right = lambda y: max((x for x in range(w) if solid(x, y)), default=-1)
+    foot = max((y for y in range(h - T, h) if right(y) >= 0), default=None)
+    if foot is None:
+        return img
+    for y in range(foot, max(h - 2 * T, 0), -1):  # up the wall until the eave juts out
+        r = right(y)
+        if r > right(foot) or r < 0:
+            break
+        for x in range(r + 1, min(r + 3, w)):
+            if not px[x, y][3]:
+                px[x, y] = tone
+    for x in range(w):
+        y = next((y for y in range(h - 1, h - T - 1, -1) if solid(x, y)), None)
+        for xx in ((x, x + 2) if y is not None else ()):  # the shadow falls right as well as down
+            for yy in range(y + 1, min(y + 4, h)):
+                if xx < w and not px[xx, yy][3]:
+                    px[xx, yy] = tone
+    return img
+
+
+# More things lying on bare ground. Kept apart from SCATTER so its tile ids stay put.
+_STONE = dict(a="#d4d2d4", b="#88869c", c="#64627e", d="#aeacb8", s="#3c4252")
+SCATTER_MORE = {
+    "concrete": (((("..aaaa..", ".abbbbc.", "abdbdbbc", "abbbbbbc", "abdbdbbc", ".cbbbbc.", "..cccc.."), _STONE)),  # manhole
+                 (("aaaaaaaa", "acscscsc", "acscscsc", "acscscsc", "cccccccc"), _STONE),  # drain grate
+                 (("a...a..", ".a.ab.a", ".bab.b.", "..bb..."), dict(a=TALL["concrete"][0], b=TALL["concrete"][2]))),  # weeds
+    "sand": (((".aaaaaaa..", "abbbbbbbbc", ".cccccbc..", "......c..."), dict(a="#d8c4a0", b="#b09474", c="#84705c")),  # driftwood
+             ((".aa....", "abbc.a.", ".cc.abc", "..a..c.", ".abc..."), dict(a="#fbf6e8", b="#c8bca8", c="#9c907c"))),  # pebbles
+    "cliff": ((("..www...", ".wwaab..", "waaabb.w", ".bbbb.wa", ".......b"), dict(w="#ffffff", a="#b0bac8", b="#8090a8")),),  # frosted stones
+    "slate": ((("..aa....", ".abbc.g.", "abbbcggc", ".ccc.gc."), dict(a="#aab4d0", b="#8490b4", c="#4c5a80", g="#6cb4a4")),),  # mossy stones
+    "basalt": (((".aa...a.", "abbc.abc", ".cc.e.c.", "...efe..", "....e..."),
+                dict(a="#8c8088", b="#5c5258", c="#3a3238", e="#d8502c", f="#f8d060")),),  # cinders
+}

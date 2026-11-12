@@ -108,8 +108,14 @@ def _mat(ch):
     return low if low in MATERIALS else None
 
 
-def shade(canvas, manual=False):
+def shade(canvas, manual=False, polish=False, hand=None):
     """Return a grid of (material, tone) / literal colour keys.
+
+    `polish` (parts-built majors): auto tones, but a seam between two materials
+    no longer darkens (only the silhouette does) and the outline is sel-out like
+    the heroes', so the parts read in the heroes' cleaner style. `hand` is a set
+    of (x, y) pixels drawn by hand (a manual head on a parts body): they keep
+    their drawn tones like `manual`.
 
     `manual` (hand-shaded heroes): the grid's own tones are kept, lowercase
     base, UPPERCASE shadow, gloss letters highlight. The silhouette is
@@ -136,7 +142,7 @@ def shade(canvas, manual=False):
                     res[y][x] = "outline"
                     continue
                 m = max(near, key=near.count)
-                if manual:
+                if manual or polish:
                     lit = m in (m_at(x, y + 1), m_at(x + 1, y))
                 else:  # sel-out: the lit top of hair and hats softens to their own shadow tone
                     lit = m in GLOSSY and m_at(x, y + 1) == m
@@ -149,10 +155,15 @@ def shade(canvas, manual=False):
                 res[y][x] = (GLOSS[ch], "hi")
                 continue
             m = ch.lower()
-            if manual or ch.isupper():
+            if manual or ch.isupper() or (hand and (x, y) in hand):
                 res[y][x] = (m, "shadow" if ch.isupper() else "base")
                 continue
-            if m_at(x + 1, y) != m or m_at(x, y + 1) != m:
+            if polish:  # silhouette edges shade; so does a lone accent dot (a flower, a stud)
+                lone = all(m_at(x + dx, y + dy) != m for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+                edge = (m_at(x + 1, y) is None, m_at(x, y + 1) is None, lone)
+            else:
+                edge = (m_at(x + 1, y) != m, m_at(x, y + 1) != m)
+            if any(edge):
                 res[y][x] = (m, "shadow")
                 continue
             x0 = x
@@ -177,14 +188,17 @@ def shade(canvas, manual=False):
     return res
 
 
-def despeckle(res):
+def despeckle(res, settle=False):
     """No orphan pixels: a tone pixel with no same-tone 8-neighbour takes the
-    most common tone of its same-material neighbours (cleaner clusters)."""
+    most common tone of its same-material neighbours (cleaner clusters).
+    `settle` reads already-fixed neighbours, so a 2px pair of opposite tones
+    agrees on one instead of trading places."""
     out = [r[:] for r in res]
+    seen = out if settle else res
     for y in range(H):
         for x in range(W):
             key = res[y][x]
-            near = [res[y + dy][x + dx] for dy in (-1, 0, 1) for dx in (-1, 0, 1)
+            near = [seen[y + dy][x + dx] for dy in (-1, 0, 1) for dx in (-1, 0, 1)
                     if (dx or dy) and 0 <= x + dx < W and 0 <= y + dy < H]
             if isinstance(key, str) and key.startswith("lit:") and key not in near:
                 out[y][x] = "edge:" + key[4:]  # a lone sel-out pixel reads as a speck: plain edge
@@ -235,6 +249,8 @@ def ramp_for(mats, m):
         raise KeyError(f"material {m!r} has no ramp in this character")
     if spec.startswith("#"):
         return [spec]
+    if spec.startswith("eye/"):  # "eye/navy": a white glint over the ramp's darkest tone
+        return [WHITE, ramp_for({"_": spec[4:]}, "_")[-1]]
     name, _, n = spec.partition(":")
     ramp = RAMPS[name]
     if n:  # "red:2" keeps only base + shadow to save palette slots
