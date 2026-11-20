@@ -72,15 +72,15 @@
     "semantic_hash": ""
   },
   "backend/data/items.json": {
-    "mtime": 1786626831.074462,
-    "seen": 1790163620.7267013,
-    "ast_hash": "a5cdfcad21fbbdb15624a61bf018df67",
+    "mtime": 1795134975.9975357,
+    "seen": 1795150214.6721313,
+    "ast_hash": "d7e25b0c75a61d27a71582d440bffb0f",
     "semantic_hash": ""
   },
   "backend/data/mart.json": {
-    "mtime": 1790390642.8094566,
-    "seen": 1793745906.533209,
-    "ast_hash": "3325d80a07836c6c189aca78b6c54b81",
+    "mtime": 1795134982.9583175,
+    "seen": 1795150214.6721337,
+    "ast_hash": "cee2ff89bbfbc1bee0b7fae355ab5240",
     "semantic_hash": ""
   },
   "backend/data/move_meta.json": {
@@ -174,9 +174,9 @@
     "semantic_hash": ""
   },
   "backend/package.json": {
-    "mtime": 1795133581.0098176,
-    "seen": 1795133794.4830058,
-    "ast_hash": "397973d449af0776467de150dc653d52",
+    "mtime": 1795134899.0518372,
+    "seen": 1795150214.674563,
+    "ast_hash": "32467b85b782b85ef8367866be1f7ef3",
     "semantic_hash": ""
   },
   "backend/scripts/balance-sim.js": {
@@ -432,15 +432,15 @@
     "semantic_hash": ""
   },
   "backend/src/services/battleSessionService.js": {
-    "mtime": 1795132364.5751584,
-    "seen": 1795133794.533782,
-    "ast_hash": "0b5d706621ca89708da9547a457afaf4",
+    "mtime": 1795149696.3272,
+    "seen": 1795150214.6805177,
+    "ast_hash": "304295c7798d1626015748b5c1e773e6",
     "semantic_hash": ""
   },
   "backend/src/services/battleSessionService.test.js": {
-    "mtime": 1795115472.1450207,
-    "seen": 1795133794.533796,
-    "ast_hash": "ab739bf071fbd4cb3ec4e06b5ba29db6",
+    "mtime": 1795149707.1062028,
+    "seen": 1795150214.6806178,
+    "ast_hash": "49f508326e72ceed3575ee9461fe17ef",
     "semantic_hash": ""
   },
   "backend/src/services/battleStatus.js": {
@@ -498,21 +498,21 @@
     "semantic_hash": ""
   },
   "backend/src/services/inventoryService.test.js": {
-    "mtime": 1786620331.6944008,
-    "seen": 1790163620.7267466,
-    "ast_hash": "cb0c2586e8905eeae156536b4d90fd21",
+    "mtime": 1795134956.4900405,
+    "seen": 1795150214.6820543,
+    "ast_hash": "563ad1228a06f40123ea38a8d4d99e35",
     "semantic_hash": ""
   },
   "backend/src/services/martService.js": {
-    "mtime": 1790390642.8130064,
-    "seen": 1793745906.5377038,
-    "ast_hash": "a591476d48b4c4dd01f784955410a8fc",
+    "mtime": 1795135011.937866,
+    "seen": 1795150214.6820562,
+    "ast_hash": "662f90b9b0bbc9af9fc18347c80987cc",
     "semantic_hash": ""
   },
   "backend/src/services/martService.test.js": {
-    "mtime": 1790390642.8130064,
-    "seen": 1793745906.537705,
-    "ast_hash": "d7c1b8c7028b6fee28e59aa634448dbd",
+    "mtime": 1795134931.2258456,
+    "seen": 1795150214.6820571,
+    "ast_hash": "228a887c9dd5a140b3509b17b210c325",
     "semantic_hash": ""
   },
   "backend/src/services/moveLearnService.js": {
@@ -528,15 +528,15 @@
     "semantic_hash": ""
   },
   "backend/src/services/partyService.js": {
-    "mtime": 1790271056.8598228,
-    "seen": 1793745906.537868,
-    "ast_hash": "1557471f974adcf38f3a5a41c593a06a",
+    "mtime": 1795135037.8503127,
+    "seen": 1795150214.6827986,
+    "ast_hash": "8c6f6aab29df5b30f6bf0e2db0f216a2",
     "semantic_hash": ""
   },
   "backend/src/services/partyService.test.js": {
-    "mtime": 1790271056.8598228,
-    "seen": 1793745906.5378687,
-    "ast_hash": "4da3a411a2a414cb306d59723cf04dbc",
+    "mtime": 1795134964.6677282,
+    "seen": 1795150214.6828003,
+    "ast_hash": "fb7e7926c5558bfed94e202d77ce0dc6",
     "semantic_hash": ""
   },
   "backend/src/services/pokeApiClient.js": {
@@ -588,15 +588,15 @@
     "semantic_hash": ""
   },
   "backend/src/services/starterService.js": {
-    "mtime": 1790271056.8629549,
-    "seen": 1793745906.5383544,
-    "ast_hash": "1f9faa186fd66c2999868d746e784da8",
+    "mtime": 1795135013.8546453,
+    "seen": 1795150214.6840937,
+    "ast_hash": "30f8331d42db98e4d86d3b795ad82faf",
     "semantic_hash": ""
   },
   "backend/src/services/starterService.test.js": {
-    "mtime": 1790271056.864527,
-    "seen": 1793745906.5383554,
-    "ast_hash": "a0b1c2b8434713d4e9460f484cdac10b",
+    "mtime": 1795134960.388733,
+    "seen": 1795150214.6840951,
+    "ast_hash": "21968b1a5ce5a9b260c18548fa2fcd90",
     "semantic_hash": ""
   },
   "backend/src/services/trainerService.js": {
@@ -6660,9 +6660,9 @@
     "semantic_hash": ""
   },
   "frontend/src/v2/battle/useBattle.js": {
-    "mtime": 1795133039.7923682,
-    "seen": 1795133794.60595,
-    "ast_hash": "e68f69a78d68020ba101ddebf112a56f",
+    "mtime": 1795149971.7888436,
+    "seen": 1795150214.6961603,
+    "ast_hash": "fa5144fb2a83b81038c85b5d8e84ba62",
     "semantic_hash": ""
   },
   "frontend/src/v2/data/profiles.js": {
@@ -6690,21 +6690,21 @@
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/bag/BagScreen.jsx": {
-    "mtime": 1794398541.4271576,
-    "seen": 1794415293.3487885,
-    "ast_hash": "28d313b2b0e8ba80ca9b1b3d03335853",
+    "mtime": 1795150014.1389155,
+    "seen": 1795150214.700536,
+    "ast_hash": "a5b8ad1fe92f011e473fcb92f67762a7",
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/battle/BattleMenus.jsx": {
-    "mtime": 1795133081.3181884,
-    "seen": 1795133794.6347294,
-    "ast_hash": "9d63c8eedb9f7dcbd9f3d36ecbb55c66",
+    "mtime": 1795150005.6120658,
+    "seen": 1795150214.700538,
+    "ast_hash": "c779955391f63e7bcb7f03aef389da6b",
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/battle/BattleStage.jsx": {
-    "mtime": 1793844855.027264,
-    "seen": 1793844996.6539357,
-    "ast_hash": "c8a408c253884fe997e0eda63959b6ac",
+    "mtime": 1795150016.4935474,
+    "seen": 1795150214.7005389,
+    "ast_hash": "b84fd4d73f582edf81af1bc6f0755ee5",
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/battle/BattleView.jsx": {
@@ -6960,15 +6960,15 @@
     "semantic_hash": ""
   },
   "frontend/src/v2/battle/battleBeats.js": {
-    "mtime": 1794491205.5455222,
-    "seen": 1794499740.6512895,
-    "ast_hash": "7326dc26ef89403e0ae6cc4107018b59",
+    "mtime": 1795149958.879181,
+    "seen": 1795150214.6955304,
+    "ast_hash": "6e70119f1bb7c6cc84cd87bf541cccbf",
     "semantic_hash": ""
   },
   "frontend/src/v2/battle/battleBeats.test.js": {
-    "mtime": 1794491189.1850202,
-    "seen": 1794499740.651291,
-    "ast_hash": "3af7b7d016ab91fcd8134690e09e3af0",
+    "mtime": 1795149798.4047027,
+    "seen": 1795150214.6955323,
+    "ast_hash": "74a96ac164a70563c2b73923490a5e4f",
     "semantic_hash": ""
   },
   "frontend/src/v2/battle/sfx.js": {
@@ -6978,9 +6978,9 @@
     "semantic_hash": ""
   },
   "frontend/src/v2/battle/useBattle.spec.jsx": {
-    "mtime": 1795132918.9181957,
-    "seen": 1795133794.6059594,
-    "ast_hash": "0adc6ece70656aa1cf68bf565e9114c0",
+    "mtime": 1795149818.608958,
+    "seen": 1795150214.6961617,
+    "ast_hash": "a4a5e2ff5d58ae25031e6a8da9b910ac",
     "semantic_hash": ""
   },
   "frontend/src/v2/data/partyLayout.js": {
@@ -7056,15 +7056,15 @@
     "semantic_hash": ""
   },
   "backend/src/config/flags.js": {
-    "mtime": 1795115626.4374404,
-    "seen": 1795133794.498172,
-    "ast_hash": "9bc3c857d5d9064a8fef20654b7d1a4c",
+    "mtime": 1795135010.5276575,
+    "seen": 1795150214.6761732,
+    "ast_hash": "c20d87d6094b896b57284d1662f86aa7",
     "semantic_hash": ""
   },
   "backend/src/config/flags.test.js": {
-    "mtime": 1795115958.1400306,
-    "seen": 1795133794.4981778,
-    "ast_hash": "c46d3a27cdf7a47c6435a24068422bac",
+    "mtime": 1795135062.7345793,
+    "seen": 1795150214.6761749,
+    "ast_hash": "2f99f0e1aa8f2107d6e11d972f49cfc6",
     "semantic_hash": ""
   },
   "backend/src/middleware/validate.playground.test.js": {
@@ -8802,9 +8802,9 @@
     "semantic_hash": ""
   },
   "frontend/src/v2/ui/MenuIcon.jsx": {
-    "mtime": 1794398480.7402368,
-    "seen": 1794415293.3762681,
-    "ast_hash": "3cbfbf1123326a4da1e2604572e6a5c4",
+    "mtime": 1795149996.7884686,
+    "seen": 1795150214.704286,
+    "ast_hash": "9045f7b2adfae41653f9550c6f52d993",
     "semantic_hash": ""
   },
   "scripts/overworld_art/hero_cast.py": {
@@ -9009,6 +9009,42 @@
     "mtime": 1795131973.8002138,
     "seen": 1795133794.8550625,
     "ast_hash": "88e43f498ad587e0dfc82659aa221fe7",
+    "semantic_hash": ""
+  },
+  "backend/data/catch_rates.json": {
+    "mtime": 1795134850.996251,
+    "seen": 1795150214.6717834,
+    "ast_hash": "e61bd10e1f35d36820c1e1eac73780bd",
+    "semantic_hash": ""
+  },
+  "backend/scripts/fetch-catch-rates.js": {
+    "mtime": 1795134828.587191,
+    "seen": 1795150214.6746542,
+    "ast_hash": "1c3124937b7eb439b0335b0c9bb1fed8",
+    "semantic_hash": ""
+  },
+  "backend/src/services/catchFormula.js": {
+    "mtime": 1795134889.9483633,
+    "seen": 1795150214.681009,
+    "ast_hash": "9b511120e04ded39a6e5d63888d655e9",
+    "semantic_hash": ""
+  },
+  "backend/src/services/catchFormula.test.js": {
+    "mtime": 1795134870.99697,
+    "seen": 1795150214.6810105,
+    "ast_hash": "ca3b06efe5f91bd7aedc5b393e4ba0aa",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-11-20-catching.md": {
+    "mtime": 1795134795.417101,
+    "seen": 1795150214.7138016,
+    "ast_hash": "c7720bf47fba1e9e2a36fb5c64a55d39",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-11-20-catching-design.md": {
+    "mtime": 1795134675.8969615,
+    "seen": 1795150214.7141926,
+    "ast_hash": "e92c2c4e0e6fcad226c0093afe9aa1d6",
     "semantic_hash": ""
   }
 }

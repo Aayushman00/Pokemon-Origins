@@ -174,9 +174,9 @@
     "semantic_hash": ""
   },
   "backend/package.json": {
-    "mtime": 1795134899.0518372,
-    "seen": 1795150214.674563,
-    "ast_hash": "32467b85b782b85ef8367866be1f7ef3",
+    "mtime": 1795154321.653084,
+    "seen": 1795174922.2445571,
+    "ast_hash": "f5b9b0ecdbfc1a369edf054f7d88bcfc",
     "semantic_hash": ""
   },
   "backend/scripts/balance-sim.js": {
@@ -312,15 +312,15 @@
     "semantic_hash": ""
   },
   "backend/src/playground/index.js": {
-    "mtime": 1795133523.6862185,
-    "seen": 1795133794.5132644,
-    "ast_hash": "77c98b19eb310670d2024c064c7dcf39",
+    "mtime": 1795168168.464679,
+    "seen": 1795174922.2480233,
+    "ast_hash": "843b64472a5476018b0ea1eab1e34b10",
     "semantic_hash": ""
   },
   "backend/src/playground/index.test.js": {
-    "mtime": 1795133494.1683197,
-    "seen": 1795133794.5132725,
-    "ast_hash": "45e1807493bf564f61233b733221051b",
+    "mtime": 1795168156.110407,
+    "seen": 1795174922.248025,
+    "ast_hash": "28279ed729dde603fa3bb5545c8d0f5d",
     "semantic_hash": ""
   },
   "backend/src/playground/movement.js": {
@@ -432,15 +432,15 @@
     "semantic_hash": ""
   },
   "backend/src/services/battleSessionService.js": {
-    "mtime": 1795149696.3272,
-    "seen": 1795150214.6805177,
-    "ast_hash": "304295c7798d1626015748b5c1e773e6",
+    "mtime": 1795168060.7356124,
+    "seen": 1795174922.250171,
+    "ast_hash": "6f72292a8095a73b5e48c4329b677467",
     "semantic_hash": ""
   },
   "backend/src/services/battleSessionService.test.js": {
-    "mtime": 1795149707.1062028,
-    "seen": 1795150214.6806178,
-    "ast_hash": "49f508326e72ceed3575ee9461fe17ef",
+    "mtime": 1795154300.7704127,
+    "seen": 1795174922.250174,
+    "ast_hash": "866060f2bdfa145648b7d663dc427aea",
     "semantic_hash": ""
   },
   "backend/src/services/battleStatus.js": {
@@ -6660,9 +6660,9 @@
     "semantic_hash": ""
   },
   "frontend/src/v2/battle/useBattle.js": {
-    "mtime": 1795149971.7888436,
-    "seen": 1795150214.6961603,
-    "ast_hash": "fa5144fb2a83b81038c85b5d8e84ba62",
+    "mtime": 1795168416.8652785,
+    "seen": 1795174922.2598097,
+    "ast_hash": "03b2cffb5064f67de634137ee6ffdaad",
     "semantic_hash": ""
   },
   "frontend/src/v2/data/profiles.js": {
@@ -6696,21 +6696,21 @@
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/battle/BattleMenus.jsx": {
-    "mtime": 1795150005.6120658,
-    "seen": 1795150214.700538,
-    "ast_hash": "c779955391f63e7bcb7f03aef389da6b",
+    "mtime": 1795168477.3616738,
+    "seen": 1795174922.2649217,
+    "ast_hash": "78bebf76370946231c0a89ebf0b11cd4",
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/battle/BattleStage.jsx": {
-    "mtime": 1795150016.4935474,
-    "seen": 1795150214.7005389,
-    "ast_hash": "b84fd4d73f582edf81af1bc6f0755ee5",
+    "mtime": 1795168651.3112993,
+    "seen": 1795174922.2649229,
+    "ast_hash": "bfe560994bd4a97e725ed646887e8128",
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/battle/BattleView.jsx": {
-    "mtime": 1795133099.1257427,
-    "seen": 1795133794.6353207,
-    "ast_hash": "27796ea0540e74feea03da1c1302903c",
+    "mtime": 1795168477.360664,
+    "seen": 1795174922.2649262,
+    "ast_hash": "e642482a504259b6f4aab1f2f1f09a03",
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/battle/HpPanel.jsx": {
@@ -6786,9 +6786,9 @@
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/mart/MartScreen.jsx": {
-    "mtime": 1794415149.2306778,
-    "seen": 1794415293.3608518,
-    "ast_hash": "72dba9d832ac439094564b801f72c1ef",
+    "mtime": 1795167725.747246,
+    "seen": 1795174922.2663698,
+    "ast_hash": "36644f34bb37394ef83f16da4ff2c287",
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/playground/ChatParts.jsx": {
@@ -6798,15 +6798,15 @@
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/playground/PlaygroundScreen.jsx": {
-    "mtime": 1795133230.8596592,
-    "seen": 1795133794.6470547,
-    "ast_hash": "10e90941e070f9ea8b5a2e6b295b161f",
+    "mtime": 1795168539.0711322,
+    "seen": 1795174922.2668324,
+    "ast_hash": "b98e34988f74ad2824335551e40fa236",
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/playground/usePlayground.js": {
-    "mtime": 1795133618.0321317,
-    "seen": 1795133794.6470835,
-    "ast_hash": "12619c4c7dc7b13c4140ebca8d4d60b3",
+    "mtime": 1795168514.8915803,
+    "seen": 1795174922.2670174,
+    "ast_hash": "151dc9dd03bfa5e48d77e39a2b4ed243",
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/title/TitleScreen.jsx": {
@@ -6978,9 +6978,9 @@
     "semantic_hash": ""
   },
   "frontend/src/v2/battle/useBattle.spec.jsx": {
-    "mtime": 1795149818.608958,
-    "seen": 1795150214.6961617,
-    "ast_hash": "a4a5e2ff5d58ae25031e6a8da9b910ac",
+    "mtime": 1795168439.3327475,
+    "seen": 1795174922.2598119,
+    "ast_hash": "3af4f68e778fb5fb8f54fed719222962",
     "semantic_hash": ""
   },
   "frontend/src/v2/data/partyLayout.js": {
@@ -7230,9 +7230,9 @@
     "semantic_hash": ""
   },
   "frontend/src/v2/overworld/logic/fixtures.js": {
-    "mtime": 1793743972.5680532,
-    "seen": 1793745906.5402732,
-    "ast_hash": "1a54e2e707a99a20ba9a10b6803e50a2",
+    "mtime": 1795154507.2782984,
+    "seen": 1795174922.2622945,
+    "ast_hash": "49186c91b8d6d689f90a8cc6a1139cf7",
     "semantic_hash": ""
   },
   "frontend/src/v2/overworld/logic/mapModel.js": {
@@ -7422,20 +7422,20 @@
     "semantic_hash": ""
   },
   "frontend/public/maps/tilesets/overworld.png": {
-    "mtime": 1795117133.1519392,
-    "seen": 1795133794.8893151,
+    "mtime": 1795154452.6997623,
+    "seen": 1795174922.3966398,
     "ast_hash": "dc63d812e7a54e7bf8ad1a504631dc0e",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/npc.png": {
-    "mtime": 1795117131.651851,
-    "seen": 1795133795.4322443,
+    "mtime": 1795154444.1798482,
+    "seen": 1795174924.8078673,
     "ast_hash": "caabae3e1e33c02a2bcbcf35e667c932",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/player.png": {
-    "mtime": 1795117130.072032,
-    "seen": 1795133795.4322674,
+    "mtime": 1795154439.9643557,
+    "seen": 1795174924.8078876,
     "ast_hash": "b20a3cce2f0cb2e02bd0977f713b7219",
     "semantic_hash": ""
   },
@@ -7482,38 +7482,38 @@
     "semantic_hash": ""
   },
   "frontend/public/art-slice/tiles.json": {
-    "mtime": 1795117135.3204505,
-    "seen": 1795133794.5858326,
+    "mtime": 1795154465.4432168,
+    "seen": 1795174922.2568693,
     "ast_hash": "f2a64bd6ec505d6e7ddde64e74904b07",
     "semantic_hash": ""
   },
   "frontend/public/maps/legend_grove.json": {
-    "mtime": 1795117135.3184497,
-    "seen": 1795133794.5860126,
+    "mtime": 1795154465.4305801,
+    "seen": 1795174922.256959,
     "ast_hash": "eedd30499c7a1456b36b3ba1e7d3f43b",
     "semantic_hash": ""
   },
   "frontend/public/maps/origin_mart.json": {
-    "mtime": 1795117135.2742827,
-    "seen": 1795133794.586034,
+    "mtime": 1795154465.170362,
+    "seen": 1795174922.2569664,
     "ast_hash": "de144cdbada7ed15340802fb3a103f77",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/legendary/manifest.json": {
-    "mtime": 1795117135.3129427,
-    "seen": 1795133794.5885744,
+    "mtime": 1795154465.4043486,
+    "seen": 1795174922.2573628,
     "ast_hash": "d9ef6654ba38fc85795eb9434cd8b0d1",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/manifest.json": {
-    "mtime": 1795117131.652854,
-    "seen": 1795133794.5885794,
+    "mtime": 1795154444.1859176,
+    "seen": 1795174922.257365,
     "ast_hash": "d5e5188d949f6e2f6c4ad65f4df63bb8",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/master_palette.json": {
-    "mtime": 1795117131.652854,
-    "seen": 1795133794.5885837,
+    "mtime": 1795154444.182804,
+    "seen": 1795174922.2573676,
     "ast_hash": "101c202e5d463e385247678a25947578",
     "semantic_hash": ""
   },
@@ -7536,20 +7536,20 @@
     "semantic_hash": ""
   },
   "frontend/src/v2/overworld/render/sheets.generated.js": {
-    "mtime": 1795117131.6538584,
-    "seen": 1795133794.6308901,
+    "mtime": 1795154444.1878479,
+    "seen": 1795174922.2643018,
     "ast_hash": "f2d02dc931f4a2a7711bbcb15226ffa0",
     "semantic_hash": ""
   },
   "frontend/src/v2/ui/tileArt.generated.js": {
-    "mtime": 1795117135.3194506,
-    "seen": 1795133794.66625,
+    "mtime": 1795154465.4366267,
+    "seen": 1795174922.2700326,
     "ast_hash": "e272535cf05b9792ea3d123a95a7b058",
     "semantic_hash": ""
   },
   "frontend/src/v2/ui/trainerArt.generated.js": {
-    "mtime": 1795117133.069289,
-    "seen": 1795133794.6668208,
+    "mtime": 1795154452.1274028,
+    "seen": 1795174922.270268,
     "ast_hash": "0bfa06612031bb960ec76f2c9fe7c58b",
     "semantic_hash": ""
   },
@@ -7692,104 +7692,104 @@
     "semantic_hash": ""
   },
   "frontend/public/maps/tilesets/interior.png": {
-    "mtime": 1795117135.2632797,
-    "seen": 1795133794.8893082,
+    "mtime": 1795154465.1089916,
+    "seen": 1795174922.396632,
     "ast_hash": "bd445185c5beea38c26acc910974c7c1",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/battle_girl.png": {
-    "mtime": 1795117130.8335474,
-    "seen": 1795133795.4292638,
+    "mtime": 1795154440.668201,
+    "seen": 1795174924.7981312,
     "ast_hash": "c47b5bb294606f07c118dfd9c25597b8",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/beauty.png": {
-    "mtime": 1795117130.6761823,
-    "seen": 1795133795.429269,
+    "mtime": 1795154440.522464,
+    "seen": 1795174924.7981365,
     "ast_hash": "af42e0119f939cf9ab8afc3fb965e709",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/biker.png": {
-    "mtime": 1795117130.4812758,
-    "seen": 1795133795.4292743,
+    "mtime": 1795154440.332079,
+    "seen": 1795174924.7981412,
     "ast_hash": "b71aa1b35558b879d51e7711537f5013",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/black_belt.png": {
-    "mtime": 1795117130.3953807,
-    "seen": 1795133795.429287,
+    "mtime": 1795154440.2474506,
+    "seen": 1795174924.7981524,
     "ast_hash": "8c5a405f0f568d5977fe0f0b770d56f7",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/bug_catcher.png": {
-    "mtime": 1795117130.1736438,
-    "seen": 1795133795.4292922,
+    "mtime": 1795154440.0557485,
+    "seen": 1795174924.7981565,
     "ast_hash": "d6d320db8fd11f81d420f28a8ad33564",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/camper.png": {
-    "mtime": 1795117130.2038317,
-    "seen": 1795133795.429305,
+    "mtime": 1795154440.0833216,
+    "seen": 1795174924.798165,
     "ast_hash": "cc64cb373b79f286c386eb2a380bcca9",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/clerk.png": {
-    "mtime": 1795117130.565371,
-    "seen": 1795133795.4293191,
+    "mtime": 1795154440.4151757,
+    "seen": 1795174924.798179,
     "ast_hash": "e9fb6f97331bb0c2aa8e22b8df9d0a37",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/cooltrainer_f.png": {
-    "mtime": 1795117130.7695124,
-    "seen": 1795133795.4293237,
+    "mtime": 1795154440.6141343,
+    "seen": 1795174924.798183,
     "ast_hash": "ebdc35bf9e33cf621fd9e79837cc7f26",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/cooltrainer_m.png": {
-    "mtime": 1795117130.511894,
-    "seen": 1795133795.4293284,
+    "mtime": 1795154440.3606582,
+    "seen": 1795174924.7981865,
     "ast_hash": "4863557e215667fbad6eceefa10461c4",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/fisherman.png": {
-    "mtime": 1795117130.305524,
-    "seen": 1795133795.429346,
+    "mtime": 1795154440.164292,
+    "seen": 1795174924.7982037,
     "ast_hash": "18d10b07e8d6cbf0f284514cf48a079d",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/gentleman.png": {
-    "mtime": 1795117130.4236495,
-    "seen": 1795133795.4293544,
+    "mtime": 1795154440.2749934,
+    "seen": 1795174924.7982087,
     "ast_hash": "be215fd3ccbd1bbd534b73e4b4f5bef1",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/grunt_f.png": {
-    "mtime": 1795117130.8065374,
-    "seen": 1795133795.4293592,
+    "mtime": 1795154440.6411462,
+    "seen": 1795174924.7982137,
     "ast_hash": "8d791b475edc3b04c541d40be104ccb3",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/grunt_m.png": {
-    "mtime": 1795117130.3649786,
-    "seen": 1795133795.4293647,
+    "mtime": 1795154440.2186997,
+    "seen": 1795174924.7982185,
     "ast_hash": "088bc136dbaa2ad36827058e0d080720",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/gym_guide.png": {
-    "mtime": 1795117130.5385413,
-    "seen": 1795133795.4293697,
+    "mtime": 1795154440.3874643,
+    "seen": 1795174924.798222,
     "ast_hash": "434873f00b03d5ce35ab88221a41e381",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/hiker.png": {
-    "mtime": 1795117130.2353432,
-    "seen": 1795133795.4293754,
+    "mtime": 1795154440.1116312,
+    "seen": 1795174924.7982268,
     "ast_hash": "be7ef1c6ca9cb2ce7ddfbba901b387d9",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/lass.png": {
-    "mtime": 1795117130.6177177,
-    "seen": 1795133795.429395,
+    "mtime": 1795154440.46578,
+    "seen": 1795174924.798243,
     "ast_hash": "b4434848c85e05064d25c16bc17e0c60",
     "semantic_hash": ""
   },
@@ -7806,104 +7806,104 @@
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/legendary/144.png": {
-    "mtime": 1795117135.2847912,
-    "seen": 1795133795.4322007,
+    "mtime": 1795154465.228184,
+    "seen": 1795174924.8078241,
     "ast_hash": "5d088e08258e3b79d0ea289bf5944639",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/legendary/145.png": {
-    "mtime": 1795117135.2984157,
-    "seen": 1795133795.4322085,
+    "mtime": 1795154465.2932806,
+    "seen": 1795174924.807834,
     "ast_hash": "9c8ef0f21f86d27a5c2fdfcbcabc009d",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/legendary/146.png": {
-    "mtime": 1795117135.3089397,
-    "seen": 1795133795.4322147,
+    "mtime": 1795154465.3673003,
+    "seen": 1795174924.8078396,
     "ast_hash": "95b7cb2c06241fbbebfc4fc8eae101b3",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/legendary/150.png": {
-    "mtime": 1795117135.3109393,
-    "seen": 1795133795.4322197,
+    "mtime": 1795154465.3869424,
+    "seen": 1795174924.8078444,
     "ast_hash": "d200bab3972af05017fd128389015b55",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/legendary/151.png": {
-    "mtime": 1795117135.3129427,
-    "seen": 1795133795.4322243,
+    "mtime": 1795154465.400784,
+    "seen": 1795174924.8078487,
     "ast_hash": "ed0798c72b2f2ec7bcba488319e92059",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/mom.png": {
-    "mtime": 1795117130.894188,
-    "seen": 1795133795.4322345,
+    "mtime": 1795154440.7198665,
+    "seen": 1795174924.807859,
     "ast_hash": "64dbae588d9c591c2b1a52b1a0adca11",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/nurse.png": {
-    "mtime": 1795117130.7053277,
-    "seen": 1795133795.4322486,
+    "mtime": 1795154440.5511496,
+    "seen": 1795174924.8078718,
     "ast_hash": "dbc4f8cf41cfe94082333a31f3a256e5",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/old_man.png": {
-    "mtime": 1795117130.4514475,
-    "seen": 1795133795.4322536,
+    "mtime": 1795154440.3015008,
+    "seen": 1795174924.8078756,
     "ast_hash": "b6cd89679573eb04769c42b7272ba4b4",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/old_woman.png": {
-    "mtime": 1795117130.7360015,
-    "seen": 1795133795.432259,
+    "mtime": 1795154440.5812647,
+    "seen": 1795174924.8078802,
     "ast_hash": "a9be660bbc9693deedc8f40b6f0add68",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/picnicker.png": {
-    "mtime": 1795117130.646494,
-    "seen": 1795133795.4322636,
+    "mtime": 1795154440.493271,
+    "seen": 1795174924.8078837,
     "ast_hash": "84f25361514a1b7c0de0f247a8a93f50",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/player_f.png": {
-    "mtime": 1795117130.0960035,
-    "seen": 1795133795.4322717,
+    "mtime": 1795154439.98588,
+    "seen": 1795174924.8078914,
     "ast_hash": "a7dc0b85587896cecf82671cee1d5f2f",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/professor.png": {
-    "mtime": 1795117130.5903711,
-    "seen": 1795133795.4322765,
+    "mtime": 1795154440.4382854,
+    "seen": 1795174924.8078976,
     "ast_hash": "d0fbfffad655bcfbb966597adf0ac988",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/rival.png": {
-    "mtime": 1795117130.1451318,
-    "seen": 1795133795.4322855,
+    "mtime": 1795154440.0312257,
+    "seen": 1795174924.8079057,
     "ast_hash": "35b896196d39a116679dfefcd7894815",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/sailor.png": {
-    "mtime": 1795117130.2772071,
-    "seen": 1795133795.432299,
+    "mtime": 1795154440.1385996,
+    "seen": 1795174924.807918,
     "ast_hash": "0667e756456403b8cd49e174511d8192",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/scientist.png": {
-    "mtime": 1795117130.3358104,
-    "seen": 1795133795.432303,
+    "mtime": 1795154440.1906393,
+    "seen": 1795174924.807922,
     "ast_hash": "b750310fbb2b19f81ac824cddbdae2b2",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/twin.png": {
-    "mtime": 1795117130.8698275,
-    "seen": 1795133795.4323347,
+    "mtime": 1795154440.695461,
+    "seen": 1795174924.807949,
     "ast_hash": "3adf714e33b1f13f33e1f9614075bb65",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/youngster.png": {
-    "mtime": 1795117130.1217802,
-    "seen": 1795133795.4323468,
+    "mtime": 1795154440.009175,
+    "seen": 1795174924.8079603,
     "ast_hash": "cd882662f816b17ba5fb748d95b53a2c",
     "semantic_hash": ""
   },
@@ -7926,62 +7926,62 @@
     "semantic_hash": ""
   },
   "frontend/public/maps/dawnbrook.json": {
-    "mtime": 1795117133.188654,
-    "seen": 1795133794.5858486,
+    "mtime": 1795154452.887275,
+    "seen": 1795174922.2568784,
     "ast_hash": "f71446d15de175b3127618918c3ddc1a",
     "semantic_hash": ""
   },
   "frontend/public/maps/dawnbrook_home.json": {
-    "mtime": 1795117135.2742827,
-    "seen": 1795133794.585854,
+    "mtime": 1795154465.1718516,
+    "seen": 1795174922.2568824,
     "ast_hash": "e684f7ea647aa510fdb63b972e6d9e5b",
     "semantic_hash": ""
   },
   "frontend/public/maps/dawnbrook_house.json": {
-    "mtime": 1795117135.2752829,
-    "seen": 1795133794.5858595,
+    "mtime": 1795154465.1764188,
+    "seen": 1795174922.256886,
     "ast_hash": "e271b9ed2bc95a0fd5120c3cc994d844",
     "semantic_hash": ""
   },
   "frontend/public/maps/dawnbrook_lab.json": {
-    "mtime": 1795117135.2752829,
-    "seen": 1795133794.5858648,
+    "mtime": 1795154465.1743636,
+    "seen": 1795174922.2568896,
     "ast_hash": "cfa4ae2ae0c99e4f0e0631cf144ff044",
     "semantic_hash": ""
   },
   "frontend/public/maps/mossgate.json": {
-    "mtime": 1795117133.2397218,
-    "seen": 1795133794.5860164,
+    "mtime": 1795154453.2490444,
+    "seen": 1795174922.2569602,
     "ast_hash": "24698386accce31d9f243395bc9f09e7",
     "semantic_hash": ""
   },
   "frontend/public/maps/mossgate_center.json": {
-    "mtime": 1795117135.2742827,
-    "seen": 1795133794.58602,
+    "mtime": 1795154465.1683593,
+    "seen": 1795174922.256961,
     "ast_hash": "d1188260f46985194b8ecadf5849af92",
     "semantic_hash": ""
   },
   "frontend/public/maps/mossgate_gym.json": {
-    "mtime": 1795117133.2425244,
-    "seen": 1795133794.5860233,
+    "mtime": 1795154453.257964,
+    "seen": 1795174922.2569623,
     "ast_hash": "b4ca69ebc237e3fa4b47c661cc3288b4",
     "semantic_hash": ""
   },
   "frontend/public/maps/mossgate_house_a.json": {
-    "mtime": 1795117135.2752829,
-    "seen": 1795133794.586027,
+    "mtime": 1795154465.1789174,
+    "seen": 1795174922.2569633,
     "ast_hash": "5e3e540f0e91f89d92a8e0140d72016d",
     "semantic_hash": ""
   },
   "frontend/public/maps/mossgate_house_b.json": {
-    "mtime": 1795117135.276283,
-    "seen": 1795133794.58603,
+    "mtime": 1795154465.1816063,
+    "seen": 1795174922.2569652,
     "ast_hash": "2839005c2bc2a0a0eb5073e41c92dd04",
     "semantic_hash": ""
   },
   "frontend/public/maps/route_1.json": {
-    "mtime": 1795117133.2086709,
-    "seen": 1795133794.5860443,
+    "mtime": 1795154452.9963942,
+    "seen": 1795174922.2569704,
     "ast_hash": "4f1e2b6ae366f8bc18717227cdfdb485",
     "semantic_hash": ""
   },
@@ -8100,9 +8100,9 @@
     "semantic_hash": ""
   },
   "scripts/overworld_art/test_nature.py": {
-    "mtime": 1794462206.6629934,
-    "seen": 1794499740.6645224,
-    "ast_hash": "336b80a47a3a06290f51c017bc3ebca7",
+    "mtime": 1795154418.5568597,
+    "seen": 1795174922.2757797,
+    "ast_hash": "1c78b5dee10e01dd22eb4ef82414d730",
     "semantic_hash": ""
   },
   "scripts/overworld_art/test_rooms.py": {
@@ -8154,440 +8154,440 @@
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/bastian_cairn.png": {
-    "mtime": 1795117131.2028835,
-    "seen": 1795133795.429256,
+    "mtime": 1795154441.6346376,
+    "seen": 1795174924.7981236,
     "ast_hash": "016248f3bba959c2469dd6069f8f5044",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/cinder_valko.png": {
-    "mtime": 1795117131.1421404,
-    "seen": 1795133795.429314,
+    "mtime": 1795154441.267418,
+    "seen": 1795174924.798174,
     "ast_hash": "01239612d82634c2388715682202ba1a",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/coral_marlowe.png": {
-    "mtime": 1795117131.020952,
-    "seen": 1795133795.4293323,
+    "mtime": 1795154440.8389933,
+    "seen": 1795174924.79819,
     "ast_hash": "fa7d6e92a95da67886c19afef1939381",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/drake_zephyrin.png": {
-    "mtime": 1795117131.2609406,
-    "seen": 1795133795.429336,
+    "mtime": 1795154441.9839232,
+    "seen": 1795174924.7981935,
     "ast_hash": "aa387eb3bf0ca6220291f433fcefabad",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/hollis_rime.png": {
-    "mtime": 1795117131.1729472,
-    "seen": 1795133795.429381,
+    "mtime": 1795154441.4478087,
+    "seen": 1795174924.7982318,
     "ast_hash": "2d684cbb929e76833269957b6cc33649",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/kestrel_vane.png": {
-    "mtime": 1795117131.2906108,
-    "seen": 1795133795.4293897,
+    "mtime": 1795154442.1928058,
+    "seen": 1795174924.7982395,
     "ast_hash": "cfb7e1e5c21970a4ad1b9b99043e349d",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/mara_quill.png": {
-    "mtime": 1795117130.9571888,
-    "seen": 1795133795.4322295,
+    "mtime": 1795154440.7815332,
+    "seen": 1795174924.8078542,
     "ast_hash": "cff854ad6e0052aa6a1c5c63b6ef3efb",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/morwen_hallow.png": {
-    "mtime": 1795117131.232786,
-    "seen": 1795133795.432239,
+    "mtime": 1795154441.7939806,
+    "seen": 1795174924.8078628,
     "ast_hash": "d4d58785b871cb186eeae93e575ec7b9",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/sage_ilmara.png": {
-    "mtime": 1795117131.1104834,
-    "seen": 1795133795.4322948,
+    "mtime": 1795154441.0690446,
+    "seen": 1795174924.8079147,
     "ast_hash": "30f8f80966bd4ce382b260732359e6c8",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/skye_corvin.png": {
-    "mtime": 1795117131.081976,
-    "seen": 1795133795.4323077,
+    "mtime": 1795154440.8989265,
+    "seen": 1795174924.807926,
     "ast_hash": "f6af20ca324713bd8538df58250fbd56",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/tavish_rook.png": {
-    "mtime": 1795117130.9872956,
-    "seen": 1795133795.4323308,
+    "mtime": 1795154440.8098462,
+    "seen": 1795174924.8079457,
     "ast_hash": "0336bcc16281761e44f5187b10777c9e",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/volt_dray.png": {
-    "mtime": 1795117131.050999,
-    "seen": 1795133795.4323385,
+    "mtime": 1795154440.8679953,
+    "seen": 1795174924.8079524,
     "ast_hash": "0d35b9c7b33c04cae2e5ae4b0f4610a9",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/willow_thornby.png": {
-    "mtime": 1795117130.925565,
-    "seen": 1795133795.4323425,
+    "mtime": 1795154440.7508905,
+    "seen": 1795174924.8079562,
     "ast_hash": "1d43845bbb795b0823b998eaa8cfb9d0",
     "semantic_hash": ""
   },
   "frontend/public/sprites/trainers/bastian_cairn.png": {
-    "mtime": 1795117133.0953016,
-    "seen": 1795133795.6849105,
+    "mtime": 1795154452.3554437,
+    "seen": 1795174925.183256,
     "ast_hash": "79bcd8b8414be33931cc8f7aa802821c",
     "semantic_hash": ""
   },
   "frontend/public/sprites/trainers/cinder_valko.png": {
-    "mtime": 1795117133.0912974,
-    "seen": 1795133795.684918,
+    "mtime": 1795154452.3111668,
+    "seen": 1795174925.183264,
     "ast_hash": "6b6502dd61ed3e29d664239acd7f5554",
     "semantic_hash": ""
   },
   "frontend/public/sprites/trainers/coral_marlowe.png": {
-    "mtime": 1795117133.082294,
-    "seen": 1795133795.684924,
+    "mtime": 1795154452.2109141,
+    "seen": 1795174925.18327,
     "ast_hash": "e8f83c24fea3c80e327560688adbc967",
     "semantic_hash": ""
   },
   "frontend/public/sprites/trainers/drake_zephyrin.png": {
-    "mtime": 1795117133.1003017,
-    "seen": 1795133795.6849291,
+    "mtime": 1795154452.382472,
+    "seen": 1795174925.1832755,
     "ast_hash": "5485b629f42fd4e4d0f2d608ae3bef15",
     "semantic_hash": ""
   },
   "frontend/public/sprites/trainers/hollis_rime.png": {
-    "mtime": 1795117133.093297,
-    "seen": 1795133795.6849337,
+    "mtime": 1795154452.3295925,
+    "seen": 1795174925.1832795,
     "ast_hash": "c0a3b686e7464f846910458d98919164",
     "semantic_hash": ""
   },
   "frontend/public/sprites/trainers/kestrel_vane.png": {
-    "mtime": 1795117133.1033008,
-    "seen": 1795133795.6849396,
+    "mtime": 1795154452.3955617,
+    "seen": 1795174925.1832857,
     "ast_hash": "1bb72150f06197408674c4c9049e931c",
     "semantic_hash": ""
   },
   "frontend/public/sprites/trainers/mara_quill.png": {
-    "mtime": 1795117133.0768204,
-    "seen": 1795133795.6849453,
+    "mtime": 1795154452.171521,
+    "seen": 1795174925.1832912,
     "ast_hash": "401dd603c546875f037bf5d89680a9ec",
     "semantic_hash": ""
   },
   "frontend/public/sprites/trainers/morwen_hallow.png": {
-    "mtime": 1795117133.098307,
-    "seen": 1795133795.6849492,
+    "mtime": 1795154452.3694658,
+    "seen": 1795174925.1832957,
     "ast_hash": "c0303aca25ecca68de0297527d17a5d1",
     "semantic_hash": ""
   },
   "frontend/public/sprites/trainers/sage_ilmara.png": {
-    "mtime": 1795117133.0892985,
-    "seen": 1795133795.6926339,
+    "mtime": 1795154452.2881827,
+    "seen": 1795174925.1893644,
     "ast_hash": "f3ad63458bdcc1baaf3698a94e56bc72",
     "semantic_hash": ""
   },
   "frontend/public/sprites/trainers/skye_corvin.png": {
-    "mtime": 1795117133.0872972,
-    "seen": 1795133795.692641,
+    "mtime": 1795154452.2712803,
+    "seen": 1795174925.1893728,
     "ast_hash": "9868cf3fd118be05406cb96ad9f326d9",
     "semantic_hash": ""
   },
   "frontend/public/sprites/trainers/tavish_rook.png": {
-    "mtime": 1795117133.0795765,
-    "seen": 1795133795.6926458,
+    "mtime": 1795154452.1914506,
+    "seen": 1795174925.1893783,
     "ast_hash": "a1cbd62def111d06246b82731ea9a8ee",
     "semantic_hash": ""
   },
   "frontend/public/sprites/trainers/volt_dray.png": {
-    "mtime": 1795117133.0842972,
-    "seen": 1795133795.6926508,
+    "mtime": 1795154452.2347944,
+    "seen": 1795174925.1893835,
     "ast_hash": "9839f082b6ab894ff63f47ffcbefba99",
     "semantic_hash": ""
   },
   "frontend/public/sprites/trainers/willow_thornby.png": {
-    "mtime": 1795117133.0748107,
-    "seen": 1795133795.692655,
+    "mtime": 1795154452.1529214,
+    "seen": 1795174925.1893883,
     "ast_hash": "ed387b30e1d9311cf869b187d0ec80b9",
     "semantic_hash": ""
   },
   "frontend/public/maps/dynamo.json": {
-    "mtime": 1795117133.4133916,
-    "seen": 1795133794.5858693,
+    "mtime": 1795154454.2199981,
+    "seen": 1795174922.256892,
     "ast_hash": "824c3e874710b2c5cd387b46776ff463",
     "semantic_hash": ""
   },
   "frontend/public/maps/dynamo_center.json": {
-    "mtime": 1795117135.2692826,
-    "seen": 1795133794.5858734,
+    "mtime": 1795154465.1422508,
+    "seen": 1795174922.2568936,
     "ast_hash": "60bbb8a09d4485b5fdcc2ed84cc492b3",
     "semantic_hash": ""
   },
   "frontend/public/maps/dynamo_gym.json": {
-    "mtime": 1795117133.2501018,
-    "seen": 1795133794.5858774,
+    "mtime": 1795154453.2935798,
+    "seen": 1795174922.256895,
     "ast_hash": "fc7d3726b7f4d7bf9330d4f40ea78845",
     "semantic_hash": ""
   },
   "frontend/public/maps/dynamo_house_a.json": {
-    "mtime": 1795117135.270283,
-    "seen": 1795133794.585881,
+    "mtime": 1795154465.1471841,
+    "seen": 1795174922.2568965,
     "ast_hash": "2990c8bbbf828643542561e92285235c",
     "semantic_hash": ""
   },
   "frontend/public/maps/dynamo_mart.json": {
-    "mtime": 1795117135.2692826,
-    "seen": 1795133794.5858853,
+    "mtime": 1795154465.1451254,
+    "seen": 1795174922.2568977,
     "ast_hash": "ba843f94fc6202687a4a82eaad13fa9d",
     "semantic_hash": ""
   },
   "frontend/public/maps/emberhold.json": {
-    "mtime": 1795117133.5311272,
-    "seen": 1795133794.5858889,
+    "mtime": 1795154454.9150312,
+    "seen": 1795174922.256899,
     "ast_hash": "92b26abbfd5c207e7496f74c43ad67ed",
     "semantic_hash": ""
   },
   "frontend/public/maps/emberhold_center.json": {
-    "mtime": 1795117135.2732832,
-    "seen": 1795133794.5858934,
+    "mtime": 1795154465.1663506,
+    "seen": 1795174922.2569041,
     "ast_hash": "580a3b5638b4455a7301fd4c73a96110",
     "semantic_hash": ""
   },
   "frontend/public/maps/emberhold_gym.json": {
-    "mtime": 1795117133.257316,
-    "seen": 1795133794.5858972,
+    "mtime": 1795154453.3368526,
+    "seen": 1795174922.2569082,
     "ast_hash": "cfb1c05d1f45bb016ecc094049346b17",
     "semantic_hash": ""
   },
   "frontend/public/maps/emberhold_house_a.json": {
-    "mtime": 1795117135.2722836,
-    "seen": 1795133794.5859013,
+    "mtime": 1795154465.1606426,
+    "seen": 1795174922.2569106,
     "ast_hash": "6b2686984e276115cd292f5b472e7870",
     "semantic_hash": ""
   },
   "frontend/public/maps/emberhold_mart.json": {
-    "mtime": 1795117135.2732832,
-    "seen": 1795133794.5859056,
+    "mtime": 1795154465.1626446,
+    "seen": 1795174922.2569125,
     "ast_hash": "66eb1633302bc15f5098d990107e486f",
     "semantic_hash": ""
   },
   "frontend/public/maps/gale.json": {
-    "mtime": 1795117133.4521632,
-    "seen": 1795133794.5859146,
+    "mtime": 1795154454.4452915,
+    "seen": 1795174922.2569165,
     "ast_hash": "fa070a8ac483c9bfbbd4070dea24cb19",
     "semantic_hash": ""
   },
   "frontend/public/maps/gale_center.json": {
-    "mtime": 1795117135.270283,
-    "seen": 1795133794.5859182,
+    "mtime": 1795154465.1517968,
+    "seen": 1795174922.256918,
     "ast_hash": "4b24f13525914b17a9f1552a2adf98c4",
     "semantic_hash": ""
   },
   "frontend/public/maps/gale_gym.json": {
-    "mtime": 1795117133.2521074,
-    "seen": 1795133794.5859218,
+    "mtime": 1795154453.3050897,
+    "seen": 1795174922.2569194,
     "ast_hash": "29b9f3dc3e5c4f41bda11f24356ada69",
     "semantic_hash": ""
   },
   "frontend/public/maps/gale_house_a.json": {
-    "mtime": 1795117135.270283,
-    "seen": 1795133794.5859258,
+    "mtime": 1795154465.1491828,
+    "seen": 1795174922.2569206,
     "ast_hash": "e57518571929e85c4e67ae78a951d880",
     "semantic_hash": ""
   },
   "frontend/public/maps/gale_mart.json": {
-    "mtime": 1795117135.271284,
-    "seen": 1795133794.5859296,
+    "mtime": 1795154465.1535122,
+    "seen": 1795174922.2569213,
     "ast_hash": "ee72ebf660f75c76e6d0d04727b1ea69",
     "semantic_hash": ""
   },
   "frontend/public/maps/hearthfield.json": {
-    "mtime": 1795117133.2955635,
-    "seen": 1795133794.5859342,
+    "mtime": 1795154453.5377326,
+    "seen": 1795174922.2569227,
     "ast_hash": "fb533e0ec362d6a4b4e0e27ec217a2f0",
     "semantic_hash": ""
   },
   "frontend/public/maps/hearthfield_center.json": {
-    "mtime": 1795117135.264279,
-    "seen": 1795133794.585938,
+    "mtime": 1795154465.1164582,
+    "seen": 1795174922.256924,
     "ast_hash": "ba9748bc58ae840b47a0289a37f435cb",
     "semantic_hash": ""
   },
   "frontend/public/maps/hearthfield_gym.json": {
-    "mtime": 1795117133.2440982,
-    "seen": 1795133794.5859418,
+    "mtime": 1795154453.2685506,
+    "seen": 1795174922.256925,
     "ast_hash": "aa966c3f995fa8f4e0dace8510639aee",
     "semantic_hash": ""
   },
   "frontend/public/maps/hearthfield_house_a.json": {
-    "mtime": 1795117135.264279,
-    "seen": 1795133794.5859456,
+    "mtime": 1795154465.1128795,
+    "seen": 1795174922.2569268,
     "ast_hash": "42a8dd0fbbb6ab1304f35ce99700ec84",
     "semantic_hash": ""
   },
   "frontend/public/maps/hearthfield_house_b.json": {
-    "mtime": 1795117135.265279,
-    "seen": 1795133794.5859492,
+    "mtime": 1795154465.121764,
+    "seen": 1795174922.2569299,
     "ast_hash": "294cc30ca67c2001242ab9bc99f230c8",
     "semantic_hash": ""
   },
   "frontend/public/maps/hearthfield_mart.json": {
-    "mtime": 1795117135.265279,
-    "seen": 1795133794.5859535,
+    "mtime": 1795154465.1197233,
+    "seen": 1795174922.256932,
     "ast_hash": "59cb3348c1e4a78f1ef20087da9989b9",
     "semantic_hash": ""
   },
   "frontend/public/maps/hearthfield_tutor.json": {
-    "mtime": 1795117135.2662792,
-    "seen": 1795133794.5859585,
+    "mtime": 1795154465.1232436,
+    "seen": 1795174922.256934,
     "ast_hash": "4dbed6c657aa70351b29cd827c604dec",
     "semantic_hash": ""
   },
   "frontend/public/maps/ironbrook.json": {
-    "mtime": 1795117133.326615,
-    "seen": 1795133794.58597,
+    "mtime": 1795154453.7485442,
+    "seen": 1795174922.2569418,
     "ast_hash": "c3dc5bc7b450de551556a2edacdcff93",
     "semantic_hash": ""
   },
   "frontend/public/maps/ironbrook_center.json": {
-    "mtime": 1795117135.2662792,
-    "seen": 1795133794.585975,
+    "mtime": 1795154465.125763,
+    "seen": 1795174922.2569437,
     "ast_hash": "b4695c18772f00440aaef8eacb79813d",
     "semantic_hash": ""
   },
   "frontend/public/maps/ironbrook_gym.json": {
-    "mtime": 1795117133.2461052,
-    "seen": 1795133794.585979,
+    "mtime": 1795154453.276563,
+    "seen": 1795174922.256945,
     "ast_hash": "c05886201e150873b5c067a1b4f04714",
     "semantic_hash": ""
   },
   "frontend/public/maps/ironbrook_house_a.json": {
-    "mtime": 1795117135.2672832,
-    "seen": 1795133794.585983,
+    "mtime": 1795154465.1302757,
+    "seen": 1795174922.256946,
     "ast_hash": "ba5ce035e41d8afca7c09ec9a85d9908",
     "semantic_hash": ""
   },
   "frontend/public/maps/ironbrook_mart.json": {
-    "mtime": 1795117135.2662792,
-    "seen": 1795133794.585988,
+    "mtime": 1795154465.1287746,
+    "seen": 1795174922.2569482,
     "ast_hash": "d17f8379a41b6944df888e0e596644c7",
     "semantic_hash": ""
   },
   "frontend/public/maps/route_2.json": {
-    "mtime": 1795117133.558713,
-    "seen": 1795133794.586048,
+    "mtime": 1795154455.086407,
+    "seen": 1795174922.256972,
     "ast_hash": "6372217ca637aa304be09f6e94deef34",
     "semantic_hash": ""
   },
   "frontend/public/maps/route_3.json": {
-    "mtime": 1795117133.5697124,
-    "seen": 1795133794.5860517,
+    "mtime": 1795154455.151153,
+    "seen": 1795174922.2569733,
     "ast_hash": "e4f2799330ca9de6c354749d663490d4",
     "semantic_hash": ""
   },
   "frontend/public/maps/route_4.json": {
-    "mtime": 1795117133.5782542,
-    "seen": 1795133794.5860548,
+    "mtime": 1795154455.2099717,
+    "seen": 1795174922.2569742,
     "ast_hash": "26f268b9fa1fe27d79d8f3e1815c33da",
     "semantic_hash": ""
   },
   "frontend/public/maps/route_5.json": {
-    "mtime": 1795117133.5891943,
-    "seen": 1795133794.5860589,
+    "mtime": 1795154455.2883584,
+    "seen": 1795174922.2569757,
     "ast_hash": "1100fe8bb36969e4bc3e894b50ec9c62",
     "semantic_hash": ""
   },
   "frontend/public/maps/route_6.json": {
-    "mtime": 1795117133.5997627,
-    "seen": 1795133794.5860622,
+    "mtime": 1795154455.3619251,
+    "seen": 1795174922.2569766,
     "ast_hash": "9461edfd44d1391ab22ce48da49fb568",
     "semantic_hash": ""
   },
   "frontend/public/maps/route_7.json": {
-    "mtime": 1795117133.6108458,
-    "seen": 1795133794.5860667,
+    "mtime": 1795154455.4237826,
+    "seen": 1795174922.2569785,
     "ast_hash": "9bb1585b69035032b251da0d5b530835",
     "semantic_hash": ""
   },
   "frontend/public/maps/route_8.json": {
-    "mtime": 1795117133.6198463,
-    "seen": 1795133794.5861003,
+    "mtime": 1795154455.4985008,
+    "seen": 1795174922.2569797,
     "ast_hash": "0cb4db315450091988324a8881dfd9c1",
     "semantic_hash": ""
   },
   "frontend/public/maps/route_9.json": {
-    "mtime": 1795117133.6269367,
-    "seen": 1795133794.5861046,
+    "mtime": 1795154455.5551858,
+    "seen": 1795174922.2569807,
     "ast_hash": "fd5573666fd90b5690f3d11373d30d61",
     "semantic_hash": ""
   },
   "frontend/public/maps/saltmere.json": {
-    "mtime": 1795117133.3670871,
-    "seen": 1795133794.5861082,
+    "mtime": 1795154453.9815557,
+    "seen": 1795174922.2569818,
     "ast_hash": "8c6a4a36f49ac44c1af96485893009a0",
     "semantic_hash": ""
   },
   "frontend/public/maps/saltmere_center.json": {
-    "mtime": 1795117135.2682831,
-    "seen": 1795133794.5861118,
+    "mtime": 1795154465.1386495,
+    "seen": 1795174922.2569826,
     "ast_hash": "586c943b2f5da025d723fa7b89ca4a26",
     "semantic_hash": ""
   },
   "frontend/public/maps/saltmere_gym.json": {
-    "mtime": 1795117133.2481022,
-    "seen": 1795133794.5861151,
+    "mtime": 1795154453.285571,
+    "seen": 1795174922.2569833,
     "ast_hash": "0e6da3af9babf8b49ab053d987172c9a",
     "semantic_hash": ""
   },
   "frontend/public/maps/saltmere_house_a.json": {
-    "mtime": 1795117135.2682831,
-    "seen": 1795133794.5861192,
+    "mtime": 1795154465.135349,
+    "seen": 1795174922.2569842,
     "ast_hash": "a8c541f1c129020a159563df29ba5928",
     "semantic_hash": ""
   },
   "frontend/public/maps/saltmere_house_b.json": {
-    "mtime": 1795117135.2682831,
-    "seen": 1795133794.5861232,
+    "mtime": 1795154465.1406517,
+    "seen": 1795174922.2569854,
     "ast_hash": "226ad22dcb4cadf6431181216c38a971",
     "semantic_hash": ""
   },
   "frontend/public/maps/saltmere_mart.json": {
-    "mtime": 1795117135.2672832,
-    "seen": 1795133794.5861268,
+    "mtime": 1795154465.1332843,
+    "seen": 1795174922.2569861,
     "ast_hash": "70ff412b2c4cadafffc39b81e5f5d36d",
     "semantic_hash": ""
   },
   "frontend/public/maps/starfall.json": {
-    "mtime": 1795117133.4916003,
-    "seen": 1795133794.5861316,
+    "mtime": 1795154454.6846635,
+    "seen": 1795174922.2569873,
     "ast_hash": "fe3d396b2a5d5ba3dd16d1d0b21699a3",
     "semantic_hash": ""
   },
   "frontend/public/maps/starfall_center.json": {
-    "mtime": 1795117135.271284,
-    "seen": 1795133794.5861354,
+    "mtime": 1795154465.1551566,
+    "seen": 1795174922.256988,
     "ast_hash": "62b653ad83ac91ced0c02292f431babe",
     "semantic_hash": ""
   },
   "frontend/public/maps/starfall_gym.json": {
-    "mtime": 1795117133.2553172,
-    "seen": 1795133794.586139,
+    "mtime": 1795154453.3200905,
+    "seen": 1795174922.25699,
     "ast_hash": "9f6586a74f03b97a55f3ed88e9724182",
     "semantic_hash": ""
   },
   "frontend/public/maps/starfall_house_a.json": {
-    "mtime": 1795117135.2722836,
-    "seen": 1795133794.5861428,
+    "mtime": 1795154465.1576374,
+    "seen": 1795174922.2569911,
     "ast_hash": "de5d470e85a6e8014b35af380914e63f",
     "semantic_hash": ""
   },
   "frontend/public/maps/starfall_mart.json": {
-    "mtime": 1795117135.2722836,
-    "seen": 1795133794.586146,
+    "mtime": 1795154465.1596472,
+    "seen": 1795174922.2569926,
     "ast_hash": "9c6ceae8811af89a2e6099610d75a397",
     "semantic_hash": ""
   },
   "frontend/public/maps/zenith.json": {
-    "mtime": 1795117133.5525427,
-    "seen": 1795133794.5885582,
+    "mtime": 1795154455.0453625,
+    "seen": 1795174922.2573578,
     "ast_hash": "ae1efbbaad9e9e0c3ad6b4f0bbc2c6bb",
     "semantic_hash": ""
   },
@@ -8616,116 +8616,116 @@
     "semantic_hash": ""
   },
   "scripts/overworld_art/towns.py": {
-    "mtime": 1795117128.1038866,
-    "seen": 1795133794.7996483,
-    "ast_hash": "3d2d007ac9b811dbb3cf8baa4b9ff814",
+    "mtime": 1795167953.0332105,
+    "seen": 1795174922.2772396,
+    "ast_hash": "51044e9064263fdbef8959dc74a50529",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/bird_keeper.png": {
-    "mtime": 1795117131.4958107,
-    "seen": 1795133795.429282,
+    "mtime": 1795154443.341985,
+    "seen": 1795174924.7981477,
     "ast_hash": "664c8fe218149a4e8fd9a810fbc6c3de",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/burglar.png": {
-    "mtime": 1795117131.5554824,
-    "seen": 1795133795.4292974,
+    "mtime": 1795154443.7044044,
+    "seen": 1795174924.7981608,
     "ast_hash": "c3ce806209fae1dab0f408c77c5cec85",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/channeler.png": {
-    "mtime": 1795117131.6219213,
-    "seen": 1795133795.4293091,
+    "mtime": 1795154444.0099258,
+    "seen": 1795174924.7981691,
     "ast_hash": "ca8200d76261f3ae78ffce4efdffcf64",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/engineer.png": {
-    "mtime": 1795117131.3817694,
-    "seen": 1795133795.42934,
+    "mtime": 1795154442.6954372,
+    "seen": 1795174924.798197,
     "ast_hash": "268bb98e2374ad814016307aad28a3fe",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/juggler.png": {
-    "mtime": 1795117131.4380107,
-    "seen": 1795133795.4293852,
+    "mtime": 1795154443.0131629,
+    "seen": 1795174924.7982357,
     "ast_hash": "369f75ef138e6a1f5ac98e914c79d58c",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/psychic.png": {
-    "mtime": 1795117131.524463,
-    "seen": 1795133795.4322808,
+    "mtime": 1795154443.5239935,
+    "seen": 1795174924.807902,
     "ast_hash": "a2437785d5f7eb6eb6fab723b22c1791",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/rocker.png": {
-    "mtime": 1795117131.4099422,
-    "seen": 1795133795.4322906,
+    "mtime": 1795154442.854303,
+    "seen": 1795174924.8079107,
     "ast_hash": "b85a2aafd048ea6b51a1742b9d555e9c",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/super_nerd.png": {
-    "mtime": 1795117131.5880754,
-    "seen": 1795133795.4323115,
+    "mtime": 1795154443.8691669,
+    "seen": 1795174924.8079293,
     "ast_hash": "6ff60e8cd340f67374e7849222b0b7a1",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/swimmer.png": {
-    "mtime": 1795117131.3220644,
-    "seen": 1795133795.432316,
+    "mtime": 1795154442.3555915,
+    "seen": 1795174924.8079338,
     "ast_hash": "4fe85963b131c189dc43ee8b9f38bba6",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/swimmer_f.png": {
-    "mtime": 1795117131.3522618,
-    "seen": 1795133795.4323206,
+    "mtime": 1795154442.5219047,
+    "seen": 1795174924.8079374,
     "ast_hash": "a38fa25024c8fbcdb05005e85ae5d2f4",
     "semantic_hash": ""
   },
   "frontend/public/sprites/overworld/tamer.png": {
-    "mtime": 1795117131.4670508,
-    "seen": 1795133795.432326,
+    "mtime": 1795154443.1832461,
+    "seen": 1795174924.807942,
     "ast_hash": "2272bcb5e51fdf29278dc8e6c235ce43",
     "semantic_hash": ""
   },
   "frontend/public/maps/hollow_lab.json": {
-    "mtime": 1795117133.6430478,
-    "seen": 1795133794.585966,
+    "mtime": 1795154455.6549904,
+    "seen": 1795174922.2569382,
     "ast_hash": "a7c046ad2d2d56ecce60da1e880fa85c",
     "semantic_hash": ""
   },
   "frontend/public/maps/league_1.json": {
-    "mtime": 1795117133.6440473,
-    "seen": 1795133794.5859933,
+    "mtime": 1795154455.6626985,
+    "seen": 1795174922.25695,
     "ast_hash": "8a2a60ca611c2d4af5a56f4f3dd3ec49",
     "semantic_hash": ""
   },
   "frontend/public/maps/league_2.json": {
-    "mtime": 1795117133.6460478,
-    "seen": 1795133794.585997,
+    "mtime": 1795154455.6717093,
+    "seen": 1795174922.2569513,
     "ast_hash": "06599128fa282193e40643fe6ddb2516",
     "semantic_hash": ""
   },
   "frontend/public/maps/league_3.json": {
-    "mtime": 1795117133.6471884,
-    "seen": 1795133794.5860007,
+    "mtime": 1795154455.6787112,
+    "seen": 1795174922.2569537,
     "ast_hash": "637520aa7745316279d6704f27594e5a",
     "semantic_hash": ""
   },
   "frontend/public/maps/league_4.json": {
-    "mtime": 1795117133.6481884,
-    "seen": 1795133794.5860045,
+    "mtime": 1795154455.6872404,
+    "seen": 1795174922.2569554,
     "ast_hash": "7fc9a2d2c281570f8b2cf749a68249df",
     "semantic_hash": ""
   },
   "frontend/public/maps/league_5.json": {
-    "mtime": 1795117133.6491885,
-    "seen": 1795133794.586009,
+    "mtime": 1795154455.6952393,
+    "seen": 1795174922.2569573,
     "ast_hash": "ae8c20d78fd6a7cafe5643b111c780da",
     "semantic_hash": ""
   },
   "frontend/public/maps/zenith_league.json": {
-    "mtime": 1795117133.6420476,
-    "seen": 1795133794.588567,
+    "mtime": 1795154455.6446676,
+    "seen": 1795174922.2573602,
     "ast_hash": "75edc7cbbfc47109fcc6667ace4112d1",
     "semantic_hash": ""
   },
@@ -8772,27 +8772,27 @@
     "semantic_hash": ""
   },
   "frontend/public/maps/playground.json": {
-    "mtime": 1795117133.640132,
-    "seen": 1795133794.5860393,
-    "ast_hash": "8af47db763e77be6994022537eaadfc8",
+    "mtime": 1795154455.634669,
+    "seen": 1795174922.2569687,
+    "ast_hash": "55fe22bf13c848ebb9920915b2894508",
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/playground/PlaygroundStage.jsx": {
-    "mtime": 1795133181.5199254,
-    "seen": 1795133794.6470613,
-    "ast_hash": "03755f3d1ab379b35722ab34188858d1",
+    "mtime": 1795168539.070132,
+    "seen": 1795174922.2668347,
+    "ast_hash": "43f558843f22e1bb4a7508d8afe86a9f",
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/playground/playgroundGame.js": {
-    "mtime": 1795133605.5524583,
-    "seen": 1795133794.647066,
-    "ast_hash": "33d3cbfe11f3b16770b48d423f35d6b5",
+    "mtime": 1795168539.070132,
+    "seen": 1795174922.2668362,
+    "ast_hash": "a45a0862ead74d6a712ed423029dc06a",
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/playground/playgroundGame.test.js": {
-    "mtime": 1795133601.4127715,
-    "seen": 1795133794.6470702,
-    "ast_hash": "47605db8dbfd09e73f1e712ef58d700d",
+    "mtime": 1795168522.651275,
+    "seen": 1795174922.2668374,
+    "ast_hash": "a17c0e7a8a7f6697725bc68685836d4e",
     "semantic_hash": ""
   },
   "frontend/src/v2/pages/playground/Emote.jsx": {
@@ -8820,9 +8820,9 @@
     "semantic_hash": ""
   },
   "backend/src/campaign/wild.test.js": {
-    "mtime": 1794498128.2615812,
-    "seen": 1794499740.6384382,
-    "ast_hash": "2ca42485a7f8a53df495e8e7da4799a2",
+    "mtime": 1795154321.5870962,
+    "seen": 1795174922.2465787,
+    "ast_hash": "c13eba6fcc867a12e5c61426556eca47",
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-11-12-wild-encounters.wild.json": {
@@ -8868,15 +8868,15 @@
     "semantic_hash": ""
   },
   "backend/src/pvp/matches.js": {
-    "mtime": 1795132607.509184,
-    "seen": 1795133794.518381,
-    "ast_hash": "f4e1a032430a24b01ae51ace5ac9c778",
+    "mtime": 1795168133.982694,
+    "seen": 1795174922.248547,
+    "ast_hash": "d55e97245221ad5c0b37a3f936e2d532",
     "semantic_hash": ""
   },
   "backend/src/pvp/matches.test.js": {
-    "mtime": 1795132516.8581388,
-    "seen": 1795133794.5184097,
-    "ast_hash": "292c40ffb8ea339ff9d34d03ff2f7515",
+    "mtime": 1795168099.467102,
+    "seen": 1795174922.2485487,
+    "ast_hash": "8730a3f3ceb0785974daba52e51b85d4",
     "semantic_hash": ""
   },
   "backend/src/pvp/party.js": {
@@ -8898,9 +8898,9 @@
     "semantic_hash": ""
   },
   "backend/src/services/battleSessionService.pvp.test.js": {
-    "mtime": 1795132279.846584,
-    "seen": 1795133794.5337899,
-    "ast_hash": "341c0079030362908228ba50a16e70ae",
+    "mtime": 1795168047.8567379,
+    "seen": 1795174922.2501726,
+    "ast_hash": "8424cd2a677f7692b777f88161adb22e",
     "semantic_hash": ""
   },
   "backend/src/services/elo.js": {
@@ -8940,26 +8940,26 @@
     "semantic_hash": ""
   },
   "frontend/public/maps/crater_throne.json": {
-    "mtime": 1795117133.653189,
-    "seen": 1795133794.5858421,
+    "mtime": 1795154455.7122455,
+    "seen": 1795174922.2568746,
     "ast_hash": "616ee0945f4af7a23b1762d71b1c4f3c",
     "semantic_hash": ""
   },
   "frontend/public/maps/frostveil_cavern.json": {
-    "mtime": 1795117133.650189,
-    "seen": 1795133794.5859103,
+    "mtime": 1795154455.7012393,
+    "seen": 1795174922.2569156,
     "ast_hash": "31214c47d0440a45c99552ce0a9c8e8a",
     "semantic_hash": ""
   },
   "frontend/public/maps/hidden_grove.json": {
-    "mtime": 1795117133.6562784,
-    "seen": 1795133794.5859618,
+    "mtime": 1795154455.7333121,
+    "seen": 1795174922.2569366,
     "ast_hash": "fccf95b3dff0702eeccfe929061980c6",
     "semantic_hash": ""
   },
   "frontend/public/maps/stormcrown_pylon.json": {
-    "mtime": 1795117133.6511886,
-    "seen": 1795133794.5861497,
+    "mtime": 1795154455.7072434,
+    "seen": 1795174922.2569938,
     "ast_hash": "59d4f0f6418331b69a1f7b15dd13ddbf",
     "semantic_hash": ""
   },
@@ -9045,6 +9045,66 @@
     "mtime": 1795134675.8969615,
     "seen": 1795150214.7141926,
     "ast_hash": "e92c2c4e0e6fcad226c0093afe9aa1d6",
+    "semantic_hash": ""
+  },
+  "backend/data/encounters/park.json": {
+    "mtime": 1795154263.1907136,
+    "seen": 1795174922.2424066,
+    "ast_hash": "262820d76e8296d7f343227843e231a7",
+    "semantic_hash": ""
+  },
+  "backend/src/campaign/park.js": {
+    "mtime": 1795154273.563094,
+    "seen": 1795174922.246454,
+    "ast_hash": "abe2412f6a9b94936e0be37c83591eae",
+    "semantic_hash": ""
+  },
+  "backend/src/campaign/park.test.js": {
+    "mtime": 1795154250.3096032,
+    "seen": 1795174922.2464578,
+    "ast_hash": "561b050846ff8afe28deae16372165e1",
+    "semantic_hash": ""
+  },
+  "backend/src/playground/clock.js": {
+    "mtime": 1795153992.7287107,
+    "seen": 1795174922.2480197,
+    "ast_hash": "fe881ea2a720ef475994d26693625519",
+    "semantic_hash": ""
+  },
+  "backend/src/playground/clock.test.js": {
+    "mtime": 1795153968.6423833,
+    "seen": 1795174922.248022,
+    "ast_hash": "95e3d9a4f3dae40f31a67a7c7e34cda3",
+    "semantic_hash": ""
+  },
+  "frontend/src/v2/pages/battle/BattleStage.spec.jsx": {
+    "mtime": 1795168638.2670457,
+    "seen": 1795174922.2649248,
+    "ast_hash": "fa5c709f1c31d9248f35a8b4b8a00008",
+    "semantic_hash": ""
+  },
+  "frontend/src/v2/pages/playground/watchTransport.js": {
+    "mtime": 1795168331.8641613,
+    "seen": 1795174922.267019,
+    "ast_hash": "27f9aa214fe95d8b338cd8ce9c645018",
+    "semantic_hash": ""
+  },
+  "frontend/src/v2/pages/playground/watchTransport.test.js": {
+    "mtime": 1795168319.9794176,
+    "seen": 1795174922.26702,
+    "ast_hash": "4328dc5b3eb2129673928ee7fa37ddc6",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/plans/2026-11-20-park-wild-mart-spectate.md": {
+    "mtime": 1795153910.1882472,
+    "seen": 1795174922.3131447,
+    "ast_hash": "e65f39cfb5bab795ec23f58bb93d783d",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-11-20-park-wild-mart-spectate-design.md": {
+    "mtime": 1795153887.535559,
+    "seen": 1795174922.329957,
+    "ast_hash": "bacbddbc749d5c609601a585ad20f668",
     "semantic_hash": ""
   }
 }
