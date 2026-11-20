@@ -76,6 +76,7 @@ describe("wild tables", () => {
 		it("every encounter zone names a table that exists", () => {
 			for (const [table, file] of used) {
 				if (table.startsWith("test_")) continue; // the engine's fixture maps (test_route, test_town, test_house)
+				if (table === "playground") continue; // the park grass: data/encounters/park.json, see park.test.js
 				assert.ok(tables[table], `${file} names unknown table ${table}`);
 			}
 		});

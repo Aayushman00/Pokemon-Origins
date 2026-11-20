@@ -546,6 +546,9 @@ function createBattleSessionService(deps = {}) {
 	const catchRandom = deps.catchRandom || random;
 	const getCatchRate = deps.getCatchRate || catchRateOf;
 	const getPartyService = () => deps.partyService || require("./partyService");
+	// The Playground's tall grass: its own table by the park's clock, levelled from the party (campaign/park.js).
+	const findParkTable = deps.findParkTable || require("../campaign/park").getParkTable;
+	const parkTime = deps.parkTime || (() => require("../playground/clock").timeOfDay(new Date()));
 
 	const winKey = (trainerId, level, battleNumber) =>
 		`${Number(trainerId)}:${level}:${battleNumber}`;
@@ -595,11 +598,24 @@ function createBattleSessionService(deps = {}) {
 
 	/** The grass the client says it walked in. Only roads the campaign has reached pay XP. */
 	function resolveWildTable(id, progress) {
+		// The park sits outside the campaign: only the catching flag gates it. Its levels need the party, so startBattle builds it.
+		if (id === "playground") {
+			if (!catchOn()) throw new CampaignError(404, "Not found");
+			return { park: parkTime() };
+		}
 		if (!overworldOn()) throw new CampaignError(404, "Not found");
 		const table = findWildTable(id);
 		if (!table) throw new CampaignError(404, "Unknown encounter table");
 		if (progress.current_level < table.minLevel) throw new CampaignError(403, "This road is not open yet");
 		return table;
+	}
+
+	/** A park encounter from `time`'s table, levelled from the trainer's best party member (none: no battle, see below). */
+	async function parkBattle(time, rows) {
+		if (!Array.isArray(rows) || !rows.length) return null;
+		const table = findParkTable(time, Math.max(...rows.map((mon) => Number(mon.level) || 1)));
+		if (!table) throw new CampaignError(404, "Unknown encounter table");
+		return getWildBattle(table);
 	}
 
 	async function startBattle(trainerId, { level, battleNumber, force, worldTrainer, wild }) {
@@ -652,10 +668,12 @@ function createBattleSessionService(deps = {}) {
 			sessions.delete(existingId);
 		}
 
-		const [partyRaw, enemyBattle] = await Promise.all([
-			getPlayerParty(trainerId),
-			wildTable ? getWildBattle(wildTable) : extra ? getExtraBattle(extra) : getEnemyBattle(level, battleNumber),
-		]);
+		const [partyRaw, enemyBattle] = wildTable?.park
+			? await getPlayerParty(trainerId).then(async (rows) => [rows, await parkBattle(wildTable.park, rows)])
+			: await Promise.all([
+					getPlayerParty(trainerId),
+					wildTable ? getWildBattle(wildTable) : extra ? getExtraBattle(extra) : getEnemyBattle(level, battleNumber),
+			  ]);
 		if (!Array.isArray(partyRaw) || !partyRaw.length) {
 			throw new CampaignError(400, "No Pokémon found for this trainer");
 		}

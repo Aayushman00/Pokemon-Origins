@@ -278,6 +278,10 @@ function makeService({
 	catchRandom,
 	getCatchRate,
 	partyService,
+	// Park battles: the clock, the levelled table, and a wild builder that reads the table.
+	parkTime,
+	findParkTable,
+	getWildBattle = async () => ({ trainerName: "Wild Pidgey", pokemon: enemy, battleType: "wild" }),
 } = {}) {
 	const progress = createProgressService({
 		store: createMemoryStore(),
@@ -329,8 +333,10 @@ function makeService({
 		...(findWildTable ? { findWildTable } : {}),
 		...(findExtraTrainer ? { findExtraTrainer, extrasOn } : {}),
 		getExtraBattle: async (spot) => ({ trainerId: spot.id, trainerName: `Extra ${spot.id}`, pokemon: enemy, battleType: "trainer" }),
-		getWildBattle: async () => ({ trainerName: "Wild Pidgey", pokemon: enemy, battleType: "wild" }),
+		getWildBattle,
 		overworldOn,
+		...(parkTime ? { parkTime } : {}),
+		...(findParkTable ? { findParkTable } : {}),
 		...(catchOn ? { catchOn } : {}),
 		...(catchRandom ? { catchRandom } : {}),
 		...(getCatchRate ? { getCatchRate } : {}),
@@ -445,6 +451,46 @@ describe("catching", () => {
 		const result = await throwBall(service);
 		assert.equal(result.state.status, "won");
 		assert.ok(result.events.some((e) => e.type === "xp_gain"));
+	});
+});
+
+describe("park battles", () => {
+	// One-slot tables (Bulbasaur by day, Gengar by night) levelled at the party's best.
+	const TABLES = { day: 1, night: 94 };
+	const setup = (opts = {}) => {
+		const seen = [];
+		const findParkTable = (time, top) => (seen.push([time, top]), { minLevel: 0, levels: [top, top], slots: [{ id: TABLES[time], weight: 1, levels: [top, top] }] });
+		// Builds the wild Pokémon from the table it is handed, like the real getWildBattle.
+		const getWildBattle = async (table) => ({
+			trainerName: "Wild one",
+			pokemon: { ...enemyMon(), pokemon_id: table.slots[0].id, level: table.slots[0].levels[0] },
+			battleType: "wild",
+		});
+		const made = makeService({ trainerId: 7, catchOn: () => true, parkTime: () => "day", findParkTable, getWildBattle, ...opts });
+		return { ...made, seen };
+	};
+
+	it("is dark while catching is off", async () => {
+		const { service } = setup({ catchOn: () => false });
+		await assert.rejects(service.startBattle(7, { wild: "playground" }), (err) => err.status === 404 && err.message === "Not found");
+	});
+	it("the night clock picks the night table", async () => {
+		const { service } = setup({ parkTime: () => "night" });
+		const { state } = await service.startBattle(7, { wild: "playground" });
+		assert.equal(state.enemy.pokemon_id, 94);
+	});
+	it("levels come from the party's best member", async () => {
+		const party = defaultParty().map((mon, i) => ({ ...mon, level: i === 0 ? 12 : 30 }));
+		const { service, seen } = setup({ party });
+		const { state } = await service.startBattle(7, { wild: "playground" });
+		assert.deepEqual(seen, [["day", 30]]);
+		assert.equal(state.enemy.level, 30);
+	});
+	it("needs neither the overworld nor campaign progress", async () => {
+		const { service } = setup({ overworldOn: () => false });
+		const { state } = await service.startBattle(7, { wild: "playground" });
+		assert.equal(state.battleType, "wild");
+		assert.equal(state.enemy.pokemon_id, 1);
 	});
 });
 
