@@ -60,7 +60,9 @@ const BattleView = ({ levelNumber, battleNumber, worldTrainer, wild, levelName, 
 		);
 	}
 
-	const opponent = session ? (session.battleType === "legendary" ? `Wild ${session.enemy?.nickname}` : session.trainerName) : null;
+	// The stands (a watched PvP match) name both trainers instead of an opponent.
+	const watched = session?.pvp?.spectator ? session.pvp.names : null;
+	const opponent = watched ? null : session ? (session.battleType === "legendary" ? `Wild ${session.enemy?.nickname}` : session.trainerName) : null;
 	const prompt = player ? `What will ${player.nickname} do?` : "";
 	// This branch only ever renders for loading/encounter/intro/acting/restarting
 	// (command has its own dialogue box below, which is where `prompt` belongs).
@@ -72,6 +74,22 @@ const BattleView = ({ levelNumber, battleNumber, worldTrainer, wild, levelName, 
 	else if (phase === "bagSelect") hud = <BagMenu battle={battle} />;
 	else if (phase === "moveLearn") hud = <LearnMenu key={battle.learnOffer.pendingId} battle={battle} charMs={TEXT_SPEEDS[speed]} />;
 	else if (phase === "finished") hud = <ResultPanel battle={battle} onContinue={onContinue} onLeave={leave} onLost={onLost} />;
+	else if (phase === "watching") {
+		hud = (
+			<div className="hud__split hud__split--cmd">
+				<DialogueBox
+					text={battle.line || (watched ? `Watching ${watched.player} vs ${watched.enemy}` : "Watching")}
+					onSkip={battle.skipLine}
+					charMs={TEXT_SPEEDS[speed]}
+					showNext={!!battle.line}
+					className="hud__dialogue"
+				/>
+				<div className="hud__watch">
+					<Button onClick={leave}>Leave the stands</Button>
+				</div>
+			</div>
+		);
+	}
 	else if (phase === "command" || phase === "restartConfirm") {
 		hud = (
 			<div className="hud__split hud__split--cmd">
@@ -95,6 +113,12 @@ const BattleView = ({ levelNumber, battleNumber, worldTrainer, wild, levelName, 
 					<strong>{levelName || `Stage ${levelNumber}`}</strong>
 					{battleNumber != null && <span className="muted"> battle {battleNumber}</span>}
 					{opponent && <span className="battle__vs"> against {opponent}</span>}
+					{watched && (
+						<span className="battle__vs">
+							{" "}
+							{watched.player} vs {watched.enemy}
+						</span>
+					)}
 				</p>
 				<div className="battle__controls">
 					<button type="button" className="chip-btn" onClick={toggleSpeed} aria-pressed={speed === "fast"} title="Text speed">

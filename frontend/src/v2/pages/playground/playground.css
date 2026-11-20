@@ -602,3 +602,18 @@
 	grid-template-areas: "side" "list" "desc";
 	padding: 0;
 }
+
+/* The battle stands: the room's live matches. */
+.stands {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: var(--s-2);
+}
+.stands__row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-3);
+}

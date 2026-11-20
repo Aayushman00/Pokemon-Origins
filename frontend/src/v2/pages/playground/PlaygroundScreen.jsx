@@ -30,7 +30,8 @@ const PlaygroundScreen = () => {
 	const [nearIds, setNearIds] = useState(new Set());
 	const [confirmId, setConfirmId] = useState(null); // trainer you are about to challenge
 	const [ladderOpen, setLadderOpen] = useState(false);
-	const [martOpen, setMartOpen] = useState(false); // the barrel stall's Mart, over the park
+	const [martOpen, setMartOpen] = useState(false);
+	const [standsOpen, setStandsOpen] = useState(false); // the benches: pick a live match to watch // the barrel stall's Mart, over the park
 	const [park, setPark] = useState(null); // a wild battle from the park's tall grass: { key }
 	const { pvp, clearNotice } = play;
 	const signedIn = Number.isInteger(play.selfId);
@@ -47,16 +48,18 @@ const PlaygroundScreen = () => {
 	const meetWild = useCallback(() => setPark({ key: Date.now() }), []);
 	const leavePark = useCallback(() => setPark(null), []);
 
-	// Busy in the grass: a challenge that lands now is turned down for you.
+	// Busy in the grass (or in the stands): a challenge that lands now is turned down for you.
 	const { respond } = play;
+	const away = !!park || !!play.watching;
 	useEffect(() => {
-		if (parkBusy(pvp.incoming, !!park)) respond(pvp.incoming.fromId, false);
-	}, [pvp.incoming, park, respond]);
+		if (parkBusy(pvp.incoming, away)) respond(pvp.incoming.fromId, false);
+	}, [pvp.incoming, away, respond]);
 
 	// Plaza spots the screen answers: the notice board's ladder, the Mart stall.
 	const onSpot = useCallback((kind) => {
 		if (kind === "board") setLadderOpen(true);
 		else if (kind === "mart") setMartOpen(true);
+		else if (kind === "stands") setStandsOpen(true);
 		else return false;
 		return true;
 	}, []);
@@ -130,6 +133,19 @@ const PlaygroundScreen = () => {
 		);
 	}
 
+	if (play.watching) {
+		return (
+			<BattleView
+				key={play.watching.matchId}
+				transport={play.watching.transport}
+				levelName="Battle stands"
+				onContinue={play.stopWatching}
+				onLeave={play.stopWatching}
+				onLost={play.stopWatching}
+			/>
+		);
+	}
+
 	if (park) {
 		return (
 			<BattleView
@@ -144,7 +160,7 @@ const PlaygroundScreen = () => {
 		);
 	}
 
-	const busy = confirmId != null || ladderOpen || martOpen || !!pvp.incoming;
+	const busy = confirmId != null || ladderOpen || martOpen || standsOpen || !!pvp.incoming;
 
 	return (
 		<div className="pg">
@@ -200,6 +216,32 @@ const PlaygroundScreen = () => {
 
 			<Modal open={ladderOpen} onClose={() => setLadderOpen(false)} title="Park ladder">
 				<LadderPanel selfId={play.selfId} />
+			</Modal>
+
+			<Modal open={standsOpen} onClose={() => setStandsOpen(false)} title="Battle stands">
+				{play.matches.length === 0 ? (
+					<p className="read muted">No battles right now. Challenge someone, or check back soon.</p>
+				) : (
+					<ul className="stands">
+						{play.matches.map((m) => (
+							<li key={m.matchId} className="stands__row">
+								<span>
+									{m.names.player} vs {m.names.enemy}
+									{m.round ? <span className="muted"> · round {m.round}</span> : null}
+								</span>
+								<Button
+									size="sm"
+									onClick={() => {
+										setStandsOpen(false);
+										play.watch(m.matchId);
+									}}
+								>
+									Watch
+								</Button>
+							</li>
+						))}
+					</ul>
+				)}
 			</Modal>
 
 			<Modal open={martOpen} onClose={() => setMartOpen(false)} title="Mart stall">

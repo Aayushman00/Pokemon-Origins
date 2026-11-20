@@ -165,6 +165,31 @@ describe("useBattle", () => {
 		expect(result.current.outcome).toEqual({ result: "win", name: "Charmander", pvp: end });
 	});
 
+	it("a watch transport plays pushed rounds without a menu and ends on the winner", async () => {
+		const post = vi.spyOn(api, "post");
+		const watchState = (over) => state({ battleType: "pvp", trainerName: "Gary", pvp: { spectator: true, names: { player: "Ash", enemy: "Gary" } }, ...over });
+		const hit = { actor: "player", moveName: "Scratch", moveType: "Normal", result: "hit", type_multiplier: 1, damage: 5, targetHpAfter: 10, targetFainted: false };
+		const feed = [
+			{ events: [hit], state: watchState({ enemy: foe({ current_hp: 10 }) }) },
+			{ events: [], state: watchState({ status: "won", enemy: foe({ current_hp: 0 }) }) }, // the KO round
+			{ end: { winnerName: "Ash", endedBy: "ko", state: watchState({ status: "won", enemy: foe({ current_hp: 0 }) }) } },
+		];
+		const phases = [];
+		const transport = { watch: true, start: async () => ({ success: true, state: watchState() }), nextRound: vi.fn(async () => feed.shift()), act: vi.fn(), forfeit: vi.fn() };
+		const { result } = renderHook(() => {
+			const b = useBattle({ trainerId: 9, transport });
+			phases.push(b.phase);
+			return b;
+		});
+		await waitFor(() => expect(result.current.phase).toBe("finished"), { timeout: 8000 });
+		expect(result.current.outcome).toEqual({ result: "watched", name: "Ash" });
+		expect(result.current.log).toContain("Charmander used SCRATCH!");
+		expect(phases).toContain("watching");
+		expect(phases).not.toContain("command");
+		expect(transport.act).not.toHaveBeenCalled();
+		expect(post).not.toHaveBeenCalled();
+	});
+
 	describe("catching", () => {
 		const potion = { itemId: 1, name: "Potion", category: "healing", quantity: 1, usableInBattle: true };
 		const ball = { itemId: 9, name: "Poké Ball", category: "ball", quantity: 3, usableInBattle: true };

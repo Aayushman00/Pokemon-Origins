@@ -15,6 +15,12 @@ const THEMES = {
 	wild: "field",
 };
 
+/** The word across the field when a battle ends: a catch and a watched match are not defeats. */
+export function bannerText(outcome) {
+	if (outcome.result === "watched") return outcome.name ? `${outcome.name} wins!` : "Match over";
+	return { win: "Victory!", caught: "Gotcha!" }[outcome.result] || "Defeated";
+}
+
 function monClass(f) {
 	return [
 		"mon__sprite",
@@ -118,7 +124,7 @@ const BattleStage = ({ battle }) => {
 
 			{phase === "finished" && outcome && (
 				<div className={`banner banner--${outcome.result}`} aria-hidden="true">
-					{outcome.result === "win" ? "Victory!" : "Defeated"}
+					{bannerText(outcome)}
 				</div>
 			)}
 		</div>

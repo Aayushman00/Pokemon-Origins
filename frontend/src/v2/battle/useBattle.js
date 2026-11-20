@@ -137,7 +137,10 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, wil
 		await drainQueue();
 		if (myGen !== gen.current) return;
 		setLine(null);
-		if (state.requiresSwitch) {
+		if (transport?.watch) {
+			setPhase("watching");
+			watchRounds(myGen);
+		} else if (state.requiresSwitch) {
 			setPhase("partySelect");
 			say("Choose your next Pokémon!");
 		} else {
@@ -248,7 +251,10 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, wil
 	const finish = (state, progress, pvpEnd) => {
 		invalidateProfile(trainerId);
 		sfx(state.status === "won" || state.status === "caught" ? "victory" : "defeat");
-		if (state.status === "caught") {
+		if (transport?.watch) {
+			setOutcome({ result: "watched", name: pvpEnd?.winnerName || null });
+			setProgressSave("saved");
+		} else if (state.status === "caught") {
 			const caught = progress?.caught || {};
 			setOutcome({ result: "caught", name: caught.nickname || state.enemy.nickname, inPc: !!caught.inPc });
 			setProgressSave("saved");
@@ -330,6 +336,61 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, wil
 		onRun?.();
 	};
 
+	/** Plays one resolved round (from an action, or pushed to the stands) and moves to the next phase. */
+	const applyRound = async (data, myGen, p, e) => {
+		const view = { player: { ...p }, enemy: { ...e } };
+		for (const event of data.events || []) {
+			if (myGen !== gen.current) return;
+			await playEvent(event, view, myGen);
+		}
+		if (myGen !== gen.current) return;
+		const lines = (data.events || [])
+			.filter((ev) => REWARD_EVENT_TYPES.has(ev.type) && ev.type !== "move_learn_available")
+			.map((ev) => rewardLine(ev));
+		if (lines.length) setRewards(lines);
+		await drainQueue();
+		if (myGen !== gen.current) return;
+		setSession(data.state);
+		setPlayer(data.state.player);
+		setEnemy(data.state.enemy);
+		setTurn("none");
+		setLine(null);
+		if (transport?.watch) {
+			// The stands: no menus, and the winner's name comes with the end, not the KO round.
+			setPhase("watching");
+		} else if (data.state.status === "active") {
+			setPhase(data.state.requiresSwitch ? "partySelect" : "command");
+			if (data.state.requiresSwitch) say("Choose your next Pokémon!");
+		} else {
+			await settleLearns(data.events || [], () => finish(data.state, data.progress, data.pvpEnd));
+		}
+	};
+
+	/** The stands: play each pushed round in arrival order until the match ends. */
+	const watchRounds = async (myGen) => {
+		try {
+			while (myGen === gen.current) {
+				const data = await transport.nextRound();
+				if (myGen !== gen.current) return;
+				if (data.end) {
+					const { state } = data.end;
+					if (state?.player) {
+						setSession(state);
+						setPlayer(state.player);
+						setEnemy(state.enemy);
+					}
+					finish(state || liveRef.current.session, null, data.end);
+					return;
+				}
+				const { player: p, enemy: e } = liveRef.current;
+				await applyRound(data, myGen, p, e);
+			}
+		} catch (err) {
+			console.error("Watching failed:", err.message);
+			setError(getErrorMessage(err, "Lost the view of this battle"));
+		}
+	};
+
 	const act = async (action) => {
 		const myGen = gen.current;
 		const { player: p, enemy: e, session: s } = liveRef.current;
@@ -341,29 +402,7 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, wil
 			const data = transport ? await transport.act(action) : (await api.post("/api/battle/action", { sessionId: sessionId.current, action })).data;
 			if (transport) setLine(null);
 			if (!data?.success || !data.state) throw new Error(data?.error || "Battle action failed");
-			const view = { player: { ...p }, enemy: { ...e } };
-			for (const event of data.events || []) {
-				if (myGen !== gen.current) return;
-				await playEvent(event, view, myGen);
-			}
-			if (myGen !== gen.current) return;
-			const lines = (data.events || [])
-				.filter((ev) => REWARD_EVENT_TYPES.has(ev.type) && ev.type !== "move_learn_available")
-				.map((ev) => rewardLine(ev));
-			if (lines.length) setRewards(lines);
-			await drainQueue();
-			if (myGen !== gen.current) return;
-			setSession(data.state);
-			setPlayer(data.state.player);
-			setEnemy(data.state.enemy);
-			setTurn("none");
-			setLine(null);
-			if (data.state.status === "active") {
-				setPhase(data.state.requiresSwitch ? "partySelect" : "command");
-				if (data.state.requiresSwitch) say("Choose your next Pokémon!");
-			} else {
-				await settleLearns(data.events || [], () => finish(data.state, data.progress, data.pvpEnd));
-			}
+			await applyRound(data, myGen, p, e);
 		} catch (err) {
 			console.error("Battle action failed:", err.response || err.message);
 			const message = getErrorMessage(err, "That action didn't go through");
@@ -428,7 +467,7 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, wil
 
 	// PvP: the opponent forfeiting, timing out or leaving ends the match while we sit at a menu.
 	useEffect(() => {
-		if (!transport) return undefined;
+		if (!transport?.onEnd) return undefined; // the stands' transport ends through nextRound
 		return transport.onEnd((end) => {
 			gen.current++;
 			queueRef.current.clear();

@@ -17,8 +17,9 @@ const toTile = (px) => Math.round(px / TILE);
 export const SPOTS = [
 	{ kind: "fountain", x: 18, y: 12, w: 4, h: 4 },
 	{ kind: "board", x: 16, y: 10, w: 2, h: 2 },
-	{ kind: "bench", x: 17, y: 17, w: 2, h: 1 },
-	{ kind: "bench", x: 21, y: 17, w: 2, h: 1 },
+	// The benches are the battle stands: watch the room's live PvP matches.
+	{ kind: "stands", x: 17, y: 17, w: 2, h: 1 },
+	{ kind: "stands", x: 21, y: 17, w: 2, h: 1 },
 	{ kind: "mart", x: 32, y: 9, w: 1, h: 2 }, // the barrel and crate: the Mart stall
 ];
 

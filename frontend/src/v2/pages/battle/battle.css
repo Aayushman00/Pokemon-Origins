@@ -1241,3 +1241,10 @@
 		animation: none;
 	}
 }
+
+/* The stands: no menus while watching, only a way out beside the running commentary. */
+.hud__watch {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}

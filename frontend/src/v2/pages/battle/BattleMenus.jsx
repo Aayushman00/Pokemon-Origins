@@ -319,6 +319,19 @@ export const LearnMenu = ({ battle, charMs }) => {
 /** Post-battle results: rewards, save state, next step. */
 export const ResultPanel = ({ battle, onContinue, onLeave, onLost }) => {
 	const win = battle.outcome?.result === "win";
+	if (battle.outcome?.result === "watched") {
+		const { name } = battle.outcome;
+		return (
+			<Panel className="result" plate={name ? `${name} wins!` : "Called off"} plateTone={name ? "grass" : undefined}>
+				<p className="result__head">{name ? `${name} won the match.` : "The match was called off."}</p>
+				<div className="result__actions">
+					<Button variant="go" size="lg" onClick={onContinue || onLeave} autoFocus>
+						Back to the park
+					</Button>
+				</div>
+			</Panel>
+		);
+	}
 	if (battle.outcome?.result === "caught") {
 		const { name, inPc } = battle.outcome;
 		return (

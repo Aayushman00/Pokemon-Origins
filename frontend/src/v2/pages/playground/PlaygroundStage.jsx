@@ -34,7 +34,6 @@ function spotText(kind, count, n) {
 			],
 		};
 	}
-	if (kind === "bench") return { title: "Bench", lines: ["You sit for a moment. The fountain sounds nice from here."] };
 	const fountain = [
 		"The fountain burbles away. The water is cold and clear.",
 		"Coins glint at the bottom. Someone made a lot of wishes.",

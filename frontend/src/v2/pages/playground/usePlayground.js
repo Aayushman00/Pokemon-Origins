@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { API_URL } from "../../../config";
 import { createPvpTransport } from "./pvpTransport";
+import { createWatchTransport } from "./watchTransport";
 
 const MAX_MESSAGES = 50;
 const GUEST_NAME_KEY = "playground_guest_name";
@@ -44,6 +45,10 @@ export default function usePlayground() {
 	const playersRef = useRef(new Map());
 	const socketRef = useRef(null);
 	const matchRef = useRef(null);
+	// The battle stands: the room's live matches, and the one you're watching ({ matchId, transport }).
+	const [matches, setMatches] = useState([]);
+	const [watching, setWatching] = useState(null);
+	const watchRef = useRef(null);
 
 	const syncRoster = () =>
 		setRoster(
@@ -59,7 +64,7 @@ export default function usePlayground() {
 		socket.on("connect_error", () => setStatus("error"));
 		socket.on("connect", () => setStatus((s) => (s === "error" ? "connecting" : s)));
 
-		socket.on("room:init", ({ self, players, messages: initial, roomWidth, roomHeight, chatRadius, time: sky, catch: catching }) => {
+		socket.on("room:init", ({ self, players, messages: initial, roomWidth, roomHeight, chatRadius, time: sky, catch: catching, matches: live }) => {
 			if (sky) setTime(sky);
 			setCatchOn(catching === true);
 			const map = new Map();
@@ -74,6 +79,7 @@ export default function usePlayground() {
 			myId = self.trainerId;
 			setMessages(initial || []);
 			syncRoster();
+			setMatches(live || []);
 			setStatus("ready");
 		});
 
@@ -144,6 +150,15 @@ export default function usePlayground() {
 				outgoing: p.outgoing === toId ? null : p.outgoing,
 			}))
 		);
+		socket.on("pvp:matches", ({ matches: list }) => setMatches(list || []));
+		socket.on("pvp:watching", (payload) => {
+			// Subscribed now, so no round between this reply and the first render is lost.
+			watchRef.current?.transport.close();
+			const seat = { matchId: payload.matchId, transport: createWatchTransport(socket, payload) };
+			watchRef.current = seat;
+			setWatching(seat);
+		});
+
 		socket.on("pvp:start", (payload) => {
 			// The transport subscribes now, before any pvp:round can arrive.
 			const match = { matchId: payload.matchId, transport: createPvpTransport(socket, payload) };
@@ -159,6 +174,7 @@ export default function usePlayground() {
 
 		return () => {
 			matchRef.current?.transport.close();
+			watchRef.current?.transport.close();
 			socket.disconnect();
 		};
 	}, []);
@@ -170,6 +186,12 @@ export default function usePlayground() {
 	const respond = useCallback((fromId, accept) => {
 		socketRef.current?.emit("pvp:respond", { fromId, accept });
 		setPvp((p) => ({ ...p, incoming: null }));
+	}, []);
+	const watch = useCallback((matchId) => socketRef.current?.emit("pvp:watch", { matchId }), []);
+	const stopWatching = useCallback(() => {
+		watchRef.current?.transport.close();
+		watchRef.current = null;
+		setWatching(null);
 	}, []);
 	const leaveMatch = useCallback(() => {
 		matchRef.current?.transport.close();
@@ -190,5 +212,5 @@ export default function usePlayground() {
 
 	const emitMove = useCallback((step) => socketRef.current?.emit("move", step), []);
 
-	return { status, selfId, roster, messages, bubbles, emotes, world, time, catchOn, playersRef, send, emote, emitMove, pvp, challenge, respond, leaveMatch, clearNotice };
+	return { status, selfId, roster, messages, bubbles, emotes, world, time, catchOn, playersRef, send, emote, emitMove, pvp, challenge, respond, leaveMatch, clearNotice, matches, watching, watch, stopWatching };
 }

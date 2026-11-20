@@ -168,3 +168,7 @@ test("the barrel and crate by the pond are the Mart stall", () => {
 	assert.equal(spotAt(32, 10)?.kind, "mart");
 	assert.equal(spotAt(33, 9), null);
 });
+
+test("the benches facing the fountain are the battle stands", () => {
+	for (const [x, y] of [[17, 17], [18, 17], [21, 17], [22, 17]]) assert.equal(spotAt(x, y)?.kind, "stands", `${x},${y}`);
+});
