@@ -20,7 +20,6 @@ const fetchJson = async (url) => {
 };
 
 const isTyping = (el) => !!el?.closest?.("input, textarea, select, [contenteditable=true]");
-const isNight = () => document.documentElement.dataset.theme === "dark";
 const calm = typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /** What the plaza says when you walk up and press A (Space / Z). */
@@ -121,7 +120,7 @@ const EmoteWheel = ({ x, y, onPick }) => (
  */
 /** `onBoard` (A at the notice board) and `onTrainer(id)` (A facing a trainer); `busy` freezes you while a PvP prompt is open. */
 const PlaygroundStage = ({ play, nearIds, onBoard, onTrainer, busy = false }) => {
-	const { playersRef, selfId, emitMove, roster, bubbles, emotes, emote, world } = play;
+	const { playersRef, selfId, emitMove, roster, bubbles, emotes, emote, world, time } = play;
 	const wrapRef = useRef(null);
 	const canvasRef = useRef(null);
 	const redrawRef = useRef(null);
@@ -135,6 +134,9 @@ const PlaygroundStage = ({ play, nearIds, onBoard, onTrainer, busy = false }) =>
 	const [wheel, setWheel] = useState(false);
 	const [dialog, setDialog] = useState(null);
 	countRef.current = roster.length;
+	const timeRef = useRef(time);
+	timeRef.current = time;
+	useEffect(() => gameRef.current?.setNight(time === "night"), [time]);
 	uiRef.current = { wheel, dialog, busy, onBoard, onTrainer };
 
 	const resize = useCallback(() => {
@@ -162,7 +164,6 @@ const PlaygroundStage = ({ play, nearIds, onBoard, onTrainer, busy = false }) =>
 		let disposed = false;
 		let loop;
 		let inputApi;
-		let night;
 		let talks = 0;
 		(async () => {
 			try {
@@ -177,9 +178,7 @@ const PlaygroundStage = ({ play, nearIds, onBoard, onTrainer, busy = false }) =>
 				};
 				const game = createPlaygroundGame({ map, selfId, players, emitMove });
 				gameRef.current = game;
-				game.setNight(isNight());
-				night = new MutationObserver(() => game.setNight(isNight()));
-				night.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+				game.setNight(timeRef.current === "night"); // the server's clock, see usePlayground `time`
 				const renderer = createRenderer({ canvas: canvasRef.current, assets, playerSprite: playerSpriteFor(players.get(selfId)?.gender) });
 				const earshot = createEarshot(canvasRef.current, world.chatRadius);
 				let last = "";
@@ -226,7 +225,6 @@ const PlaygroundStage = ({ play, nearIds, onBoard, onTrainer, busy = false }) =>
 			disposed = true;
 			loop?.stop();
 			inputApi?.dispose();
-			night?.disconnect();
 			redrawRef.current = null;
 			gameRef.current = null;
 		};

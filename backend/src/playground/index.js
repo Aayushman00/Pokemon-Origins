@@ -9,6 +9,8 @@ const { createChatRing, sanitizeMessage, isRateLimited, MIN_MESSAGE_INTERVAL_MS 
 const { createMatchRegistry } = require("../pvp/matches");
 const { loadPvpParty } = require("../pvp/party");
 const { createBattleSessionService } = require("../services/battleSessionService");
+const { timeOfDay, createSkyWatch } = require("./clock");
+const flags = require("../config/flags");
 
 const ROOM_ID = "main";
 const FACINGS = new Set(["up", "down", "left", "right"]);
@@ -17,14 +19,25 @@ const EMOTES = new Set(["heart", "exclaim", "question", "music", "happy", "sad",
 const EMOTE_INTERVAL_MS = 600;
 
 const STEP_FLUSH_MS = 60_000;
+const SKY_CHECK_MS = 60_000;
 
-/** `pvp` (a match registry), `recordResult`, `spawn`, `now` and `steps` (step counter) are injectable for tests. */
-function attachPlayground(io, pool, { pvp, recordResult, spawn = spawnPoint, now = Date.now, steps } = {}) {
+/**
+ * `pvp` (a match registry), `recordResult`, `spawn`, `now`, `steps` (step counter),
+ * `clock` (the park's "day"/"night") and `catchOn` (the CATCH flag) are injectable for tests.
+ */
+function attachPlayground(
+	io,
+	pool,
+	{ pvp, recordResult, spawn = spawnPoint, now = Date.now, steps, clock = () => timeOfDay(new Date(now())), catchOn = () => flags.isEnabled("CATCH") } = {}
+) {
 	const roomState = createRoomState();
 	const chatRing = createChatRing();
 	const stepBudgets = new Map(); // trainerId -> { tokens, at }, see movement.validateStep
 	const stepCounter = steps || createStepService({ store: createMysqlStepStore(pool) });
 	setInterval(() => stepCounter.flush(), STEP_FLUSH_MS).unref?.();
+	// One sky for the room: checked once a minute, broadcast only when it turns.
+	const sky = createSkyWatch({ getTime: clock, onFlip: (time) => io.to(ROOM_ID).emit("world:time", { time }) });
+	setInterval(sky.check, SKY_CHECK_MS).unref?.();
 	const lastMessageAt = new Map(); // trainerId -> timestamp (ms)
 	const lastEmoteAt = new Map(); // trainerId -> timestamp (ms)
 	const trainerSockets = new Map(); // trainerId -> socket, for proximity chat delivery
@@ -83,6 +96,8 @@ function attachPlayground(io, pool, { pvp, recordResult, spawn = spawnPoint, now
 			roomWidth: ROOM_WIDTH,
 			roomHeight: ROOM_HEIGHT,
 			chatRadius: CHAT_RADIUS_PX,
+			time: sky.current(),
+			catch: catchOn(),
 		});
 		socket.to(ROOM_ID).emit("player:joined", self);
 

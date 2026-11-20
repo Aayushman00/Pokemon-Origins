@@ -36,6 +36,9 @@ export default function usePlayground() {
 	const [bubbles, setBubbles] = useState({}); // trainerId -> { text, ts }
 	const [emotes, setEmotes] = useState({}); // trainerId -> { emote, ts }
 	const [world, setWorld] = useState({ width: 640, height: 448, chatRadius: 96 });
+	// The park's sky ("day" | "night") and whether wild Pokémon can be caught, both from the server.
+	const [time, setTime] = useState("day");
+	const [catchOn, setCatchOn] = useState(false);
 	// Live PvP: an incoming challenge, the one you sent, a short notice line, and the running match.
 	const [pvp, setPvp] = useState({ incoming: null, outgoing: null, notice: null, match: null });
 	const playersRef = useRef(new Map());
@@ -56,7 +59,9 @@ export default function usePlayground() {
 		socket.on("connect_error", () => setStatus("error"));
 		socket.on("connect", () => setStatus((s) => (s === "error" ? "connecting" : s)));
 
-		socket.on("room:init", ({ self, players, messages: initial, roomWidth, roomHeight, chatRadius }) => {
+		socket.on("room:init", ({ self, players, messages: initial, roomWidth, roomHeight, chatRadius, time: sky, catch: catching }) => {
+			if (sky) setTime(sky);
+			setCatchOn(catching === true);
 			const map = new Map();
 			players.forEach((p) => map.set(p.trainerId, { ...p }));
 			playersRef.current = map;
@@ -71,6 +76,8 @@ export default function usePlayground() {
 			syncRoster();
 			setStatus("ready");
 		});
+
+		socket.on("world:time", ({ time: sky }) => sky && setTime(sky));
 
 		socket.on("chat:message", (msg) => {
 			setMessages((prev) => [...prev, msg].slice(-MAX_MESSAGES));
@@ -183,5 +190,5 @@ export default function usePlayground() {
 
 	const emitMove = useCallback((step) => socketRef.current?.emit("move", step), []);
 
-	return { status, selfId, roster, messages, bubbles, emotes, world, playersRef, send, emote, emitMove, pvp, challenge, respond, leaveMatch, clearNotice };
+	return { status, selfId, roster, messages, bubbles, emotes, world, time, catchOn, playersRef, send, emote, emitMove, pvp, challenge, respond, leaveMatch, clearNotice };
 }

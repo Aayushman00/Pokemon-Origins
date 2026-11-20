@@ -323,6 +323,16 @@ describe("attachPlayground pvp wiring", () => {
 		return { calls, challenge: rec("challenge"), respond: rec("respond"), act: rec("act"), forfeit: rec("forfeit"), inMatch: () => false };
 	}
 
+	it("room:init carries the sky and the catch flag", () => {
+		const { io, connect } = createFakeIo();
+		attachPlayground(io, fakePool, { clock: () => "night", catchOn: () => true });
+		const { socket, emits } = createFakeSocket({ trainerId: 4, name: "Gary" });
+		connect(socket);
+		const init = emits.find((e) => e.event === "room:init").payload;
+		assert.equal(init.time, "night");
+		assert.equal(init.catch, true);
+	});
+
 	it("routes pvp events to the registry with the socket's own trainer", () => {
 		const { io, connect } = createFakeIo();
 		const pvp = spyRegistry();
