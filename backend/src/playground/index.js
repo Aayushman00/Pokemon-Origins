@@ -19,6 +19,8 @@ const EMOTES = new Set(["heart", "exclaim", "question", "music", "happy", "sad",
 const EMOTE_INTERVAL_MS = 600;
 
 const STEP_FLUSH_MS = 60_000;
+// The stands: everyone watching one PvP match shares this Socket.IO room.
+const watchRoom = (matchId) => `watch:${matchId}`;
 const SKY_CHECK_MS = 60_000;
 
 /**
@@ -48,6 +50,8 @@ function attachPlayground(
 			loadParty: loadPvpParty,
 			recordResult,
 			emitTo: (id, event, payload) => trainerSockets.get(id)?.emit(event, payload),
+			broadcast: (event, payload) => io.to(ROOM_ID).emit(event, payload),
+			emitWatchers: (matchId, event, payload) => io.to(watchRoom(matchId)).emit(event, payload),
 			distance: (a, b) => {
 				const p = roomState.getPlayer(a);
 				const q = roomState.getPlayer(b);
@@ -97,6 +101,7 @@ function attachPlayground(
 			roomHeight: ROOM_HEIGHT,
 			chatRadius: CHAT_RADIUS_PX,
 			time: sky.current(),
+			matches: registry.list?.() || [],
 			catch: catchOn(),
 		});
 		socket.to(ROOM_ID).emit("player:joined", self);
@@ -133,6 +138,19 @@ function attachPlayground(
 		socket.on("pvp:respond", (p) => registry.respond(trainerId, name, p?.fromId, p?.accept === true)?.catch?.(logFailure));
 		socket.on("pvp:action", (action) => registry.act(trainerId, action)?.catch?.(logFailure));
 		socket.on("pvp:forfeit", () => registry.forfeit(trainerId)?.catch?.(logFailure));
+		// The stands: one match at a time; a refused watch keeps the seat you had.
+		const leaveStands = () => {
+			for (const room of [...(socket.rooms || [])]) if (String(room).startsWith("watch:")) socket.leave(room);
+		};
+		socket.on("pvp:watch", (p) => {
+			const seat = registry.watch?.(trainerId, p?.matchId);
+			if (!seat) return;
+			if (seat.error) return socket.emit("pvp:error", { message: seat.error });
+			leaveStands();
+			socket.join(watchRoom(p.matchId));
+			socket.emit("pvp:watching", { matchId: p.matchId, state: seat.state });
+		});
+		socket.on("pvp:unwatch", leaveStands);
 
 		socket.on("chat:send", (text) => {
 			const clean = sanitizeMessage(text);

@@ -301,6 +301,17 @@ function viewFor(session, side) {
 	return state;
 }
 
+/** A watcher's view (the Playground stands): seat A's side of the field, with both trainers' moves and reserve HP hidden. */
+function spectatorView(session) {
+	const state = viewFor(session, "player");
+	state.player = hideFoe(state.player, true);
+	state.party = state.party.map((mon) => hideFoe(mon, mon.position === state.activePosition));
+	state.requiresSwitch = false;
+	state.mustStruggle = false;
+	state.pvp = { spectator: true, names: { ...session.pvp.names }, round: session.pvp.round };
+	return state;
+}
+
 function toPublicState(session) {
 	// Move menu hint: each damaging move's type multiplier against the foe that is out.
 	const player = clonePokemon(session.player);
@@ -2209,6 +2220,7 @@ function createBattleSessionService(deps = {}) {
 		submitPvpAction,
 		forfeitPvp,
 		viewFor,
+		spectatorView,
 		mirrorEvents,
 	};
 }

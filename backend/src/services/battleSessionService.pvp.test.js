@@ -152,6 +152,22 @@ describe("pvp round resolver", () => {
 		assert.equal(svc.viewFor(s, "player").pvp.waitingOn, "opponent");
 	});
 
+	it("spectatorView hides both sides' moves and reserve HP and names both trainers", async () => {
+		const { svc, parties } = setup();
+		const s = await svc.createPvpSession(parties);
+		const v = svc.spectatorView(s);
+		assert.equal(v.player.nickname, "Alpha");
+		assert.equal(v.enemy.nickname, "Gamma");
+		assert.ok(!("moves" in v.player));
+		assert.ok(!("moves" in v.enemy));
+		for (const [party, active] of [[v.party, v.activePosition], [v.enemyParty, v.enemyActivePosition]]) {
+			assert.ok(party.every((m) => !("moves" in m)));
+			assert.ok(party.filter((m) => m.position !== active).every((m) => !("current_hp" in m)));
+		}
+		assert.equal(v.requiresSwitch, false);
+		assert.deepEqual(v.pvp, { spectator: true, names: { player: "Ash", enemy: "Gary" }, round: s.pvp.round });
+	});
+
 	it("mirrorEvents swaps player/enemy values only", () => {
 		const { svc } = setup();
 		assert.deepEqual(svc.mirrorEvents([{ actor: "player", target: "enemy", type: "move", damage: 5 }]), [

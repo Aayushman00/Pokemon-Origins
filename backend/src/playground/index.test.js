@@ -52,9 +52,16 @@ function createFakeSocket(trainer) {
 	const handlers = {};
 	const emits = [];
 	const toEmits = [];
+	const rooms = new Set();
 	const socket = {
 		trainer,
-		join() {},
+		rooms,
+		join(room) {
+			rooms.add(room);
+		},
+		leave(room) {
+			rooms.delete(room);
+		},
 		on(event, handler) {
 			handlers[event] = handler;
 		},
@@ -322,6 +329,27 @@ describe("attachPlayground pvp wiring", () => {
 		const rec = (name) => async (...args) => { calls.push([name, ...args]); };
 		return { calls, challenge: rec("challenge"), respond: rec("respond"), act: rec("act"), forfeit: rec("forfeit"), inMatch: () => false };
 	}
+
+	it("pvp:watch seats a socket (even a guest's) in the stands; pvp:unwatch takes it out", () => {
+		const { io, connect } = createFakeIo();
+		const pvp = {
+			...spyRegistry(),
+			list: () => [{ matchId: "m1" }],
+			watch: (viewer, matchId) => (matchId === "m1" ? { state: { viewer } } : { error: "That battle is over" }),
+		};
+		attachPlayground(io, fakePool, { pvp });
+		const { socket, handlers, emits } = createFakeSocket({ trainerId: "guest-x", name: "Guest" });
+		connect(socket);
+		assert.deepEqual(emits.find((e) => e.event === "room:init").payload.matches, [{ matchId: "m1" }]);
+		handlers["pvp:watch"]({ matchId: "m1" });
+		assert.ok(socket.rooms.has("watch:m1"));
+		assert.deepEqual(emits.find((e) => e.event === "pvp:watching").payload, { matchId: "m1", state: { viewer: "guest-x" } });
+		handlers["pvp:watch"]({ matchId: "gone" });
+		assert.equal(emits.find((e) => e.event === "pvp:error").payload.message, "That battle is over");
+		assert.ok(socket.rooms.has("watch:m1"), "a refused watch keeps the seat you had");
+		handlers["pvp:unwatch"]();
+		assert.ok(![...socket.rooms].some((r) => String(r).startsWith("watch:")));
+	});
 
 	it("room:init carries the sky and the catch flag", () => {
 		const { io, connect } = createFakeIo();

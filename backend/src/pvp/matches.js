@@ -2,12 +2,16 @@
  * Live PvP over the Playground socket: challenges, matches, round timers.
  * One match per trainer, in memory (lost on restart, like battle sessions).
  * Side A (challenger) is the battle's "player" seat, side B the "enemy" seat.
+ * Anyone in the room may watch from the stands (seat A's view, nothing hidden
+ * revealed); at most MAX_MATCHES run at once.
  */
 const { CHAT_RADIUS_PX } = require("../playground/movement");
 
 const CHALLENGE_MS = 30_000;
 const ROUND_MS = 60_000;
 const SIDES = ["player", "enemy"];
+const MAX_MATCHES = 5;
+const FULL = "The stadium is full — wait for a battle to finish";
 
 const isTrainer = (id) => Number.isInteger(id);
 
@@ -16,6 +20,8 @@ function createMatchRegistry({
 	loadParty,
 	recordResult = async () => null,
 	emitTo,
+	broadcast = () => {}, // to the whole room: the live match list
+	emitWatchers = () => {}, // to everyone watching one match
 	distance,
 	maxDistance = CHAT_RADIUS_PX,
 	setTimer = setTimeout,
@@ -24,6 +30,13 @@ function createMatchRegistry({
 	const challenges = new Map(); // fromId -> { toId, name, timer }
 	const byTrainer = new Map(); // trainerId -> match
 	const starting = new Set(); // trainerIds whose match is being built (parties loading)
+	const byMatch = new Map(); // matchId (the session id) -> match
+
+	// A match still loading parties holds its place: two trainers per match.
+	const full = () => byMatch.size + starting.size / 2 >= MAX_MATCHES;
+	const list = () =>
+		[...byMatch.values()].map(({ session }) => ({ matchId: session.sessionId, names: { ...session.pvp.names }, round: session.pvp.round }));
+	const announce = () => broadcast("pvp:matches", { matches: list() });
 
 	const busy = (id) => byTrainer.has(id) || starting.has(id);
 	const error = (id, message) => emitTo(id, "pvp:error", { message });
@@ -35,6 +48,7 @@ function createMatchRegistry({
 		if (busy(fromId)) return error(fromId, "You're already in a battle");
 		if (busy(toId)) return error(fromId, "That trainer is already in a battle");
 		if (challenges.has(fromId)) return error(fromId, "You already have a challenge out");
+		if (full()) return error(fromId, FULL);
 		const gap = distance(fromId, toId);
 		if (gap == null || gap > maxDistance) return error(fromId, "Too far away — walk closer first");
 		const timer = setTimer(() => expire(fromId), CHALLENGE_MS);
@@ -58,6 +72,10 @@ function createMatchRegistry({
 		challenges.delete(fromId);
 		if (!accept) return emitTo(fromId, "pvp:declined", { byId: toId });
 		if (busy(fromId) || busy(toId)) return error(toId, "One of you is already in a battle");
+		if (full()) {
+			for (const id of [fromId, toId]) error(id, FULL);
+			return;
+		}
 
 		starting.add(fromId);
 		starting.add(toId);
@@ -75,10 +93,12 @@ function createMatchRegistry({
 			const match = { session, seats: { player: fromId, enemy: toId }, timer: null, ended: false };
 			byTrainer.set(fromId, match);
 			byTrainer.set(toId, match);
+			byMatch.set(session.sessionId, match);
 			armRoundTimer(match);
 			for (const side of SIDES) {
 				emitTo(match.seats[side], "pvp:start", { matchId: session.sessionId, state: battle.viewFor(session, side) });
 			}
+			announce();
 		} catch (err) {
 			console.error("PvP start failed:", err.message);
 			for (const id of [fromId, toId]) error(id, "Could not start the battle");
@@ -117,6 +137,7 @@ function createMatchRegistry({
 		const { session } = match;
 		emitTo(match.seats.player, "pvp:round", { events: result.events, state: battle.viewFor(session, "player") });
 		emitTo(match.seats.enemy, "pvp:round", { events: battle.mirrorEvents(result.events), state: battle.viewFor(session, "enemy") });
+		emitWatchers(session.sessionId, "pvp:watch-round", { matchId: session.sessionId, events: result.events, state: battle.spectatorView(session) });
 		if (session.status !== "active") await end(match, "ko");
 		else armRoundTimer(match);
 	}
@@ -139,6 +160,7 @@ function createMatchRegistry({
 		const { session, seats } = match;
 		byTrainer.delete(seats.player);
 		byTrainer.delete(seats.enemy);
+		byMatch.delete(session.sessionId);
 		const winnerId = session.status === "won" ? seats.player : session.status === "lost" ? seats.enemy : null;
 		let result = null;
 		if (winnerId != null) {
@@ -157,9 +179,25 @@ function createMatchRegistry({
 				state: battle.viewFor(session, side),
 			});
 		}
+		const winnerSide = SIDES.find((side) => seats[side] === winnerId);
+		emitWatchers(session.sessionId, "pvp:watch-end", {
+			matchId: session.sessionId,
+			winnerName: winnerSide ? session.pvp.names[winnerSide] : null,
+			endedBy,
+			state: battle.spectatorView(session),
+		});
+		announce();
 	}
 
-	return { challenge, respond, act, forfeit, inMatch: (id) => byTrainer.has(id) };
+	/** A seat in the stands: `viewerId` may be a guest. The caller joins the socket to the match's watch room. */
+	function watch(viewerId, matchId) {
+		const match = byMatch.get(matchId);
+		if (!match) return { error: "That battle is over" };
+		if (SIDES.some((side) => match.seats[side] === viewerId)) return { error: "You're in this battle" };
+		return { state: battle.spectatorView(match.session) };
+	}
+
+	return { challenge, respond, act, forfeit, list, watch, inMatch: (id) => byTrainer.has(id) };
 }
 
-module.exports = { createMatchRegistry, CHALLENGE_MS, ROUND_MS };
+module.exports = { createMatchRegistry, CHALLENGE_MS, ROUND_MS, MAX_MATCHES };
