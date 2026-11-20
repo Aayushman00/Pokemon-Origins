@@ -4,6 +4,7 @@ import PlaygroundStage from "./PlaygroundStage";
 import LadderPanel from "./LadderPanel";
 import { ChatLog, Composer, Roster } from "./ChatParts";
 import BattleView from "../battle/BattleView";
+import { parkBusy } from "./playgroundGame";
 import Modal from "../../ui/Modal";
 import Button from "../../ui/Button";
 import "../battle/battle.css"; // the touch pad's styles live with the battle pad
@@ -28,6 +29,7 @@ const PlaygroundScreen = () => {
 	const [nearIds, setNearIds] = useState(new Set());
 	const [confirmId, setConfirmId] = useState(null); // trainer you are about to challenge
 	const [ladderOpen, setLadderOpen] = useState(false);
+	const [park, setPark] = useState(null); // a wild battle from the park's tall grass: { key }
 	const { pvp, clearNotice } = play;
 	const signedIn = Number.isInteger(play.selfId);
 	const nameOf = (id) => play.roster.find((r) => r.trainerId === id)?.name || "that trainer";
@@ -38,6 +40,16 @@ const PlaygroundScreen = () => {
 		const t = setTimeout(clearNotice, 4000);
 		return () => clearTimeout(t);
 	}, [pvp.notice, clearNotice]);
+
+	// Tall grass: signed-in trainers only, and only while the server has catching on.
+	const meetWild = useCallback(() => setPark({ key: Date.now() }), []);
+	const leavePark = useCallback(() => setPark(null), []);
+
+	// Busy in the grass: a challenge that lands now is turned down for you.
+	const { respond } = play;
+	useEffect(() => {
+		if (parkBusy(pvp.incoming, !!park)) respond(pvp.incoming.fromId, false);
+	}, [pvp.incoming, park, respond]);
 
 	const askChallenge = useCallback(
 		(id) => {
@@ -108,6 +120,20 @@ const PlaygroundScreen = () => {
 		);
 	}
 
+	if (park) {
+		return (
+			<BattleView
+				key={park.key}
+				wild="playground"
+				levelName="In the park's tall grass"
+				onContinue={leavePark}
+				onLeave={leavePark}
+				onLost={leavePark}
+				onRun={leavePark}
+			/>
+		);
+	}
+
 	const busy = confirmId != null || ladderOpen || !!pvp.incoming;
 
 	return (
@@ -115,7 +141,7 @@ const PlaygroundScreen = () => {
 			<div className="pg__layout">
 				<div className="pg__frame">
 					{ready ? (
-						<PlaygroundStage play={play} nearIds={nearIds} busy={busy} onBoard={() => setLadderOpen(true)} onTrainer={askChallenge} />
+						<PlaygroundStage play={play} nearIds={nearIds} busy={busy} onBoard={() => setLadderOpen(true)} onTrainer={askChallenge} onWild={signedIn && play.catchOn ? meetWild : undefined} />
 					) : (
 						<p className="pg__loading font-pixel loading-dots">Joining the park</p>
 					)}

@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 1,
+ "nextobjectid": 5,
  "layers": [
   {
    "id": 1,
@@ -5687,7 +5687,80 @@
    "y": 0,
    "opacity": 1,
    "visible": true,
-   "objects": []
+   "objects": [
+    {
+     "id": 1,
+     "name": "grass_1",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 480,
+     "y": 256,
+     "width": 64,
+     "height": 16,
+     "properties": [
+      {
+       "name": "table",
+       "type": "string",
+       "value": "playground"
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "name": "grass_2",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 464,
+     "y": 272,
+     "width": 96,
+     "height": 16,
+     "properties": [
+      {
+       "name": "table",
+       "type": "string",
+       "value": "playground"
+      }
+     ]
+    },
+    {
+     "id": 3,
+     "name": "grass_3",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 464,
+     "y": 288,
+     "width": 96,
+     "height": 16,
+     "properties": [
+      {
+       "name": "table",
+       "type": "string",
+       "value": "playground"
+      }
+     ]
+    },
+    {
+     "id": 4,
+     "name": "grass_4",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 480,
+     "y": 304,
+     "width": 64,
+     "height": 16,
+     "properties": [
+      {
+       "name": "table",
+       "type": "string",
+       "value": "playground"
+      }
+     ]
+    }
+   ]
   },
   {
    "id": 7,

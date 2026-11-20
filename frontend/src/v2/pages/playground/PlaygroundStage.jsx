@@ -119,7 +119,8 @@ const EmoteWheel = ({ x, y, onPick }) => (
  * touch pad on phones). Names, bubbles, emotes and menus float over the canvas.
  */
 /** `onBoard` (A at the notice board) and `onTrainer(id)` (A facing a trainer); `busy` freezes you while a PvP prompt is open. */
-const PlaygroundStage = ({ play, nearIds, onBoard, onTrainer, busy = false }) => {
+/** `onWild(table)`: a step into the tall grass met a wild Pokémon (left out for guests and while catching is off). */
+const PlaygroundStage = ({ play, nearIds, onBoard, onTrainer, onWild, busy = false }) => {
 	const { playersRef, selfId, emitMove, roster, bubbles, emotes, emote, world, time } = play;
 	const wrapRef = useRef(null);
 	const canvasRef = useRef(null);
@@ -137,7 +138,7 @@ const PlaygroundStage = ({ play, nearIds, onBoard, onTrainer, busy = false }) =>
 	const timeRef = useRef(time);
 	timeRef.current = time;
 	useEffect(() => gameRef.current?.setNight(time === "night"), [time]);
-	uiRef.current = { wheel, dialog, busy, onBoard, onTrainer };
+	uiRef.current = { wheel, dialog, busy, onBoard, onTrainer, onWild };
 
 	const resize = useCallback(() => {
 		const wrap = wrapRef.current;
@@ -176,7 +177,8 @@ const PlaygroundStage = ({ play, nearIds, onBoard, onTrainer, busy = false }) =>
 					has: (id) => playersRef.current.has(id),
 					forEach: (f) => playersRef.current.forEach(f),
 				};
-				const game = createPlaygroundGame({ map, selfId, players, emitMove });
+				// Read through the ref: the game outlives renders, and onWild comes and goes with the flag.
+				const game = createPlaygroundGame({ map, selfId, players, emitMove, onWild: (t) => uiRef.current.onWild?.(t) });
 				gameRef.current = game;
 				game.setNight(timeRef.current === "night"); // the server's clock, see usePlayground `time`
 				const renderer = createRenderer({ canvas: canvasRef.current, assets, playerSprite: playerSpriteFor(players.get(selfId)?.gender) });

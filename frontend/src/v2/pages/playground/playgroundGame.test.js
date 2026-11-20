@@ -2,15 +2,15 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { asciiMap } from "../../overworld/logic/fixtures.js";
 import { RUN_TICKS, WALK_TICKS } from "../../overworld/constants.js";
-import { createPlaygroundGame } from "./playgroundGame.js";
+import { createPlaygroundGame, parkBusy } from "./playgroundGame.js";
 
 const MAP = asciiMap("playground", ["......", "..#...", "......", "......"]);
 const still = { dir: null, run: false };
 
-function setup(players) {
+function setup(players, opts = {}) {
 	const sent = [];
 	const ref = new Map(Object.entries(players));
-	const game = createPlaygroundGame({ map: MAP, selfId: "me", players: ref, emitMove: (m) => sent.push(m) });
+	const game = createPlaygroundGame({ map: MAP, selfId: "me", players: ref, emitMove: (m) => sent.push(m), ...opts });
 	return { game, sent, ref };
 }
 
@@ -125,4 +125,40 @@ test("a server correction puts you back on the server's tile, mid-step or not", 
 	game.tick(still);
 	assert.deepEqual([game.player.x, game.player.y, game.player.phase], [0, 2, "idle"]);
 	assert.equal(ref.get("me").corrected, false);
+});
+
+// The park's tall grass (the encounters zone the map build lays over the `g` patch).
+const GRASS = asciiMap("playground", ["......", "......"], { encounters: [{ x: 1, y: 0, props: { table: "playground" } }] });
+const walkRightOnce = (game) => {
+	game.tick({ dir: "right", run: false }); // turn
+	run(game, { dir: "right", run: false }, 8);
+	run(game, still, WALK_TICKS);
+};
+
+test("a step into the tall grass rolls an encounter", () => {
+	const met = [];
+	const { game } = setup({ me: { x: 0, y: 0 } }, { map: GRASS, onWild: (t) => met.push(t), encounterRoll: () => 0 });
+	walkRightOnce(game);
+	assert.deepEqual([game.player.x, game.player.y], [1, 0]);
+	assert.deepEqual(met, ["playground"]);
+});
+
+test("a missed roll starts nothing", () => {
+	const met = [];
+	const { game } = setup({ me: { x: 0, y: 0 } }, { map: GRASS, onWild: (t) => met.push(t), encounterRoll: () => 0.5 });
+	walkRightOnce(game);
+	assert.deepEqual(met, []);
+});
+
+test("no onWild (guest, or catching off): the grass never rolls", () => {
+	let rolls = 0;
+	const { game } = setup({ me: { x: 0, y: 0 } }, { map: GRASS, encounterRoll: () => (rolls++, 0) });
+	walkRightOnce(game);
+	assert.equal(rolls, 0);
+});
+
+test("parkBusy: a challenge that lands mid park battle is declined", () => {
+	assert.equal(parkBusy({ fromId: 2 }, true), true);
+	assert.equal(parkBusy({ fromId: 2 }, false), false);
+	assert.equal(parkBusy(null, true), false);
 });

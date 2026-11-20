@@ -326,8 +326,22 @@ class PlaygroundMap(unittest.TestCase):
             for b in spots:
                 self.assertLess(((a[0] - b[0]) ** 2 + (a[1] - b[1]) ** 2) ** .5, 6, (a, b))
         groups = {l["name"]: l.get("objects", []) for l in m["layers"] if l["type"] == "objectgroup"}
-        self.assertEqual(groups.get("encounters", []), [])
         self.assertEqual(groups.get("warps", []), [])
+
+    def test_the_tall_grass_rolls_the_park_table(self):
+        """Wild battles happen only in the drawn `g` patch, from data/encounters/park.json."""
+        from .towns import PLAYGROUND
+        m = json.loads((MAPS / "playground.json").read_text())
+        zones = next(l["objects"] for l in m["layers"] if l["name"] == "encounters")
+        grass = {(x, y) for y, row in enumerate(PLAYGROUND) for x, c in enumerate(row) if c == "g"}
+        covered = set()
+        for o in zones:
+            self.assertEqual({p["name"]: p["value"] for p in o.get("properties", [])}.get("table"), "playground")
+            for ty in range(o["y"] // 16, (o["y"] + o["height"]) // 16):
+                for tx in range(o["x"] // 16, (o["x"] + o["width"]) // 16):
+                    covered.add((tx, ty))
+        self.assertTrue(grass)
+        self.assertEqual(covered, grass)
 
 
 class SkyAndPlains(unittest.TestCase):

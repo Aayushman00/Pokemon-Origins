@@ -4,7 +4,7 @@ import { parseTiledMap } from "./mapModel.js";
 
 const CODE = { "#": 100, v: 101, "<": 102, ">": 103, "^": 104 };
 
-export function asciiMap(id, rows, { props = {}, npcs = [], warps = [], triggers = [], signs = [] } = {}) {
+export function asciiMap(id, rows, { props = {}, npcs = [], warps = [], triggers = [], signs = [], encounters = [] } = {}) {
 	const height = rows.length;
 	const width = rows[0].length;
 	const obj = (kind, list, extra) =>
@@ -28,6 +28,7 @@ export function asciiMap(id, rows, { props = {}, npcs = [], warps = [], triggers
 				{ ...obj("warps", warps), type: "objectgroup", name: "warps" },
 				{ ...obj("triggers", triggers), type: "objectgroup", name: "triggers" },
 				{ ...obj("signs", signs), type: "objectgroup", name: "signs" },
+				{ ...obj("encounters", encounters), type: "objectgroup", name: "encounters" },
 			],
 			properties: Object.entries(props).map(([name, value]) => ({ name, value })),
 		},

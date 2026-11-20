@@ -469,6 +469,10 @@ def playground():
     for name, x, y in (("rock", 25, 20), ("stump", 11, 3), ("rock", 3, 18), ("barrel", 32, 9), ("crate", 32, 10)):
         prop(m, name, x, y)
     plaza_pieces(m)
+    # The tall grass east of the plaza: wild battles from data/encounters/park.json
+    # (day or night by the server's clock, levels from the trainer's party).
+    for i, (x, y, w) in enumerate(grass_runs(PLAYGROUND)):
+        m.obj("encounters", f"grass_{i + 1}", x, y, w, 1, table="playground")
     dress_pond(m, PLAYGROUND)
     autotile_paths(m)
     fringe(m, PLAYGROUND)

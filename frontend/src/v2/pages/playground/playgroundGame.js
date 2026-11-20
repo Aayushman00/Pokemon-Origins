@@ -3,6 +3,8 @@ import { collisionAt } from "../../overworld/logic/mapModel.js";
 import { createActor, tickActor } from "../../overworld/logic/movement.js";
 import { createWorld } from "../../overworld/logic/world.js";
 import { playerSpriteFor } from "../../overworld/render/assets.js";
+import { wildTable } from "../../overworld/logic/events.js";
+import { WILD_CHANCE } from "../../overworld/game/overworld.js";
 
 // Further than this (in tiles) and another trainer jumps instead of walking:
 // a reconnect or a long stall should not send them strolling through walls.
@@ -71,7 +73,15 @@ function stepRemote(a, p) {
  * follow the positions the server relays. `players` is the live Map from
  * usePlayground (positions in map pixels); `emitMove` reports your steps.
  */
-export function createPlaygroundGame({ map, selfId, players, emitMove }) {
+/** A challenge that lands while you're in a park battle is turned down for you. */
+export const parkBusy = (incoming, inParkBattle) => Boolean(incoming && inParkBattle);
+
+/**
+ * `onWild(table)` (optional): a step into the tall grass met a wild Pokémon,
+ * one roll of `encounterRoll` against WILD_CHANCE per step. Left out (a guest,
+ * or catching is off) and the grass never rolls.
+ */
+export function createPlaygroundGame({ map, selfId, players, emitMove, onWild, encounterRoll = Math.random }) {
 	const world = createWorld((id) => (id === map.id ? map : undefined));
 	const remotes = new Map();
 	const ctx = { world, canMove: true, canRun: true };
@@ -129,7 +139,10 @@ export function createPlaygroundGame({ map, selfId, players, emitMove }) {
 			game.player = actor;
 			for (const e of events) {
 				if (e.type === "stepStart") send(actor, actor.to);
-				else if (e.type === "turn") send(actor);
+				else if (e.type === "stepEnd" && onWild) {
+					const table = wildTable(map, actor);
+					if (table && encounterRoll() < WILD_CHANCE) onWild(table);
+				} else if (e.type === "turn") send(actor);
 			}
 			for (const id of remotes.keys()) if (!players.has(id)) remotes.delete(id);
 			players.forEach((p, id) => {
