@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import usePlayground from "./usePlayground";
 import PlaygroundStage from "./PlaygroundStage";
 import LadderPanel from "./LadderPanel";
+import MartScreen from "../mart/MartScreen";
 import { ChatLog, Composer, Roster } from "./ChatParts";
 import BattleView from "../battle/BattleView";
 import { parkBusy } from "./playgroundGame";
@@ -29,6 +30,7 @@ const PlaygroundScreen = () => {
 	const [nearIds, setNearIds] = useState(new Set());
 	const [confirmId, setConfirmId] = useState(null); // trainer you are about to challenge
 	const [ladderOpen, setLadderOpen] = useState(false);
+	const [martOpen, setMartOpen] = useState(false); // the barrel stall's Mart, over the park
 	const [park, setPark] = useState(null); // a wild battle from the park's tall grass: { key }
 	const { pvp, clearNotice } = play;
 	const signedIn = Number.isInteger(play.selfId);
@@ -50,6 +52,14 @@ const PlaygroundScreen = () => {
 	useEffect(() => {
 		if (parkBusy(pvp.incoming, !!park)) respond(pvp.incoming.fromId, false);
 	}, [pvp.incoming, park, respond]);
+
+	// Plaza spots the screen answers: the notice board's ladder, the Mart stall.
+	const onSpot = useCallback((kind) => {
+		if (kind === "board") setLadderOpen(true);
+		else if (kind === "mart") setMartOpen(true);
+		else return false;
+		return true;
+	}, []);
 
 	const askChallenge = useCallback(
 		(id) => {
@@ -134,14 +144,14 @@ const PlaygroundScreen = () => {
 		);
 	}
 
-	const busy = confirmId != null || ladderOpen || !!pvp.incoming;
+	const busy = confirmId != null || ladderOpen || martOpen || !!pvp.incoming;
 
 	return (
 		<div className="pg">
 			<div className="pg__layout">
 				<div className="pg__frame">
 					{ready ? (
-						<PlaygroundStage play={play} nearIds={nearIds} busy={busy} onBoard={() => setLadderOpen(true)} onTrainer={askChallenge} onWild={signedIn && play.catchOn ? meetWild : undefined} />
+						<PlaygroundStage play={play} nearIds={nearIds} busy={busy} onSpot={onSpot} onTrainer={askChallenge} onWild={signedIn && play.catchOn ? meetWild : undefined} />
 					) : (
 						<p className="pg__loading font-pixel loading-dots">Joining the park</p>
 					)}
@@ -190,6 +200,14 @@ const PlaygroundScreen = () => {
 
 			<Modal open={ladderOpen} onClose={() => setLadderOpen(false)} title="Park ladder">
 				<LadderPanel selfId={play.selfId} />
+			</Modal>
+
+			<Modal open={martOpen} onClose={() => setMartOpen(false)} title="Mart stall">
+				{martOpen && (
+					<div className="pg__mart">
+						<MartScreen onClose={() => setMartOpen(false)} />
+					</div>
+				)}
 			</Modal>
 		</div>
 	);

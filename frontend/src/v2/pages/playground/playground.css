@@ -595,3 +595,10 @@
 	margin: 0;
 	font-size: var(--fs-xs, 0.75rem);
 }
+
+/* The Mart stall: the Mart screen inside a modal, one column at any width. */
+.pg__mart .items {
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-areas: "side" "list" "desc";
+	padding: 0;
+}

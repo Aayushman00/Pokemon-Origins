@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { asciiMap } from "../../overworld/logic/fixtures.js";
 import { RUN_TICKS, WALK_TICKS } from "../../overworld/constants.js";
-import { createPlaygroundGame, parkBusy } from "./playgroundGame.js";
+import { createPlaygroundGame, parkBusy, spotAt } from "./playgroundGame.js";
 
 const MAP = asciiMap("playground", ["......", "..#...", "......", "......"]);
 const still = { dir: null, run: false };
@@ -161,4 +161,10 @@ test("parkBusy: a challenge that lands mid park battle is declined", () => {
 	assert.equal(parkBusy({ fromId: 2 }, true), true);
 	assert.equal(parkBusy({ fromId: 2 }, false), false);
 	assert.equal(parkBusy(null, true), false);
+});
+
+test("the barrel and crate by the pond are the Mart stall", () => {
+	assert.equal(spotAt(32, 9)?.kind, "mart");
+	assert.equal(spotAt(32, 10)?.kind, "mart");
+	assert.equal(spotAt(33, 9), null);
 });

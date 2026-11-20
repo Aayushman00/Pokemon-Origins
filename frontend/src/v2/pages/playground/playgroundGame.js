@@ -19,6 +19,7 @@ export const SPOTS = [
 	{ kind: "board", x: 16, y: 10, w: 2, h: 2 },
 	{ kind: "bench", x: 17, y: 17, w: 2, h: 1 },
 	{ kind: "bench", x: 21, y: 17, w: 2, h: 1 },
+	{ kind: "mart", x: 32, y: 9, w: 1, h: 2 }, // the barrel and crate: the Mart stall
 ];
 
 export const spotAt = (x, y) => SPOTS.find((s) => x >= s.x && x < s.x + s.w && y >= s.y && y < s.y + s.h) || null;

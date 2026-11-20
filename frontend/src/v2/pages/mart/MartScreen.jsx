@@ -9,8 +9,12 @@ import DialogueBox from "../../ui/DialogueBox";
 import { useToast } from "../../ui/toastContext";
 import "../bag/items.css";
 
-/** Mart: server-priced stock, coin balance, one-item purchases. */
-const MartScreen = () => {
+/**
+ * Mart: server-priced stock, coin balance, one-item purchases. `onClose`
+ * (optional): opened over another page (the Playground's stall), so leaving
+ * closes it instead of navigating back to the hub.
+ */
+const MartScreen = ({ onClose }) => {
 	const toast = useToast();
 	const [mart, setMart] = useState(null);
 	const [owned, setOwned] = useState({});
@@ -64,7 +68,7 @@ const MartScreen = () => {
 						<Button variant="primary" onClick={load}>
 							Try again
 						</Button>
-						<Button to="/game">Back to hub</Button>
+						{onClose ? <Button onClick={onClose}>Close</Button> : <Button to="/game">Back to hub</Button>}
 					</div>
 				</Panel>
 			</div>
@@ -116,9 +120,15 @@ const MartScreen = () => {
 						}))}
 					/>
 				)}
-				<Button to="/game" className="items__back">
-					Leave the Mart
-				</Button>
+				{onClose ? (
+					<Button onClick={onClose} className="items__back">
+						Close
+					</Button>
+				) : (
+					<Button to="/game" className="items__back">
+						Leave the Mart
+					</Button>
+				)}
 			</Panel>
 
 			<DialogueBox className="items__desc" keys={false} text={clerk} />

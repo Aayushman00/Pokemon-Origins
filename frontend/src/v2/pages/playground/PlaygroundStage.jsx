@@ -118,9 +118,12 @@ const EmoteWheel = ({ x, y, onPick }) => (
  * renderer, tile movement and input (WASD or arrows walk, Shift runs, the
  * touch pad on phones). Names, bubbles, emotes and menus float over the canvas.
  */
-/** `onBoard` (A at the notice board) and `onTrainer(id)` (A facing a trainer); `busy` freezes you while a PvP prompt is open. */
+/**
+ * `onSpot(kind)` (A at a plaza spot; return true when the screen handles it, else the spot's own line shows),
+ * `onTrainer(id)` (A facing a trainer); `busy` freezes you while a prompt is open.
+ */
 /** `onWild(table)`: a step into the tall grass met a wild Pokémon (left out for guests and while catching is off). */
-const PlaygroundStage = ({ play, nearIds, onBoard, onTrainer, onWild, busy = false }) => {
+const PlaygroundStage = ({ play, nearIds, onSpot, onTrainer, onWild, busy = false }) => {
 	const { playersRef, selfId, emitMove, roster, bubbles, emotes, emote, world, time } = play;
 	const wrapRef = useRef(null);
 	const canvasRef = useRef(null);
@@ -138,7 +141,7 @@ const PlaygroundStage = ({ play, nearIds, onBoard, onTrainer, onWild, busy = fal
 	const timeRef = useRef(time);
 	timeRef.current = time;
 	useEffect(() => gameRef.current?.setNight(time === "night"), [time]);
-	uiRef.current = { wheel, dialog, busy, onBoard, onTrainer, onWild };
+	uiRef.current = { wheel, dialog, busy, onSpot, onTrainer, onWild };
 
 	const resize = useCallback(() => {
 		const wrap = wrapRef.current;
@@ -206,9 +209,9 @@ const PlaygroundStage = ({ play, nearIds, onBoard, onTrainer, onWild, busy = fal
 						else if (!ui.dialog && !ui.wheel && !ui.busy && pressedA) {
 							const spot = game.facingSpot();
 							const trainer = spot ? null : game.facingTrainer();
-							if (spot?.kind === "board" && ui.onBoard) ui.onBoard();
-							else if (spot) setDialog(spotText(spot.kind, countRef.current, talks++));
-							else if (trainer != null) ui.onTrainer?.(trainer);
+							if (spot) {
+								if (!ui.onSpot?.(spot.kind)) setDialog(spotText(spot.kind, countRef.current, talks++));
+							} else if (trainer != null) ui.onTrainer?.(trainer);
 						}
 						game.tick(snapshot(inputApi.state), !!(ui.dialog || ui.wheel || ui.busy));
 					},

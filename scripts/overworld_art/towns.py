@@ -484,6 +484,7 @@ def playground():
 FOUNTAIN_AT = (18, 12)   # 4x4, centred on the plaza
 BOARD_AT = (16, 10)      # 2x2, north-west of the fountain
 BENCHES = ((17, 17), (21, 17))  # two-seat benches facing the fountain
+# The barrel and crate at (32, 9)-(32, 10) (props in playground()) are the Mart stall.
 
 
 def plaza_pieces(m):
