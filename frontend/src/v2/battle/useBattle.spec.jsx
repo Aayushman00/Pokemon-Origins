@@ -121,4 +121,85 @@ describe("useBattle", () => {
 		expect(result.current.error).toBe("");
 		expect(result.current.log).toContain("It's already at full HP");
 	});
+
+	it("uses an injected PvP transport instead of the REST api", async () => {
+		const post = vi.spyOn(api, "post");
+		const pvpState = (over) => state({ battleType: "pvp", trainerName: "Gary", pvp: { opponent: "Gary" }, ...over });
+		const end = { winnerId: 9, endedBy: "ko", rating: { rating: 1016, delta: 16, rated: true } };
+		const transport = {
+			start: vi.fn(async () => ({ success: true, state: pvpState() })),
+			act: vi.fn(async () => ({
+				success: true,
+				state: pvpState({ status: "won", enemy: foe({ current_hp: 0 }) }),
+				events: [{ actor: "player", moveName: "Scratch", moveType: "Normal", result: "hit", type_multiplier: 1, damage: 15, targetHpAfter: 0, targetFainted: true }],
+				pvpEnd: end,
+			})),
+			forfeit: vi.fn(),
+			onEnd: () => () => {},
+		};
+		const { result } = renderHook(() => useBattle({ trainerId: 9, transport }));
+		await waitFor(() => expect(result.current.phase).toBe("command"));
+		await act(async () => result.current.chooseMove(result.current.player.moves[0]));
+		await waitFor(() => expect(result.current.phase).toBe("finished"));
+		expect(post).not.toHaveBeenCalled();
+		expect(transport.act).toHaveBeenCalledWith({ type: "move", moveId: 10 });
+		expect(result.current.outcome).toEqual({ result: "win", name: "Charmander", pvp: end });
+		expect(result.current.progressSave).toBe("saved");
+		result.current.forfeit();
+		expect(transport.forfeit).toHaveBeenCalled();
+	});
+
+	it("finishes when a PvP match ends while waiting at the menu", async () => {
+		let ended;
+		const transport = {
+			start: async () => ({ success: true, state: state({ battleType: "pvp", pvp: { opponent: "Gary" } }) }),
+			act: vi.fn(),
+			forfeit: vi.fn(),
+			onEnd: (cb) => ((ended = cb), () => {}),
+		};
+		const { result } = renderHook(() => useBattle({ trainerId: 9, transport }));
+		await waitFor(() => expect(result.current.phase).toBe("command"));
+		const end = { winnerId: 9, endedBy: "disconnect", rating: null, state: state({ battleType: "pvp", status: "won" }) };
+		await act(async () => ended(end));
+		await waitFor(() => expect(result.current.phase).toBe("finished"));
+		expect(result.current.outcome).toEqual({ result: "win", name: "Charmander", pvp: end });
+	});
+
+	describe("catching", () => {
+		const potion = { itemId: 1, name: "Potion", category: "healing", quantity: 1, usableInBattle: true };
+		const ball = { itemId: 9, name: "Poké Ball", category: "ball", quantity: 3, usableInBattle: true };
+		const startWith = async (battleType) => {
+			const post = vi.spyOn(api, "post");
+			post.mockResolvedValueOnce({ data: { success: true, state: state({ battleType }) } });
+			vi.spyOn(api, "get").mockResolvedValueOnce({ data: { success: true, items: [potion, ball] } });
+			const props = battleType === "wild" ? { wild: "route_1", trainerId: 9 } : { levelNumber: 1, battleNumber: 1, trainerId: 9 };
+			const { result } = renderHook(() => useBattle(props));
+			await waitFor(() => expect(result.current.phase).toBe("command"));
+			await act(async () => result.current.openBag());
+			return { post, result };
+		};
+
+		it("only offers balls in a wild battle", async () => {
+			const { result } = await startWith("trainer");
+			expect(result.current.bagItems.map((i) => i.itemId)).toEqual([1]);
+		});
+
+		it("a ball throws a catch and a catch ends the battle", async () => {
+			const { post, result } = await startWith("wild");
+			expect(result.current.bagItems.map((i) => i.itemId)).toEqual([1, 9]);
+			post.mockResolvedValueOnce({
+				data: {
+					success: true,
+					state: state({ battleType: "wild", status: "caught" }),
+					progress: { wild: true, caught: { nickname: "Rattata", inPc: false } },
+					events: [{ actor: "player", type: "catch", itemId: 9, itemName: "Poké Ball", nickname: "Rattata", shakes: 3, caught: true, inPc: false }],
+				},
+			});
+			await act(async () => result.current.chooseItem(ball));
+			await waitFor(() => expect(result.current.phase).toBe("finished"));
+			expect(post).toHaveBeenLastCalledWith("/api/battle/action", { sessionId: "s1", action: { type: "catch", itemId: 9 } });
+			expect(result.current.log).toContain("Gotcha! Rattata was caught!");
+			expect(result.current.outcome).toEqual({ result: "caught", name: "Rattata", inPc: false });
+		});
+	});
 });

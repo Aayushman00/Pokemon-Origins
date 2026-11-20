@@ -49,6 +49,7 @@ const TrainerRecord = ({ profile, coins }) => {
 					<span className="coin" aria-hidden="true" /> {coins.toLocaleString()} coins
 				</p>
 			)}
+			{profile.steps > 0 && <p className="record__coins muted">{profile.steps.toLocaleString()} steps walked in the park</p>}
 
 			<div className="record__block">
 				<p className="record__heading">

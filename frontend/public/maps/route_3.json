@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 13,
+ "nextobjectid": 14,
  "layers": [
   {
    "id": 1,
@@ -5238,6 +5238,55 @@
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:rocker_luca\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Dynamo Station has the best amps in Aurelia. Do not tell them I said so.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:gentleman_tucker\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"One, two, three, four! This next battle is called YOU LOSE!\"}, {\"op\": \"battle\", \"trainer\": \"rocker_luca\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 13,
+     "name": "hiker_bram",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 656,
+     "y": 64,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "hiker"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "left"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "hiker_bram"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:hiker_bram\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Take the switchbacks slow. The hills are patient, so be patient back.\"}]}, {\"op\": \"say\", \"text\": \"These ridges built my legs. Let's see what they built in you!\"}, {\"op\": \"battle\", \"trainer\": \"hiker_bram\"}]"
       }
      ],
      "point": true

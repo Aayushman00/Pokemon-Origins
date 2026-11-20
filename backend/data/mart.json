@@ -11,6 +11,9 @@
     { "itemId": 8, "price": 300 },
     { "itemId": 3, "price": 800 },
     { "itemId": 4, "price": 800 },
-    { "itemId": 5, "price": 800 }
+    { "itemId": 5, "price": 800 },
+    { "itemId": 9, "price": 200 },
+    { "itemId": 10, "price": 600 },
+    { "itemId": 11, "price": 1200 }
   ]
 }

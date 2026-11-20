@@ -25,6 +25,28 @@ function mon(overrides = {}) {
 	};
 }
 
+describe("partyService.addCaught", () => {
+	it("joins the party while there is room", async () => {
+		const service = createPartyService({ store: createMemoryPartyStore() });
+		await service.addPokemon(1, mon(), []);
+		const caught = await service.addCaught(1, mon({ pokemon_id: 19 }), [{ move_id: 33, pp: 30 }]);
+		assert.equal(caught.position, 2);
+		assert.equal(caught.inPc, false);
+		assert.equal((await service.getPartyRows(1)).length, 2);
+	});
+
+	it("goes to the end of the PC when the party is full", async () => {
+		const service = createPartyService({ store: createMemoryPartyStore() });
+		for (let i = 0; i < MAX_PARTY; i++) await service.addPokemon(1, mon(), []);
+		await service.addCaught(1, mon({ pokemon_id: 19 }), []);
+		const caught = await service.addCaught(1, mon({ pokemon_id: 10 }), []);
+		assert.deepEqual([caught.position, caught.inPc], [2, true]);
+		assert.equal((await service.getPartyRows(1)).length, MAX_PARTY);
+		const pc = await service.getPcRows(1);
+		assert.deepEqual(pc.map((r) => r.pokemon_id), [19, 10]);
+	});
+});
+
 describe("partyService", () => {
 	it("assigns positions 1..3 in insert order", async () => {
 		const service = createPartyService({ store: createMemoryPartyStore() });

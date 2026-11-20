@@ -16,6 +16,8 @@ const trainerSchema = z.object({
 });
 
 const trainerCatalogSchema = z.record(z.string(), trainerSchema);
+// Extra road trainers live off the campaign; `route` says which road (and so which level) they wait on.
+const extraTrainerCatalogSchema = z.record(z.string(), trainerSchema.extend({ route: z.string().regex(/^route_[1-9]$/) }));
 
 const trainerBattleSchema = z.object({
 	battleNumber: z.number().int().positive(),
@@ -52,6 +54,7 @@ module.exports = {
 	partyMemberSchema,
 	trainerSchema,
 	trainerCatalogSchema,
+	extraTrainerCatalogSchema,
 	encounterSchema,
 	encounterCatalogSchema,
 	battleSchema,

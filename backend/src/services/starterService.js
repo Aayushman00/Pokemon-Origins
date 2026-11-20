@@ -30,8 +30,13 @@ function scaleStarterStats(starter) {
 	};
 }
 
+const POKE_BALL_ID = 9;
+const STARTER_BALLS = 5;
+
 function createStarterService(deps = {}) {
 	const party = deps.party || partyServiceModule;
+	const getInventory = () => deps.inventory || require("./inventoryService");
+	const catchOn = deps.catchOn || (() => require("../config/flags").isEnabled("CATCH"));
 
 	async function chooseStarter(trainerId, chosenPokemon) {
 		const starter = starterStats[chosenPokemon];
@@ -47,6 +52,15 @@ function createStarterService(deps = {}) {
 		// Party cap (max 3) is enforced by partyService.addPokemon.
 		const { moves, ...rawMon } = scaleStarterStats(starter);
 		await party.addPokemon(trainerId, rawMon, moves || []);
+
+		// A few Poké Balls to start catching with. Never worth failing the starter over.
+		if (catchOn()) {
+			try {
+				await getInventory().addItem(trainerId, POKE_BALL_ID, STARTER_BALLS);
+			} catch (err) {
+				console.error("Starter Poké Balls not given:", err.message);
+			}
+		}
 
 		return { message: "Starter chosen successfully", chosenPokemon };
 	}

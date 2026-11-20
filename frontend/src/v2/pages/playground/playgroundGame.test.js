@@ -105,3 +105,24 @@ test("facing a plaza spot finds it; every spot is solid on the real park map", a
 	assert.equal(spotAt(19, 13).kind, "fountain");
 	assert.equal(spotAt(0, 0), null);
 });
+
+test("facingTrainer names the trainer on the tile you face, only while standing still", () => {
+	const { game } = setup({ me: { x: 0, y: 0 }, them: { x: 16, y: 0 } });
+	game.tick(still);
+	game.tick(still);
+	assert.equal(game.facingTrainer(), null); // spawned facing down; they are to the right
+	game.player = { ...game.player, facing: "right" };
+	assert.equal(game.facingTrainer(), "them");
+	game.player = { ...game.player, phase: "walk" };
+	assert.equal(game.facingTrainer(), null);
+});
+
+test("a server correction puts you back on the server's tile, mid-step or not", () => {
+	const { game, ref } = setup({ me: { x: 0, y: 0 } });
+	game.tick({ dir: "right", run: false });
+	run(game, { dir: "right", run: false }, 3); // walking toward (1,0)
+	Object.assign(ref.get("me"), { x: 0, y: 32, corrected: true });
+	game.tick(still);
+	assert.deepEqual([game.player.x, game.player.y, game.player.phase], [0, 2, "idle"]);
+	assert.equal(ref.get("me").corrected, false);
+});

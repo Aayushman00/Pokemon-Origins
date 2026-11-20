@@ -1,0 +1,291 @@
+{
+  "hiker_bram": {
+    "id": "hiker_bram",
+    "name": "Hiker Bram",
+    "title": "Hiker",
+    "specialization": "Rock",
+    "region": "Aurelia",
+    "sprite": "hiker",
+    "route": "route_3",
+    "party": [
+      {
+        "pokemonId": 74,
+        "level": 19
+      },
+      {
+        "pokemonId": 95,
+        "level": 20
+      }
+    ]
+  },
+  "fisherman_otto": {
+    "id": "fisherman_otto",
+    "name": "Fisherman Otto",
+    "title": "Fisherman",
+    "specialization": "Water",
+    "region": "Aurelia",
+    "sprite": "fisherman",
+    "route": "route_4",
+    "party": [
+      {
+        "pokemonId": 72,
+        "level": 24
+      },
+      {
+        "pokemonId": 98,
+        "level": 25
+      },
+      {
+        "pokemonId": 90,
+        "level": 25
+      }
+    ]
+  },
+  "twin_pia": {
+    "id": "twin_pia",
+    "name": "Twin Pia",
+    "title": "Twin",
+    "specialization": "Normal",
+    "region": "Aurelia",
+    "sprite": "twin",
+    "route": "route_5",
+    "party": [
+      {
+        "pokemonId": 35,
+        "level": 30
+      },
+      {
+        "pokemonId": 39,
+        "level": 30
+      }
+    ]
+  },
+  "bird_keeper_ines": {
+    "id": "bird_keeper_ines",
+    "name": "Bird Keeper Ines",
+    "title": "Bird Keeper",
+    "specialization": "Flying",
+    "region": "Aurelia",
+    "sprite": "bird_keeper",
+    "route": "route_6",
+    "party": [
+      {
+        "pokemonId": 22,
+        "level": 34
+      },
+      {
+        "pokemonId": 85,
+        "level": 35
+      }
+    ]
+  },
+  "psychic_nell": {
+    "id": "psychic_nell",
+    "name": "Psychic Nell",
+    "title": "Psychic",
+    "specialization": "Psychic",
+    "region": "Aurelia",
+    "sprite": "psychic",
+    "route": "route_7",
+    "party": [
+      {
+        "pokemonId": 96,
+        "level": 39
+      },
+      {
+        "pokemonId": 64,
+        "level": 40
+      }
+    ]
+  },
+  "swimmer_cora": {
+    "id": "swimmer_cora",
+    "name": "Swimmer Cora",
+    "title": "Swimmer",
+    "specialization": "Water",
+    "region": "Aurelia",
+    "sprite": "swimmer_f",
+    "route": "route_7",
+    "party": [
+      {
+        "pokemonId": 119,
+        "level": 39
+      },
+      {
+        "pokemonId": 121,
+        "level": 40
+      }
+    ]
+  },
+  "black_belt_taro": {
+    "id": "black_belt_taro",
+    "name": "Black Belt Taro",
+    "title": "Black Belt",
+    "specialization": "Fighting",
+    "region": "Aurelia",
+    "sprite": "black_belt",
+    "route": "route_8",
+    "party": [
+      {
+        "pokemonId": 67,
+        "level": 43
+      },
+      {
+        "pokemonId": 57,
+        "level": 44
+      }
+    ]
+  },
+  "cooltrainer_ada": {
+    "id": "cooltrainer_ada",
+    "name": "Cooltrainer Ada",
+    "title": "Cooltrainer",
+    "specialization": "Fire",
+    "region": "Aurelia",
+    "sprite": "cooltrainer_f",
+    "route": "route_8",
+    "party": [
+      {
+        "pokemonId": 38,
+        "level": 44
+      },
+      {
+        "pokemonId": 78,
+        "level": 44
+      }
+    ]
+  },
+  "cooltrainer_ronan": {
+    "id": "cooltrainer_ronan",
+    "name": "Cooltrainer Ronan",
+    "title": "Cooltrainer",
+    "specialization": "Ground",
+    "region": "Aurelia",
+    "sprite": "cooltrainer_m",
+    "route": "route_9",
+    "party": [
+      {
+        "pokemonId": 34,
+        "level": 47
+      },
+      {
+        "pokemonId": 59,
+        "level": 47
+      }
+    ]
+  },
+  "battle_girl_suki": {
+    "id": "battle_girl_suki",
+    "name": "Battle Girl Suki",
+    "title": "Battle Girl",
+    "specialization": "Fighting",
+    "region": "Aurelia",
+    "sprite": "battle_girl",
+    "route": "route_9",
+    "party": [
+      {
+        "pokemonId": 106,
+        "level": 47
+      },
+      {
+        "pokemonId": 107,
+        "level": 47
+      }
+    ]
+  },
+  "engineer_hale": {
+    "id": "engineer_hale",
+    "name": "Engineer Hale",
+    "title": "Engineer",
+    "specialization": "Electric",
+    "region": "Aurelia",
+    "sprite": "engineer",
+    "route": "route_9",
+    "party": [
+      {
+        "pokemonId": 82,
+        "level": 47
+      },
+      {
+        "pokemonId": 101,
+        "level": 48
+      }
+    ]
+  },
+  "beauty_liora": {
+    "id": "beauty_liora",
+    "name": "Beauty Liora",
+    "title": "Beauty",
+    "specialization": "Grass",
+    "region": "Aurelia",
+    "sprite": "beauty",
+    "route": "route_9",
+    "party": [
+      {
+        "pokemonId": 45,
+        "level": 47
+      },
+      {
+        "pokemonId": 40,
+        "level": 48
+      }
+    ]
+  },
+  "gentleman_corwin": {
+    "id": "gentleman_corwin",
+    "name": "Gentleman Corwin",
+    "title": "Gentleman",
+    "specialization": "Normal",
+    "region": "Aurelia",
+    "sprite": "gentleman",
+    "route": "route_9",
+    "party": [
+      {
+        "pokemonId": 53,
+        "level": 48
+      },
+      {
+        "pokemonId": 55,
+        "level": 48
+      }
+    ]
+  },
+  "channeler_ysolde": {
+    "id": "channeler_ysolde",
+    "name": "Channeler Ysolde",
+    "title": "Channeler",
+    "specialization": "Ghost",
+    "region": "Aurelia",
+    "sprite": "channeler",
+    "route": "route_9",
+    "party": [
+      {
+        "pokemonId": 93,
+        "level": 48
+      },
+      {
+        "pokemonId": 94,
+        "level": 49
+      }
+    ]
+  },
+  "sailor_fen": {
+    "id": "sailor_fen",
+    "name": "Sailor Fen",
+    "title": "Sailor",
+    "specialization": "Water",
+    "region": "Aurelia",
+    "sprite": "sailor",
+    "route": "route_9",
+    "party": [
+      {
+        "pokemonId": 99,
+        "level": 48
+      },
+      {
+        "pokemonId": 131,
+        "level": 49
+      }
+    ]
+  }
+}

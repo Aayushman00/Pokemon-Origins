@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 11,
+ "nextobjectid": 15,
  "layers": [
   {
    "id": 1,
@@ -670,8 +670,8 @@
     0,
     0,
     0,
-    0,
-    0,
+    538,
+    463,
     0,
     0,
     0,
@@ -1252,10 +1252,10 @@
    "data": [
     375,
     378,
-    375,
-    378,
-    375,
-    378,
+    615,
+    426,
+    423,
+    690,
     375,
     378,
     1485,
@@ -1282,10 +1282,10 @@
     378,
     381,
     624,
-    429,
-    432,
-    429,
-    432,
+    453,
+    0,
+    0,
+    528,
     693,
     384,
     1487,
@@ -2509,8 +2509,8 @@
     4000,
     4000,
     4000,
-    4000,
-    4000,
+    0,
+    0,
     4000,
     4000,
     4000,
@@ -2538,7 +2538,6 @@
     4000,
     4000,
     4000,
-    0,
     0,
     0,
     0,
@@ -2569,6 +2568,7 @@
     4000,
     4000,
     4000,
+    4000,
     0,
     0,
     0,
@@ -2728,7 +2728,6 @@
     0,
     0,
     0,
-    4000,
     0,
     0,
     0,
@@ -2743,6 +2742,7 @@
     0,
     0,
     0,
+    0,
     4000,
     4000,
     4000,
@@ -3004,7 +3004,7 @@
     0,
     0,
     0,
-    4000,
+    0,
     0,
     0,
     0,
@@ -3290,6 +3290,102 @@
        "value": "up"
       }
      ]
+    },
+    {
+     "id": 11,
+     "name": "hidden_grove_3_1",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 48,
+     "y": 16,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "hidden_grove"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 8
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "fade"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "up"
+      }
+     ]
+    },
+    {
+     "id": 12,
+     "name": "hidden_grove_4_1",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 64,
+     "y": 16,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "hidden_grove"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 8
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 10
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "fade"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "up"
+      }
+     ]
     }
    ]
   },
@@ -3323,6 +3419,29 @@
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:willow_thornby\", \"else\": [{\"op\": \"say\", \"text\": \"The road to Route 2 is closed to anyone without the Bloom Badge. Try the Gym here first.\"}, {\"op\": \"cutsceneMove\", \"actor\": \"player\", \"path\": [\"left\"]}]}]"
+      }
+     ]
+    },
+    {
+     "id": 13,
+     "name": "hidden_grove_seal",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 48,
+     "y": 32,
+     "width": 32,
+     "height": 16,
+     "properties": [
+      {
+       "name": "when",
+       "type": "string",
+       "value": "step"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:kestrel_vane\", \"else\": [{\"op\": \"say\", \"text\": \"Hold it. Past here is League ground. Only the Champion of Aurelia goes on.\"}, {\"op\": \"cutsceneMove\", \"actor\": \"player\", \"path\": [\"down\"]}]}]"
       }
      ]
     }
@@ -3360,6 +3479,11 @@
        "value": "down"
       },
       {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
+      },
+      {
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"say\", \"text\": \"The Gym is built inside a hollow trunk. Older than the town, they say.\"}]"
@@ -3389,9 +3513,43 @@
        "value": "up"
       },
       {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
+      },
+      {
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"say\", \"text\": \"Rest at the Center before the Gym. The Leader won't rush you, but the seeds might.\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 14,
+     "name": "hidden_grove_guard",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 80,
+     "y": 32,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "gym_guide"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "left"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:kestrel_vane\", \"else\": [{\"op\": \"say\", \"text\": \"League order. Nobody but the Champion passes. Come back with the title, not just the badges.\"}]}, {\"op\": \"say\", \"text\": \"Champion! The way's yours. Whatever's in there has waited a long time. Go gently.\"}]"
       }
      ],
      "point": true

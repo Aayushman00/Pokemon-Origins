@@ -570,22 +570,34 @@ describe("the League and the Hollow Lab (headless)", () => {
 		settle(d);
 		assert.equal(d.pos()[0], "hollow_lab");
 	});
-	it("each legendary bars the way to the next, then leaves once met", async () => {
-		const d = await boot({ mapId: "hollow_lab", x: 21, y: 4, facing: "left" });
+	it("a lair gate turns back anyone but the Champion", async () => {
+		const d = await boot({ mapId: "dynamo", x: 26, y: 8, facing: "right" });
+		walk(d, "right", () => d.game.mode === "dialogue");
+		assert.match(d.dialogues().at(-1).pages.join(" "), /Champion/);
+		d.close();
+		settle(d);
+		assert.equal(d.game.player.x, 26, "walked back from the gate");
+		d.flags.add("trainer:kestrel_vane");
+		walk(d, "right", on(d, "stormcrown_pylon"));
+		settle(d);
+		assert.equal(d.pos()[0], "stormcrown_pylon");
+	});
+	it("a lair's legendary waits its campaign turn, then battles and leaves", async () => {
+		const d = await boot({ mapId: "stormcrown_pylon", x: 6, y: 4, facing: "up" });
 		const names = () => d.game.npcs().map((n) => n.name);
-		assert.deepEqual(names(), ["articuno", "zapdos", "moltres", "mew", "mewtwo"]);
-		d.hold("left", 40);
-		assert.equal(d.game.player.x, 21, "Articuno fills the doorway");
+		const battle = () => d.events.find((e) => e.type === "effect" && e.effect.type === "battle");
+		assert.deepEqual(names(), ["zapdos"]);
+		d.press();
+		assert.match(d.dialogues().at(-1).pages.join(" "), /Frostveil/, "names the lair that comes first");
+		d.close();
+		assert.equal(battle(), undefined);
+		d.flags.add("trainer:articuno");
 		d.press();
 		d.close();
-		const battle = d.events.find((e) => e.type === "effect" && e.effect.type === "battle");
-		assert.equal(battle.effect.trainer, "articuno");
-		d.flags.add("trainer:articuno");
+		assert.equal(battle().effect.trainer, "zapdos");
+		d.flags.add("trainer:zapdos");
 		d.game.endBattle();
-		assert.ok(!names().includes("articuno"));
-		d.idle(4);
-		d.hold("left", 60);
-		assert.ok(d.game.player.x < 20, "the doorway is clear");
+		assert.deepEqual(names(), []);
 	});
 });
 
@@ -613,5 +625,33 @@ describe("legendary encounters (headless)", () => {
 		d.close();
 		const battle = d.events.find((e) => e.type === "effect" && e.effect.type === "battle");
 		assert.deepEqual([battle.effect.wild, battle.effect.shiny], [151, true]);
+	});
+});
+
+describe("wandering townsfolk", () => {
+	// Small seeded PRNG so the run is the same every time.
+	const seeded = (s) => () => ((s = (s * 1103515245 + 12345) >>> 0) / 2 ** 32);
+	const oldWoman = (d) => d.game.npcs().find((n) => n.name === "old_woman");
+
+	it("stand still when the host gives no wander roll", async () => {
+		const d = await boot({ mapId: "dawnbrook", x: 16, y: 8, facing: "up" });
+		d.idle(3000);
+		assert.deepEqual([oldWoman(d).x, oldWoman(d).y], [15, 7]);
+	});
+
+	it("look around and step, but stay within a tile of home and off the player", async () => {
+		const d = await boot({ mapId: "dawnbrook", x: 16, y: 8, facing: "up" }, { wanderRoll: seeded(7) });
+		const seen = new Set();
+		const faced = new Set();
+		for (let i = 0; i < 20000; i++) {
+			d.idle();
+			const n = oldWoman(d);
+			seen.add(`${n.x},${n.y}`);
+			faced.add(n.facing);
+			assert.ok(Math.abs(n.x - 15) <= 1 && Math.abs(n.y - 7) <= 1, `left home: ${n.x},${n.y}`);
+			assert.ok(!(n.x === 16 && n.y === 8) && !(n.to?.x === 16 && n.to?.y === 8), "walked into the player");
+		}
+		assert.ok(seen.size > 1, "never stepped");
+		assert.equal(faced.size, 4, "never looked every way");
 	});
 });

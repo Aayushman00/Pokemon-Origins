@@ -27,7 +27,12 @@ const IDLE_FX = { lunge: false, hit: null, crit: false, fainted: false, tick: nu
 // Nobody sends these out: they are simply there.
 const appearsAtOnce = (state) => state.battleType === "legendary" || state.battleType === "wild";
 
-export default function useBattle({ levelNumber, battleNumber, worldTrainer, wild, trainerId, onBattleWon, onRun, textSpeed = "normal" }) {
+/**
+ * `transport` (optional): a live PvP channel shaped like the battle API
+ * ({ start, act, forfeit, onEnd }, see pages/playground/pvpTransport.js).
+ * When present it replaces the REST calls and there is no campaign progress.
+ */
+export default function useBattle({ levelNumber, battleNumber, worldTrainer, wild, trainerId, onBattleWon, onRun, textSpeed = "normal", transport }) {
 	const reduce = useReducedMotion();
 	const [session, setSession] = useState(null);
 	const [player, setPlayer] = useState(null);
@@ -152,10 +157,14 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, wil
 			setProgressSave("idle");
 			setError("");
 			try {
-				const { data } = await api.post("/api/battle/start", {
-					...(wild ? { wild } : worldTrainer ? { worldTrainer } : { level: levelNumber, battleNumber }),
-					...(force ? { force: true } : {}),
-				});
+				const data = transport
+					? await transport.start()
+					: (
+							await api.post("/api/battle/start", {
+								...(wild ? { wild } : worldTrainer ? { worldTrainer } : { level: levelNumber, battleNumber }),
+								...(force ? { force: true } : {}),
+							})
+					  ).data;
 				if (!data?.success || !data.state) throw new Error(data?.error || "Failed to start battle");
 				if (myGen !== gen.current) return;
 				sessionId.current = data.state.sessionId;
@@ -173,7 +182,7 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, wil
 			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[levelNumber, battleNumber, worldTrainer, wild]
+		[levelNumber, battleNumber, worldTrainer, wild, transport]
 	);
 
 	useEffect(() => {
@@ -236,10 +245,18 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, wil
 	};
 
 	// ---- Actions -------------------------------------------------------------
-	const finish = (state, progress) => {
+	const finish = (state, progress, pvpEnd) => {
 		invalidateProfile(trainerId);
-		sfx(state.status === "won" ? "victory" : "defeat");
-		if (state.status === "won") {
+		sfx(state.status === "won" || state.status === "caught" ? "victory" : "defeat");
+		if (state.status === "caught") {
+			const caught = progress?.caught || {};
+			setOutcome({ result: "caught", name: caught.nickname || state.enemy.nickname, inPc: !!caught.inPc });
+			setProgressSave("saved");
+		} else if (transport) {
+			// PvP: nothing to save; the outcome carries the rating change.
+			setOutcome({ result: state.status === "won" ? "win" : "lose", name: (state.status === "won" ? state.player : state.enemy).nickname, pvp: pvpEnd });
+			setProgressSave("saved");
+		} else if (state.status === "won") {
 			setOutcome({ result: "win", name: state.player.nickname });
 			if (progress) {
 				setProgressSave("saved");
@@ -320,7 +337,9 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, wil
 		setLine(null);
 		queueRef.current.clear();
 		try {
-			const { data } = await api.post("/api/battle/action", { sessionId: sessionId.current, action });
+			if (transport) setLine(`Waiting for ${s?.pvp?.opponent || "your opponent"}…`);
+			const data = transport ? await transport.act(action) : (await api.post("/api/battle/action", { sessionId: sessionId.current, action })).data;
+			if (transport) setLine(null);
 			if (!data?.success || !data.state) throw new Error(data?.error || "Battle action failed");
 			const view = { player: { ...p }, enemy: { ...e } };
 			for (const event of data.events || []) {
@@ -343,7 +362,7 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, wil
 				setPhase(data.state.requiresSwitch ? "partySelect" : "command");
 				if (data.state.requiresSwitch) say("Choose your next Pokémon!");
 			} else {
-				await settleLearns(data.events || [], () => finish(data.state, data.progress));
+				await settleLearns(data.events || [], () => finish(data.state, data.progress, data.pvpEnd));
 			}
 		} catch (err) {
 			console.error("Battle action failed:", err.response || err.message);
@@ -363,13 +382,16 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, wil
 		act({ type: "move", moveId: move.move_id });
 	};
 	const switchTo = (mon) => liveRef.current.phase !== "acting" && act({ type: "switch", partyPosition: mon.position });
-	const chooseItem = (item) => liveRef.current.phase !== "acting" && act({ type: "item", itemId: item.itemId });
+	const chooseItem = (item) =>
+		liveRef.current.phase !== "acting" && act(item.category === "ball" ? { type: "catch", itemId: item.itemId } : { type: "item", itemId: item.itemId });
 
 	const openBag = async () => {
 		try {
 			const { data } = await api.get("/api/inventory");
 			if (!data?.success) throw new Error(data?.error || "Failed to load the bag");
-			const usable = (data.items || []).filter((i) => i.usableInBattle && i.quantity > 0);
+			// Balls only make sense against a wild Pokémon; the server refuses them anywhere else too.
+			const wildBattle = liveRef.current.session?.battleType === "wild";
+			const usable = (data.items || []).filter((i) => i.usableInBattle && i.quantity > 0 && (wildBattle || i.category !== "ball"));
 			if (!usable.length) {
 				say("There's nothing in the Bag you can use in battle.");
 				return;
@@ -404,7 +426,25 @@ export default function useBattle({ levelNumber, battleNumber, worldTrainer, wil
 		start(true);
 	};
 
+	// PvP: the opponent forfeiting, timing out or leaving ends the match while we sit at a menu.
+	useEffect(() => {
+		if (!transport) return undefined;
+		return transport.onEnd((end) => {
+			gen.current++;
+			queueRef.current.clear();
+			setSession(end.state);
+			setPlayer(end.state.player);
+			setEnemy(end.state.enemy);
+			setTurn("none");
+			setLine(null);
+			finish(end.state, null, end);
+		});
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [transport]);
+
 	return {
+		pvp: !!transport,
+		forfeit: () => transport?.forfeit(),
 		session,
 		player,
 		enemy,

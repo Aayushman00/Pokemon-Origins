@@ -34,6 +34,35 @@ function makeStarterService(initialRows = {}) {
 	return { starter: createStarterService({ party }), party };
 }
 
+describe("starterService: Poké Ball gift", () => {
+	const make = (catchOn, addItem) => {
+		const party = createPartyService({ store: createMemoryPartyStore() });
+		const gifts = [];
+		const inventory = { addItem: addItem || (async (...args) => gifts.push(args)) };
+		return { starter: createStarterService({ party, inventory, catchOn }), gifts, party };
+	};
+
+	it("gives 5 Poké Balls with the starter while CATCH is on", async () => {
+		const { starter, gifts } = make(() => true);
+		await starter.chooseStarter(1, "bulbasaur");
+		assert.deepEqual(gifts, [[1, 9, 5]]);
+	});
+
+	it("gives none while CATCH is off", async () => {
+		const { starter, gifts } = make(() => false);
+		await starter.chooseStarter(1, "bulbasaur");
+		assert.deepEqual(gifts, []);
+	});
+
+	it("a failed gift never fails the starter", async () => {
+		const { starter, party } = make(() => true, async () => {
+			throw new Error("db down");
+		});
+		await starter.chooseStarter(1, "bulbasaur");
+		assert.equal((await party.getPartyRows(1)).length, 1);
+	});
+});
+
 describe("starterService", () => {
 	it("allows choosing a starter with an empty party", async () => {
 		const { starter, party } = makeStarterService();

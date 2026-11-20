@@ -92,6 +92,14 @@ export function createPlaygroundGame({ map, selfId, players, emitMove }) {
 			const d = DIRS[p.facing];
 			return d ? spotAt(p.x + d.dx, p.y + d.dy) : null;
 		},
+		/** Id of the trainer on the tile right in front of you (same standing-still rule), for a PvP challenge. */
+		facingTrainer() {
+			const p = game.player;
+			const d = p && p.phase !== "walk" && p.phase !== "hop" ? DIRS[p.facing] : null;
+			if (!d) return null;
+			for (const a of remotes.values()) if (a.x === p.x + d.dx && a.y === p.y + d.dy) return a.id;
+			return null;
+		},
 		player: null,
 		tickCount: 0,
 		doorOpening: false,
@@ -105,8 +113,13 @@ export function createPlaygroundGame({ map, selfId, players, emitMove }) {
 		tick(input, frozen = false) {
 			game.tickCount += 1;
 			if (frozen) input = STILL;
+			const me = players.get(selfId);
+			// The server refused a step (wall, jump, too fast): respawn on its tile.
+			if (me?.corrected) {
+				me.corrected = false;
+				game.player = null;
+			}
 			if (!game.player) {
-				const me = players.get(selfId);
 				if (!me) return;
 				const spot = nearestOpen(map, toTile(me.x), toTile(me.y));
 				game.player = { ...createActor({ mapId: map.id, ...spot }), id: selfId };

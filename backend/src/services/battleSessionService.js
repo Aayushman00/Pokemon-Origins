@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const { addVoice, introLine, usesPlayerName } = require("./trainerVoice");
 const { CampaignError } = require("../campaign/errors");
+const { rollCatch, catchRateOf } = require("./catchFormula");
 const {
 	STAGE_KEYS,
 	clampStage,
@@ -217,6 +218,89 @@ function outOfPp(mon) {
 	);
 }
 
+/**
+ * The move `mon` may legally use this turn (Struggle only when every move is
+ * out of PP). Throws a 400 for anything else.
+ */
+function pickLegalMove(mon, moveId) {
+	if (moveId === STRUGGLE_MOVE_ID) {
+		if (!outOfPp(mon)) {
+			throw new CampaignError(400, "You still have PP left — Struggle is only for when every move is out");
+		}
+		return struggleMove();
+	}
+	const move = mon.moves.find((m) => m.move_id === moveId);
+	if (!move) throw new CampaignError(400, "Unknown move for this Pokémon");
+	if (mon.disabledMoveId === moveId) throw new CampaignError(400, `${move.name} is disabled!`);
+	if (typeof move.current_pp === "number" && move.current_pp <= 0) {
+		throw new CampaignError(400, outOfPp(mon) ? `${move.name} has no PP left — use Struggle` : `${move.name} has no PP left`);
+	}
+	return move;
+}
+
+/** Stat stages AND volatile conditions reset when a mon leaves the field (major status and HP persist). */
+function leaveField(mon) {
+	mon.stages = freshStages();
+	mon.confusionTurns = 0;
+	mon.disabledMoveId = null;
+	mon.disableTurns = 0;
+	mon.attracted = false;
+	mon.flinched = false;
+}
+
+const PVP_SIDES = ["player", "enemy"];
+const otherSide = (side) => (side === "player" ? "enemy" : "player");
+// A switch seen from the other seat is a send-out, and the reverse.
+const MIRRORED_TYPES = { switch: "enemy_send", enemy_send: "switch" };
+
+/** One side's events as the other seat sees them: every "player"/"enemy" value swapped. */
+function mirrorEvents(events) {
+	return events.map((event) => {
+		const out = {};
+		for (const [key, value] of Object.entries(event)) {
+			out[key] = value === "player" || value === "enemy" ? otherSide(value) : value;
+		}
+		if (MIRRORED_TYPES[event.type]) out.type = MIRRORED_TYPES[event.type];
+		return out;
+	});
+}
+
+/** What a seat may know about the other trainer's mons: no moves, and no HP for the ones still in reserve. */
+function hideFoe(mon, active) {
+	const { moves, ...rest } = mon;
+	return active ? rest : { position: mon.position, nickname: mon.nickname, pokemon_id: mon.pokemon_id, fainted: mon.current_hp <= 0 };
+}
+
+/** Public state for one PvP seat. Seat "enemy" (side B) sees the battle mirrored. */
+function viewFor(session, side) {
+	const { pvp } = session;
+	const mirrored = side === "enemy";
+	const seat = mirrored
+		? {
+				...session,
+				player: session.enemy,
+				enemy: session.player,
+				party: session.enemyParty,
+				enemyParty: session.party,
+				activePosition: session.enemyActivePosition,
+				enemyActivePosition: session.activePosition,
+				trainerName: pvp.names.player,
+				status: session.status === "won" ? "lost" : session.status === "lost" ? "won" : session.status,
+		  }
+		: session;
+	const state = toPublicState(seat);
+	state.enemy = hideFoe(state.enemy, true);
+	state.enemyParty = state.enemyParty.map((mon) => hideFoe(mon, mon.position === state.enemyActivePosition));
+	state.requiresSwitch = pvp.needsSend[side];
+	state.pvp = {
+		opponent: pvp.names[otherSide(side)],
+		waitingOn: pvp.pending[side] ? "opponent" : null,
+		needsSend: pvp.needsSend[side],
+		round: pvp.round,
+	};
+	return state;
+}
+
 function toPublicState(session) {
 	// Move menu hint: each damaging move's type multiplier against the foe that is out.
 	const player = clonePokemon(session.player);
@@ -307,6 +391,15 @@ function defaultGetWildBattle(random) {
 		const { pokemonId, level } = rollWild(table, random);
 		const party = await hydrateParty([{ pokemonId, level }]);
 		return { trainerName: `Wild ${party[0].nickname}`, party, battleType: "wild" };
+	};
+}
+
+/** An extra road trainer's team (data/trainers/extra.json), with the same stat and move math. */
+function defaultGetExtraBattle() {
+	return async (extra) => {
+		const { hydrateParty } = require("../campaign/hydrate");
+		const party = await hydrateParty(extra.party);
+		return { trainerId: extra.id, trainerName: extra.name, party, battleType: "trainer" };
 	};
 }
 
@@ -445,6 +538,14 @@ function createBattleSessionService(deps = {}) {
 	const overworldOn = deps.overworldOn || (() => require("../config/flags").isEnabled("OVERWORLD"));
 	const findWildTable = deps.findWildTable || require("../campaign/loader").getWildTable;
 	const getWildBattle = deps.getWildBattle || defaultGetWildBattle(random);
+	const findExtraTrainer = deps.findExtraTrainer || require("../campaign/loader").getExtraTrainer;
+	const extrasOn = deps.extrasOn || (() => require("../config/flags").isEnabled("EXTRA_TRAINERS"));
+	const getExtraBattle = deps.getExtraBattle || defaultGetExtraBattle();
+	// Catching (wild battles only): flag, its own dice, species catch rate, and where a catch is written.
+	const catchOn = deps.catchOn || (() => require("../config/flags").isEnabled("CATCH"));
+	const catchRandom = deps.catchRandom || random;
+	const getCatchRate = deps.getCatchRate || catchRateOf;
+	const getPartyService = () => deps.partyService || require("./partyService");
 
 	const winKey = (trainerId, level, battleNumber) =>
 		`${Number(trainerId)}:${level}:${battleNumber}`;
@@ -469,9 +570,15 @@ function createBattleSessionService(deps = {}) {
 	async function resolveWorldTrainer(trainerId, id, progress) {
 		if (!overworldOn()) throw new CampaignError(404, "Not found");
 		const spot = findWorldTrainer(id);
-		if (!spot) throw new CampaignError(404, "Unknown trainer");
+		const extra = !spot && extrasOn() ? findExtraTrainer(id) : null;
+		if (!spot && !extra) throw new CampaignError(404, "Unknown trainer");
 		const flags = await getFlagService().listFlags(trainerId);
 		if (flags.includes(defeatedFlag(id))) throw new CampaignError(409, "Trainer already defeated");
+		if (extra) {
+			// Off the campaign: any order, once the campaign has reached the road.
+			if (progress.current_level < extra.minLevel) throw new CampaignError(403, "This road is not open yet");
+			return { extra };
+		}
 		const cursorPast =
 			progress.current_level > spot.level ||
 			(progress.current_level === spot.level && progress.current_battle > spot.battleNumber);
@@ -499,11 +606,16 @@ function createBattleSessionService(deps = {}) {
 		const progressService = getProgressService();
 		const progress = await progressService.getProgress(trainerId);
 		const wildTable = wild ? resolveWildTable(wild, progress) : null;
+		let extra = null;
 		if (worldTrainer) {
-			({ level, battleNumber } = await resolveWorldTrainer(trainerId, worldTrainer, progress));
+			const spot = await resolveWorldTrainer(trainerId, worldTrainer, progress);
+			if (spot.extra) extra = spot.extra;
+			else ({ level, battleNumber } = spot);
 		}
+		// Wild and extra road battles sit outside the campaign cursor.
+		const offCursor = Boolean(wildTable || extra);
 		if (
-			!wildTable &&
+			!offCursor &&
 			(progress.current_level !== level ||
 				progress.current_battle !== battleNumber)
 		) {
@@ -528,7 +640,7 @@ function createBattleSessionService(deps = {}) {
 				: Infinity;
 			if (
 				!force &&
-				!wildTable &&
+				!offCursor &&
 				existing &&
 				existing.status === "active" &&
 				existing.level === level &&
@@ -542,7 +654,7 @@ function createBattleSessionService(deps = {}) {
 
 		const [partyRaw, enemyBattle] = await Promise.all([
 			getPlayerParty(trainerId),
-			wildTable ? getWildBattle(wildTable) : getEnemyBattle(level, battleNumber),
+			wildTable ? getWildBattle(wildTable) : extra ? getExtraBattle(extra) : getEnemyBattle(level, battleNumber),
 		]);
 		if (!Array.isArray(partyRaw) || !partyRaw.length) {
 			throw new CampaignError(400, "No Pokémon found for this trainer");
@@ -595,6 +707,7 @@ function createBattleSessionService(deps = {}) {
 			playerName: usesPlayerName(enemyBattle.trainerId) ? await playerName(trainerId) : null,
 			worldTrainer: worldTrainer || null,
 			wild: Boolean(wildTable),
+			extra: Boolean(extra),
 			party,
 			// `player` always references the active party entry, so beat
 			// resolution mutates the party snapshot in place.
@@ -1202,37 +1315,7 @@ function createBattleSessionService(deps = {}) {
 			);
 		}
 
-		let playerMove;
-		if (action.moveId === STRUGGLE_MOVE_ID) {
-			if (!outOfPp(session.player)) {
-				throw new CampaignError(
-					400,
-					"You still have PP left — Struggle is only for when every move is out"
-				);
-			}
-			playerMove = struggleMove();
-		} else {
-			playerMove = session.player.moves.find(
-				(m) => m.move_id === action.moveId
-			);
-			if (!playerMove) {
-				throw new CampaignError(400, "Unknown move for this Pokémon");
-			}
-			if (session.player.disabledMoveId === action.moveId) {
-				throw new CampaignError(400, `${playerMove.name} is disabled!`);
-			}
-			if (
-				typeof playerMove.current_pp === "number" &&
-				playerMove.current_pp <= 0
-			) {
-				throw new CampaignError(
-					400,
-					outOfPp(session.player)
-						? `${playerMove.name} has no PP left — use Struggle`
-						: `${playerMove.name} has no PP left`
-				);
-			}
-		}
+		const playerMove = pickLegalMove(session.player, action.moveId);
 
 		const enemyMove = await pickEnemyMove(session);
 
@@ -1308,15 +1391,7 @@ function createBattleSessionService(deps = {}) {
 		}
 
 		const forced = session.requiresSwitch;
-		const outgoing = session.player;
-		// Stat stages AND volatile conditions reset when a mon leaves the
-		// field (major status and current_hp persist).
-		outgoing.stages = freshStages();
-		outgoing.confusionTurns = 0;
-		outgoing.disabledMoveId = null;
-		outgoing.disableTurns = 0;
-		outgoing.attracted = false;
-		outgoing.flinched = false;
+		leaveField(session.player);
 		const fromPosition = session.activePosition;
 		session.player = target;
 		session.activePosition = target.position;
@@ -1356,6 +1431,73 @@ function createBattleSessionService(deps = {}) {
 	 * from the persisted inventory, and then costs the turn: the enemy gets
 	 * one beat (against the active mon), like a voluntary switch.
 	 */
+	/**
+	 * A Poké Ball at the wild Pokémon. The ball is spent before the roll (like a
+	 * Potion). Caught: written to party/PC, battle over. Missed: the turn is
+	 * spent, so the wild Pokémon gets its beat and the round closes as after an item.
+	 */
+	async function resolveCatch(session, action, trainerId) {
+		if (!catchOn()) throw new CampaignError(403, "Catching isn't open yet");
+		if (session.requiresSwitch) {
+			throw new CampaignError(400, "Your Pokémon fainted — you must switch first");
+		}
+		const inventory = getInventoryService();
+		const item = inventory.getItem(action.itemId);
+		if (!item || item.category !== "ball") throw new CampaignError(400, "That's not a Poké Ball");
+		if (!(await inventory.consumeItem(trainerId, item.itemId))) {
+			throw new CampaignError(400, `You don't have a ${item.name}`);
+		}
+
+		const wild = session.enemy;
+		const { shakes, caught } = rollCatch({
+			maxHp: wild.max_hp,
+			hp: wild.current_hp,
+			rate: getCatchRate(wild.pokemon_id),
+			ballBonus: Number(item.catchBonus) || 1,
+			status: wild.status,
+			random: catchRandom,
+		});
+		const event = { actor: "player", type: "catch", itemId: item.itemId, itemName: item.name, nickname: wild.nickname, shakes, caught };
+
+		if (!caught) {
+			session.log.push(`${wild.nickname} broke free!`);
+			const events = [event, ...(await runBeat(session, "enemy", await pickEnemyMove(session)))];
+			events.push(...endOfRoundChip(session, "enemy"));
+			return events;
+		}
+
+		let saved;
+		try {
+			saved = await getPartyService().addCaught(
+				trainerId,
+				{
+					pokemon_id: wild.pokemon_id,
+					nickname: wild.nickname,
+					level: wild.level,
+					current_hp: wild.current_hp,
+					max_hp: wild.max_hp,
+					attack: wild.attack,
+					defense: wild.defense,
+					speed: wild.speed,
+					special_atk: wild.special_atk,
+					special_def: wild.special_def,
+					experience: 0,
+					status: "Healthy",
+					gender: wild.gender ?? null,
+				},
+				wild.moves.map((m) => ({ move_id: m.move_id, pp: m.current_pp ?? m.max_pp ?? 0 }))
+			);
+		} catch (err) {
+			console.error("Caught Pokémon not saved:", err.message);
+			await inventory.addItem(trainerId, item.itemId, 1).catch(() => {});
+			throw new CampaignError(500, "Couldn't save the caught Pokémon");
+		}
+		session.status = "caught";
+		session.caught = { nickname: wild.nickname, inPc: saved.inPc };
+		session.log.push(`Gotcha! ${wild.nickname} was caught!`);
+		return [{ ...event, inPc: saved.inPc }];
+	}
+
 	async function resolveItem(session, action, trainerId) {
 		if (session.requiresSwitch) {
 			throw new CampaignError(
@@ -1692,6 +1834,19 @@ function createBattleSessionService(deps = {}) {
 		}
 	}
 
+	// Flat win coins (a boss pays more), at most once per session.
+	async function payWinCoins(session, trainerId, events) {
+		if (session.coinsAwarded) return;
+		try {
+			const award = await getWalletService().awardWinCoins({ trainerId, battleType: session.battleType });
+			session.coinsAwarded = true;
+			session.log.push(`Got ${award.amount} coins!`);
+			events.push({ actor: "player", type: "coins", amount: award.amount, balance: award.balance });
+		} catch (coinErr) {
+			console.error("Failed to award coins after win:", coinErr.message);
+		}
+	}
+
 	async function performAction(trainerId, { sessionId, action }) {
 		const session = getOwnedSession(trainerId, sessionId);
 		if (session.status !== "active") {
@@ -1702,7 +1857,7 @@ function createBattleSessionService(deps = {}) {
 		}
 		if (
 			!action ||
-			!["move", "switch", "item", ...(session.wild ? ["run"] : [])].includes(action.type)
+			!["move", "switch", "item", ...(session.wild ? ["run", "catch"] : [])].includes(action.type)
 		) {
 			throw new CampaignError(400, "Unsupported action type");
 		}
@@ -1718,6 +1873,8 @@ function createBattleSessionService(deps = {}) {
 					? await resolveSwitch(session, action)
 					: action.type === "item"
 					? await resolveItem(session, action, trainerId)
+					: action.type === "catch"
+					? await resolveCatch(session, action, trainerId)
 					: await resolveMove(session, action)
 			);
 
@@ -1729,7 +1886,10 @@ function createBattleSessionService(deps = {}) {
 			// completion.
 			let progress;
 			let reward;
-			if (session.status === "won" && session.wild) {
+			if (session.status === "caught") {
+				// A catch is its own ending: no XP, no coins, nothing for the campaign.
+				progress = { wild: true, caught: session.caught };
+			} else if (session.status === "won" && session.wild) {
 				// Wild wins sit outside the campaign: XP only. `progress` just tells the client it's settled.
 				progress = { wild: true };
 				try {
@@ -1737,6 +1897,21 @@ function createBattleSessionService(deps = {}) {
 				} catch (xpErr) {
 					console.error("Failed to award XP after a wild win:", xpErr.message);
 				}
+			} else if (session.status === "won" && session.extra) {
+				// Extra road trainers sit outside the campaign too. The defeat flag is what stops a
+				// second fight (resolveWorldTrainer), so it goes first; then XP and a road trainer's coins.
+				progress = { extra: true };
+				try {
+					await getFlagService().setFlag(trainerId, defeatedFlag(session.worldTrainer));
+				} catch (err) {
+					console.error("Failed to set trainer flag:", err.message);
+				}
+				try {
+					events.push(...(await grantWinXp(session, trainerId)));
+				} catch (xpErr) {
+					console.error("Failed to award XP after an extra trainer win:", xpErr.message);
+				}
+				await payWinCoins(session, trainerId, events);
 			} else if (session.status === "won") {
 				wonBattles.add(
 					winKey(trainerId, session.level, session.battleNumber)
@@ -1788,31 +1963,7 @@ function createBattleSessionService(deps = {}) {
 				// Coins (Phase 8): flat award (boss pays more) on the
 				// first-time completion only — same idempotency gate as XP,
 				// so replays and losses never pay.
-				if (
-					progress &&
-					!progress.alreadyCompleted &&
-					!session.coinsAwarded
-				) {
-					try {
-						const award = await getWalletService().awardWinCoins({
-							trainerId,
-							battleType: session.battleType,
-						});
-						session.coinsAwarded = true;
-						session.log.push(`Got ${award.amount} coins!`);
-						events.push({
-							actor: "player",
-							type: "coins",
-							amount: award.amount,
-							balance: award.balance,
-						});
-					} catch (coinErr) {
-						console.error(
-							"Failed to award coins after win:",
-							coinErr.message
-						);
-					}
-				}
+				if (progress && !progress.alreadyCompleted) await payWinCoins(session, trainerId, events);
 				// Boss reward offer (Phase 6, extended in Phase 10): only
 				// boss-type battles can create offers — gym_boss (levels
 				// 1–8), champion (level 9 final), legendary (each level 10
@@ -1868,6 +2019,160 @@ function createBattleSessionService(deps = {}) {
 		}
 	}
 
+	// ---- PvP: two human seats. Side A is "player", side B is "enemy". ----
+	// Sessions live with the caller (pvp/matches.js), never in `sessions`,
+	// and nothing here touches HP/PP/XP/coins/history stores.
+
+	async function createPvpSession({ a, b }) {
+		const build = (raw) => raw.map((mon, idx) => snapshotPokemon(mon, idx + 1)).sort((x, y) => x.position - y.position);
+		const party = build(a.party);
+		const enemyParty = build(b.party);
+		if (!party.length || !enemyParty.length) throw new CampaignError(400, "Both trainers need a Pokémon");
+		const now = new Date(clock()).toISOString();
+		return {
+			sessionId: crypto.randomUUID(),
+			battleType: "pvp",
+			trainerName: b.name,
+			party,
+			player: party[0],
+			activePosition: party[0].position,
+			requiresSwitch: false,
+			participants: new Set([party[0].position]),
+			enemyParty,
+			enemy: enemyParty[0],
+			enemyActivePosition: enemyParty[0].position,
+			enemyNeedsSend: false,
+			status: "active",
+			log: [`${a.name} challenged ${b.name}!`],
+			progressAwarded: false,
+			createdAt: now,
+			updatedAt: now,
+			typeChart: (await ai.getChart?.()) || {},
+			pvp: {
+				trainerIds: { player: a.trainerId, enemy: b.trainerId },
+				names: { player: a.name, enemy: b.name },
+				pending: { player: null, enemy: null },
+				needsSend: { player: false, enemy: false },
+				round: 1,
+				resolving: false,
+			},
+		};
+	}
+
+	const partyOf = (session, side) => (side === "player" ? session.party : session.enemyParty);
+
+	/** Checks one seat's choice against the current state; returns what the round needs to run it. */
+	function checkPvpAction(session, side, action) {
+		if (action?.type === "move") return { type: "move", move: pickLegalMove(session[side], Number(action.moveId)) };
+		if (action?.type !== "switch") throw new CampaignError(400, "Pick a move or a Pokémon");
+		const position = Number(action.partyPosition);
+		const target = partyOf(session, side).find((mon) => mon.position === position);
+		if (!target) throw new CampaignError(400, "No Pokémon at that party position");
+		if (target === session[side]) throw new CampaignError(400, `${target.nickname} is already in battle`);
+		if (target.current_hp <= 0) throw new CampaignError(400, `${target.nickname} has fainted and can't battle`);
+		if (!target.moves.length) throw new CampaignError(400, `${target.nickname} has no usable moves`);
+		return { type: "switch", position };
+	}
+
+	/** Puts a new mon in for `side`. The event carries both switch and send-out fields so it mirrors cleanly. */
+	function switchSide(session, side, position) {
+		const target = partyOf(session, side).find((mon) => mon.position === position);
+		const fromPosition = session[side].position;
+		leaveField(session[side]);
+		session[side] = target;
+		if (side === "player") {
+			session.activePosition = position;
+			session.participants.add(position);
+		} else {
+			session.enemyActivePosition = position;
+		}
+		session.log.push(`${session.pvp.names[side]} sent out ${target.nickname}!`);
+		return {
+			actor: side,
+			type: side === "player" ? "switch" : "enemy_send",
+			fromPosition,
+			toPosition: position,
+			position,
+			pokemon: clonePokemon(target),
+			remaining: partyOf(session, side).filter((mon) => mon.current_hp > 0).length,
+		};
+	}
+
+	/** Switches first, then both moves in speed/priority order, then end-of-round chip. */
+	async function resolvePvpRound(session, actions) {
+		const events = [];
+		for (const side of PVP_SIDES) {
+			if (actions[side].type === "switch") events.push(switchSide(session, side, actions[side].position));
+		}
+		const movers = PVP_SIDES.filter((side) => actions[side].type === "move");
+		let first = movers[0] || "player";
+		if (movers.length === 2) {
+			const playerForOrder = clonePokemon(session.player);
+			playerForOrder.speed = effectiveSpeed(session.player);
+			const enemyForOrder = clonePokemon(session.enemy);
+			enemyForOrder.speed = effectiveSpeed(session.enemy);
+			const order = await getEngine().turnOrder(playerForOrder, enemyForOrder, {
+				priority1: movePriority(actions.player.move.name),
+				priority2: movePriority(actions.enemy.move.name),
+			});
+			first = order.first === "pokemon2" ? "enemy" : "player";
+		}
+		const beats = movers.length === 2 ? [first, otherSide(first)] : movers;
+		for (const side of beats) {
+			events.push(...(await runBeat(session, side, actions[side].move)));
+			if (session.status !== "active" || session.requiresSwitch || session.enemyNeedsSend) break;
+		}
+		events.push(...endOfRoundChip(session, first));
+		// processFaint flags a campaign auto-send / forced switch; in PvP the owner picks.
+		session.pvp.needsSend = { player: session.requiresSwitch, enemy: session.enemyNeedsSend };
+		session.requiresSwitch = false;
+		session.enemyNeedsSend = false;
+		return events;
+	}
+
+	/**
+	 * One seat's choice. Resolves the round once every seat that owes a
+	 * choice has made one; after a KO only the side that fainted owes one,
+	 * and it must be a switch.
+	 */
+	async function submitPvpAction(session, side, action) {
+		const { pvp } = session;
+		if (session.status !== "active") throw new CampaignError(400, "The battle is over");
+		if (pvp.resolving) throw new CampaignError(400, "Still resolving the last turn");
+		const sending = pvp.needsSend.player || pvp.needsSend.enemy;
+		if (sending && !pvp.needsSend[side]) throw new CampaignError(400, "Waiting for your opponent to choose");
+		if (sending && action?.type !== "switch") throw new CampaignError(400, "Choose your next Pokémon");
+		if (pvp.pending[side]) throw new CampaignError(400, "Already chose this turn");
+		pvp.pending[side] = checkPvpAction(session, side, action);
+
+		const owed = sending ? PVP_SIDES.filter((s) => pvp.needsSend[s]) : PVP_SIDES;
+		if (!owed.every((s) => pvp.pending[s])) return { resolved: false };
+
+		const actions = pvp.pending;
+		pvp.pending = { player: null, enemy: null };
+		pvp.resolving = true;
+		try {
+			let events;
+			if (sending) {
+				events = owed.map((s) => switchSide(session, s, actions[s].position));
+				pvp.needsSend = { player: false, enemy: false };
+			} else {
+				events = await resolvePvpRound(session, actions);
+				pvp.round += 1;
+			}
+			session.updatedAt = new Date(clock()).toISOString();
+			return { resolved: true, events };
+		} finally {
+			pvp.resolving = false;
+		}
+	}
+
+	function forfeitPvp(session, side) {
+		if (session.status !== "active") return;
+		session.status = side === "enemy" ? "won" : "lost";
+		session.log.push(`${session.pvp.names[side]} gave up!`);
+	}
+
 	function getSession(trainerId, sessionId) {
 		const session = getOwnedSession(trainerId, sessionId);
 		return { state: toPublicState(session) };
@@ -1882,6 +2187,11 @@ function createBattleSessionService(deps = {}) {
 		performAction,
 		getSession,
 		hasWonBattle,
+		createPvpSession,
+		submitPvpAction,
+		forfeitPvp,
+		viewFor,
+		mirrorEvents,
 	};
 }
 

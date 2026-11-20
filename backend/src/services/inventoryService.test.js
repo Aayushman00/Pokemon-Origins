@@ -80,6 +80,18 @@ function makeFixture({ bag = {}, party = [partyRow({ position: 1 })] } = {}) {
 }
 
 describe("inventoryService", () => {
+	it("catalog has the three balls: battle-only, with their catch bonus", () => {
+		const catalog = loadItemCatalog();
+		const pick = (id) => {
+			const { name, category, catchBonus, usableInBattle, usableOverworld } = catalog.get(id);
+			return { name, category, catchBonus, usableInBattle, usableOverworld };
+		};
+		const ball = (name, catchBonus) => ({ name, category: "ball", catchBonus, usableInBattle: true, usableOverworld: false });
+		assert.deepEqual(pick(9), ball("Poké Ball", 1));
+		assert.deepEqual(pick(10), ball("Great Ball", 1.5));
+		assert.deepEqual(pick(11), ball("Ultra Ball", 2));
+	});
+
 	it("catalog loads the Phase 7 items with context rules", () => {
 		const catalog = loadItemCatalog();
 		const potion = catalog.get(POTION);

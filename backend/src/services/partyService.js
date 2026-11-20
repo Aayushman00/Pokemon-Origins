@@ -67,13 +67,14 @@ function createMemoryPartyStore(initialRows = {}) {
 			partyIds.forEach((id, i) => Object.assign(byId.get(id), { in_pc: 0, position: i + 1 }));
 			pcIds.forEach((id, i) => Object.assign(byId.get(id), { in_pc: 1, position: i + 1 }));
 		},
-		async insert(trainerId, mon, moves, position) {
+		async insert(trainerId, mon, moves, position, inPc = 0) {
 			const key = Number(trainerId);
 			const rows = byTrainer.get(key) || [];
 			const id = nextId++;
 			rows.push({
 				id,
 				position,
+				in_pc: inPc,
 				...mon,
 				moves: (moves || []).map((m) => ({ ...m })),
 			});
@@ -158,15 +159,15 @@ function createMysqlPartyStore(pool) {
 				connection.release();
 			}
 		},
-		async insert(trainerId, mon, moves, position) {
+		async insert(trainerId, mon, moves, position, inPc = 0) {
 			const connection = await pool.getConnection();
 			try {
 				await connection.beginTransaction();
 				const [result] = await connection.query(
 					`INSERT INTO trainer_pokemon
              (trainer_id, pokemon_id, nickname, level, current_hp, max_hp,
-              attack, defense, speed, special_atk, special_def, experience, status, gender, position)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              attack, defense, speed, special_atk, special_def, experience, status, gender, position, in_pc)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 					[
 						trainerId,
 						mon.pokemon_id,
@@ -183,6 +184,7 @@ function createMysqlPartyStore(pool) {
 						mon.status ?? "Healthy",
 						mon.gender ?? null,
 						position,
+						inPc ? 1 : 0,
 					]
 				);
 				const trainerPokemonId = result.insertId;
@@ -311,6 +313,22 @@ function createPartyService(deps = {}) {
 	}
 
 	/**
+	 * A caught wild Pokémon: into the party while it has room, else onto the
+	 * end of the PC (no cap there). Returns where it went.
+	 */
+	async function addCaught(trainerId, mon, moves = []) {
+		const rows = await getStore().list(trainerId);
+		if (rows.length < MAX_PARTY) {
+			const added = await addPokemon(trainerId, mon, moves);
+			return { ...added, inPc: false };
+		}
+		const position = (await getStore().listPc(trainerId)).length + 1;
+		const withGender = { ...mon, gender: mon.gender ?? rollGenderForSpecies(mon.pokemon_id) };
+		const id = await getStore().insert(trainerId, withGender, moves, position, 1);
+		return { id, position, inPc: true };
+	}
+
+	/**
 	 * Removes the Pokémon at `position` (moves + row). Used by the boss
 	 * reward replacement flow. Throws PartyError(400) if the slot is empty.
 	 */
@@ -398,6 +416,7 @@ function createPartyService(deps = {}) {
 		arrange,
 		depositByPosition,
 		addPokemon,
+		addCaught,
 		removeByPosition,
 		setCurrentHpByPosition,
 		updatePokemonByPosition,
@@ -417,6 +436,7 @@ module.exports = {
 	arrange: defaultService.arrange,
 	depositByPosition: defaultService.depositByPosition,
 	addPokemon: defaultService.addPokemon,
+	addCaught: defaultService.addCaught,
 	removeByPosition: defaultService.removeByPosition,
 	setCurrentHpByPosition: defaultService.setCurrentHpByPosition,
 	updatePokemonByPosition: defaultService.updatePokemonByPosition,

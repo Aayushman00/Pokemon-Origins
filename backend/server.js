@@ -29,6 +29,8 @@ const trainerProfileRoutes = require("./src/routes/trainers");
 const partyRoutes = require("./src/routes/party");
 const playgroundRoutes = require("./src/routes/playground");
 const worldRoutes = require("./src/routes/world");
+const pvpRoutes = require("./src/routes/pvp");
+const { getDefaultLadder } = require("./src/services/pvpLadderService");
 const serverFlags = require("./src/config/flags");
 const attachPlayground = require("./src/playground");
 const trainerPool = require("./src/config/trainerdb");
@@ -111,6 +113,7 @@ app.use("/api/trainers", trainerProfileRoutes);
 app.use("/api/party", partyRoutes);
 app.use("/api/playground", playgroundRoutes);
 app.use("/api/world", worldRoutes);
+app.use("/api/pvp", pvpRoutes);
 app.get("/api/flags", (req, res) => res.json({ success: true, flags: serverFlags.all() }));
 
 app.use("/pokemon", pokemonRoutes);
@@ -131,7 +134,7 @@ const io = socketIo(server, {
 	},
 });
 
-attachPlayground(io, trainerPool);
+attachPlayground(io, trainerPool, { recordResult: (result) => getDefaultLadder().recordResult(result) });
 
 server.listen(PORT, () => {
 	console.log(`API + Socket.IO running on http://localhost:${PORT}`);

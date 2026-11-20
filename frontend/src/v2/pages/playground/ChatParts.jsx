@@ -118,7 +118,7 @@ export const Composer = ({ onSend, disabled }) => {
 	);
 };
 
-const RosterRow = ({ p, self, near }) => {
+const RosterRow = ({ p, self, near, onChallenge }) => {
 	const guest = isGuestId(p.trainerId);
 	const body = (
 		<>
@@ -136,13 +136,19 @@ const RosterRow = ({ p, self, near }) => {
 	return (
 		<li className={`roster__row ${near && !self ? "is-near" : ""}`}>
 			{self ? <span className="trainer-trigger">{body}</span> : <TrainerTrigger trainerId={p.trainerId} name={p.name} online>{body}</TrainerTrigger>}
-			{near && !self && <span className="roster__near">Near</span>}
+			{near && !self && !guest && onChallenge ? (
+				<button type="button" className="roster__battle font-pixel" onClick={() => onChallenge(p.trainerId)} aria-label={`Challenge ${p.name} to a battle`}>
+					Battle
+				</button>
+			) : (
+				near && !self && <span className="roster__near">Near</span>
+			)}
 		</li>
 	);
 };
 
 /** Everyone currently on the map, you first, then registered, then guests. */
-export const Roster = ({ roster, selfId, nearIds }) => {
+export const Roster = ({ roster, selfId, nearIds, onChallenge }) => {
 	const sorted = [...roster].sort((a, b) => {
 		if (a.trainerId === selfId) return -1;
 		if (b.trainerId === selfId) return 1;
@@ -154,7 +160,7 @@ export const Roster = ({ roster, selfId, nearIds }) => {
 	return (
 		<ul className="roster" aria-label="Trainers on the map">
 			{sorted.map((p) => (
-				<RosterRow key={p.trainerId} p={p} self={p.trainerId === selfId} near={nearIds.has(p.trainerId)} />
+				<RosterRow key={p.trainerId} p={p} self={p.trainerId === selfId} near={nearIds.has(p.trainerId)} onChallenge={onChallenge} />
 			))}
 		</ul>
 	);

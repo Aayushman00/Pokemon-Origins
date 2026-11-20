@@ -152,7 +152,8 @@ async function start() {
 	}
 
 	function meet(id) {
-		const map = maps.find((m) => m.npcs.some((n) => n.trainer === id || n.name === id));
+		// legend_grove is the unlinked art showcase; the real legendaries wait in their lairs
+		const map = maps.find((m) => m.id !== "legend_grove" && m.npcs.some((n) => n.trainer === id || n.name === id));
 		assert.ok(map, `${id} is nowhere in the world`);
 		const npc = map.npcs.find((n) => n.trainer === id || n.name === id);
 		if (unsolved(map)) {

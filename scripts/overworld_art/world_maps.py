@@ -41,8 +41,9 @@ def say(*texts):
 
 class Town(base.MapBuilder):
     def npc(self, name, x, y, sprite, facing, *lines):
-        self.obj("npcs", name, x, y, point=True, sprite=sprite, facing=facing, script=say(*lines))
-        self.block(x, y)
+        # Townsfolk wander the 3x3 round home; the engine blocks them where they stand,
+        # so their cell stays walkable in the collision layer or they could not come back.
+        self.obj("npcs", name, x, y, point=True, sprite=sprite, facing=facing, idle="wander", script=say(*lines))
 
     def sign(self, name, x, y, text):
         self.obj("signs", name, x, y, text=text)
@@ -91,6 +92,17 @@ def trainer_script(trainer):
                         "else": [{"op": "say", "text": voice["after"]}]},
                        *([{"op": "requireFlag", "flag": f"trainer:{prior}", "else": [{"op": "say", "text": wait}]}] if prior else []),
                        {"op": "say", "text": voice.get("greet") or voice["intro"]}, {"op": "battle", "trainer": trainer}])
+
+
+EXTRAS = json.loads((ROOT / "backend" / "data" / "trainers" / "extra.json").read_text(encoding="utf8"))
+
+
+def extra_script(trainer):
+    """An extra road trainer: off the campaign, so no turn order, just battle until beaten."""
+    voice = VOICES[trainer]
+    return json.dumps([{"op": "requireFlag", "flag": f"trainer:{trainer}", "not": True,
+                        "else": [{"op": "say", "text": voice["after"]}]},
+                       {"op": "say", "text": voice["intro"]}, {"op": "battle", "trainer": trainer}])
 
 
 def leader_story(m, leader, x, y, facing, *more_rules):
@@ -407,7 +419,7 @@ def dawnbrook():
 
 MOSSGATE = [
     "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-    "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
+    "TTT,,TTTTTTTTTTTTTTTTTTTTTTTTT",
     "TT....TTTTTTBBBBBBTTTTBBBBBTTT",
     "TTL...TTT..hBBBBBBh.T.BBBBBTTT",
     "TT....TT...hBBBBBBh.T.BBBBBTTT",
@@ -458,6 +470,8 @@ def mossgate():
     for name, x, y in (("mailbox", 25, 7), ("mailbox", 25, 16), ("barrel", 9, 15), ("crate", 9, 14), ("rock", 4, 4),
                        ("stump", 4, 8), ("rock", 26, 17)):
         prop(m, name, x, y)
+    from .lairs import gate as lair_gate
+    lair_gate(m, "mew")
     dress_pond(m, MOSSGATE)
     dress_grass(m)
     autotile_paths(m)

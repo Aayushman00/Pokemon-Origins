@@ -299,5 +299,80 @@
     "intro": "I have held this road for years. Show me why I should step aside.",
     "lose": "Then I step aside. The summit is yours to try.",
     "after": "Tell the Champion I said hello. She owes me a rematch."
+  },
+  "hiker_bram": {
+    "intro": "These ridges built my legs. Let's see what they built in you!",
+    "lose": "Ha! Flattened like a pass in winter.",
+    "after": "Take the switchbacks slow. The hills are patient, so be patient back."
+  },
+  "fisherman_otto": {
+    "intro": "Every cast off this pier pulls up something. Today it pulled up you.",
+    "lose": "Snapped my line clean through.",
+    "after": "The tide turns twice a day. My luck, about once a year."
+  },
+  "twin_pia": {
+    "intro": "My brother's off chasing sparks by the pylons, so you get me instead!",
+    "lose": "Aww. He's going to laugh at me.",
+    "after": "If you see a boy with my face near the substation, tell him I won. Please?"
+  },
+  "bird_keeper_ines": {
+    "intro": "Up here the wind decides who wins. Let's ask it!",
+    "lose": "The wind picked you. Fair enough.",
+    "after": "Watch the gusts on the bridge. My birds land on it sideways."
+  },
+  "psychic_nell": {
+    "intro": "I saw you coming three bends ago. I did not see how this ends.",
+    "lose": "So that was the ending. Huh.",
+    "after": "The crater lake shows the stars at noon if you look long enough."
+  },
+  "swimmer_cora": {
+    "intro": "The crater lake is freezing, which is exactly why I train here!",
+    "lose": "Brr. Beaten and cold.",
+    "after": "Swim the rim at dawn. The water is warmest just before it freezes over again."
+  },
+  "black_belt_taro": {
+    "intro": "I train where the ground is hot so my feet never stop. Ready?",
+    "lose": "My stance broke before my will did.",
+    "after": "Keep moving on these islands. Stand still and the rock bites."
+  },
+  "cooltrainer_ada": {
+    "intro": "Nobody comes out to this islet by accident. Let's make it worth it.",
+    "lose": "Worth it. For you, anyway.",
+    "after": "Emberhold's Leader respects heat. Bring water anyway."
+  },
+  "cooltrainer_ronan": {
+    "intro": "Eight badges and you still climbed the long way. I like that.",
+    "lose": "Go on, then. The summit's waiting.",
+    "after": "I've lost to the League four times. Fifth time's the one, I can feel it."
+  },
+  "battle_girl_suki": {
+    "intro": "No more warm-ups. This is the last plaza before the League!",
+    "lose": "Ow. That was a real one.",
+    "after": "My partner's across the plaza. Don't think you're done yet."
+  },
+  "engineer_hale": {
+    "intro": "I wired the lamps on these stairs. Let's see if you're brighter.",
+    "lose": "Short circuit. Mine.",
+    "after": "Every step up here has a lamp. Counted them twice: four hundred and twelve."
+  },
+  "beauty_liora": {
+    "intro": "The view from this plaza is lovely. Let's give it something to watch.",
+    "lose": "Even losing looks nice up here.",
+    "after": "Breathe slowly on the steps. The air thins before the doors do."
+  },
+  "gentleman_corwin": {
+    "intro": "A stroll up the avenue, and a battle to finish it. Shall we?",
+    "lose": "Splendid. Simply splendid.",
+    "after": "I come up here for the stairs, not the League. Mostly."
+  },
+  "channeler_ysolde": {
+    "intro": "The old trainers who never reached the top still walk these steps...",
+    "lose": "They stopped walking. For now.",
+    "after": "Do not look back on the last flight. Something always follows."
+  },
+  "sailor_fen": {
+    "intro": "Came all the way up from Saltmere for this. Don't make it a short trip!",
+    "lose": "Short trip, long walk home.",
+    "after": "From up here you can see the harbor. Barely. On a clear day. If you squint."
   }
 }

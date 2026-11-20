@@ -111,3 +111,29 @@ describe("planEvent: other events", () => {
 		assert.deepEqual(says(steps), []);
 	});
 });
+
+describe("planEvent: catching", () => {
+	const throwAt = (over) => planEvent({ actor: "player", type: "catch", itemName: "Great Ball", nickname: "Pidgey", shakes: 0, caught: false, ...over }, view, ctx);
+	const balls = (steps) => steps.filter((s) => s.fx === "enemy" && s.patch && "ball" in s.patch).map((s) => s.patch.ball);
+
+	it("throws, wobbles once per shake, and lets a broken-free Pokémon out again", () => {
+		const { steps } = throwAt({ shakes: 2 });
+		assert.equal(says(steps)[0], "You threw a Great Ball!");
+		assert.ok(says(steps).includes("Aargh! Almost had it!"));
+		assert.deepEqual(balls(steps), [0, 1, 2, null]);
+	});
+
+	it("uses the FireRed line for each near miss", () => {
+		assert.ok(says(throwAt({ shakes: 0 }).steps).includes("Oh no! The Pokémon broke free!"));
+		assert.ok(says(throwAt({ shakes: 1 }).steps).includes("Aww! It appeared to be caught!"));
+		assert.ok(says(throwAt({ shakes: 3 }).steps).includes("Shoot! It was so close, too!"));
+	});
+
+	it("a catch keeps it in the ball and says where it went", () => {
+		const { steps } = throwAt({ shakes: 3, caught: true, inPc: true });
+		assert.deepEqual(balls(steps), [0, 1, 2, 3]);
+		assert.ok(says(steps).includes("Gotcha! Pidgey was caught!"));
+		assert.ok(says(steps).includes("Pidgey was sent to the PC."));
+		assert.ok(!says(throwAt({ shakes: 3, caught: true, inPc: false }).steps).some((s) => /PC/.test(s)));
+	});
+});

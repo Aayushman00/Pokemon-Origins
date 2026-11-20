@@ -10,10 +10,12 @@ import json
 from scripts import gen_overworld_placeholders as base
 
 from .gym_rooms import ROOMS
+from .lairs import LAIRS, gate as lair_gate
 from .tiles_v2 import blob_mask
 from .town_art import CRAGGY, LAYOUTS, town_buildings
 from .world_maps import (BADGES, BORDER, GYMS, ID, NAMES, NAMES_BY_ID, PEOPLE, PATH, ROUTES, SOLID, Town, autotile_paths, door, dress_grass, finish, halo,
-                         ledge_row, fringe, grass_runs, hashed, lone_tree, paint, prop, dress_pond, say, trainer_script, TRAILS, worn)
+                         ledge_row, fringe, grass_runs, hashed, lone_tree, paint, prop, dress_pond, say, trainer_script, TRAILS, worn,
+                         EXTRAS, extra_script)
 
 COMMON = {".": "walk", ",": "road", "p": "plaza", "g": "grass", "q": "grass", "=": "stairs", "k": "plank", "b": "plank", "B": "bld", "D": "bld",
           "A": "bld", "T": "tree", "~": "water", "l": "lava", "L": "lamp", "f": "fence", "h": "hedge", "n": "bench", "u": "well",
@@ -224,7 +226,7 @@ TOWNS = {
               ("trainee", 18, 13, "battle_girl", "right", "Those posts have been kicked every day for forty years. They're winning.")]),
     "saltmere": dict(
         biome="sand", leader="coral_marlowe", props=[("clouds", True), ("ambient", "dust")], links={"west": "route_4", "north": "route_5"}, onward="north",
-        legend={"r": "obj:prop_rock", "W": "water", "N": "obj:net", "c": "obj:prop_crate", "q": "obj:buoy", "X": "obj:prop_crate"},
+        legend={"r": "obj:prop_rock", "W": "water", "N": "obj:net", "c": "obj:prop_crate", "q": "obj:buoy", "X": "plank"},
         signs=[("town_sign", 12, 8, "SALTMERE HARBOR - Tide tables at the Mart."),
                ("gym_sign", 29, 13, "SALTMERE GYM - Out on the pier. Leader: Coral Marlowe."),
                ("route_sign", 13, 1, "ROUTE 5 - North to Dynamo Station.")],
@@ -233,8 +235,8 @@ TOWNS = {
               ("tourist", 9, 7, "beauty", "right", "The sand here squeaks when you walk on it. Nobody warned me about the squeak.")]),
     "dynamo": dict(
         biome="concrete", leader="volt_dray", props=[("clouds", True), ("ambient", "dust")], links={"south": "route_5", "north": "route_6"}, onward="north",
-        legend={"P": "tall:pylon", "-": "wire", "z": "obj:steel_rail", "K": "obj:container", "X": "obj:container"},
-        patch=[(29, 8, "K"), (29, 9, "K")],
+        legend={"P": "tall:pylon", "-": "wire", "z": "obj:steel_rail", "K": "obj:container", "X": "road"},
+        patch=[(29, 8, ","), (29, 9, ",")],  # the road runs off east to Stormcrown Pylon
         signs=[("town_sign", 10, 7, "DYNAMO STATION - Output today: 91 percent."),
                ("gym_sign", 23, 7, "DYNAMO GYM - Leader: Volt Dray. Do not lick the panels."),
                ("route_sign", 12, 10, "ROUTE 6 - North along the Gale cliffs.")],
@@ -262,7 +264,7 @@ TOWNS = {
               ("student", 15, 12, "twin", "up", "Your reflection in the Gym moves the wrong way. I checked. Twice.")]),
     "emberhold": dict(
         biome="basalt", leader="cinder_valko", props=[("time", "dusk"), ("ambient", "embers")], links={"east": "route_8", "west": "route_9"}, onward="west",
-        legend={"#": "mass:basalt", "W": "bld", "X": "mass:basalt"},
+        legend={"#": "mass:basalt", "W": "bld", "X": "road"},
         patch=[(22, 0, "#"), (23, 0, "#")],
         signs=[("town_sign", 7, 11, "EMBERHOLD - Forged, not grown."),
                ("gym_sign", 17, 8, "EMBERHOLD GYM - Leader: Cinder Valko. Count your steps."),
@@ -356,6 +358,9 @@ def town(tid):
         gate(m, spec["onward"], spec["leader"], spec["links"][spec["onward"]])
     if tid == "zenith":
         hollow_lab_door(m)
+    for legend, lair in LAIRS.items():
+        if lair["host"] == tid:
+            lair_gate(m, legend)
     if spec["biome"] == "meadow":
         autotile_paths(m)
     else:
@@ -406,6 +411,11 @@ def route(rid):
         m.obj("npcs", t["id"], t["x"], t["y"], point=True, sprite=sprite, facing=t["facing"],
               trainer=t["id"], order=t["i"], sight=t["sight"], script=trainer_script(t["id"]))
         m.block(t["x"], t["y"])
+    # Extra road trainers stand only while the server's EXTRA_TRAINERS flag is on, so their cell stays
+    # walkable; the engine blocks them where they stand.
+    for t in r["later"]:
+        m.obj("npcs", t["id"], t["x"], t["y"], point=True, sprite=EXTRAS[t["id"]]["sprite"], facing=t["facing"],
+              trainer=t["id"], extra=True, sight=t["sight"], showFlag="feature:extra_trainers", script=extra_script(t["id"]))
     if biome == "meadow":
         autotile_paths(m)
         fringe(m, r["grid"])

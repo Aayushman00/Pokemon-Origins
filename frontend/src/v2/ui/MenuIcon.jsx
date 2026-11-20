@@ -18,6 +18,7 @@ const ICONS = {
 	healing: ["...xx...", "..xxxx..", "...xx...", "..xxxx..", ".x....x.", ".x.xx.x.", ".x....x.", "..xxxx.."],
 	pp_restore: ["...x....", "..xxx...", "..xxx...", ".xxxxx..", ".x.xxx..", ".xxxxx..", "..xxx...", "........"],
 	evolution_stone: ["...xx...", "..x.xx..", ".x...xx.", "x..x..xx", "x.....xx", ".x...xx.", "..xxxx..", "........"],
+	ball: ["..xxxx..", ".xxxxxx.", "xxxxxxxx", "xxx..xxx", "x..xx..x", "x......x", ".x....x.", "..xxxx.."],
 };
 const PAL = { x: "currentColor" };
 

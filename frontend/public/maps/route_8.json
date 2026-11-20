@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 14,
+ "nextobjectid": 16,
  "layers": [
   {
    "id": 1,
@@ -6056,6 +6056,104 @@
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:cooltrainer_selena\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Tell the Champion I said hello. She owes me a rematch.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_odessa\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"I have held this road for years. Show me why I should step aside.\"}, {\"op\": \"battle\", \"trainer\": \"cooltrainer_selena\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 14,
+     "name": "black_belt_taro",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 672,
+     "y": 256,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "black_belt"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "right"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "black_belt_taro"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:black_belt_taro\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Keep moving on these islands. Stand still and the rock bites.\"}]}, {\"op\": \"say\", \"text\": \"I train where the ground is hot so my feet never stop. Ready?\"}, {\"op\": \"battle\", \"trainer\": \"black_belt_taro\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 15,
+     "name": "cooltrainer_ada",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 224,
+     "y": 64,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "cooltrainer_f"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "right"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "cooltrainer_ada"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:cooltrainer_ada\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Emberhold's Leader respects heat. Bring water anyway.\"}]}, {\"op\": \"say\", \"text\": \"Nobody comes out to this islet by accident. Let's make it worth it.\"}, {\"op\": \"battle\", \"trainer\": \"cooltrainer_ada\"}]"
       }
      ],
      "point": true

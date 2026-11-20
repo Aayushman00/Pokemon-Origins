@@ -271,6 +271,13 @@ function makeService({
 	findWorldTrainer,
 	overworldOn = () => true,
 	findWildTable,
+	findExtraTrainer,
+	extrasOn,
+	// Catching: flag, its own random source, species rate lookup, party writer.
+	catchOn,
+	catchRandom,
+	getCatchRate,
+	partyService,
 } = {}) {
 	const progress = createProgressService({
 		store: createMemoryStore(),
@@ -320,8 +327,14 @@ function makeService({
 		...(flags ? { flags } : {}),
 		...(findWorldTrainer ? { findWorldTrainer } : {}),
 		...(findWildTable ? { findWildTable } : {}),
+		...(findExtraTrainer ? { findExtraTrainer, extrasOn } : {}),
+		getExtraBattle: async (spot) => ({ trainerId: spot.id, trainerName: `Extra ${spot.id}`, pokemon: enemy, battleType: "trainer" }),
 		getWildBattle: async () => ({ trainerName: "Wild Pidgey", pokemon: enemy, battleType: "wild" }),
 		overworldOn,
+		...(catchOn ? { catchOn } : {}),
+		...(catchRandom ? { catchRandom } : {}),
+		...(getCatchRate ? { getCatchRate } : {}),
+		...(partyService ? { partyService } : {}),
 		getPlayerParty,
 		getEnemyBattle: async (level, battleNumber) => ({
 			trainerId: voiceId,
@@ -333,6 +346,107 @@ function makeService({
 	});
 	return { service, progress, engine, xp, xpStore, wallet, history };
 }
+
+describe("catching", () => {
+	const POKE_BALL = 9;
+	const tables = { route_1: { minLevel: 1 } };
+	const wildEnemy = (overrides) => enemyMon({ moves: [{ move_id: 33, name: "Tackle", power: 40, accuracy: 100, move_type: "Normal", pp: 35 }], ...overrides });
+	const setup = ({ balls = 2, catchOn = () => true, catchRandom = () => 0, addCaught, ...opts } = {}) => {
+		const inventory = makeInventory(7, { [POKE_BALL]: balls, 1: 1 });
+		const caught = [];
+		const partyService = {
+			addCaught: addCaught || (async (trainerId, mon, moves) => (caught.push({ trainerId, mon, moves }), { id: 99, position: 2, inPc: false })),
+		};
+		const flags = createFlagService({ store: createMemoryFlagStore() });
+		const made = makeService({ flags, trainerId: 7, findWildTable: (id) => tables[id] || null, inventory, catchOn, catchRandom, getCatchRate: () => 45, partyService, enemy: wildEnemy(), ...opts });
+		return { ...made, inventory, caught };
+	};
+	const throwBall = async (service, battle = { wild: "route_1" }) => {
+		const { state } = await service.startBattle(7, battle);
+		return service.performAction(7, { sessionId: state.sessionId, action: { type: "catch", itemId: POKE_BALL } });
+	};
+	const balls = (inventory) => inventory.getQuantity(7, POKE_BALL);
+
+	it("is refused outside wild battles", async () => {
+		const { service } = setup();
+		await assert.rejects(throwBall(service, { level: 1, battleNumber: 1 }), (err) => err.status === 400 && /Unsupported action type/.test(err.message));
+	});
+
+	it("is refused while CATCH is off, and the ball is kept", async () => {
+		const { service, inventory } = setup({ catchOn: () => false });
+		await assert.rejects(throwBall(service), (err) => err.status === 403);
+		assert.equal(await balls(inventory), 2);
+	});
+
+	it("needs a ball you own", async () => {
+		const potion = setup();
+		const { state } = await potion.service.startBattle(7, { wild: "route_1" });
+		await assert.rejects(potion.service.performAction(7, { sessionId: state.sessionId, action: { type: "catch", itemId: 1 } }), (err) => err.status === 400);
+		const none = setup({ balls: 0 });
+		await assert.rejects(throwBall(none.service), (err) => err.status === 400);
+	});
+
+	it("is refused while your Pokémon has fainted, before the ball is spent", async () => {
+		const party = defaultParty();
+		party.push({ ...party[0], id: 2, position: 2, nickname: "Backup" });
+		// The wild one is faster and knocks the active Pokémon out before it can move.
+		const { service, inventory } = setup({ party, enemy: wildEnemy({ speed: 999 }), engine: stubEngine([{ result: "hit", damage: 999 }]) });
+		const { state } = await service.startBattle(7, { wild: "route_1" });
+		const after = await service.performAction(7, { sessionId: state.sessionId, action: { type: "move", moveId: 33 } });
+		assert.equal(after.state.requiresSwitch, true, "setup: the active Pokémon fainted");
+		await assert.rejects(service.performAction(7, { sessionId: state.sessionId, action: { type: "catch", itemId: POKE_BALL } }), (err) => err.status === 400);
+		assert.equal(await balls(inventory), 2);
+	});
+
+	it("a catch ends the battle, keeps the Pokémon's HP and moves, and pays no XP", async () => {
+		const { service, inventory, caught } = setup({ enemy: wildEnemy({ current_hp: 12 }) });
+		const result = await throwBall(service);
+		assert.equal(result.state.status, "caught");
+		const event = result.events.find((e) => e.type === "catch");
+		assert.deepEqual([event.caught, event.shakes, event.itemName, event.nickname], [true, 3, "Poké Ball", "Rattata"]);
+		assert.equal(caught.length, 1);
+		const { mon, moves } = caught[0];
+		assert.deepEqual(
+			[mon.pokemon_id, mon.level, mon.current_hp, mon.max_hp, mon.status, mon.experience, mon.nickname],
+			[19, 4, 12, 30, "Healthy", 0, "Rattata"]
+		);
+		assert.deepEqual(moves, [{ move_id: 33, pp: 35 }]);
+		assert.ok(!result.events.some((e) => e.type === "xp_gain"));
+		assert.equal(await balls(inventory), 1);
+		assert.deepEqual(result.progress, { wild: true, caught: { nickname: "Rattata", inPc: false } });
+	});
+
+	it("a miss costs the turn and the ball", async () => {
+		const { service, inventory, caught } = setup({ catchRandom: () => 0.999 });
+		const result = await throwBall(service);
+		assert.equal(result.state.status, "active");
+		const i = result.events.findIndex((e) => e.type === "catch");
+		assert.deepEqual([result.events[i].caught, result.events[i].shakes], [false, 0]);
+		assert.ok(result.events.slice(i + 1).some((e) => e.actor === "enemy"), "the wild Pokémon gets its attack");
+		assert.equal(await balls(inventory), 1);
+		assert.equal(caught.length, 0);
+	});
+
+	it("a failed save refunds the ball and the battle goes on", async () => {
+		const { service, inventory } = setup({ addCaught: async () => { throw new Error("db down"); } });
+		const { state } = await service.startBattle(7, { wild: "route_1" });
+		await assert.rejects(service.performAction(7, { sessionId: state.sessionId, action: { type: "catch", itemId: POKE_BALL } }), (err) => err.status === 500);
+		assert.equal(await balls(inventory), 2);
+		const again = await service.performAction(7, { sessionId: state.sessionId, action: { type: "move", moveId: 33 } });
+		assert.ok(["active", "won"].includes(again.state.status));
+	});
+
+	it("a miss whose end-of-turn poison faints the wild Pokémon is a normal win", async () => {
+		const { service } = setup({
+			catchRandom: () => 0.999,
+			enemy: wildEnemy({ current_hp: 1, debugStatus: "psn" }),
+			engine: stubEngine([{ result: "miss" }]),
+		});
+		const result = await throwBall(service);
+		assert.equal(result.state.status, "won");
+		assert.ok(result.events.some((e) => e.type === "xp_gain"));
+	});
+});
 
 describe("wild battles", () => {
 	const tables = { route_1: { minLevel: 1 }, route_5: { minLevel: 5 } };
@@ -472,6 +586,43 @@ describe("world_trainer battles", () => {
 		const off = setup({ overworldOn: () => false });
 		await assert.rejects(off.service.startBattle(7, { worldTrainer: "joey" }), code(404));
 	});
+	describe("extra road trainers (off the campaign cursor)", () => {
+		const extras = { otto: { id: "otto", minLevel: 1 }, late: { id: "late", minLevel: 4 } };
+		const extraSetup = (opts = {}) =>
+			setup({ findExtraTrainer: (id) => extras[id] || null, extrasOn: () => true, engine: stubEngine([{ result: "hit", damage: 30 }]), ...opts });
+
+		it("fights without moving the cursor, then pays once and stands down", async () => {
+			const { service, flags, progress, wallet } = extraSetup();
+			const { state } = await service.startBattle(7, { worldTrainer: "otto" });
+			const result = await service.performAction(7, { sessionId: state.sessionId, action: { type: "move", moveId: 33 } });
+			assert.equal(result.state.status, "won");
+			assert.deepEqual(await flags.listFlags(7), ["trainer:otto"]);
+			assert.equal((await progress.getProgress(7)).current_battle, 1, "the campaign cursor stays put");
+			assert.ok(result.events.some((e) => e.type === "coins"));
+			assert.ok((await wallet.getBalance(7)) > STARTING_COINS);
+			await assert.rejects(service.startBattle(7, { worldTrainer: "otto" }), code(409));
+		});
+		it("waits until the campaign reaches its road", async () => {
+			const { service } = extraSetup();
+			await assert.rejects(service.startBattle(7, { worldTrainer: "late" }), code(403));
+		});
+		it("is not there at all with EXTRA_TRAINERS off", async () => {
+			const { service } = extraSetup({ extrasOn: () => false });
+			await assert.rejects(service.startBattle(7, { worldTrainer: "otto" }), code(404));
+		});
+		it("pays nothing on a loss", async () => {
+			const { service, flags, wallet } = extraSetup({
+				party: [playerMon({ id: 101, position: 1, current_hp: 1 })],
+				engine: stubEngine([{ result: "hit", damage: 1 }]),
+			});
+			const { state } = await service.startBattle(7, { worldTrainer: "otto" });
+			const result = await service.performAction(7, { sessionId: state.sessionId, action: { type: "move", moveId: 33 } });
+			assert.notEqual(result.state.status, "won");
+			assert.deepEqual(await flags.listFlags(7), []);
+			assert.equal(await wallet.getBalance(7), STARTING_COINS);
+		});
+	});
+
 	it("finds real trainers in the campaign data", () => {
 		const { findTrainerBattle } = require("../campaign/loader");
 		assert.deepEqual(findTrainerBattle("hiker_jack"), { level: 1, battleNumber: 4, type: "trainer" });

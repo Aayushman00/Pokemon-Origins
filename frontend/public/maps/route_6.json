@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 14,
+ "nextobjectid": 15,
  "layers": [
   {
    "id": 1,
@@ -7656,6 +7656,55 @@
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:blackbelt_kiyo\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Master Tavish says I shout too much. HAH!\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_silas\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"Hah! Fists first, questions never! Stand ready!\"}, {\"op\": \"battle\", \"trainer\": \"blackbelt_kiyo\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 14,
+     "name": "bird_keeper_ines",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 32,
+     "y": 416,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "bird_keeper"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "right"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "bird_keeper_ines"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:bird_keeper_ines\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Watch the gusts on the bridge. My birds land on it sideways.\"}]}, {\"op\": \"say\", \"text\": \"Up here the wind decides who wins. Let's ask it!\"}, {\"op\": \"battle\", \"trainer\": \"bird_keeper_ines\"}]"
       }
      ],
      "point": true

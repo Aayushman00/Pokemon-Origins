@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 import { API_URL } from "../../../config";
+import { createPvpTransport } from "./pvpTransport";
 
 const MAX_MESSAGES = 50;
 const GUEST_NAME_KEY = "playground_guest_name";
@@ -35,8 +36,11 @@ export default function usePlayground() {
 	const [bubbles, setBubbles] = useState({}); // trainerId -> { text, ts }
 	const [emotes, setEmotes] = useState({}); // trainerId -> { emote, ts }
 	const [world, setWorld] = useState({ width: 640, height: 448, chatRadius: 96 });
+	// Live PvP: an incoming challenge, the one you sent, a short notice line, and the running match.
+	const [pvp, setPvp] = useState({ incoming: null, outgoing: null, notice: null, match: null });
 	const playersRef = useRef(new Map());
 	const socketRef = useRef(null);
+	const matchRef = useRef(null);
 
 	const syncRoster = () =>
 		setRoster(
@@ -47,6 +51,7 @@ export default function usePlayground() {
 		const token = localStorage.getItem("token");
 		const socket = io(API_URL, { auth: token ? { token } : { name: guestName() } });
 		socketRef.current = socket;
+		let myId = null; // this socket's own trainer id, from room:init
 
 		socket.on("connect_error", () => setStatus("error"));
 		socket.on("connect", () => setStatus((s) => (s === "error" ? "connecting" : s)));
@@ -61,6 +66,7 @@ export default function usePlayground() {
 				chatRadius: chatRadius || w.chatRadius,
 			}));
 			setSelfId(self.trainerId);
+			myId = self.trainerId;
 			setMessages(initial || []);
 			syncRoster();
 			setStatus("ready");
@@ -106,13 +112,64 @@ export default function usePlayground() {
 			if (p) Object.assign(p, { x, y, facing: facing || p.facing, run: !!run });
 		});
 
+		// Sent to us alone when the server refused our step: it still has us here.
+		socket.on("player:correct", ({ x, y }) => {
+			const me = playersRef.current.get(myId);
+			if (me) Object.assign(me, { x, y, corrected: true });
+		});
+
 		socket.on("player:left", ({ trainerId }) => {
 			playersRef.current.delete(trainerId);
 			syncRoster();
 		});
 
-		return () => socket.disconnect();
+		const nameOf = (id) => playersRef.current.get(id)?.name || "That trainer";
+		const notice = (text) => setPvp((p) => ({ ...p, notice: { text, ts: Date.now() } }));
+		socket.on("pvp:challenged", ({ fromId, name }) => setPvp((p) => ({ ...p, incoming: { fromId, name } })));
+		socket.on("pvp:declined", ({ byId }) => {
+			setPvp((p) => ({ ...p, outgoing: null }));
+			notice(`${nameOf(byId)} turned down your challenge.`);
+		});
+		socket.on("pvp:expired", ({ fromId, toId }) =>
+			setPvp((p) => ({
+				...p,
+				incoming: p.incoming?.fromId === fromId ? null : p.incoming,
+				outgoing: p.outgoing === toId ? null : p.outgoing,
+			}))
+		);
+		socket.on("pvp:start", (payload) => {
+			// The transport subscribes now, before any pvp:round can arrive.
+			const match = { matchId: payload.matchId, transport: createPvpTransport(socket, payload) };
+			matchRef.current = match;
+			setPvp((p) => ({ ...p, incoming: null, outgoing: null, match }));
+		});
+		// In a match the transport owns errors; outside one they are challenge problems.
+		socket.on("pvp:error", ({ message }) => {
+			if (matchRef.current) return;
+			setPvp((p) => ({ ...p, outgoing: null }));
+			notice(message);
+		});
+
+		return () => {
+			matchRef.current?.transport.close();
+			socket.disconnect();
+		};
 	}, []);
+
+	const challenge = useCallback((targetId) => {
+		socketRef.current?.emit("pvp:challenge", { targetId });
+		setPvp((p) => ({ ...p, outgoing: targetId }));
+	}, []);
+	const respond = useCallback((fromId, accept) => {
+		socketRef.current?.emit("pvp:respond", { fromId, accept });
+		setPvp((p) => ({ ...p, incoming: null }));
+	}, []);
+	const leaveMatch = useCallback(() => {
+		matchRef.current?.transport.close();
+		matchRef.current = null;
+		setPvp((p) => ({ ...p, match: null }));
+	}, []);
+	const clearNotice = useCallback(() => setPvp((p) => ({ ...p, notice: null })), []);
 
 	// Proximity only: a typed "/all" prefix is escaped so it can't reach the whole map.
 	const send = useCallback((text) => {
@@ -126,5 +183,5 @@ export default function usePlayground() {
 
 	const emitMove = useCallback((step) => socketRef.current?.emit("move", step), []);
 
-	return { status, selfId, roster, messages, bubbles, emotes, world, playersRef, send, emote, emitMove };
+	return { status, selfId, roster, messages, bubbles, emotes, world, playersRef, send, emote, emitMove, pvp, challenge, respond, leaveMatch, clearNotice };
 }

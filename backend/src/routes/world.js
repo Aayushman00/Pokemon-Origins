@@ -13,7 +13,10 @@ router.use((req, res, next) => (flags.isEnabled("OVERWORLD") ? next() : res.stat
 // GET /api/world/flags — the trainer's server-owned world flags (read-only for clients).
 router.get("/flags", requireAuth, async (req, res) => {
 	try {
-		return res.json({ success: true, flags: await flagService.listFlags(req.user.trainer_id) });
+		const stored = await flagService.listFlags(req.user.trainer_id);
+		// Derived, never stored: tells the maps to stand the extra road trainers up (showFlag).
+		const list = flags.isEnabled("EXTRA_TRAINERS") ? [...stored, "feature:extra_trainers"] : stored;
+		return res.json({ success: true, flags: list });
 	} catch (err) {
 		console.error("World flags error:", err.message);
 		return res.status(500).json({ success: false, error: "Failed to load flags" });

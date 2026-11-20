@@ -66,6 +66,33 @@
       "usableInBattle": false,
       "usableOverworld": true,
       "description": "Fully restores the PP of all moves of one Pokémon."
+    },
+    {
+      "itemId": 9,
+      "name": "Poké Ball",
+      "category": "ball",
+      "catchBonus": 1,
+      "usableInBattle": true,
+      "usableOverworld": false,
+      "description": "A device for catching wild Pokémon. Throw it at a wild Pokémon in battle."
+    },
+    {
+      "itemId": 10,
+      "name": "Great Ball",
+      "category": "ball",
+      "catchBonus": 1.5,
+      "usableInBattle": true,
+      "usableOverworld": false,
+      "description": "A good Ball with a higher catch rate than a Poké Ball."
+    },
+    {
+      "itemId": 11,
+      "name": "Ultra Ball",
+      "category": "ball",
+      "catchBonus": 2,
+      "usableInBattle": true,
+      "usableOverworld": false,
+      "description": "A very good Ball with a higher catch rate than a Great Ball."
     }
   ]
 }

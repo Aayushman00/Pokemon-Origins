@@ -3880,21 +3880,14 @@
     0,
     0,
     0,
-    4000,
-    0,
-    4000,
-    4000,
-    4000,
-    4000,
-    4000,
-    0,
-    0,
-    0,
-    0,
-    0,
     0,
     0,
     4000,
+    4000,
+    4000,
+    4000,
+    4000,
+    0,
     0,
     0,
     0,
@@ -3907,8 +3900,15 @@
     0,
     0,
     0,
+    0,
     4000,
+    0,
+    0,
+    0,
+    0,
+    0,
     4000,
+    0,
     0,
     0,
     0,
@@ -4105,7 +4105,7 @@
     4000,
     4000,
     0,
-    4000,
+    0,
     0,
     0,
     4000,
@@ -4860,6 +4860,11 @@
        "value": "left"
       },
       {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
+      },
+      {
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"say\", \"text\": \"The birds fly low when grey coats pass. They flew low all last month.\"}]"
@@ -4889,6 +4894,11 @@
        "value": "down"
       },
       {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
+      },
+      {
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"say\", \"text\": \"From the top of the spire you can see Zenith Summit. And a door in its side nobody remembers building.\"}]"
@@ -4916,6 +4926,11 @@
        "name": "facing",
        "type": "string",
        "value": "right"
+      },
+      {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
       },
       {
        "name": "script",

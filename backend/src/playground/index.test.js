@@ -2,17 +2,12 @@
 const { describe, it } = require("node:test");
 const assert = require("node:assert/strict");
 const attachPlayground = require("./index");
-const { ROOM_WIDTH, ROOM_HEIGHT, CHAT_RADIUS_PX } = require("./movement");
+const { CHAT_RADIUS_PX, TILE_PX } = require("./movement");
 
-// Blocks synchronously so a subsequent Date.now()-based elapsedMs calculation
-// (in the real move handler, which doesn't accept an injectable clock) is
-// guaranteed non-trivial instead of racing test-execution speed.
-function busyWaitMs(ms) {
-	const start = Date.now();
-	while (Date.now() - start < ms) {
-		// intentionally empty
-	}
-}
+// Real playground.json collision: (12,2) and (13,2) are open, (14,2) is a wall.
+const px = (tx, ty) => ({ x: tx * TILE_PX, y: ty * TILE_PX });
+/** Hands out the given spawn points in order (attachPlayground's `spawn` dep). */
+const spawns = (...points) => () => ({ ...points.shift() });
 
 /**
  * Minimal fake Socket.IO `io` object. Captures whatever handler
@@ -148,7 +143,8 @@ describe("attachPlayground chat wiring", () => {
 
 	it("only delivers a non-broadcast message to trainers within the chat radius", () => {
 		const { io, connect } = createFakeIo();
-		attachPlayground(io, fakePool);
+		// Far spawns well past the chat radius from Near.
+		attachPlayground(io, fakePool, { spawn: spawns(px(2, 3), { x: px(2, 3).x + CHAT_RADIUS_PX * 3, y: px(2, 3).y }) });
 
 		const { socket: nearSocket, handlers: nearHandlers, emits: nearEmits } = createFakeSocket({
 			trainerId: 10,
@@ -161,27 +157,54 @@ describe("attachPlayground chat wiring", () => {
 		});
 		connect(farSocket);
 
-		// Both spawn near the room center; walk Far well past the chat
-		// radius before Near speaks. The
-		// move handler computes elapsedMs from a real Date.now() delta (no
-		// injectable clock), so wait long enough that MAX_SPEED_PX_PER_SEC
-		// comfortably covers the distance in one step.
-		busyWaitMs(300); // maxDist = 2000px/s * 0.3s = 600px, more than the walk needs
-		farHandlers["move"]({ x: ROOM_WIDTH / 2 + CHAT_RADIUS_PX * 3, y: ROOM_HEIGHT / 2 });
-
+		assert.ok(farHandlers["move"]); // Far is on the map, just out of earshot
 		nearHandlers["chat:send"]("hello");
 		assert.equal(chatEmits(nearEmits).length, 1);
 		assert.equal(chatEmits(farEmits).length, 0);
 	});
 
+	it("refuses a wall, a jump and a speed burst: snaps the sender back, tells nobody, counts no step", () => {
+		const { io, broadcasts, connect } = createFakeIo();
+		const counted = [];
+		let clock = 5_000;
+		attachPlayground(io, fakePool, { spawn: spawns(px(13, 2)), now: () => clock, steps: { add: (id) => counted.push(id), flush: async () => {} } });
+		const { socket, handlers, emits } = createFakeSocket({ trainerId: 21, name: "Cheat" });
+		connect(socket);
+
+		handlers["move"](px(14, 2)); // wall
+		handlers["move"](px(13, 9)); // teleport
+		const corrections = emits.filter((e) => e.event === "player:correct");
+		assert.deepEqual(corrections.map((e) => e.payload), [px(13, 2), px(13, 2)]);
+		assert.equal(broadcasts.filter((b) => b.event === "player:moved").length, 0);
+
+		// Three quick legal steps pass, a fourth in the same instant does not.
+		for (const t of [px(12, 2), px(13, 2), px(12, 2)]) handlers["move"](t);
+		handlers["move"](px(13, 2));
+		assert.equal(broadcasts.filter((b) => b.event === "player:moved").length, 3);
+		assert.deepEqual(counted, [21, 21, 21]);
+		clock += 200; // budget refills
+		handlers["move"](px(13, 2));
+		assert.equal(counted.length, 4);
+	});
+
+	it("flushes a trainer's steps when they leave", () => {
+		const { io, connect } = createFakeIo();
+		const flushed = [];
+		attachPlayground(io, fakePool, { spawn: spawns(px(12, 2)), steps: { add() {}, flush: async (id) => flushed.push(id) } });
+		const { socket, handlers } = createFakeSocket({ trainerId: 22, name: "Walker" });
+		connect(socket);
+		handlers["disconnect"]();
+		assert.deepEqual(flushed, [22]);
+	});
+
 	it("relays a step's facing and run flag, and drops anything else", () => {
 		const { io, broadcasts, connect } = createFakeIo();
-		attachPlayground(io, fakePool);
+		attachPlayground(io, fakePool, { spawn: spawns(px(12, 2)) });
 		const { socket, handlers } = createFakeSocket({ trainerId: 13, name: "Walker" });
 		connect(socket);
 
-		handlers["move"]({ x: ROOM_WIDTH / 2 + 16, y: ROOM_HEIGHT / 2, facing: "right", run: true, evil: "<b>" });
-		handlers["move"]({ x: ROOM_WIDTH / 2 + 16, y: ROOM_HEIGHT / 2, facing: "sideways", run: "yes" });
+		handlers["move"]({ ...px(13, 2), facing: "right", run: true, evil: "<b>" });
+		handlers["move"]({ ...px(13, 2), facing: "sideways", run: "yes" });
 
 		const moved = broadcasts.filter((b) => b.event === "player:moved").map((b) => b.payload);
 		assert.equal(moved[0].facing, "right");
@@ -292,3 +315,43 @@ describe("attachPlayground chat wiring", () => {
 	});
 });
 
+
+describe("attachPlayground pvp wiring", () => {
+	function spyRegistry() {
+		const calls = [];
+		const rec = (name) => async (...args) => { calls.push([name, ...args]); };
+		return { calls, challenge: rec("challenge"), respond: rec("respond"), act: rec("act"), forfeit: rec("forfeit"), inMatch: () => false };
+	}
+
+	it("routes pvp events to the registry with the socket's own trainer", () => {
+		const { io, connect } = createFakeIo();
+		const pvp = spyRegistry();
+		attachPlayground(io, fakePool, { pvp });
+		const { socket, handlers } = createFakeSocket({ trainerId: 1, name: "Ash" });
+		connect(socket);
+		handlers["pvp:challenge"]({ targetId: 2 });
+		handlers["pvp:respond"]({ fromId: 2, accept: true });
+		handlers["pvp:action"]({ type: "move", moveId: 33 });
+		handlers["pvp:forfeit"]();
+		assert.deepEqual(pvp.calls, [
+			["challenge", 1, "Ash", 2],
+			["respond", 1, "Ash", 2, true],
+			["act", 1, { type: "move", moveId: 33 }],
+			["forfeit", 1],
+		]);
+	});
+
+	it("only the socket that owns the trainer forfeits on disconnect", () => {
+		const { io, connect } = createFakeIo();
+		const pvp = spyRegistry();
+		attachPlayground(io, fakePool, { pvp });
+		const first = createFakeSocket({ trainerId: 5, name: "Ash" });
+		const second = createFakeSocket({ trainerId: 5, name: "Ash" });
+		connect(first.socket);
+		connect(second.socket);
+		first.handlers["disconnect"]();
+		assert.deepEqual(pvp.calls, []);
+		second.handlers["disconnect"]();
+		assert.deepEqual(pvp.calls, [["forfeit", 5, "disconnect"]]);
+	});
+});

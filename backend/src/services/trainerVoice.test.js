@@ -5,6 +5,7 @@ const leaders = require("../../data/trainers/gym_leaders.json");
 const elite = require("../../data/trainers/elite_four.json");
 const champion = require("../../data/trainers/champion.json");
 const regular = require("../../data/trainers/regular.json");
+const extra = require("../../data/trainers/extra.json");
 const { addVoice, introLine, overworldLines } = require("./trainerVoice");
 
 const session = (over = {}) => ({
@@ -96,7 +97,7 @@ describe("voice data", () => {
 	});
 
 	it("only speaks for trainers that exist", () => {
-		for (const id of Object.keys(voices)) assert.ok(named[id] || regular[id], id);
+		for (const id of Object.keys(voices)) assert.ok(named[id] || regular[id] || extra[id], id);
 	});
 
 	it("exposes the overworld lines the map scripts use", () => {

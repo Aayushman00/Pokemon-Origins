@@ -46,6 +46,7 @@ function makeMart({
 	coins,
 	bag = {},
 	breakInventory = false,
+	catchOn = () => false,
 } = {}) {
 	const walletStore = createMemoryWalletStore(
 		coins != null ? { [TRAINER]: coins } : {}
@@ -111,6 +112,7 @@ function makeMart({
 		},
 		wallet,
 		inventory,
+		catchOn,
 		store: createMemoryMartStore({
 			wallet: walletStore,
 			inventory: purchaseInventoryStore,
@@ -157,6 +159,23 @@ describe("walletService", () => {
 			await wallet.getBalance(TRAINER),
 			STARTING_COINS + WIN_COINS + 4 * BOSS_WIN_COINS
 		);
+	});
+});
+
+describe("martService: Poké Balls", () => {
+	it("sells no balls while CATCH is off, and refuses to", async () => {
+		const { mart } = makeMart({ catchOn: () => false });
+		const view = await mart.getMart(TRAINER);
+		assert.ok(!view.stock.some((row) => row.category === "ball"));
+		await assert.rejects(() => mart.purchase(TRAINER, { itemId: 9 }));
+	});
+
+	it("sells Poké, Great and Ultra Balls at 200/600/1200 while CATCH is on", async () => {
+		const { mart } = makeMart({ catchOn: () => true });
+		const view = await mart.getMart(TRAINER);
+		const price = (id) => view.stock.find((row) => row.itemId === id)?.price;
+		assert.deepEqual([price(9), price(10), price(11)], [200, 600, 1200]);
+		await mart.purchase(TRAINER, { itemId: 9 });
 	});
 });
 

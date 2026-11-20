@@ -36,7 +36,13 @@ function checkObjects(map, err) {
 			err(`npcs "${n.name}" uses unknown sprite "${n.sprite}"`);
 		}
 		if (!isDir(n.facing)) err(`npcs "${n.name}" has bad facing "${n.facing}"`);
-		if (!n.hideFlag && collisionAt(map, n.x, n.y) === COL.FREE) err(`npcs "${n.name}" stands on a walkable tile`);
+		const free = collisionAt(map, n.x, n.y) === COL.FREE;
+		if (n.idle !== undefined && n.idle !== "wander") err(`npcs "${n.name}" has bad idle "${n.idle}"`);
+		// A wanderer leaves home and must be able to step back onto it, and a showFlag NPC is not always
+		// there, so its cell must not be an invisible wall. Anyone else is the wall there.
+		if (n.idle === "wander" && !free) err(`npcs "${n.name}" wanders but stands on a solid tile`);
+		else if (n.showFlag && !free) err(`npcs "${n.name}" comes and goes (showFlag) but stands on a solid tile`);
+		else if (!n.idle && !n.hideFlag && !n.showFlag && free) err(`npcs "${n.name}" stands on a walkable tile`);
 	}
 }
 
@@ -135,34 +141,43 @@ function checkReachable(map, err, maps) {
 	}
 }
 
-/** Trainers must stop the player, in order. `entry` names the edge the player arrives on. */
+/**
+ * Road trainers must stop the player, in order. `entry` names the edge the player arrives on.
+ * Extra trainers (`extra`) are optional and off the order: they only must not seal the road.
+ */
 function checkTrainers(map, err, maps) {
-	const trainers = map.npcs.filter((n) => n.trainer).sort((a, b) => a.order - b.order);
+	const all = map.npcs.filter((n) => n.trainer);
+	if (!all.length) return;
+	const sights = new Map(
+		all.map((t) => {
+			const cells = new Set();
+			const { dx, dy } = DIRS[t.facing] || { dx: 0, dy: 0 };
+			for (let i = 1; i <= t.sight && collisionAt(map, t.x + dx * i, t.y + dy * i) !== COL.SOLID; i++) cells.add(`${t.x + dx * i},${t.y + dy * i}`);
+			if (!cells.size) err(`trainer "${t.name}" sees nothing`);
+			return [t, cells];
+		})
+	);
+	// Beaten, they stay where they stopped: any sight cell short of the last, one step from the player.
+	// An extra's own cell is walkable on the map, so standing there must not cut the road either.
+	const points = keyPoints(map, maps);
+	for (const t of all) {
+		for (const stop of [...(t.extra ? [`${t.x},${t.y}`] : []), ...[...sights.get(t)].slice(0, -1)]) {
+			const sealed = points.find((from) => `${from}` !== stop && cutOff(map, points, from, new Set([stop])));
+			if (sealed) err(`trainer "${t.name}" seals the way at (${stop}), stranding (${sealed})`);
+		}
+	}
+	const trainers = all.filter((t) => !t.extra).sort((a, b) => a.order - b.order);
 	if (!trainers.length) return;
 	const entry = map.properties.entry;
 	if (!(entry in SIDE_STEP)) return err(`has trainers and needs an "entry" edge`);
 	if (trainers.some((t, i) => t.order !== i + 1)) return err("trainer order must run 1, 2, 3...");
-	const sights = trainers.map((t) => {
-		const cells = new Set();
-		const { dx, dy } = DIRS[t.facing] || { dx: 0, dy: 0 };
-		for (let i = 1; i <= t.sight && collisionAt(map, t.x + dx * i, t.y + dy * i) !== COL.SOLID; i++) cells.add(`${t.x + dx * i},${t.y + dy * i}`);
-		if (!cells.size) err(`trainer "${t.name}" sees nothing`);
-		return cells;
-	});
 	const start = edgeCells(map, entry);
 	const exits = Object.keys(SIDE_STEP).filter((s) => s !== entry).flatMap((s) => edgeCells(map, s));
 	trainers.forEach((t, k) => {
-		const seen = flood(map, start, sights[k]);
+		const seen = flood(map, start, sights.get(t));
 		if (exits.some(([x, y]) => seen.has(`${x},${y}`))) err(`trainer "${t.name}" can be walked around`);
 		const next = trainers[k + 1];
-		if (next && [...sights[k + 1]].some((c) => seen.has(c))) err(`trainer "${next.name}" can be met before "${t.name}"`);
-		// Beaten, they stay where they stopped: any sight cell short of the last, one step from the player.
-		const points = keyPoints(map, maps);
-		for (const stop of [...sights[k]].slice(0, -1)) {
-			const blocked = new Set([stop]);
-			const sealed = points.find((from) => `${from}` !== stop && cutOff(map, points, from, blocked));
-			if (sealed) err(`trainer "${t.name}" seals the way at (${stop}), stranding (${sealed})`);
-		}
+		if (next && [...sights.get(next)].some((c) => seen.has(c))) err(`trainer "${next.name}" can be met before "${t.name}"`);
 	});
 }
 

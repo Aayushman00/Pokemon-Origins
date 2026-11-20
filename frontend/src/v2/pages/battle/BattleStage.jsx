@@ -73,6 +73,7 @@ const BattleStage = ({ battle }) => {
 				<div className="mon mon--foe" style={{ translate: `0 ${seatDrop(enemy.pokemon_id, "front")}%` }} aria-hidden="true">
 					<BattlePokemonSprite key={`foe-${enemy.pokemon_id}-${enemy.position}`} pokemonId={enemy.pokemon_id} variant="front" alt="" className={`sprite ${monClass(fx.enemy)}`} />
 					{fx.enemy.sparkle && <span className="sparkle" />}
+					{fx.enemy.ball != null && <span key={`ball-${fx.enemy.ball}`} className={`catch-ball${fx.enemy.ball > 0 ? " is-wobble" : ""}`} />}
 				</div>
 			)}
 			{player && (

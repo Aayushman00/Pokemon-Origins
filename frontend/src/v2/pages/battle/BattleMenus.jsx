@@ -7,9 +7,10 @@ import { TypeBadge } from "../../ui/Badges";
 import PartyRow from "../../ui/PartyRow";
 import MenuIcon from "../../ui/MenuIcon";
 import { STRUGGLE_MOVE } from "../../battle/useBattle";
+import { ratingLine } from "../playground/pvpTransport";
 import { typeColor } from "../../../utils/typeColors";
 
-/** FIGHT / BAG / POKéMON / RESTART — the 2x2 command box. */
+/** FIGHT / BAG / POKéMON / RESTART — the 2x2 command box. PvP: no bag, and GIVE UP instead of restart. */
 export const CommandMenu = ({ battle }) => (
 	<div className="frame panel cmd-box">
 		<MenuList
@@ -17,16 +18,24 @@ export const CommandMenu = ({ battle }) => (
 			columns={2}
 			globalKeys
 			sound
-			items={[
-				{ id: "fight", label: "Fight", onSelect: () => battle.setPhase("moveSelect") },
-				{ id: "bag", label: "Bag", onSelect: battle.openBag },
-				{ id: "mon", label: "Pokémon", onSelect: battle.openParty },
-				battle.session?.battleType === "wild"
-					? { id: "run", label: "Run", onSelect: battle.run }
-					: battle.noEscape
-						? { id: "run", label: "Run", onSelect: battle.refuseRun }
-						: { id: "restart", label: "Restart", onSelect: () => battle.setPhase("restartConfirm") },
-			]}
+			items={
+				battle.pvp
+					? [
+							{ id: "fight", label: "Fight", onSelect: () => battle.setPhase("moveSelect") },
+							{ id: "mon", label: "Pokémon", onSelect: battle.openParty },
+							{ id: "forfeit", label: "Give up", onSelect: battle.forfeit },
+					  ]
+					: [
+							{ id: "fight", label: "Fight", onSelect: () => battle.setPhase("moveSelect") },
+							{ id: "bag", label: "Bag", onSelect: battle.openBag },
+							{ id: "mon", label: "Pokémon", onSelect: battle.openParty },
+							battle.session?.battleType === "wild"
+								? { id: "run", label: "Run", onSelect: battle.run }
+								: battle.noEscape
+									? { id: "run", label: "Run", onSelect: battle.refuseRun }
+									: { id: "restart", label: "Restart", onSelect: () => battle.setPhase("restartConfirm") },
+					  ]
+			}
 		/>
 	</div>
 );
@@ -310,6 +319,36 @@ export const LearnMenu = ({ battle, charMs }) => {
 /** Post-battle results: rewards, save state, next step. */
 export const ResultPanel = ({ battle, onContinue, onLeave, onLost }) => {
 	const win = battle.outcome?.result === "win";
+	if (battle.outcome?.result === "caught") {
+		const { name, inPc } = battle.outcome;
+		return (
+			<Panel className="result" plate="Caught!" plateTone="grass">
+				<p className="result__head">Gotcha! {name} was caught!</p>
+				<p className="read">{inPc ? `Your party is full, so ${name} was sent to the PC.` : `${name} joined your party.`}</p>
+				<div className="result__actions">
+					<Button variant="go" size="lg" onClick={onContinue} autoFocus>
+						Continue
+					</Button>
+				</div>
+			</Panel>
+		);
+	}
+	if (battle.pvp) {
+		const opponent = battle.session?.pvp?.opponent || "your opponent";
+		const end = battle.outcome?.pvp;
+		const how = end?.endedBy === "disconnect" ? " (they left)" : end?.endedBy === "timeout" ? " (out of time)" : end?.endedBy === "forfeit" ? " (gave up)" : "";
+		return (
+			<Panel variant={win ? undefined : "inset"} className="result" plate={win ? "Victory" : "Defeat"} plateTone={win ? "grass" : undefined}>
+				<p className="result__head">{end && end.winnerId == null ? `The match against ${opponent} was called off.` : win ? `You beat ${opponent}!${how}` : `${opponent} won this one.${how}`}</p>
+				<p className="read">{ratingLine(end?.rating, opponent)}</p>
+				<div className="result__actions">
+					<Button variant="go" size="lg" onClick={onContinue} autoFocus>
+						Back to the park
+					</Button>
+				</div>
+			</Panel>
+		);
+	}
 	return (
 		<Panel variant={win ? undefined : "inset"} className="result" plate={win ? "Victory" : "Defeat"} plateTone={win ? "grass" : undefined}>
 			<p className="result__head">

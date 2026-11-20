@@ -119,7 +119,8 @@ const EmoteWheel = ({ x, y, onPick }) => (
  * renderer, tile movement and input (WASD or arrows walk, Shift runs, the
  * touch pad on phones). Names, bubbles, emotes and menus float over the canvas.
  */
-const PlaygroundStage = ({ play, nearIds }) => {
+/** `onBoard` (A at the notice board) and `onTrainer(id)` (A facing a trainer); `busy` freezes you while a PvP prompt is open. */
+const PlaygroundStage = ({ play, nearIds, onBoard, onTrainer, busy = false }) => {
 	const { playersRef, selfId, emitMove, roster, bubbles, emotes, emote, world } = play;
 	const wrapRef = useRef(null);
 	const canvasRef = useRef(null);
@@ -134,7 +135,7 @@ const PlaygroundStage = ({ play, nearIds }) => {
 	const [wheel, setWheel] = useState(false);
 	const [dialog, setDialog] = useState(null);
 	countRef.current = roster.length;
-	uiRef.current = { wheel, dialog };
+	uiRef.current = { wheel, dialog, busy, onBoard, onTrainer };
 
 	const resize = useCallback(() => {
 		const wrap = wrapRef.current;
@@ -201,11 +202,14 @@ const PlaygroundStage = ({ play, nearIds }) => {
 						const pressedA = drainEdges(inputApi.state).some((e) => e.button === "a");
 						const ui = uiRef.current;
 						if (ui.dialog && pressedA) setDialog(null);
-						else if (!ui.dialog && !ui.wheel && pressedA) {
+						else if (!ui.dialog && !ui.wheel && !ui.busy && pressedA) {
 							const spot = game.facingSpot();
-							if (spot) setDialog(spotText(spot.kind, countRef.current, talks++));
+							const trainer = spot ? null : game.facingTrainer();
+							if (spot?.kind === "board" && ui.onBoard) ui.onBoard();
+							else if (spot) setDialog(spotText(spot.kind, countRef.current, talks++));
+							else if (trainer != null) ui.onTrainer?.(trainer);
 						}
-						game.tick(snapshot(inputApi.state), !!(ui.dialog || ui.wheel));
+						game.tick(snapshot(inputApi.state), !!(ui.dialog || ui.wheel || ui.busy));
 					},
 					render: draw,
 				});

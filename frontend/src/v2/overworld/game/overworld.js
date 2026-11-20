@@ -1,5 +1,5 @@
 import { DIRS } from "../constants.js";
-import { createActor, tickActor } from "../logic/movement.js";
+import { createActor, planStep, tickActor } from "../logic/movement.js";
 import { createWorld } from "../logic/world.js";
 import { dueTriggers, facingToward, interactionAt, spotter, triggerScript, warpFor, wildTable } from "../logic/events.js";
 import { resolveScript } from "../logic/script.js";
@@ -23,9 +23,13 @@ export const CRY_FLASH_TICKS = 2;
 export const ALERT_TICKS = 40;
 // Chance that a step ending in grass meets something.
 export const WILD_CHANCE = 0.1;
+// Chance per tick that an idle wanderer turns or steps (about every 2 s).
+export const WANDER_CHANCE = 1 / 120;
+const WANDER_DIRS = ["up", "down", "left", "right"];
 
-// encounterRoll is the host's Math.random. Left out, nothing lives in the grass.
-export function createOverworld({ store, flags, start, canRun = true, reducedMotion = false, emit = () => {}, encounterRoll = () => 1 }) {
+// encounterRoll / wanderRoll are the host's Math.random. Left out, nothing lives in the
+// grass and townsfolk stand still, which keeps headless runs deterministic.
+export function createOverworld({ store, flags, start, canRun = true, reducedMotion = false, emit = () => {}, encounterRoll = () => 1, wanderRoll = () => 1 }) {
 	const world = createWorld((id) => store.get(id));
 	let player = createActor(start);
 	const npcs = new Map(); // `${mapId}:${name}` -> actor + script/sprite
@@ -48,7 +52,7 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		if (!map) return [];
 		for (const n of map.npcs) {
 			const id = `${mapId}:${n.name}`;
-			if (n.hideFlag && flags.has(n.hideFlag)) {
+			if ((n.hideFlag && flags.has(n.hideFlag)) || (n.showFlag && !flags.has(n.showFlag))) {
 				npcs.delete(id);
 				continue;
 			}
@@ -61,7 +65,8 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 					script: n.script,
 					// legendary encounters: drawn 32x32, shiny = palette swap of the same sheet
 					...(n.kind ? { kind: n.kind, dex: n.dex, shiny: !!n.shiny } : {}),
-					...(n.trainer ? { trainer: n.trainer, order: n.order, sight: n.sight } : {}),
+					...(n.trainer ? { trainer: n.trainer, order: n.order, sight: n.sight, extra: Boolean(n.extra) } : {}),
+					...(n.idle === "wander" ? { home: { x: n.x, y: n.y } } : {}),
 				});
 			}
 		}
@@ -138,6 +143,34 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 	const isBlocked = (ref) =>
 		roomBlocks(ref) ||
 		allNpcs().some((n) => n.mapId === ref.mapId && ((n.x === ref.x && n.y === ref.y) || (n.to && n.to.mapId === ref.mapId && n.to.x === ref.x && n.to.y === ref.y)));
+
+	// A wanderer keeps to the 3x3 around home, off doors and step triggers, and out of the player's way.
+	const at = (a, ref) => a && a.mapId === ref.mapId && a.x === ref.x && a.y === ref.y;
+	function wanderBlocks(n, map, ref) {
+		if (ref.mapId !== n.mapId || Math.abs(ref.x - n.home.x) > 1 || Math.abs(ref.y - n.home.y) > 1) return true;
+		if (map.warpIndex.has(`${ref.x},${ref.y}`)) return true;
+		if (map.triggers.some((t) => t.when === "step" && ref.x >= t.x && ref.y >= t.y && ref.x < t.x + t.w && ref.y < t.y + t.h)) return true;
+		return at(player, ref) || at(player.to, ref) || isBlocked(ref);
+	}
+
+	function tickWanderers() {
+		const map = currentMap();
+		if (!map) return;
+		for (const n of npcsOf(map.id)) {
+			if (!n.home) continue;
+			const blocks = (ref) => wanderBlocks(n, map, ref);
+			let dir = null;
+			if (n.phase === "idle") {
+				const r = wanderRoll();
+				if (r >= WANDER_CHANCE) continue;
+				dir = WANDER_DIRS[Math.floor((r / WANDER_CHANCE) * 4)];
+				// Facing a wall already: stay put rather than walk in place.
+				if (dir === n.facing && planStep(n, dir, world, blocks).kind !== "walk") continue;
+			}
+			const { actor } = tickActor(n, { dir }, { world, isBlocked: blocks, canMove: true });
+			npcs.set(n.id, { ...n, ...actor });
+		}
+	}
 
 	function runScript(script) {
 		queue.push(...resolveScript(script, flags).effects);
@@ -302,10 +335,9 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 		if (!aBlock && tickCount >= edgeGuard && player.phase !== "walk" && player.phase !== "hop" && edges.some((e) => e.button === "a")) {
 			const hit = interactionAt(map, player, allNpcs());
 			if (hit) {
-				if (hit.npc) {
-					const n = npcs.get(hit.npc.id);
-					npcs.set(n.id, { ...n, facing: facingToward(n, player) });
-				}
+				const n = hit.npc && npcs.get(hit.npc.id);
+				// Turning mid-step would swing the walk sideways; a wanderer on the move keeps its heading.
+				if (n && n.phase !== "walk") npcs.set(n.id, { ...n, phase: "idle", t: 0, facing: facingToward(n, player) });
 				runScript(hit.script);
 				return;
 			}
@@ -359,7 +391,8 @@ export function createOverworld({ store, flags, start, canRun = true, reducedMot
 			else if (mode === "script") tickWalks();
 			else if (mode === "alert") tickAlert();
 			else if (mode === "explore") tickExplore(input, edges);
-			// idle NPCs animate through their own tickActor only during cutscenes
+			// tickExplore may have opened a dialogue or warp: wanderers only move while the player is free
+			if (mode === "explore") tickWanderers();
 		},
 		/** Host calls when the player dismisses the last dialogue page. */
 		closeDialogue() {

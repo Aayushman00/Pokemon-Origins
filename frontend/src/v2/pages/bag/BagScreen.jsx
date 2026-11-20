@@ -16,15 +16,16 @@ import { HpBar } from "../../ui/Bars";
 import "./items.css";
 
 const NEEDS_TARGET = new Set(["healing", "evolution_stone", "pp_restore"]);
-// Two pockets, as on a handheld: stones in one, everything you drink or spray in the other.
+// Pockets, as on a handheld: medicine, stones, and Poké Balls (thrown only in wild battles).
 const POCKETS = [
 	{ id: "medicine", label: "Medicine" },
 	{ id: "stones", label: "Stones" },
+	{ id: "balls", label: "Balls" },
 ];
-const pocketOf = (item) => (item.category === "evolution_stone" ? "stones" : "medicine");
+const pocketOf = (item) => (item.category === "evolution_stone" ? "stones" : item.category === "ball" ? "balls" : "medicine");
 /** What the item does, in a few words, for the list row. */
 const effectOf = (item) =>
-	item.healAmount ? `+${item.healAmount} HP` : item.category === "pp_restore" ? "Full PP" : item.category === "evolution_stone" ? "Evolves" : "";
+	item.healAmount ? `+${item.healAmount} HP` : item.category === "pp_restore" ? "Full PP" : item.category === "evolution_stone" ? "Evolves" : item.category === "ball" ? "Wild battles" : "";
 
 /** Overworld bag: heal, restore PP, evolution stones (server-validated). */
 const BagScreen = () => {

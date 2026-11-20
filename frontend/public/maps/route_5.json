@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 24,
+ "nextobjectid": 25,
  "layers": [
   {
    "id": 1,
@@ -7836,6 +7836,55 @@
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:hollow_grunt_petra\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The boss says the Lab is the point. I just carry the boxes.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:biker_jaxon\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"You again? No, wait, a different kid. They keep making more of you!\"}, {\"op\": \"battle\", \"trainer\": \"hollow_grunt_petra\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 24,
+     "name": "twin_pia",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 432,
+     "y": 176,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "twin"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "left"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "twin_pia"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:twin_pia\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"If you see a boy with my face near the substation, tell him I won. Please?\"}]}, {\"op\": \"say\", \"text\": \"My brother's off chasing sparks by the pylons, so you get me instead!\"}, {\"op\": \"battle\", \"trainer\": \"twin_pia\"}]"
       }
      ],
      "point": true

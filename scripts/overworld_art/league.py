@@ -118,8 +118,8 @@ LAB = [
 
 
 def lab():
-    """Five chambers on one corridor. Each legendary fills a doorway, so they come in the
-    campaign's order, and each is gone once met. The floor under them stays walkable."""
+    """Five chambers on one corridor, and Mewtwo in the last. It waits until the four lairs
+    have been answered, in the campaign's order."""
     theme = "dome"
     tile = lambda name: ID[f"gym_{theme}_{name}"]
     w, h = len(LAB[0]), len(LAB)
@@ -133,13 +133,11 @@ def lab():
             else:
                 m.put("ground", x, y, tile(f"floor{(x + y) % 2}"))
     opening(m, theme, "exit", w - 1, 4, "zenith", *LAB_DOOR, "right", "right")
-    for (name, dex, cry), x in zip(LEGENDS, (20, 15, 10, 5, 2)):  # four doorways, then the last chamber
-        script = [{"op": "cry", "dex": dex}, {"op": "say", "text": f"{name.upper()}: {cry}"}, {"op": "battle", "trainer": name}]
-        m.obj("npcs", name, x, 4, point=True, sprite=f"legend_{dex}", facing="left", kind="legendary", dex=dex, shiny=False,
-              hideFlag=f"trainer:{name}", script=json.dumps(script))
+    from .lairs import place_legend  # the other four wait in their own lairs (lairs.py)
+    place_legend(m, "mewtwo", 2, 4, "left")  # the last chamber
     m.obj("triggers", "arrival", 0, 0, when="enter", once=True, script=say(
         "Crates, cut chains and a great key left in the lock. Team Hollow broke the seal and ran from what was inside.",
-        "Five old presences wait along the corridor. They have been asleep since before the League had a name."))
+        "Something waits at the end of the corridor. It has been awake far longer than the League has had a name."))
     m.sign("notes", 22, 1, "Hollow Lab, final entry: 'We wanted to know how Pokemon and people first met. We asked them. They answered.'")
     m.put("ground", 22, 1, tile("plaque"))
     return finish(m.build(), m)

@@ -116,6 +116,7 @@ function createMartService(deps = {}) {
 	const getWallet = () => deps.wallet || require("./walletService");
 	const getInventory = () => deps.inventory || require("./inventoryService");
 	const getConfig = () => deps.config || loadMartConfig();
+	const catchOn = deps.catchOn || (() => require("../config/flags").isEnabled("CATCH"));
 
 	function requiredUnlockedLevel() {
 		return getConfig().unlock?.requiredUnlockedLevel ?? 2;
@@ -127,7 +128,8 @@ function createMartService(deps = {}) {
 		return (getConfig().stock || [])
 			.map((entry) => {
 				const item = inventory.getItem(entry.itemId);
-				if (!item) return null;
+				// Balls are only on the shelf while catching is switched on.
+				if (!item || (item.category === "ball" && !catchOn())) return null;
 				return {
 					itemId: item.itemId,
 					name: item.name,

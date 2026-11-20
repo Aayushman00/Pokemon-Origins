@@ -88,7 +88,7 @@ async function getPublicProfile(trainerId, pool = require("../config/trainerdb")
 	if (!trainerRows.length) throw profileError(404, "Trainer not found");
 	const trainer = trainerRows[0];
 
-	const [[progressRows], [countRows], [recentRows], [partyRows], [streakRows], [cardRows]] = await Promise.all([
+	const [[progressRows], [countRows], [recentRows], [partyRows], [streakRows], [cardRows], [stepRows]] = await Promise.all([
 		pool.query(
 			"SELECT current_level, current_battle, unlocked_level FROM trainer_progress WHERE trainer_id = ?",
 			[trainerId]
@@ -123,6 +123,9 @@ async function getPublicProfile(trainerId, pool = require("../config/trainerdb")
 			 WHERE c.trainer_id = ?`,
 			[trainerId]
 		),
+		// Playground steps (server-validated, see playground/movement.js). Before
+		// migration 016 the table is missing: show 0 rather than fail the profile.
+		pool.query("SELECT steps FROM trainer_steps WHERE trainer_id = ?", [trainerId]).catch(() => [[]]),
 	]);
 	const card = cardRows[0];
 
@@ -141,6 +144,7 @@ async function getPublicProfile(trainerId, pool = require("../config/trainerdb")
 			})),
 		},
 		record: { ...summarizeRecord(countRows[0]), streak: summarizeStreak(streakRows.map((r) => r.result)) },
+		steps: Number(stepRows[0]?.steps) || 0,
 		card: {
 			theme: card?.theme || "sky",
 			motto: card?.motto || null,

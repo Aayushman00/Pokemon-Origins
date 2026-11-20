@@ -103,9 +103,16 @@ describe("validateMaps", () => {
 		prop(npc(raw), "facing").value = "sideways";
 		expectError(raw, /npcs.*facing/);
 		raw = load();
-		const n = npc(raw);
-		layer(raw.dawnbrook, "collision").data[(n.y / 16) * raw.dawnbrook.width + n.x / 16] = 0;
+		const t = layer(raw.route_1, "npcs").objects[0]; // a trainer: stands on its own wall
+		layer(raw.route_1, "collision").data[(t.y / 16) * raw.route_1.width + t.x / 16] = 0;
 		expectError(raw, /npcs.*walkable/);
+		raw = load();
+		const n = npc(raw); // townsfolk wander, so home must stay walkable
+		layer(raw.dawnbrook, "collision").data[(n.y / 16) * raw.dawnbrook.width + n.x / 16] = raw.dawnbrook.tilesets.find((s) => s.name === "collision").firstgid;
+		expectError(raw, /npcs.*wanders but stands on a solid tile/);
+		raw = load();
+		prop(npc(raw), "idle").value = "dance";
+		expectError(raw, /npcs.*bad idle "dance"/);
 	});
 	it("a legendary needs a dex number instead of a sheet", () => {
 		const raw = load();

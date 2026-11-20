@@ -22,13 +22,13 @@ const readSpeed = () => {
 };
 
 /** Battle screen: stage on top, FRLG-style text + command boxes below. */
-const BattleView = ({ levelNumber, battleNumber, worldTrainer, wild, levelName, onBattleWon, onContinue, onLeave, onLost, onRun }) => {
+const BattleView = ({ levelNumber, battleNumber, worldTrainer, wild, levelName, onBattleWon, onContinue, onLeave, onLost, onRun, transport }) => {
 	const navigate = useNavigate();
 	const leave = onLeave || (() => navigate("/game"));
 	const { user } = useUser();
 	const [speed, setSpeed] = useState(readSpeed);
 	const [soundOn, setSound] = useState(isSoundOn);
-	const battle = useBattle({ levelNumber, battleNumber, worldTrainer, wild, trainerId: user?.trainer_id, onBattleWon, onRun, textSpeed: speed });
+	const battle = useBattle({ levelNumber, battleNumber, worldTrainer, wild, trainerId: user?.trainer_id, onBattleWon, onRun, textSpeed: speed, transport });
 	const { phase, player, session } = battle;
 	const slow = useDelayedHint(phase === "loading" || phase === "restarting");
 
@@ -93,7 +93,7 @@ const BattleView = ({ levelNumber, battleNumber, worldTrainer, wild, levelName, 
 			<div className="battle__bar">
 				<p className="battle__where">
 					<strong>{levelName || `Stage ${levelNumber}`}</strong>
-					<span className="muted"> battle {battleNumber}</span>
+					{battleNumber != null && <span className="muted"> battle {battleNumber}</span>}
 					{opponent && <span className="battle__vs"> against {opponent}</span>}
 				</p>
 				<div className="battle__controls">
@@ -111,7 +111,7 @@ const BattleView = ({ levelNumber, battleNumber, worldTrainer, wild, levelName, 
 					>
 						Sound: {soundOn ? "On" : "Off"}
 					</button>
-					{!worldTrainer && !wild && (
+					{!worldTrainer && !wild && !transport && (
 						<button type="button" className="chip-btn" onClick={() => navigate("/game")} title="Your battle is saved on the server; you can resume it">
 							Leave
 						</button>

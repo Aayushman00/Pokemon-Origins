@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 12,
+ "nextobjectid": 16,
  "layers": [
   {
    "id": 1,
@@ -46,8 +46,8 @@
     3168,
     2018,
     3168,
-    2018,
-    3168,
+    3116,
+    3116,
     2018,
     3168,
     2018,
@@ -75,10 +75,10 @@
     3448,
     3116,
     3456,
-    3116,
-    2026,
-    3112,
-    2026,
+    3117,
+    1888,
+    1888,
+    2028,
     3112,
     3112,
     2026,
@@ -689,8 +689,8 @@
     0,
     0,
     0,
-    0,
-    0,
+    3095,
+    3095,
     0,
     0,
     0,
@@ -719,8 +719,8 @@
     3095,
     0,
     3095,
-    3095,
-    3095,
+    3723,
+    3711,
     3095,
     3095,
     3095,
@@ -2528,8 +2528,8 @@
     4000,
     4000,
     4000,
-    4000,
-    4000,
+    0,
+    0,
     4000,
     4000,
     4000,
@@ -2587,7 +2587,7 @@
     4000,
     4000,
     4000,
-    0,
+    4000,
     0,
     0,
     0,
@@ -2810,9 +2810,9 @@
     0,
     4000,
     0,
-    4000,
     0,
     0,
+    0,
     4000,
     0,
     0,
@@ -2824,14 +2824,14 @@
     0,
     0,
     0,
-    4000,
     0,
     0,
     0,
     0,
     0,
     0,
-    4000,
+    0,
+    0,
     0,
     0,
     0,
@@ -3290,6 +3290,102 @@
        "value": "up"
       }
      ]
+    },
+    {
+     "id": 12,
+     "name": "crater_throne_22_1",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 352,
+     "y": 16,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "crater_throne"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 6
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "iris"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "up"
+      }
+     ]
+    },
+    {
+     "id": 13,
+     "name": "crater_throne_23_1",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 368,
+     "y": 16,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "crater_throne"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 6
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "iris"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "up"
+      }
+     ]
     }
    ]
   },
@@ -3323,6 +3419,29 @@
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:cinder_valko\", \"else\": [{\"op\": \"say\", \"text\": \"The road to Route 9 is closed to anyone without the Ember Badge. Try the Gym here first.\"}, {\"op\": \"cutsceneMove\", \"actor\": \"player\", \"path\": [\"right\"]}]}]"
+      }
+     ]
+    },
+    {
+     "id": 14,
+     "name": "crater_throne_seal",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 352,
+     "y": 32,
+     "width": 32,
+     "height": 16,
+     "properties": [
+      {
+       "name": "when",
+       "type": "string",
+       "value": "step"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:kestrel_vane\", \"else\": [{\"op\": \"say\", \"text\": \"Hold it. Past here is League ground. Only the Champion of Aurelia goes on.\"}, {\"op\": \"cutsceneMove\", \"actor\": \"player\", \"path\": [\"down\"]}]}]"
       }
      ]
     }
@@ -3360,6 +3479,11 @@
        "value": "right"
       },
       {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
+      },
+      {
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"say\", \"text\": \"Our forge has burned since before the town had a name. Nobody lit it.\"}]"
@@ -3387,6 +3511,11 @@
        "name": "facing",
        "type": "string",
        "value": "left"
+      },
+      {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
       },
       {
        "name": "script",
@@ -3418,9 +3547,43 @@
        "value": "down"
       },
       {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
+      },
+      {
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"say\", \"text\": \"Eight badges is a lot of road, dear. Sit by the fire a minute.\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 15,
+     "name": "crater_throne_guard",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 336,
+     "y": 48,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "gym_guide"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "right"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:kestrel_vane\", \"else\": [{\"op\": \"say\", \"text\": \"League order. Nobody but the Champion passes. Come back with the title, not just the badges.\"}]}, {\"op\": \"say\", \"text\": \"Champion! The way's yours. Whatever's in there has waited a long time. Go gently.\"}]"
       }
      ],
      "point": true

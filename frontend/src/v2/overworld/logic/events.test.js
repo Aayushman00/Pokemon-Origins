@@ -24,6 +24,12 @@ describe("trainer sight", () => {
 		assert.equal(spotter(field, { x: 3, y: 1 }, [{ ...foe, y: 1 }], none), null);
 		assert.equal(spotter(field, { x: 3, y: 0 }, [foe, { name: "o", x: 2, y: 0 }], none), null);
 	});
+	it("extra trainers stand outside the line: they challenge whatever the road order says", () => {
+		const first = { ...foe, trainer: "first", order: 1, x: 0, y: 3 };
+		const extra = { ...foe, name: "x", trainer: "x", order: undefined, extra: true };
+		assert.equal(spotter(field, { x: 3, y: 0 }, [first, extra], none).npc, extra);
+		assert.equal(spotter(field, { x: 3, y: 0 }, [first, extra], new Set([defeatedFlag("x")])), null);
+	});
 	it("ignores beaten trainers and plain NPCs, and earlier trainers go first", () => {
 		assert.equal(spotter(field, { x: 3, y: 0 }, [foe], new Set([defeatedFlag("t")])), null);
 		assert.equal(spotter(field, { x: 3, y: 0 }, [{ name: "n", x: 0, y: 0, facing: "right" }], none), null);

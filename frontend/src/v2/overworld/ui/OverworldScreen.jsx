@@ -6,6 +6,7 @@ import BattleView from "../../pages/battle/BattleView";
 import RewardScreen from "../../pages/battle/RewardScreen";
 import StarterPick from "../../pages/hub/StarterPick";
 import { play } from "../../battle/sfx";
+import { playTrack, stopMusic, trackFor } from "../../battle/music";
 import { attachInput, drainEdges, snapshot } from "../engine/input";
 import { createLoop } from "../engine/loop";
 import { computeScale } from "../engine/scale";
@@ -108,6 +109,7 @@ const OverworldScreen = () => {
 					start,
 					reducedMotion: reduced(),
 					encounterRoll: Math.random,
+					wanderRoll: Math.random,
 					emit: (e) => {
 						if (e.type === "sound") play(e.cue);
 						else if (e.type === "dialogue") setDialogue({ pages: e.pages, i: 0 });
@@ -115,6 +117,7 @@ const OverworldScreen = () => {
 							if (/^(done|story):/.test(e.flag)) api.post("/api/world/flags", { flag: e.flag }).catch(logFailure("save a story flag"));
 						} else if (e.type === "mapChange") {
 							store.prune(e.mapId);
+							playTrack(trackFor(e.mapId));
 							if (e.reason !== "start") savePosition(game);
 						} else if (e.type === "effect" && e.effect.type === "battle" && e.effect.trainer) setBattle({ trainer: e.effect.trainer });
 						else if (e.type === "effect" && e.effect.type === "battle" && e.effect.table) setBattle({ wild: e.effect.table });
@@ -204,6 +207,7 @@ const OverworldScreen = () => {
 			loop?.stop();
 			inputApi?.dispose();
 			clearInterval(hudTimer);
+			stopMusic();
 			sessionRef.current = null;
 			delete window.__overworld;
 		};
@@ -220,6 +224,13 @@ const OverworldScreen = () => {
 			window.removeEventListener("resize", resize);
 		};
 	}, [resize]);
+
+	// Battles play over the world: their own tune while fighting, the map's again after.
+	const fighting = Boolean(battle && !battle.reward);
+	useEffect(() => {
+		const game = sessionRef.current?.game;
+		if (game) playTrack(fighting ? "battle" : trackFor(game.player.mapId));
+	}, [fighting]);
 
 	const endBattle = async (lost = false) => {
 		const { game } = sessionRef.current;

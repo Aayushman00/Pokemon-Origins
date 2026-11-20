@@ -210,7 +210,7 @@ class WorldTests(unittest.TestCase):
         self.assertEqual((W, H), (30, 20))
 
     def test_world_map_npcs_use_existing_sheets(self):
-        for map_id, count in (("dawnbrook", 2), ("route_1", 4), ("mossgate", 2), ("mossgate_gym", 1)):
+        for map_id, count in (("dawnbrook", 2), ("route_1", 4), ("mossgate", 3), ("mossgate_gym", 1)):  # mossgate: 2 townsfolk + the Hidden Grove guard
             m = json.loads((MAPS / f"{map_id}.json").read_text())
             npcs = next(l for l in m["layers"] if l["name"] == "npcs")["objects"]
             self.assertEqual(len(npcs), count)

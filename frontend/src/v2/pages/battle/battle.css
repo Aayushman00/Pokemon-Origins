@@ -1196,3 +1196,48 @@
 	transform: translateY(3px);
 	box-shadow: 0 1px 0 var(--c-red-dark), 0 0 0 3px var(--c-line);
 }
+
+/* Poké Ball on the foe's spot while a catch plays out: red top, white bottom, black band. */
+.catch-ball {
+	position: absolute;
+	left: 50%;
+	bottom: 8%;
+	width: 6cqw;
+	height: 6cqw;
+	translate: -50% 0;
+	border-radius: 50%;
+	background: linear-gradient(#e33a3a 0 44%, #1a1a1a 44% 56%, #f4f4f4 56%);
+	box-shadow: inset 0 0 0 0.4cqw #1a1a1a;
+	animation: ball-drop 300ms steps(4, end) both;
+}
+.catch-ball::after {
+	content: "";
+	position: absolute;
+	inset: 36%;
+	border-radius: 50%;
+	background: #f4f4f4;
+	box-shadow: 0 0 0 0.4cqw #1a1a1a;
+}
+.catch-ball.is-wobble {
+	transform-origin: 50% 100%;
+	animation: ball-wobble 480ms steps(6, end) both;
+}
+@keyframes ball-drop {
+	from {
+		transform: translateY(-12cqw);
+	}
+}
+@keyframes ball-wobble {
+	25% {
+		rotate: -18deg;
+	}
+	75% {
+		rotate: 18deg;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.catch-ball,
+	.catch-ball.is-wobble {
+		animation: none;
+	}
+}

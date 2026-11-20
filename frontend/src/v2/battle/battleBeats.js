@@ -27,6 +27,8 @@ import { STATUS_APPLIED_TEXT, CANT_MOVE_TEXT, STATUS_END_TEXT, STATUS_HURT_TEXT,
 export const DRAIN_MS = 600;
 
 const other = (side) => (side === "player" ? "enemy" : "player");
+// FireRed's line for a ball that wobbled 0, 1, 2 or 3 times and still broke open.
+const BROKE_FREE = ["Oh no! The Pokémon broke free!", "Aww! It appeared to be caught!", "Aargh! Almost had it!", "Shoot! It was so close, too!"];
 const withFallback = (table, key, fallback) => table[key] || fallback;
 
 function faintSteps(side, nickname) {
@@ -86,6 +88,25 @@ export function planEvent(event, view, { trainerName = "The trainer", nextId = (
 					{ wait: 700 },
 					{ fx: "enemy", patch: { entering: false } },
 				]);
+
+		case "catch": {
+			// The server already rolled it; this only plays it back: in, wobble per shake, out or click.
+			const steps = [
+				{ turn: "none" },
+				{ say: `You threw a ${event.itemName}!` },
+				{ sfx: "shot" },
+				{ fx: "enemy", patch: { hidden: true, ball: 0 } },
+				{ wait: 500 },
+			];
+			for (let i = 1; i <= event.shakes; i++) steps.push({ fx: "enemy", patch: { ball: i } }, { sfx: "bump" }, { wait: 600 });
+			if (event.caught) {
+				steps.push({ sfx: "levelUp" }, { say: `Gotcha! ${event.nickname} was caught!` });
+				if (event.inPc) steps.push({ say: `${event.nickname} was sent to the PC.` });
+				return done(steps);
+			}
+			steps.push({ fx: "enemy", patch: { hidden: false, ball: null } }, { sfx: "sendOut" }, { say: BROKE_FREE[Math.min(event.shakes, 3)] });
+			return done(steps);
+		}
 
 		case "item": {
 			const steps = [{ turn: "none" }, { say: `Used ${event.itemName}! ${event.nickname} recovered ${event.amount} HP.` }];

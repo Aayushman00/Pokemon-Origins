@@ -1,65 +1,82 @@
 // backend/src/playground/movement.js
 /**
- * Server-side resolution of one incoming "move" event. The room is the
- * Playground map (frontend/public/maps/playground.json) in game pixels:
- * a position is the top-left of the 16px tile a trainer stands on, sent at
- * the start of each step. The client walks tile by tile on that map; this
- * module only caps speed and keeps positions inside the room.
+ * Server-side check of one incoming "move" event. The room is the Playground
+ * map (frontend/public/maps/playground.json, served to the server as
+ * maps.index.json "playground") in game pixels: a position is the top-left of
+ * the 16px tile a trainer stands on, sent at the start of each step.
+ *
+ * A move is accepted only if it is the same tile (a turn) or one orthogonal
+ * tile onto a free tile, and the trainer's step budget allows it. The budget
+ * is a token bucket a little faster than running (8 ticks a tile at 60 Hz =
+ * 7.5 tiles/s), with a small burst for network bunching. Anything else is
+ * refused and the client is snapped back.
  */
+const { canStand } = require("../world/maps");
 
 const TILE_PX = 16;
 const ROOM_WIDTH = 40 * TILE_PX; // playground.json is 40 x 28 tiles
 const ROOM_HEIGHT = 28 * TILE_PX;
-const MAX_SPEED_PX_PER_SEC = 2000;
 const CHAT_RADIUS_PX = 6 * TILE_PX; // earshot: six tiles
+const STEP_REFILL_PER_SEC = 8;
+const STEP_BURST = 3;
 
-function clamp(value, min, max) {
-	return Math.min(Math.max(value, min), max);
-}
+const standOnPlayground = (tx, ty) => canStand("playground", tx, ty);
 
-function resolveMove(current, target, elapsedMs) {
-	const dx = target.x - current.x;
-	const dy = target.y - current.y;
-	const dist = Math.hypot(dx, dy);
-	const maxDist = MAX_SPEED_PX_PER_SEC * (elapsedMs / 1000);
-
-	let next;
-	if (dist <= maxDist) {
-		next = { x: target.x, y: target.y };
-	} else {
-		const ratio = maxDist / dist;
-		next = { x: current.x + dx * ratio, y: current.y + dy * ratio };
-	}
-
-	// Bounds always win, regardless of whether this step arrived at the
-	// target or was still speed-capped: a large elapsedMs (e.g. after a
-	// reconnect or lag spike) must never resolve outside the room.
-	return {
-		x: clamp(next.x, 0, ROOM_WIDTH),
-		y: clamp(next.y, 0, ROOM_HEIGHT),
-	};
-}
-
-const SPAWN_RADIUS_PX = 2 * TILE_PX;
+/** A full bucket, for a trainer who just arrived. */
+const freshBudget = (nowMs) => ({ tokens: STEP_BURST, at: nowMs });
 
 /**
- * Random tile on the plaza, within SPAWN_RADIUS_PX of the room center (the
- * fountain covers most of it; the client steps a blocked spawn onto the
- * nearest open tile, see playgroundGame.js nearestOpen). Keeps new trainers from stacking on one tile
- * while staying close enough (2 x 32 < CHAT_RADIUS_PX) that everyone who just
- * joined can hear each other.
+ * `current`/`target` are { x, y } in pixels. Returns the position the server
+ * now holds (`target` if ok, else `current`), whether a tile was crossed, and
+ * the updated budget.
  */
-function spawnPoint(random = Math.random) {
-	const angle = random() * Math.PI * 2;
-	const dist = Math.sqrt(random()) * SPAWN_RADIUS_PX;
-	const snap = (v) => Math.round(v / TILE_PX) * TILE_PX;
-	const x = snap(ROOM_WIDTH / 2 + Math.cos(angle) * dist);
-	const y = snap(ROOM_HEIGHT / 2 + Math.sin(angle) * dist);
-	// Snapping can push a point just past the radius; pull it back a tile toward the center.
-	const back = (v, c) => (v > c ? v - TILE_PX : v < c ? v + TILE_PX : v);
-	return Math.hypot(x - ROOM_WIDTH / 2, y - ROOM_HEIGHT / 2) <= SPAWN_RADIUS_PX
-		? { x, y }
-		: { x: back(x, ROOM_WIDTH / 2), y: back(y, ROOM_HEIGHT / 2) };
+function validateStep(current, target, budget, nowMs, stand = standOnPlayground) {
+	const tokens = Math.min(STEP_BURST, budget.tokens + ((nowMs - budget.at) / 1000) * STEP_REFILL_PER_SEC);
+	const refilled = { tokens, at: nowMs };
+	const refuse = { ok: false, x: current.x, y: current.y, stepped: false, budget: refilled };
+	if (!Number.isFinite(target?.x) || !Number.isFinite(target?.y)) return refuse;
+	if (target.x % TILE_PX || target.y % TILE_PX) return refuse;
+	const dx = (target.x - current.x) / TILE_PX;
+	const dy = (target.y - current.y) / TILE_PX;
+	if (!dx && !dy) return { ok: true, x: current.x, y: current.y, stepped: false, budget: refilled };
+	if (Math.abs(dx) + Math.abs(dy) !== 1) return refuse;
+	if (!stand(target.x / TILE_PX, target.y / TILE_PX)) return refuse;
+	if (tokens < 1) return refuse;
+	return { ok: true, x: target.x, y: target.y, stepped: true, budget: { tokens: tokens - 1, at: nowMs } };
 }
 
-module.exports = { resolveMove, clamp, spawnPoint, SPAWN_RADIUS_PX, TILE_PX, ROOM_WIDTH, ROOM_HEIGHT, MAX_SPEED_PX_PER_SEC, CHAT_RADIUS_PX };
+const SPAWN_RADIUS_PX = 3 * TILE_PX;
+let spawnTiles = null;
+
+/**
+ * Random free tile within SPAWN_RADIUS_PX of the room center (the fountain
+ * sits on the center itself). Close enough (2 x 48 = CHAT_RADIUS_PX) that
+ * everyone who just joined can hear each other.
+ */
+function spawnPoint(random = Math.random) {
+	if (!spawnTiles) {
+		spawnTiles = [];
+		for (let ty = 0; ty < ROOM_HEIGHT / TILE_PX; ty++) {
+			for (let tx = 0; tx < ROOM_WIDTH / TILE_PX; tx++) {
+				const x = tx * TILE_PX;
+				const y = ty * TILE_PX;
+				if (Math.hypot(x - ROOM_WIDTH / 2, y - ROOM_HEIGHT / 2) <= SPAWN_RADIUS_PX && standOnPlayground(tx, ty)) spawnTiles.push({ x, y });
+			}
+		}
+	}
+	if (!spawnTiles.length) return { x: ROOM_WIDTH / 2, y: ROOM_HEIGHT / 2 };
+	return { ...spawnTiles[Math.min(spawnTiles.length - 1, Math.floor(random() * spawnTiles.length))] };
+}
+
+module.exports = {
+	validateStep,
+	freshBudget,
+	spawnPoint,
+	SPAWN_RADIUS_PX,
+	STEP_BURST,
+	STEP_REFILL_PER_SEC,
+	TILE_PX,
+	ROOM_WIDTH,
+	ROOM_HEIGHT,
+	CHAT_RADIUS_PX,
+};

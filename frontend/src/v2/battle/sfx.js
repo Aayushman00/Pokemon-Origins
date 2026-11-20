@@ -8,7 +8,7 @@ const KEY = "po.sound";
 let ctx = null;
 let noise = null;
 
-function audio() {
+export function audio() {
 	if (!ctx) {
 		const AC = window.AudioContext || window.webkitAudioContext;
 		if (!AC) return null;
@@ -72,7 +72,7 @@ const CUES = {
 	cry: [["noise", 0, 0.1], [440, 0, 0.12, "sawtooth"], [660, 0.1, 0.12, "sawtooth"], [990, 0.2, 0.22, "square"]],
 };
 
-function noiseBuffer(ac) {
+export function noiseBuffer(ac) {
 	if (noise) return noise;
 	noise = ac.createBuffer(1, ac.sampleRate * 0.3, ac.sampleRate);
 	const data = noise.getChannelData(0);

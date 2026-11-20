@@ -529,3 +529,69 @@
 	background: #6fcf6a;
 	white-space: nowrap;
 }
+
+/* ---- PvP: roster challenge button, status line, ladder board ---- */
+.roster__battle {
+	flex: none;
+	margin-left: auto;
+	padding: 2px 8px;
+	font-size: var(--fs-xs, 0.7rem);
+	color: var(--pg-ink);
+	background: var(--pg-gold);
+	border: 2px solid var(--pg-line);
+	cursor: pointer;
+}
+.roster__battle:hover,
+.roster__battle:focus-visible {
+	filter: brightness(1.1);
+	outline: 2px solid var(--pg-edge-hi);
+}
+.pg__notice {
+	position: absolute;
+	left: 50%;
+	bottom: var(--s-2);
+	transform: translateX(-50%);
+	max-width: calc(100% - 32px);
+	margin: 0;
+	padding: 6px 12px;
+	color: var(--pg-text);
+	background: var(--pg-panel);
+	border: 2px solid var(--pg-edge);
+	font-size: var(--fs-sm);
+	text-align: center;
+}
+.ladder {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	min-width: min(360px, calc(100vw - 64px));
+}
+.ladder__list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	max-height: 50vh;
+	overflow-y: auto;
+}
+.ladder__row {
+	display: grid;
+	grid-template-columns: 2.5em 1fr auto;
+	gap: var(--s-2);
+	align-items: baseline;
+	padding: 4px 6px;
+}
+.ladder__row:nth-child(odd) {
+	background: color-mix(in srgb, currentColor 6%, transparent);
+}
+.ladder__row.is-self {
+	outline: 2px solid var(--pg-gold, #f4d870);
+}
+.ladder__name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.ladder__note {
+	margin: 0;
+	font-size: var(--fs-xs, 0.75rem);
+}

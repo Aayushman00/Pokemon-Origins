@@ -3,6 +3,7 @@ const path = require("path");
 const {
 	levelSchema,
 	trainerCatalogSchema,
+	extraTrainerCatalogSchema,
 	encounterCatalogSchema,
 } = require("./schemas");
 const { CampaignError } = require("./errors");
@@ -221,6 +222,16 @@ function getWildTable(id, dataDir = DATA_DIR) {
 	return Object.hasOwn(tables, id) ? tables[id] : null; // "__proto__" is a valid-looking id, not a table
 }
 
+/** An extra road trainer (trainers/extra.json) plus `minLevel`, the campaign level its road opens at; or null. */
+function getExtraTrainer(id, dataDir = DATA_DIR) {
+	const result = extraTrainerCatalogSchema.safeParse(readJson(path.join(dataDir, "trainers", "extra.json")));
+	if (!result.success) {
+		throw new CampaignError(500, `Invalid trainer catalog extra.json: ${result.error.issues.map((i) => i.message).join("; ")}`);
+	}
+	const trainer = Object.hasOwn(result.data, id) ? result.data[id] : null;
+	return trainer && { ...trainer, minLevel: Number(trainer.route.slice("route_".length)) };
+}
+
 /** Where a campaign trainer sits in the gauntlet: { level, battleNumber, type }, or null. */
 function findTrainerBattle(trainerId, dataDir = DATA_DIR) {
 	for (let level = 1; level <= CAMPAIGN_LEVELS; level++) {
@@ -239,6 +250,7 @@ module.exports = {
 	countBattles,
 	findTrainerBattle,
 	getWildTable,
+	getExtraTrainer,
 	getTrainer,
 	getEncounter,
 	resetCache,

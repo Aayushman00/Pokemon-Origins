@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 13,
+ "nextobjectid": 16,
  "layers": [
   {
    "id": 1,
@@ -1473,9 +1473,9 @@
     3195,
     3195,
     3201,
-    3735,
-    956,
-    3737,
+    3731,
+    3717,
+    3721,
     3222,
     3216,
     3192,
@@ -2287,7 +2287,7 @@
     0,
     0,
     0,
-    1745,
+    0,
     0,
     0,
     0,
@@ -3565,7 +3565,7 @@
     0,
     0,
     0,
-    4000,
+    0,
     0,
     0,
     0,
@@ -3741,7 +3741,6 @@
     0,
     0,
     0,
-    4000,
     0,
     0,
     0,
@@ -3755,6 +3754,7 @@
     0,
     0,
     0,
+    0,
     4000,
     4000,
     4000,
@@ -3770,11 +3770,11 @@
     0,
     0,
     0,
-    4000,
     0,
     0,
     0,
     0,
+    0,
     4000,
     0,
     4000,
@@ -3837,7 +3837,6 @@
     0,
     4000,
     4000,
-    0,
     0,
     0,
     0,
@@ -3872,6 +3871,7 @@
     0,
     0,
     0,
+    4000,
     0,
     4000,
     4000,
@@ -3913,7 +3913,7 @@
     4000,
     4000,
     0,
-    4000,
+    0,
     0,
     4000,
     4000,
@@ -4338,6 +4338,54 @@
        "value": "down"
       }
      ]
+    },
+    {
+     "id": 13,
+     "name": "frostveil_cavern_37_15",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 592,
+     "y": 240,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "frostveil_cavern"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 6
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "fade"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "right"
+      }
+     ]
     }
    ]
   },
@@ -4371,6 +4419,29 @@
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:coral_marlowe\", \"else\": [{\"op\": \"say\", \"text\": \"The road to Route 5 is closed to anyone without the Tide Badge. Try the Gym here first.\"}, {\"op\": \"cutsceneMove\", \"actor\": \"player\", \"path\": [\"down\"]}]}]"
+      }
+     ]
+    },
+    {
+     "id": 14,
+     "name": "frostveil_cavern_seal",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 576,
+     "y": 240,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "when",
+       "type": "string",
+       "value": "step"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:kestrel_vane\", \"else\": [{\"op\": \"say\", \"text\": \"Hold it. Past here is League ground. Only the Champion of Aurelia goes on.\"}, {\"op\": \"cutsceneMove\", \"actor\": \"player\", \"path\": [\"left\"]}]}]"
       }
      ]
     }
@@ -4408,6 +4479,11 @@
        "value": "left"
       },
       {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
+      },
+      {
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"say\", \"text\": \"Captain Marlowe once sailed a storm in a soup pot. She tells it better.\"}]"
@@ -4435,6 +4511,11 @@
        "name": "facing",
        "type": "string",
        "value": "up"
+      },
+      {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
       },
       {
        "name": "script",
@@ -4466,9 +4547,43 @@
        "value": "right"
       },
       {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
+      },
+      {
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"say\", \"text\": \"The sand here squeaks when you walk on it. Nobody warned me about the squeak.\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 15,
+     "name": "frostveil_cavern_guard",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 560,
+     "y": 224,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "sailor"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "right"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:kestrel_vane\", \"else\": [{\"op\": \"say\", \"text\": \"League order. Nobody but the Champion passes. Come back with the title, not just the badges.\"}]}, {\"op\": \"say\", \"text\": \"Champion! The way's yours. Whatever's in there has waited a long time. Go gently.\"}]"
       }
      ],
      "point": true

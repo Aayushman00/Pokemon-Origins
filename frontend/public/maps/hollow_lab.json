@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 9,
+ "nextobjectid": 5,
  "layers": [
   {
    "id": 1,
@@ -1118,7 +1118,7 @@
     4000,
     4000,
     0,
-    0,
+    4000,
     0,
     0,
     0,
@@ -1330,7 +1330,7 @@
    "visible": true,
    "objects": [
     {
-     "id": 7,
+     "id": 3,
      "name": "arrival",
      "type": "",
      "rotation": 0,
@@ -1353,7 +1353,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"say\", \"text\": \"Crates, cut chains and a great key left in the lock. Team Hollow broke the seal and ran from what was inside.\"}, {\"op\": \"say\", \"text\": \"Five old presences wait along the corridor. They have been asleep since before the League had a name.\"}]"
+       "value": "[{\"op\": \"say\", \"text\": \"Crates, cut chains and a great key left in the lock. Team Hollow broke the seal and ran from what was inside.\"}, {\"op\": \"say\", \"text\": \"Something waits at the end of the corridor. It has been awake far longer than the League has had a name.\"}]"
       }
      ]
     }
@@ -1371,202 +1371,6 @@
    "objects": [
     {
      "id": 2,
-     "name": "articuno",
-     "type": "",
-     "rotation": 0,
-     "visible": true,
-     "x": 320,
-     "y": 64,
-     "width": 0,
-     "height": 0,
-     "properties": [
-      {
-       "name": "sprite",
-       "type": "string",
-       "value": "legend_144"
-      },
-      {
-       "name": "facing",
-       "type": "string",
-       "value": "left"
-      },
-      {
-       "name": "kind",
-       "type": "string",
-       "value": "legendary"
-      },
-      {
-       "name": "dex",
-       "type": "int",
-       "value": 144
-      },
-      {
-       "name": "shiny",
-       "type": "bool",
-       "value": false
-      },
-      {
-       "name": "hideFlag",
-       "type": "string",
-       "value": "trainer:articuno"
-      },
-      {
-       "name": "script",
-       "type": "string",
-       "value": "[{\"op\": \"cry\", \"dex\": 144}, {\"op\": \"say\", \"text\": \"ARTICUNO: Kyaaa!\"}, {\"op\": \"battle\", \"trainer\": \"articuno\"}]"
-      }
-     ],
-     "point": true
-    },
-    {
-     "id": 3,
-     "name": "zapdos",
-     "type": "",
-     "rotation": 0,
-     "visible": true,
-     "x": 240,
-     "y": 64,
-     "width": 0,
-     "height": 0,
-     "properties": [
-      {
-       "name": "sprite",
-       "type": "string",
-       "value": "legend_145"
-      },
-      {
-       "name": "facing",
-       "type": "string",
-       "value": "left"
-      },
-      {
-       "name": "kind",
-       "type": "string",
-       "value": "legendary"
-      },
-      {
-       "name": "dex",
-       "type": "int",
-       "value": 145
-      },
-      {
-       "name": "shiny",
-       "type": "bool",
-       "value": false
-      },
-      {
-       "name": "hideFlag",
-       "type": "string",
-       "value": "trainer:zapdos"
-      },
-      {
-       "name": "script",
-       "type": "string",
-       "value": "[{\"op\": \"cry\", \"dex\": 145}, {\"op\": \"say\", \"text\": \"ZAPDOS: Gyaoo!\"}, {\"op\": \"battle\", \"trainer\": \"zapdos\"}]"
-      }
-     ],
-     "point": true
-    },
-    {
-     "id": 4,
-     "name": "moltres",
-     "type": "",
-     "rotation": 0,
-     "visible": true,
-     "x": 160,
-     "y": 64,
-     "width": 0,
-     "height": 0,
-     "properties": [
-      {
-       "name": "sprite",
-       "type": "string",
-       "value": "legend_146"
-      },
-      {
-       "name": "facing",
-       "type": "string",
-       "value": "left"
-      },
-      {
-       "name": "kind",
-       "type": "string",
-       "value": "legendary"
-      },
-      {
-       "name": "dex",
-       "type": "int",
-       "value": 146
-      },
-      {
-       "name": "shiny",
-       "type": "bool",
-       "value": false
-      },
-      {
-       "name": "hideFlag",
-       "type": "string",
-       "value": "trainer:moltres"
-      },
-      {
-       "name": "script",
-       "type": "string",
-       "value": "[{\"op\": \"cry\", \"dex\": 146}, {\"op\": \"say\", \"text\": \"MOLTRES: Gyaoo!\"}, {\"op\": \"battle\", \"trainer\": \"moltres\"}]"
-      }
-     ],
-     "point": true
-    },
-    {
-     "id": 5,
-     "name": "mew",
-     "type": "",
-     "rotation": 0,
-     "visible": true,
-     "x": 80,
-     "y": 64,
-     "width": 0,
-     "height": 0,
-     "properties": [
-      {
-       "name": "sprite",
-       "type": "string",
-       "value": "legend_151"
-      },
-      {
-       "name": "facing",
-       "type": "string",
-       "value": "left"
-      },
-      {
-       "name": "kind",
-       "type": "string",
-       "value": "legendary"
-      },
-      {
-       "name": "dex",
-       "type": "int",
-       "value": 151
-      },
-      {
-       "name": "shiny",
-       "type": "bool",
-       "value": false
-      },
-      {
-       "name": "hideFlag",
-       "type": "string",
-       "value": "trainer:mew"
-      },
-      {
-       "name": "script",
-       "type": "string",
-       "value": "[{\"op\": \"cry\", \"dex\": 151}, {\"op\": \"say\", \"text\": \"MEW: Mew!\"}, {\"op\": \"battle\", \"trainer\": \"mew\"}]"
-      }
-     ],
-     "point": true
-    },
-    {
-     "id": 6,
      "name": "mewtwo",
      "type": "",
      "rotation": 0,
@@ -1609,7 +1413,7 @@
       {
        "name": "script",
        "type": "string",
-       "value": "[{\"op\": \"cry\", \"dex\": 150}, {\"op\": \"say\", \"text\": \"MEWTWO: ...!\"}, {\"op\": \"battle\", \"trainer\": \"mewtwo\"}]"
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:articuno\", \"else\": [{\"op\": \"say\", \"text\": \"MEWTWO looks straight through you, toward somewhere else. A cold wind still blows from Frostveil Cavern, out past the Saltmere ferry.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:zapdos\", \"else\": [{\"op\": \"say\", \"text\": \"MEWTWO looks straight through you, toward somewhere else. Thunder still rolls over Stormcrown Pylon, east of Dynamo Station.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:moltres\", \"else\": [{\"op\": \"say\", \"text\": \"MEWTWO looks straight through you, toward somewhere else. The crater above Emberhold still burns brighter than its forge.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:mew\", \"else\": [{\"op\": \"say\", \"text\": \"MEWTWO looks straight through you, toward somewhere else. Something small still giggles in the Hidden Grove, north of Mossgate.\"}]}, {\"op\": \"cry\", \"dex\": 150}, {\"op\": \"say\", \"text\": \"MEWTWO: ...!\"}, {\"op\": \"battle\", \"trainer\": \"mewtwo\"}]"
       }
      ],
      "point": true
@@ -1627,7 +1431,7 @@
    "visible": true,
    "objects": [
     {
-     "id": 8,
+     "id": 4,
      "name": "notes",
      "type": "",
      "rotation": 0,

@@ -31,11 +31,14 @@ function useSteppedNumber(target) {
 	return value;
 }
 
+/** A PvP opponent's reserves come without HP, only a `fainted` flag. */
+const able = (m) => (m.fainted != null ? !m.fainted : m.current_hp > 0);
+
 /** Party balls: one per member, dimmed when fainted. */
 const PartyBalls = ({ party = [], label }) => (
-	<span className="balls" role="img" aria-label={`${label}: ${party.filter((m) => m.current_hp > 0).length} of ${party.length} able to battle`}>
+	<span className="balls" role="img" aria-label={`${label}: ${party.filter(able).length} of ${party.length} able to battle`}>
 		{party.map((m) => (
-			<span key={m.position} className={`ball ${m.current_hp <= 0 ? "ball--out" : ""}`} />
+			<span key={m.position} className={`ball ${able(m) ? "" : "ball--out"}`} />
 		))}
 	</span>
 );

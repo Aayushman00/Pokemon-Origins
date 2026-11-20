@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 12,
+ "nextobjectid": 16,
  "layers": [
   {
    "id": 1,
@@ -292,12 +292,8 @@
     1929,
     1929,
     1929,
-    1925,
-    1926,
-    1928,
-    1927,
-    1926,
-    1925,
+    1929,
+    1929,
     1928,
     1927,
     1926,
@@ -305,25 +301,29 @@
     1928,
     1927,
     1926,
-    1930,
-    1930,
-    1930,
-    1930,
-    1930,
-    1930,
-    1930,
-    1930,
-    1929,
-    1929,
-    1929,
-    1929,
-    1929,
-    1929,
-    1929,
-    1929,
-    1929,
+    1925,
     1928,
     1927,
+    1926,
+    1930,
+    1930,
+    1930,
+    1930,
+    1930,
+    1930,
+    1930,
+    1930,
+    1929,
+    1929,
+    1929,
+    1929,
+    1929,
+    1929,
+    1929,
+    1929,
+    1929,
+    1929,
+    1929,
     1927,
     1928,
     1925,
@@ -904,9 +904,9 @@
     3708,
     3708,
     3708,
-    3712,
-    3474,
-    3475,
+    3708,
+    3708,
+    3708,
     3476,
     3477,
     3486,
@@ -934,9 +934,9 @@
     3714,
     3714,
     3714,
-    3718,
-    3476,
-    3477,
+    3714,
+    3714,
+    3714,
     3474,
     3475,
     3484,
@@ -1518,8 +1518,8 @@
     0,
     0,
     0,
-    2071,
-    2071,
+    0,
+    0,
     381,
     408,
     0,
@@ -1548,8 +1548,8 @@
     0,
     0,
     0,
-    2071,
-    2071,
+    0,
+    0,
     375,
     402,
     0,
@@ -2713,37 +2713,7 @@
     0,
     0,
     0,
-    0,
     4000,
-    4000,
-    4000,
-    4000,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    4000,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
     4000,
     4000,
     4000,
@@ -2774,20 +2744,9 @@
     0,
     0,
     0,
-    4000,
-    4000,
-    4000,
-    4000,
     0,
     0,
     4000,
-    0,
-    4000,
-    0,
-    0,
-    0,
-    0,
-    0,
     4000,
     0,
     0,
@@ -2796,7 +2755,48 @@
     0,
     0,
     0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
     4000,
+    4000,
+    0,
+    0,
+    4000,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    4000,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
     0,
     0,
     0,
@@ -3290,6 +3290,102 @@
        "value": "up"
       }
      ]
+    },
+    {
+     "id": 12,
+     "name": "stormcrown_pylon_28_8",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 448,
+     "y": 128,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "stormcrown_pylon"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 6
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "fade"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "right"
+      }
+     ]
+    },
+    {
+     "id": 13,
+     "name": "stormcrown_pylon_28_9",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 448,
+     "y": 144,
+     "width": 16,
+     "height": 16,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "door"
+      },
+      {
+       "name": "targetMap",
+       "type": "string",
+       "value": "stormcrown_pylon"
+      },
+      {
+       "name": "targetX",
+       "type": "int",
+       "value": 6
+      },
+      {
+       "name": "targetY",
+       "type": "int",
+       "value": 9
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "up"
+      },
+      {
+       "name": "transition",
+       "type": "string",
+       "value": "fade"
+      },
+      {
+       "name": "enterDir",
+       "type": "string",
+       "value": "right"
+      }
+     ]
     }
    ]
   },
@@ -3323,6 +3419,29 @@
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:volt_dray\", \"else\": [{\"op\": \"say\", \"text\": \"The road to Route 6 is closed to anyone without the Current Badge. Try the Gym here first.\"}, {\"op\": \"cutsceneMove\", \"actor\": \"player\", \"path\": [\"down\"]}]}]"
+      }
+     ]
+    },
+    {
+     "id": 14,
+     "name": "stormcrown_pylon_seal",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 432,
+     "y": 128,
+     "width": 16,
+     "height": 32,
+     "properties": [
+      {
+       "name": "when",
+       "type": "string",
+       "value": "step"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:kestrel_vane\", \"else\": [{\"op\": \"say\", \"text\": \"Hold it. Past here is League ground. Only the Champion of Aurelia goes on.\"}, {\"op\": \"cutsceneMove\", \"actor\": \"player\", \"path\": [\"left\"]}]}]"
       }
      ]
     }
@@ -3360,6 +3479,11 @@
        "value": "right"
       },
       {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
+      },
+      {
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"say\", \"text\": \"Somebody tapped the north line last week. Whatever's drawing that much power isn't a Pokemon.\"}]"
@@ -3387,6 +3511,11 @@
        "name": "facing",
        "type": "string",
        "value": "up"
+      },
+      {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
       },
       {
        "name": "script",
@@ -3418,9 +3547,43 @@
        "value": "down"
       },
       {
+       "name": "idle",
+       "type": "string",
+       "value": "wander"
+      },
+      {
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"say\", \"text\": \"Mr. Dray says the odds of me passing are ninety-one percent! He says that to everyone.\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 15,
+     "name": "stormcrown_pylon_guard",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 432,
+     "y": 112,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "gym_guide"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "down"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:kestrel_vane\", \"else\": [{\"op\": \"say\", \"text\": \"League order. Nobody but the Champion passes. Come back with the title, not just the badges.\"}]}, {\"op\": \"say\", \"text\": \"Champion! The way's yours. Whatever's in there has waited a long time. Go gently.\"}]"
       }
      ],
      "point": true

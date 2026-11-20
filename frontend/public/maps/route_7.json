@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 15,
+ "nextobjectid": 17,
  "layers": [
   {
    "id": 1,
@@ -6074,6 +6074,104 @@
        "name": "script",
        "type": "string",
        "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:scientist_ivan\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"I used to work near the Hollow Lab. I sleep better now.\"}]}, {\"op\": \"requireFlag\", \"flag\": \"trainer:swimmer_nora\", \"else\": [{\"op\": \"say\", \"text\": \"You walked past someone further back on the road. They get first go at you.\"}]}, {\"op\": \"say\", \"text\": \"A live subject! Hold still, this is for the data.\"}, {\"op\": \"battle\", \"trainer\": \"scientist_ivan\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 15,
+     "name": "psychic_nell",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 416,
+     "y": 16,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "psychic"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "right"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "psychic_nell"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:psychic_nell\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"The crater lake shows the stars at noon if you look long enough.\"}]}, {\"op\": \"say\", \"text\": \"I saw you coming three bends ago. I did not see how this ends.\"}, {\"op\": \"battle\", \"trainer\": \"psychic_nell\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 16,
+     "name": "swimmer_cora",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 416,
+     "y": 288,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "swimmer_f"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "right"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "swimmer_cora"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:swimmer_cora\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Swim the rim at dawn. The water is warmest just before it freezes over again.\"}]}, {\"op\": \"say\", \"text\": \"The crater lake is freezing, which is exactly why I train here!\"}, {\"op\": \"battle\", \"trainer\": \"swimmer_cora\"}]"
       }
      ],
      "point": true

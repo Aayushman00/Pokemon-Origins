@@ -48,9 +48,11 @@ describe("sample maps (smoke + lint)", () => {
 		}
 	});
 	it("every Mossgate door round-trips, and the guard gate is gone", () => {
-		assert.deepEqual(maps.mossgate.warps.map((w) => w.targetMap).sort(), ["mossgate_center", "mossgate_gym", "mossgate_house_a", "mossgate_house_b"]);
+		assert.deepEqual(maps.mossgate.warps.map((w) => w.targetMap).sort(), [
+			"hidden_grove", "hidden_grove", "mossgate_center", "mossgate_gym", "mossgate_house_a", "mossgate_house_b",
+		]);
 		for (const w of maps.mossgate.warps) {
-			const back = maps[w.targetMap].warps.find((b) => b.targetMap === "mossgate");
+			const back = maps[w.targetMap].warps.find((b) => b.targetMap === "mossgate" && b.targetX === w.x);
 			assert.ok(back, `${w.targetMap} has no way back`);
 			assert.deepEqual([back.targetX, back.targetY], [w.x, w.y + 1], `${w.targetMap} drops you off the door step`);
 		}
@@ -115,7 +117,13 @@ describe("sample maps (smoke + lint)", () => {
 		}
 	});
 	it("NPCs and sign scripts stand on tiles that are not walls, and npc tiles are blocked", () => {
-		for (const m of Object.values(maps)) for (const n of m.npcs.filter((n) => !n.hideFlag)) assert.notEqual(collisionAt(m, n.x, n.y), COL.FREE, `${m.id}/${n.name} is walkable (players could overlap it)`);
+		for (const m of Object.values(maps)) {
+			for (const n of m.npcs.filter((n) => !n.hideFlag)) {
+				// Wanderers are blocked by the engine wherever they stand, and must be able to walk home.
+				if (n.idle === "wander" || n.showFlag) assert.equal(collisionAt(m, n.x, n.y), COL.FREE, `${m.id}/${n.name} comes and goes but leaves a wall`);
+				else assert.notEqual(collisionAt(m, n.x, n.y), COL.FREE, `${m.id}/${n.name} is walkable (players could overlap it)`);
+			}
+		}
 	});
 	it("outdoor maps have a border block and interiors are black outside", () => {
 		assert.deepEqual(maps.test_town.border, [3, 3, 3, 3]); // local tree tile 2, firstgid 1

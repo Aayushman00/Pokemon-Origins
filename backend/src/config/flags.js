@@ -1,6 +1,6 @@
 // Server feature flags, read from env FLAG_<NAME>=1|true. Everything new is off by default.
 // The server is authoritative: gated routes check these, never the client.
-const NAMES = ["OVERWORLD"];
+const NAMES = ["OVERWORLD", "EXTRA_TRAINERS", "CATCH"];
 
 const truthy = (v) => v === "1" || v === "true" || v === true;
 

@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 11,
- "nextobjectid": 9,
+ "nextobjectid": 16,
  "layers": [
   {
    "id": 1,
@@ -6665,7 +6665,351 @@
    "y": 0,
    "opacity": 1,
    "visible": true,
-   "objects": []
+   "objects": [
+    {
+     "id": 9,
+     "name": "cooltrainer_ronan",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 752,
+     "y": 64,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "cooltrainer_m"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "right"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "cooltrainer_ronan"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:cooltrainer_ronan\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"I've lost to the League four times. Fifth time's the one, I can feel it.\"}]}, {\"op\": \"say\", \"text\": \"Eight badges and you still climbed the long way. I like that.\"}, {\"op\": \"battle\", \"trainer\": \"cooltrainer_ronan\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 10,
+     "name": "battle_girl_suki",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 752,
+     "y": 224,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "battle_girl"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "right"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "battle_girl_suki"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:battle_girl_suki\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"My partner's across the plaza. Don't think you're done yet.\"}]}, {\"op\": \"say\", \"text\": \"No more warm-ups. This is the last plaza before the League!\"}, {\"op\": \"battle\", \"trainer\": \"battle_girl_suki\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 11,
+     "name": "engineer_hale",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 816,
+     "y": 224,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "engineer"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "left"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "engineer_hale"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:engineer_hale\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Every step up here has a lamp. Counted them twice: four hundred and twelve.\"}]}, {\"op\": \"say\", \"text\": \"I wired the lamps on these stairs. Let's see if you're brighter.\"}, {\"op\": \"battle\", \"trainer\": \"engineer_hale\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 12,
+     "name": "beauty_liora",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 464,
+     "y": 64,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "beauty"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "right"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "beauty_liora"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:beauty_liora\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Breathe slowly on the steps. The air thins before the doors do.\"}]}, {\"op\": \"say\", \"text\": \"The view from this plaza is lovely. Let's give it something to watch.\"}, {\"op\": \"battle\", \"trainer\": \"beauty_liora\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 13,
+     "name": "gentleman_corwin",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 464,
+     "y": 224,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "gentleman"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "right"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "gentleman_corwin"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:gentleman_corwin\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"I come up here for the stairs, not the League. Mostly.\"}]}, {\"op\": \"say\", \"text\": \"A stroll up the avenue, and a battle to finish it. Shall we?\"}, {\"op\": \"battle\", \"trainer\": \"gentleman_corwin\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 14,
+     "name": "channeler_ysolde",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 176,
+     "y": 64,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "channeler"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "right"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "channeler_ysolde"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:channeler_ysolde\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"Do not look back on the last flight. Something always follows.\"}]}, {\"op\": \"say\", \"text\": \"The old trainers who never reached the top still walk these steps...\"}, {\"op\": \"battle\", \"trainer\": \"channeler_ysolde\"}]"
+      }
+     ],
+     "point": true
+    },
+    {
+     "id": 15,
+     "name": "sailor_fen",
+     "type": "",
+     "rotation": 0,
+     "visible": true,
+     "x": 176,
+     "y": 224,
+     "width": 0,
+     "height": 0,
+     "properties": [
+      {
+       "name": "sprite",
+       "type": "string",
+       "value": "sailor"
+      },
+      {
+       "name": "facing",
+       "type": "string",
+       "value": "right"
+      },
+      {
+       "name": "trainer",
+       "type": "string",
+       "value": "sailor_fen"
+      },
+      {
+       "name": "extra",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "sight",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "showFlag",
+       "type": "string",
+       "value": "feature:extra_trainers"
+      },
+      {
+       "name": "script",
+       "type": "string",
+       "value": "[{\"op\": \"requireFlag\", \"flag\": \"trainer:sailor_fen\", \"not\": true, \"else\": [{\"op\": \"say\", \"text\": \"From up here you can see the harbor. Barely. On a clear day. If you squint.\"}]}, {\"op\": \"say\", \"text\": \"Came all the way up from Saltmere for this. Don't make it a short trip!\"}, {\"op\": \"battle\", \"trainer\": \"sailor_fen\"}]"
+      }
+     ],
+     "point": true
+    }
+   ]
   },
   {
    "id": 10,

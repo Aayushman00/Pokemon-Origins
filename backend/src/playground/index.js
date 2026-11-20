@@ -3,8 +3,12 @@ const jwt = require("jsonwebtoken");
 const { JWT_SECRET } = require("../config/env");
 const { createSocketAuthMiddleware } = require("./socketAuth");
 const { createRoomState } = require("./roomState");
-const { resolveMove, spawnPoint, CHAT_RADIUS_PX, ROOM_WIDTH, ROOM_HEIGHT } = require("./movement");
+const { validateStep, freshBudget, spawnPoint, CHAT_RADIUS_PX, ROOM_WIDTH, ROOM_HEIGHT } = require("./movement");
+const { createStepService, createMysqlStepStore } = require("../services/stepService");
 const { createChatRing, sanitizeMessage, isRateLimited, MIN_MESSAGE_INTERVAL_MS } = require("./chat");
+const { createMatchRegistry } = require("../pvp/matches");
+const { loadPvpParty } = require("../pvp/party");
+const { createBattleSessionService } = require("../services/battleSessionService");
 
 const ROOM_ID = "main";
 const FACINGS = new Set(["up", "down", "left", "right"]);
@@ -12,13 +16,32 @@ const FACINGS = new Set(["up", "down", "left", "right"]);
 const EMOTES = new Set(["heart", "exclaim", "question", "music", "happy", "sad", "angry", "sleep"]);
 const EMOTE_INTERVAL_MS = 600;
 
-function attachPlayground(io, pool) {
+const STEP_FLUSH_MS = 60_000;
+
+/** `pvp` (a match registry), `recordResult`, `spawn`, `now` and `steps` (step counter) are injectable for tests. */
+function attachPlayground(io, pool, { pvp, recordResult, spawn = spawnPoint, now = Date.now, steps } = {}) {
 	const roomState = createRoomState();
 	const chatRing = createChatRing();
-	const lastMoveAt = new Map(); // trainerId -> timestamp (ms)
+	const stepBudgets = new Map(); // trainerId -> { tokens, at }, see movement.validateStep
+	const stepCounter = steps || createStepService({ store: createMysqlStepStore(pool) });
+	setInterval(() => stepCounter.flush(), STEP_FLUSH_MS).unref?.();
 	const lastMessageAt = new Map(); // trainerId -> timestamp (ms)
 	const lastEmoteAt = new Map(); // trainerId -> timestamp (ms)
 	const trainerSockets = new Map(); // trainerId -> socket, for proximity chat delivery
+	const registry =
+		pvp ||
+		createMatchRegistry({
+			battle: createBattleSessionService(),
+			loadParty: loadPvpParty,
+			recordResult,
+			emitTo: (id, event, payload) => trainerSockets.get(id)?.emit(event, payload),
+			distance: (a, b) => {
+				const p = roomState.getPlayer(a);
+				const q = roomState.getPlayer(b);
+				return p && q ? Math.hypot(p.x - q.x, p.y - q.y) : null;
+			},
+		});
+	const logFailure = (err) => console.error("PvP handler failed:", err.message);
 
 	io.use(
 		createSocketAuthMiddleware({
@@ -49,9 +72,8 @@ function attachPlayground(io, pool) {
 			}
 		}
 
-		const spawn = spawnPoint();
-		const self = roomState.addPlayer(trainerId, name, spawn, gender);
-		lastMoveAt.set(trainerId, Date.now());
+		const self = roomState.addPlayer(trainerId, name, spawn(), gender);
+		stepBudgets.set(trainerId, freshBudget(now()));
 		trainerSockets.set(trainerId, socket);
 
 		socket.emit("room:init", {
@@ -64,22 +86,22 @@ function attachPlayground(io, pool) {
 		});
 		socket.to(ROOM_ID).emit("player:joined", self);
 
+		// One tile at a time, onto open ground, no faster than running. A refused
+		// move snaps only the sender back; nobody else sees it and it is no step.
 		socket.on("move", (target) => {
-			if (!target || !Number.isFinite(target.x) || !Number.isFinite(target.y)) {
+			const current = roomState.getPlayer(trainerId);
+			if (!current || !target) return;
+			const result = validateStep(current, target, stepBudgets.get(trainerId) || freshBudget(now()), now());
+			stepBudgets.set(trainerId, result.budget);
+			if (!result.ok) {
+				socket.emit("player:correct", { x: current.x, y: current.y });
 				return;
 			}
-			const current = roomState.getPlayer(trainerId);
-			if (!current) return;
-
-			const now = Date.now();
-			const elapsedMs = now - (lastMoveAt.get(trainerId) ?? now);
-			lastMoveAt.set(trainerId, now);
-
-			const resolved = resolveMove(current, target, elapsedMs);
-			roomState.updatePosition(trainerId, resolved.x, resolved.y);
+			roomState.updatePosition(trainerId, result.x, result.y);
+			if (result.stepped) stepCounter.add(trainerId);
 			// facing / run only steer the walk animation other players see.
 			const facing = FACINGS.has(target.facing) ? target.facing : undefined;
-			io.to(ROOM_ID).emit("player:moved", { trainerId, x: resolved.x, y: resolved.y, facing, run: target.run === true });
+			io.to(ROOM_ID).emit("player:moved", { trainerId, x: result.x, y: result.y, facing, run: target.run === true });
 		});
 
 		// A reaction bubble over the sender's head, seen by everyone on the map.
@@ -90,6 +112,12 @@ function attachPlayground(io, pool) {
 			lastEmoteAt.set(trainerId, now);
 			io.to(ROOM_ID).emit("player:emote", { trainerId, emote, ts: now });
 		});
+
+		// Live PvP. The registry checks guests, range and turn legality itself.
+		socket.on("pvp:challenge", (p) => registry.challenge(trainerId, name, p?.targetId)?.catch?.(logFailure));
+		socket.on("pvp:respond", (p) => registry.respond(trainerId, name, p?.fromId, p?.accept === true)?.catch?.(logFailure));
+		socket.on("pvp:action", (action) => registry.act(trainerId, action)?.catch?.(logFailure));
+		socket.on("pvp:forfeit", () => registry.forfeit(trainerId)?.catch?.(logFailure));
 
 		socket.on("chat:send", (text) => {
 			const clean = sanitizeMessage(text);
@@ -128,9 +156,12 @@ function attachPlayground(io, pool) {
 			// older tab closing must not remove the trainer who is still here.
 			if (trainerSockets.get(trainerId) !== socket) return;
 			roomState.removePlayer(trainerId);
-			lastMoveAt.delete(trainerId);
+			stepBudgets.delete(trainerId);
+			stepCounter.flush(trainerId).catch?.((err) => console.error("Steps flush failed:", err.message));
 			lastEmoteAt.delete(trainerId);
 			trainerSockets.delete(trainerId);
+			// Leaving the Playground mid-battle is a loss; open challenges go too.
+			registry.forfeit(trainerId, "disconnect")?.catch?.(logFailure);
 			// lastMessageAt is deliberately NOT cleared here — see the sweep
 			// in the connection handler above.
 			io.to(ROOM_ID).emit("player:left", { trainerId });
